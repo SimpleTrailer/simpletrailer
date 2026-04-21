@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Buchung bestätigt – SimpleTrailer</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --bg:#0D0D0D; --s1:#161616; --orange:#E85D00; --white:#fff; --gray:#888; --border:#383838; --font:'Inter',system-ui,sans-serif; }
+    body { background:var(--bg); color:var(--white); font-family:var(--font); min-height:100vh; -webkit-font-smoothing:antialiased; }
+    nav { background:rgba(13,13,13,.95); border-bottom:1px solid var(--border); padding:0 5%; height:64px; display:flex; align-items:center; }
+    .logo { font-size:1.2rem; font-weight:800; text-decoration:none; letter-spacing:-.03em; }
+    .logo span:first-child { color:var(--white); }
+    .logo span:last-child  { color:var(--orange); }
+    .page { max-width:600px; margin:0 auto; padding:60px 20px 80px; text-align:center; }
+    .icon { font-size:3rem; margin-bottom:20px; }
+    h1 { font-size:1.8rem; font-weight:800; letter-spacing:-.03em; margin-bottom:12px; }
+    .sub { color:var(--gray); margin-bottom:40px; line-height:1.6; }
+    .card { background:var(--s1); border:1.5px solid var(--border); border-radius:16px; padding:28px; margin-bottom:20px; text-align:left; }
+    .booking-num { text-align:center; margin-bottom:24px; }
+    .booking-num .label { font-size:.68rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--orange); margin-bottom:6px; }
+    .booking-num .num { font-size:1.4rem; font-weight:800; letter-spacing:.05em; }
+    .code-box { background:#1a0d00; border:1.5px solid var(--orange); border-radius:12px; padding:20px; text-align:center; margin-bottom:24px; }
+    .code-box .label { font-size:.68rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--orange); margin-bottom:8px; }
+    .code-box .code  { font-size:2.5rem; font-weight:800; letter-spacing:.2em; }
+    .code-box .hint  { color:var(--gray); font-size:.78rem; margin-top:8px; }
+    table { width:100%; border-collapse:collapse; }
+    td { padding:9px 0; font-size:.88rem; border-bottom:1px solid var(--border); }
+    tr:last-child td { border-bottom:none; }
+    td:first-child { color:var(--gray); }
+    td:last-child  { text-align:right; }
+    .btn { display:inline-flex; align-items:center; justify-content:center; padding:13px 28px; border-radius:8px; font-weight:600; font-size:.95rem; cursor:pointer; border:none; text-decoration:none; transition:background .2s; font-family:var(--font); }
+    .btn-orange { background:var(--orange); color:#fff; width:100%; margin-bottom:12px; }
+    .btn-orange:hover { background:#FF6A00; }
+    .loading { color:var(--gray); margin:40px auto; }
+    .spinner { width:32px; height:32px; border:3px solid var(--border); border-top-color:var(--orange); border-radius:50%; animation:spin .8s linear infinite; margin:0 auto 16px; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .error-view { display:none; }
+    .error-view .icon { color:#f87171; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="logo"><span>Simple</span><span>Trailer</span></a>
+</nav>
+
+<div class="page">
+
+  <!-- Ladeansicht -->
+  <div id="loadingView" class="loading">
+    <div class="spinner"></div>
+    <p>Buchung wird bestätigt...</p>
+  </div>
+
+  <!-- Erfolg -->
+  <div id="successView" style="display:none;">
+    <div class="icon">🎉</div>
+    <h1>Buchung bestätigt!</h1>
+    <p class="sub">Deine Bestätigungs-E-Mail ist unterwegs.<br>Hier sind alle Details für deine Abholung.</p>
+
+    <div class="card">
+      <div class="booking-num">
+        <div class="label">Buchungsnummer</div>
+        <div class="num" id="bookingNum">–</div>
+      </div>
+
+      <div class="code-box">
+        <div class="label">Zugangscode Schloss</div>
+        <div class="code" id="accessCode">–</div>
+        <div class="hint">Diesen Code am Zahlenschloss des Anhängers eingeben</div>
+      </div>
+
+      <table>
+        <tr><td>Anhänger</td><td>PKW-Anhänger mit Plane</td></tr>
+        <tr><td>Von</td><td id="fromDate">–</td></tr>
+        <tr><td>Bis</td><td id="toDate">–</td></tr>
+        <tr><td>Bezahlt</td><td style="color:var(--orange);font-weight:700;" id="paidAmount">–</td></tr>
+      </table>
+    </div>
+
+    <a id="returnLink" href="#" class="btn btn-orange">Rückgabe-Link öffnen →</a>
+    <p style="color:var(--gray);font-size:.78rem;">Der Rückgabe-Link wurde auch per E-Mail gesendet.</p>
+  </div>
+
+  <!-- Fehler -->
+  <div id="errorView" class="error-view">
+    <div class="icon">❌</div>
+    <h1>Etwas ist schiefgelaufen</h1>
+    <p class="sub" id="errorMsg">Bitte versuche es erneut oder kontaktiere uns.</p>
+    <a href="booking.html" class="btn btn-orange" style="display:inline-flex;width:auto;margin-top:20px;">Erneut buchen</a>
+  </div>
+
+</div>
+
+<script>
+  const fmtDate = (iso) => new Date(iso).toLocaleString('de-DE', {
+    day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+  });
+
+  async function confirm() {
+    const params = new URLSearchParams(window.location.search);
+    const piId   = params.get('payment_intent') || sessionStorage.getItem('st_pi_id');
+    const status = params.get('redirect_status');
+
+    if (!piId || (status && status !== 'succeeded')) {
+      showError('Die Zahlung wurde abgebrochen oder ist fehlgeschlagen.');
+      return;
+    }
+
+    try {
+      const res  = await fetch('/.netlify/functions/confirm-booking', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ payment_intent_id: piId })
+      });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || 'Bestätigung fehlgeschlagen');
+
+      document.getElementById('bookingNum').textContent  = '#' + data.booking_id.slice(0, 8).toUpperCase();
+      document.getElementById('accessCode').textContent  = data.access_code;
+      document.getElementById('fromDate').textContent    = fmtDate(data.start_time);
+      document.getElementById('toDate').textContent      = fmtDate(data.end_time);
+      document.getElementById('paidAmount').textContent  = data.amount.toFixed(2).replace('.', ',') + ' €';
+
+      // Return-Link bauen (wird auch per E-Mail gesendet)
+      const returnUrl = `/return.html?id=${data.booking_id}&token=${data.return_token || ''}`;
+      document.getElementById('returnLink').href = returnUrl;
+
+      document.getElementById('loadingView').style.display = 'none';
+      document.getElementById('successView').style.display = 'block';
+      sessionStorage.removeItem('st_client_secret');
+      sessionStorage.removeItem('st_pi_id');
+
+    } catch (err) {
+      showError(err.message);
+    }
+  }
+
+  function showError(msg) {
+    document.getElementById('loadingView').style.display = 'none';
+    document.getElementById('errorView').style.display   = 'block';
+    document.getElementById('errorMsg').textContent      = msg;
+  }
+
+  confirm();
+</script>
+</body>
+</html>

@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin – SimpleTrailer</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:#0D0D0D; --s1:#161616; --s2:#1E1E1E; --s3:#252525;
+      --orange:#E85D00; --white:#fff; --gray:#888; --border:#383838;
+      --green:#22c55e; --red:#f87171; --blue:#60a5fa;
+      --font:'Inter',system-ui,sans-serif;
+    }
+    body { background:var(--bg); color:var(--white); font-family:var(--font); min-height:100vh; -webkit-font-smoothing:antialiased; }
+
+    /* NAV */
+    nav { background:rgba(13,13,13,.97); border-bottom:1px solid var(--border); padding:0 5%; height:64px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
+    .logo { font-size:1.2rem; font-weight:800; text-decoration:none; letter-spacing:-.03em; }
+    .logo span:first-child { color:var(--white); }
+    .logo span:last-child  { color:var(--orange); }
+    .nav-right { display:flex; align-items:center; gap:16px; }
+    .nav-badge { font-size:.75rem; background:var(--s2); border:1px solid var(--border); padding:4px 10px; border-radius:20px; color:var(--gray); }
+    #logoutBtn { background:none; border:1px solid var(--border); color:var(--gray); padding:6px 14px; border-radius:6px; font-size:.82rem; cursor:pointer; font-family:var(--font); transition:border-color .2s, color .2s; }
+    #logoutBtn:hover { border-color:var(--red); color:var(--red); }
+
+    /* LOGIN */
+    #loginView { display:flex; align-items:center; justify-content:center; min-height:100vh; padding:20px; }
+    .login-card { background:var(--s1); border:1.5px solid var(--border); border-radius:20px; padding:40px 36px; width:100%; max-width:400px; }
+    .login-card .lock { font-size:2.5rem; text-align:center; margin-bottom:16px; }
+    .login-card h1 { font-size:1.5rem; font-weight:800; text-align:center; letter-spacing:-.03em; margin-bottom:6px; }
+    .login-card .sub { color:var(--gray); font-size:.85rem; text-align:center; margin-bottom:28px; }
+    .field { margin-bottom:16px; }
+    .field label { display:block; font-size:.78rem; font-weight:600; color:var(--gray); margin-bottom:6px; letter-spacing:.05em; text-transform:uppercase; }
+    .field input { width:100%; background:var(--s2); border:1.5px solid var(--border); border-radius:8px; padding:12px 14px; color:var(--white); font-size:.95rem; font-family:var(--font); transition:border-color .2s; }
+    .field input:focus { outline:none; border-color:var(--orange); }
+    .btn-login { width:100%; background:var(--orange); color:#fff; border:none; padding:13px; border-radius:8px; font-weight:700; font-size:1rem; cursor:pointer; font-family:var(--font); margin-top:8px; transition:background .2s; }
+    .btn-login:hover { background:#FF6A00; }
+    .btn-login:disabled { opacity:.5; cursor:not-allowed; }
+    .login-error { color:var(--red); font-size:.82rem; text-align:center; margin-top:12px; min-height:20px; }
+
+    /* MAIN */
+    #mainView { display:none; }
+    .container { max-width:1200px; margin:0 auto; padding:32px 24px 80px; }
+
+    /* STATS */
+    .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; margin-bottom:32px; }
+    .stat-card { background:var(--s1); border:1.5px solid var(--border); border-radius:14px; padding:20px 24px; }
+    .stat-card .stat-label { font-size:.68rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--gray); margin-bottom:6px; }
+    .stat-card .stat-val { font-size:2rem; font-weight:800; letter-spacing:-.03em; }
+    .stat-card.orange .stat-val { color:var(--orange); }
+    .stat-card.green  .stat-val { color:var(--green); }
+    .stat-card.blue   .stat-val { color:var(--blue); }
+
+    /* TOOLBAR */
+    .toolbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:12px; }
+    .toolbar h2 { font-size:1.2rem; font-weight:800; letter-spacing:-.02em; }
+    .toolbar-right { display:flex; gap:10px; flex-wrap:wrap; }
+    .filter-btn { background:var(--s2); border:1.5px solid var(--border); color:var(--gray); padding:7px 16px; border-radius:6px; font-size:.82rem; cursor:pointer; font-family:var(--font); transition:all .2s; }
+    .filter-btn.active, .filter-btn:hover { border-color:var(--orange); color:var(--white); }
+    #refreshBtn { background:var(--s2); border:1.5px solid var(--border); color:var(--gray); padding:7px 14px; border-radius:6px; font-size:.82rem; cursor:pointer; font-family:var(--font); transition:all .2s; }
+    #refreshBtn:hover { border-color:var(--orange); color:var(--white); }
+
+    /* TABLE */
+    .table-wrap { background:var(--s1); border:1.5px solid var(--border); border-radius:16px; overflow:hidden; overflow-x:auto; }
+    table { width:100%; border-collapse:collapse; font-size:.84rem; }
+    th { padding:12px 16px; text-align:left; font-size:.68rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--gray); border-bottom:1px solid var(--border); white-space:nowrap; }
+    td { padding:13px 16px; border-bottom:1px solid var(--border); white-space:nowrap; }
+    tr:last-child td { border-bottom:none; }
+    tr:hover td { background:var(--s2); }
+    .mono { font-family:monospace; font-size:.8rem; color:var(--gray); }
+
+    /* BADGES */
+    .badge { display:inline-block; padding:3px 10px; border-radius:20px; font-size:.72rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase; }
+    .badge-pending   { background:#2d2000; color:#f59e0b; }
+    .badge-confirmed { background:#001f3d; color:var(--blue); }
+    .badge-active    { background:#0f2d0f; color:var(--green); }
+    .badge-returned  { background:#1a1a1a; color:var(--gray); }
+
+    /* LATE FEE */
+    .late-fee { color:var(--red); font-weight:700; }
+    .late-fee-ok { color:var(--green); font-weight:700; }
+
+    /* EMPTY / LOADING */
+    .table-info { text-align:center; padding:60px 20px; color:var(--gray); }
+    .spin { width:28px; height:28px; border:3px solid var(--border); border-top-color:var(--orange); border-radius:50%; animation:spin .8s linear infinite; margin:0 auto 12px; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    /* DETAIL MODAL */
+    .modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:200; align-items:center; justify-content:center; padding:20px; }
+    .modal-bg.open { display:flex; }
+    .modal { background:var(--s1); border:1.5px solid var(--border); border-radius:20px; padding:32px; width:100%; max-width:520px; max-height:90vh; overflow-y:auto; position:relative; }
+    .modal-close { position:absolute; top:16px; right:16px; background:none; border:none; color:var(--gray); font-size:1.2rem; cursor:pointer; padding:4px 8px; border-radius:4px; }
+    .modal-close:hover { color:var(--white); }
+    .modal h3 { font-size:1.2rem; font-weight:800; margin-bottom:20px; letter-spacing:-.02em; }
+    .modal-row { display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--border); font-size:.86rem; }
+    .modal-row:last-child { border-bottom:none; }
+    .modal-row .key { color:var(--gray); }
+    .modal-row .val { font-weight:500; text-align:right; max-width:60%; word-break:break-all; }
+    .photo-preview { width:100%; border-radius:10px; margin-top:16px; }
+
+    /* SECTION LABEL */
+    .section-tag { font-size:.65rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--orange); margin:20px 0 10px; }
+
+    @media(max-width:600px) {
+      .container { padding:20px 16px 60px; }
+      .stats-grid { grid-template-columns:repeat(2,1fr); }
+      .stat-card .stat-val { font-size:1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginView">
+  <div class="login-card">
+    <div class="lock">🔐</div>
+    <h1>Admin Login</h1>
+    <p class="sub">SimpleTrailer Verwaltung</p>
+    <div class="field">
+      <label>E-Mail</label>
+      <input type="email" id="loginEmail" placeholder="admin@simpletrailer.de" autocomplete="email" />
+    </div>
+    <div class="field">
+      <label>Passwort</label>
+      <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password" />
+    </div>
+    <button class="btn-login" id="loginBtn" onclick="doLogin()">Anmelden</button>
+    <p class="login-error" id="loginError"></p>
+  </div>
+</div>
+
+<!-- MAIN ADMIN -->
+<div id="mainView">
+  <nav>
+    <a href="index.html" class="logo"><span>Simple</span><span>Trailer</span></a>
+    <div class="nav-right">
+      <span class="nav-badge" id="adminEmail">–</span>
+      <button id="logoutBtn" onclick="doLogout()">Abmelden</button>
+    </div>
+  </nav>
+
+  <div class="container">
+
+    <!-- Stats -->
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card">
+        <div class="stat-label">Gesamt</div>
+        <div class="stat-val" id="statTotal">–</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-label">Bestätigt</div>
+        <div class="stat-val" id="statConfirmed">–</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-label">Aktiv</div>
+        <div class="stat-val" id="statActive">–</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Zurückgegeben</div>
+        <div class="stat-val" id="statReturned">–</div>
+      </div>
+      <div class="stat-card orange">
+        <div class="stat-label">Umsatz</div>
+        <div class="stat-val" id="statRevenue">–</div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="toolbar">
+      <h2>Buchungen</h2>
+      <div class="toolbar-right">
+        <button class="filter-btn active" onclick="setFilter('all', this)">Alle</button>
+        <button class="filter-btn" onclick="setFilter('pending', this)">Ausstehend</button>
+        <button class="filter-btn" onclick="setFilter('confirmed', this)">Bestätigt</button>
+        <button class="filter-btn" onclick="setFilter('returned', this)">Abgeschlossen</button>
+        <button id="refreshBtn" onclick="loadData()">↺ Aktualisieren</button>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <div id="tableBody">
+        <div class="table-info">
+          <div class="spin"></div>
+          <p>Lade Buchungen...</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="modal-bg" id="modalBg" onclick="closeModal(event)">
+  <div class="modal" id="modalContent">
+    <button class="modal-close" onclick="document.getElementById('modalBg').classList.remove('open')">✕</button>
+    <h3>Buchungsdetails</h3>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL  = 'https://zcjlfatuelhkghtdyrqh.supabase.co';
+  const SUPABASE_ANON = 'sb_publishable_cX1r2GLuIkxEPIpkFKdXaQ_RtP7eDOf';
+
+  let authToken    = null;
+  let allBookings  = [];
+  let activeFilter = 'all';
+
+  const fmtDate = (iso) => iso
+    ? new Date(iso).toLocaleString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })
+    : '–';
+
+  const statusLabel = { pending:'Ausstehend', confirmed:'Bestätigt', active:'Aktiv', returned:'Abgeschlossen' };
+
+  /* ── AUTH ─────────────────────────────────────────────── */
+  async function doLogin() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const pass  = document.getElementById('loginPassword').value;
+    const btn   = document.getElementById('loginBtn');
+    const err   = document.getElementById('loginError');
+    err.textContent = '';
+    btn.disabled = true;
+    btn.textContent = 'Wird angemeldet...';
+
+    try {
+      const res  = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json', apikey: SUPABASE_ANON },
+        body: JSON.stringify({ email, password: pass })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error_description || data.msg || 'Login fehlgeschlagen');
+
+      authToken = data.access_token;
+      document.getElementById('adminEmail').textContent = email;
+      document.getElementById('loginView').style.display = 'none';
+      document.getElementById('mainView').style.display  = 'block';
+      loadData();
+
+    } catch (e) {
+      err.textContent = e.message;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Anmelden';
+    }
+  }
+
+  function doLogout() {
+    authToken = null;
+    allBookings = [];
+    document.getElementById('mainView').style.display  = 'none';
+    document.getElementById('loginView').style.display = 'flex';
+    document.getElementById('loginPassword').value = '';
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && document.getElementById('loginView').style.display !== 'none') doLogin();
+  });
+
+  /* ── DATA ─────────────────────────────────────────────── */
+  async function loadData() {
+    setTableLoading();
+    try {
+      const res  = await fetch('/.netlify/functions/admin-data', {
+        headers: { Authorization: `Bearer ${authToken}` }
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Fehler beim Laden');
+
+      allBookings = data.bookings;
+      renderStats(data.stats);
+      renderTable();
+
+    } catch (e) {
+      document.getElementById('tableBody').innerHTML =
+        `<div class="table-info"><p style="color:var(--red)">Fehler: ${e.message}</p></div>`;
+    }
+  }
+
+  function renderStats(stats) {
+    document.getElementById('statTotal').textContent     = stats.total;
+    document.getElementById('statConfirmed').textContent = stats.confirmed;
+    document.getElementById('statActive').textContent    = stats.active;
+    document.getElementById('statReturned').textContent  = stats.returned;
+    document.getElementById('statRevenue').textContent   = stats.revenue.toFixed(2).replace('.',',') + ' €';
+  }
+
+  /* ── FILTER ───────────────────────────────────────────── */
+  function setFilter(val, btn) {
+    activeFilter = val;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderTable();
+  }
+
+  /* ── TABLE ────────────────────────────────────────────── */
+  function renderTable() {
+    const filtered = activeFilter === 'all'
+      ? allBookings
+      : allBookings.filter(b => b.status === activeFilter);
+
+    if (!filtered.length) {
+      document.getElementById('tableBody').innerHTML =
+        '<div class="table-info"><p>Keine Buchungen gefunden.</p></div>';
+      return;
+    }
+
+    const rows = filtered.map((b, i) => {
+      const lateFeeCell = b.late_fee_amount > 0
+        ? `<span class="${b.late_fee_payment_intent_id && !b.late_fee_payment_intent_id.startsWith('FAILED:') ? 'late-fee-ok' : 'late-fee'}">${b.late_fee_amount.toFixed(2).replace('.',',')} €</span>`
+        : '<span style="color:var(--gray)">–</span>';
+
+      return `
+        <tr style="cursor:pointer" onclick="openModal(${i})">
+          <td class="mono">#${b.id.slice(0,8).toUpperCase()}</td>
+          <td>${b.customer_name || '–'}</td>
+          <td style="color:var(--gray)">${b.customer_email || '–'}</td>
+          <td>${fmtDate(b.start_time)}</td>
+          <td>${fmtDate(b.end_time)}</td>
+          <td>${b.pricing_type === '3h' ? '3 Stunden' : b.pricing_type === 'day' ? 'Tag' : 'Wochenende'}</td>
+          <td style="font-weight:700">${b.total_amount.toFixed(2).replace('.',',')} €</td>
+          <td>${lateFeeCell}</td>
+          <td><span class="badge badge-${b.status}">${statusLabel[b.status] || b.status}</span></td>
+        </tr>`;
+    }).join('');
+
+    document.getElementById('tableBody').innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>Buchung</th>
+            <th>Name</th>
+            <th>E-Mail</th>
+            <th>Von</th>
+            <th>Bis</th>
+            <th>Tarif</th>
+            <th>Betrag</th>
+            <th>Verspätung</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  }
+
+  function setTableLoading() {
+    document.getElementById('tableBody').innerHTML =
+      '<div class="table-info"><div class="spin"></div><p>Lade Buchungen...</p></div>';
+  }
+
+  /* ── MODAL ────────────────────────────────────────────── */
+  function openModal(index) {
+    const filtered = activeFilter === 'all'
+      ? allBookings
+      : allBookings.filter(b => b.status === activeFilter);
+    const b = filtered[index];
+    if (!b) return;
+
+    const rows = (label, val) =>
+      `<div class="modal-row"><span class="key">${label}</span><span class="val">${val || '–'}</span></div>`;
+
+    const lateStatus = b.late_fee_amount > 0
+      ? (b.late_fee_payment_intent_id && !b.late_fee_payment_intent_id.startsWith('FAILED:')
+          ? `<span style="color:var(--green)">✓ Abgebucht (${b.late_fee_amount.toFixed(2).replace('.',',')} €)</span>`
+          : `<span style="color:var(--red)">✗ Fehlgeschlagen (${b.late_fee_amount.toFixed(2).replace('.',',')} €)</span>`)
+      : '<span style="color:var(--gray)">Keine</span>';
+
+    const photoHtml = b.return_photo_url
+      ? `<img src="${b.return_photo_url}" class="photo-preview" alt="Rückgabefoto" />`
+      : '';
+
+    document.getElementById('modalBody').innerHTML = `
+      <p class="section-tag">Buchungsinfo</p>
+      ${rows('Buchungsnummer', '#' + b.id.slice(0,8).toUpperCase())}
+      ${rows('Status', `<span class="badge badge-${b.status}">${statusLabel[b.status]}</span>`)}
+      ${rows('Zugangscode', b.access_code)}
+      ${rows('Tarif', b.pricing_type === '3h' ? '3 Stunden' : b.pricing_type === 'day' ? 'Tag' : 'Wochenende')}
+      ${rows('Von', fmtDate(b.start_time))}
+      ${rows('Bis', fmtDate(b.end_time))}
+      ${rows('Betrag', b.total_amount.toFixed(2).replace('.',',') + ' €')}
+      ${rows('Erstellt', fmtDate(b.created_at))}
+
+      <p class="section-tag">Kunde</p>
+      ${rows('Name', b.customer_name)}
+      ${rows('E-Mail', b.customer_email)}
+      ${rows('Telefon', b.customer_phone)}
+
+      <p class="section-tag">Zahlung</p>
+      ${rows('Stripe Payment Intent', b.stripe_payment_intent_id ? `<span class="mono">${b.stripe_payment_intent_id.slice(0,20)}…</span>` : '–')}
+      ${rows('Verspätungsaufpreis', lateStatus)}
+      ${b.actual_return_time ? rows('Tatsächliche Rückgabe', fmtDate(b.actual_return_time)) : ''}
+
+      ${photoHtml ? `<p class="section-tag">Rückgabefoto</p>${photoHtml}` : ''}
+    `;
+
+    document.getElementById('modalBg').classList.add('open');
+  }
+
+  function closeModal(e) {
+    if (e.target === document.getElementById('modalBg')) {
+      document.getElementById('modalBg').classList.remove('open');
+    }
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') document.getElementById('modalBg').classList.remove('open');
+  });
+</script>
+</body>
+</html>

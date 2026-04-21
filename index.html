@@ -843,7 +843,7 @@
       <li><a href="#preise">Preise</a></li>
       <li><a href="#faq">FAQ</a></li>
     </ul>
-    <a href="#preise" class="btn btn-orange nav-cta">Jetzt buchen</a>
+    <a href="booking.html" class="btn btn-orange nav-cta">Jetzt buchen</a>
     <button class="hamburger" id="hamburger" aria-label="Menü">
       <span></span><span></span><span></span>
     </button>
@@ -912,7 +912,7 @@
             <span class="spec-label"><strong>Kontaktlose Abholung</strong> – Code kommt per E-Mail</span>
           </div>
         </div>
-        <a href="#preise" class="btn btn-orange" style="align-self: flex-start; padding: 13px 30px; font-size: 1rem; border: 2px solid var(--orange);">Jetzt buchen →</a>
+        <a href="booking.html" class="btn btn-orange" style="align-self: flex-start; padding: 13px 30px; font-size: 1rem; border: 2px solid var(--orange);">Jetzt buchen →</a>
       </div>
     </div>
   </div>
@@ -973,7 +973,7 @@
           <li>Kostenlose Stornierung</li>
           <li>Code per E-Mail</li>
         </ul>
-        <a href="#kontakt" class="btn btn-outline">Jetzt buchen</a>
+        <a href="booking.html" class="btn btn-outline">Jetzt buchen</a>
       </div>
 
       <div class="price-card featured reveal">
@@ -990,7 +990,7 @@
           <li>Kostenlose Stornierung</li>
           <li>Code per E-Mail</li>
         </ul>
-        <a href="#kontakt" class="btn btn-orange">Jetzt buchen</a>
+        <a href="booking.html" class="btn btn-orange">Jetzt buchen</a>
       </div>
 
       <div class="price-card reveal">
@@ -1006,7 +1006,7 @@
           <li>Kostenlose Stornierung</li>
           <li>Code per E-Mail</li>
         </ul>
-        <a href="#kontakt" class="btn btn-outline">Jetzt buchen</a>
+        <a href="booking.html" class="btn btn-outline">Jetzt buchen</a>
       </div>
 
     </div>
@@ -1317,7 +1317,7 @@
     const to   = document.getElementById('dateTo').value;
     if (!from || !to) { alert('Bitte Zeitraum wählen.'); return; }
     if (from >= to)   { alert('Das Enddatum muss nach dem Startdatum liegen.'); return; }
-    document.getElementById('preise').scrollIntoView({ behavior: 'smooth' });
+    window.location.href = 'booking.html';
   }
 
   function submitForm(e) {
