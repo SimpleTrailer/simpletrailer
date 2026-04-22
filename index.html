@@ -825,10 +825,37 @@
         z-index: 999;
       }
       .nav-links.open + .nav-cta { display: flex; }
-      .steps { grid-template-columns: 1fr; }
-      .booking-fields { grid-template-columns: 1fr; }
+
+      /* Steps: vertikale Timeline auf Mobile */
+      .steps { grid-template-columns: 1fr; padding-left: 44px; }
+      .steps::before {
+        display: block !important;
+        top: 8px; left: 14px; right: auto;
+        bottom: 8px; height: auto; width: 2px;
+      }
+      .steps-line {
+        top: 8px; left: 14px;
+        height: 0; width: 2px;
+        background: linear-gradient(to bottom, var(--orange), rgba(232,93,0,.25));
+        transition: height 1.4s cubic-bezier(.4,0,.2,1);
+      }
+      #how.line-active .steps-line { width: 2px; height: calc(100% - 16px); }
+      .step { padding: 0 0 36px; position: relative; }
+      .step:last-child { padding-bottom: 0; }
+      .step-num { font-size: 2.2rem; margin-bottom: 12px; gap: 8px; }
+      .step-num::before { position: absolute; left: -30px; top: 10px; width: 14px; height: 14px; }
+
+      /* Booking-Box im Hero */
+      .booking-box { padding: 18px; }
+      .booking-fields { grid-template-columns: 1fr; gap: 10px; }
+
+      /* Formular */
       .form-row { grid-template-columns: 1fr; }
+
+      /* Allgemein */
       section { padding: 60px 5%; }
+      .section-title { font-size: 1.8rem; }
+      h1 { font-size: 2.4rem; }
     }
   </style>
 </head>
