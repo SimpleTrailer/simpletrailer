@@ -874,23 +874,26 @@
       .hero-inner { grid-template-columns: 1fr; gap: 40px; }
       #map { height: 320px; }
       .trailer-grid { grid-template-columns: 1fr; gap: 32px; }
+      .trailers-grid-wrapper {
+        overflow: hidden;
+        margin-top: 32px;
+      }
       .trailers-grid {
         display: flex;
         flex-direction: row;
-        overflow-x: scroll;
-        gap: 14px;
-        margin-top: 32px;
-        padding-bottom: 12px;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
-        scroll-snap-type: none;
+        gap: 16px;
+        width: max-content;
+        animation: trailers-scroll 12s linear infinite;
       }
-      .trailers-grid::-webkit-scrollbar { display: none; }
+      .trailers-grid.paused { animation-play-state: paused; }
+      @keyframes trailers-scroll {
+        from { transform: translateX(0); }
+        to   { transform: translateX(-50%); }
+      }
       .trailers-grid .trailer-card {
         min-width: 78vw;
         max-width: 78vw;
         flex-shrink: 0;
-        scroll-snap-align: none;
       }
       .steps { grid-template-columns: 1fr 1fr; gap: 36px; }
       .steps::before { display: none; }
@@ -1021,6 +1024,7 @@
       <h2 class="section-title">Für jeden Zweck der richtige.</h2>
     </div>
 
+    <div class="trailers-grid-wrapper">
     <div class="trailers-grid">
 
       <!-- PKW-Anhänger mit Plane -->
@@ -1086,6 +1090,7 @@
       </div>
 
     </div>
+    </div><!-- end trailers-grid-wrapper -->
   </div>
 </section>
 
@@ -1542,14 +1547,14 @@
     });
   }
 
-  // TRAILER CAROUSEL – Endlos-Loop auf Mobile, stoppt beim Swipen
+  // TRAILER CAROUSEL – Karten klonen + Touch-Pause
   (function() {
     if (!window.matchMedia('(max-width: 767px)').matches) return;
 
     const grid = document.querySelector('.trailers-grid');
     if (!grid) return;
 
-    // Karten klonen für nahtlosen Loop
+    // Karten klonen für nahtlosen Loop (wie Reviews)
     const originals = Array.from(grid.children);
     originals.forEach(card => {
       const clone = card.cloneNode(true);
@@ -1557,23 +1562,8 @@
       grid.appendChild(clone);
     });
 
-    let paused = false;
-    let rafId = null;
-    const speed = 0.6;
-
-    function tick() {
-      if (!paused) {
-        grid.scrollLeft += speed;
-        if (grid.scrollLeft >= grid.scrollWidth / 2) {
-          grid.scrollLeft = 0;
-        }
-      }
-      rafId = requestAnimationFrame(tick);
-    }
-
-    grid.addEventListener('touchstart', () => { paused = true; cancelAnimationFrame(rafId); }, { passive: true });
-
-    rafId = requestAnimationFrame(tick);
+    // Stopp beim Antippen
+    grid.addEventListener('touchstart', () => { grid.classList.add('paused'); }, { passive: true });
   })();
 </script>
 </body>
