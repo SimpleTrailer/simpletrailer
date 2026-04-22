@@ -434,17 +434,6 @@
         return;
       }
       trailerId = data[0].id;
-      // Echte Preise aus Supabase laden
-      trailerPrices = {
-        '3h':     data[0].price_3h      || 8,
-        day:      data[0].price_day     || 25,
-        weekend:  data[0].price_weekend || 45
-      };
-      // Preise in den Karten aktualisieren
-      document.querySelector('[data-pricing="3h"] .pricing-price').textContent      = trailerPrices['3h'] + '€';
-      document.querySelector('[data-pricing="day"] .pricing-price').textContent     = trailerPrices['day'] + '€';
-      document.querySelector('[data-pricing="weekend"] .pricing-price').textContent = trailerPrices['weekend'] + '€';
-      selectedPrice = trailerPrices[selectedPricing];
     } catch(e) {
       console.error('loadTrailer:', e);
     }
