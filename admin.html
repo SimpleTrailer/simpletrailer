@@ -296,6 +296,11 @@
       </div>
 
       <div style="background:var(--s1); border:1.5px solid var(--border); border-radius:14px; padding:24px; margin-bottom:20px">
+        <p class="section-tag" style="margin-top:0">Schutzpakete</p>
+        <div id="insuranceStats">–</div>
+      </div>
+
+      <div style="background:var(--s1); border:1.5px solid var(--border); border-radius:14px; padding:24px; margin-bottom:20px">
         <p class="section-tag" style="margin-top:0">Letzten 5 Buchungen</p>
         <div id="recentBookingsList">–</div>
       </div>
@@ -452,6 +457,34 @@
     document.getElementById('sActive').textContent      = allBookings.filter(b => b.status === 'active').length;
 
     const recent = allBookings.slice(0, 5);
+    const insRevenue = paidBookings.reduce((sum, b) => sum + (b.insurance_amount || 0), 0);
+    const insBasis   = paidBookings.filter(b => b.insurance_type === 'basis').length;
+    const insPremium = paidBookings.filter(b => b.insurance_type === 'premium').length;
+    const insNone    = paidBookings.filter(b => !b.insurance_type || b.insurance_type === 'none').length;
+    const insTotal   = paidBookings.length || 1;
+    document.getElementById('insuranceStats').innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px">
+        <div style="background:var(--s2);border-radius:10px;padding:16px">
+          <div style="font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gray);margin-bottom:4px">Schutzpaket-Umsatz</div>
+          <div style="font-size:1.6rem;font-weight:800;color:var(--orange)">${fmtEur(insRevenue)}</div>
+        </div>
+        <div style="background:var(--s2);border-radius:10px;padding:16px">
+          <div style="font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gray);margin-bottom:4px">Basis Schutz</div>
+          <div style="font-size:1.6rem;font-weight:800;color:var(--blue)">${insBasis}</div>
+          <div style="font-size:.72rem;color:var(--gray)">${Math.round(insBasis/insTotal*100)}% aller Buchungen</div>
+        </div>
+        <div style="background:var(--s2);border-radius:10px;padding:16px">
+          <div style="font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gray);margin-bottom:4px">Premium Schutz</div>
+          <div style="font-size:1.6rem;font-weight:800;color:var(--green)">${insPremium}</div>
+          <div style="font-size:.72rem;color:var(--gray)">${Math.round(insPremium/insTotal*100)}% aller Buchungen</div>
+        </div>
+        <div style="background:var(--s2);border-radius:10px;padding:16px">
+          <div style="font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gray);margin-bottom:4px">Kein Schutz</div>
+          <div style="font-size:1.6rem;font-weight:800;color:var(--gray)">${insNone}</div>
+          <div style="font-size:.72rem;color:var(--gray)">${Math.round(insNone/insTotal*100)}% aller Buchungen</div>
+        </div>
+      </div>`;
+
     document.getElementById('recentBookingsList').innerHTML = recent.map(b => `
       <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:.84rem;gap:12px;flex-wrap:wrap">
         <span style="font-family:monospace;color:var(--gray);font-size:.75rem">#${b.id.slice(0,8).toUpperCase()}</span>
@@ -510,6 +543,7 @@
           <td>${b.pricing_type === '3h' ? '3 Std.' : b.pricing_type === 'day' ? 'Tag' : 'Wochenende'}</td>
           <td style="font-weight:700">${fmtEur(b.total_amount)}</td>
           <td>${lateFeeCell}</td>
+          <td>${b.insurance_type && b.insurance_type !== 'none' ? `<span class="badge ${b.insurance_type === 'premium' ? 'badge-ok' : 'badge-confirmed'}">${b.insurance_type === 'basis' ? 'Basis' : 'Premium'}</span>` : '<span style="color:var(--gray);font-size:.75rem">–</span>'}</td>
           <td><span class="badge badge-${b.status}">${statusLabel[b.status] || b.status}</span></td>
         </tr>`;
     }).join('');
@@ -519,7 +553,7 @@
         <thead>
           <tr>
             <th>Buchung</th><th>Name</th><th>E-Mail</th><th>Von</th><th>Bis</th>
-            <th>Tarif</th><th>Betrag</th><th>Verspätung</th><th>Status</th>
+            <th>Tarif</th><th>Betrag</th><th>Verspätung</th><th>Schutz</th><th>Status</th>
           </tr>
         </thead>
         <tbody>${rows}</tbody>
@@ -620,6 +654,10 @@
       ${b.actual_return_time ? row('Tatsächliche Rückgabe', fmtDate(b.actual_return_time)) : ''}
       ${row('Betrag', fmtEur(b.total_amount))}
       ${row('Erstellt', fmtDate(b.created_at))}
+
+      <p class="section-tag">Schutzpaket</p>
+      ${row('Paket', b.insurance_type === 'none' || !b.insurance_type ? '<span style="color:var(--gray)">Kein Schutz</span>' : b.insurance_type === 'basis' ? '<span style="color:var(--blue)">Basis Schutz · 500 € SB</span>' : '<span style="color:var(--green)">Premium Schutz · 50 € SB</span>')}
+      ${b.insurance_amount > 0 ? row('Schutzpaket-Preis', fmtEur(b.insurance_amount)) : ''}
 
       <p class="section-tag">Kunde</p>
       ${row('Name', b.customer_name)}

@@ -115,6 +115,22 @@
     .summary-total { display: flex; justify-content: space-between; padding: 14px 0 0; font-weight: 700; font-size: 1rem; }
     .summary-total .amount { color: var(--orange); font-size: 1.1rem; }
 
+    /* INSURANCE */
+    .insurance-grid { display: flex; flex-direction: column; gap: 10px; }
+    .insurance-option { border: 1.5px solid var(--border); border-radius: 12px; padding: 14px 16px; cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: 14px; background: var(--s2); }
+    .insurance-option:hover { border-color: #555; }
+    .insurance-option.selected { border-color: var(--orange); background: #1a0d00; }
+    .insurance-option input[type=radio] { display: none; }
+    .ins-radio { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all .2s; }
+    .insurance-option.selected .ins-radio { border-color: var(--orange); background: var(--orange); }
+    .insurance-option.selected .ins-radio::after { content: ''; width: 6px; height: 6px; border-radius: 50%; background: #fff; }
+    .ins-body { flex: 1; }
+    .ins-name { font-weight: 700; font-size: .9rem; margin-bottom: 2px; }
+    .ins-desc { font-size: .75rem; color: var(--gray); }
+    .ins-price { font-weight: 800; font-size: 1rem; color: var(--orange); flex-shrink: 0; text-align: right; }
+    .ins-price.free { color: var(--gray); }
+    .ins-badge { display: inline-block; font-size: .62rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; background: #1a3a1a; color: #22c55e; border-radius: 4px; padding: 2px 6px; margin-left: 6px; vertical-align: middle; }
+
     /* ERROR */
     .error-msg { color: #f87171; font-size: .82rem; margin-top: 6px; display: none; }
 
@@ -287,6 +303,43 @@
       </label>
     </div>
     <span class="error-msg" id="errLicense" style="margin-top:-8px;margin-bottom:12px;display:none;">Bitte Führerschein bestätigen</span>
+
+    <!-- INSURANCE -->
+    <div class="card" style="margin-top:4px;">
+      <p class="field-label" style="margin-bottom:4px;">Schutzpaket wählen</p>
+      <p style="color:var(--gray);font-size:.78rem;margin-bottom:14px;">Begrenze deine Haftung bei Schäden am Anhänger.</p>
+      <div class="insurance-grid">
+
+        <div class="insurance-option selected" id="ins-none" onclick="selectInsurance('none')">
+          <div class="ins-radio"></div>
+          <div class="ins-body">
+            <div class="ins-name">Kein Schutz</div>
+            <div class="ins-desc">Volle Haftung bis 1.500 € bei Schäden</div>
+          </div>
+          <div class="ins-price free">0,00 €</div>
+        </div>
+
+        <div class="insurance-option" id="ins-basis" onclick="selectInsurance('basis')">
+          <div class="ins-radio"></div>
+          <div class="ins-body">
+            <div class="ins-name">Basis Schutz <span class="ins-badge">Beliebt</span></div>
+            <div class="ins-desc">Selbstbeteiligung auf 500 € begrenzt · +15% vom Mietpreis</div>
+          </div>
+          <div class="ins-price" id="ins-basis-price">–</div>
+        </div>
+
+        <div class="insurance-option" id="ins-premium" onclick="selectInsurance('premium')">
+          <div class="ins-radio"></div>
+          <div class="ins-body">
+            <div class="ins-name">Premium Schutz</div>
+            <div class="ins-desc">Selbstbeteiligung auf 50 € begrenzt · +30% vom Mietpreis</div>
+          </div>
+          <div class="ins-price" id="ins-premium-price">–</div>
+        </div>
+
+      </div>
+    </div>
+
     <button class="btn btn-orange" onclick="goStep3()">Weiter zur Zahlung →</button>
     <div style="text-align:center;margin-top:12px;">
       <a href="#" onclick="goToStep(1)" style="color:var(--gray);font-size:.85rem;text-decoration:none;">← Zurück</a>
@@ -299,6 +352,8 @@
       <p class="field-label" style="margin-bottom:16px;">Zusammenfassung</p>
       <div class="summary-row"><span class="label">Anhänger</span><span>PKW-Anhänger mit Plane</span></div>
       <div class="summary-row"><span class="label">Tarif</span><span id="sumTarif">–</span></div>
+      <div class="summary-row"><span class="label">Mietpreis</span><span id="sumBase">–</span></div>
+      <div class="summary-row" id="sumInsRow" style="display:none"><span class="label" id="sumInsLabel">Schutzpaket</span><span id="sumIns">–</span></div>
       <div class="summary-row"><span class="label">Von</span><span id="sumVon">–</span></div>
       <div class="summary-row"><span class="label">Bis</span><span id="sumBis">–</span></div>
       <div class="summary-total"><span>Gesamt</span><span class="amount" id="sumTotal">–</span></div>
@@ -325,10 +380,38 @@
 
   const stripeClient = Stripe(STRIPE_PK);
 
-  let selectedPricing = 'day';
-  let selectedPrice   = 25;
-  let trailerId       = null;
-  let stripeElements  = null;
+  let selectedPricing   = 'day';
+  let selectedPrice     = 25;
+  let selectedInsurance = 'none';
+  let insuranceRate     = 0;
+  let trailerId         = null;
+  let stripeElements    = null;
+
+  function getInsuranceAmount() {
+    return Math.round(selectedPrice * insuranceRate * 100) / 100;
+  }
+  function getTotalPrice() {
+    return selectedPrice + getInsuranceAmount();
+  }
+
+  function selectInsurance(type) {
+    selectedInsurance = type;
+    insuranceRate = type === 'basis' ? 0.15 : type === 'premium' ? 0.30 : 0;
+    ['none','basis','premium'].forEach(t => {
+      document.getElementById(`ins-${t}`).classList.toggle('selected', t === type);
+    });
+    updatePriceDisplay();
+  }
+
+  function updatePriceDisplay() {
+    const total = getTotalPrice();
+    document.getElementById('priceDisplay').textContent = total.toFixed(2).replace('.', ',') + ' €';
+    // Versicherungspreise in den Karten aktualisieren
+    const basisAmt   = Math.round(selectedPrice * 0.15 * 100) / 100;
+    const premiumAmt = Math.round(selectedPrice * 0.30 * 100) / 100;
+    document.getElementById('ins-basis-price').textContent   = '+' + basisAmt.toFixed(2).replace('.', ',') + ' €';
+    document.getElementById('ins-premium-price').textContent = '+' + premiumAmt.toFixed(2).replace('.', ',') + ' €';
+  }
 
   // Trailer aus Supabase laden
   async function loadTrailer() {
@@ -355,7 +438,7 @@
     selectedPrice   = price;
     document.querySelectorAll('.pricing-option').forEach(el => el.classList.remove('selected'));
     event.currentTarget.classList.add('selected');
-    document.getElementById('priceDisplay').textContent = price.toFixed(2).replace('.', ',') + ' €';
+    updatePriceDisplay();
     updateEndTime();
   }
 
@@ -416,6 +499,7 @@
   window.addEventListener('DOMContentLoaded', async () => {
     await loadTrailer();
     await prefillUserData();
+    updatePriceDisplay();
     const now = new Date();
     now.setMinutes(0, 0, 0);
     now.setHours(now.getHours() + 1);
@@ -477,11 +561,21 @@
   }
 
   function updateSummary() {
-    const labels = { '3h': '3 Stunden (8 €)', day: 'Ganzer Tag (25 €)', weekend: 'Wochenende (45 €)' };
-    document.getElementById('sumTarif').textContent = labels[selectedPricing];
+    const tarifLabels = { '3h': '3 Stunden', day: 'Ganzer Tag', weekend: 'Wochenende' };
+    const insLabels   = { basis: 'Basis Schutz (+15%)', premium: 'Premium Schutz (+30%)' };
+    const insAmt = getInsuranceAmount();
+    document.getElementById('sumTarif').textContent = tarifLabels[selectedPricing];
+    document.getElementById('sumBase').textContent  = selectedPrice.toFixed(2).replace('.', ',') + ' €';
     document.getElementById('sumVon').textContent   = fmtDate(document.getElementById('startTime').value);
     document.getElementById('sumBis').textContent   = fmtDate(document.getElementById('endTime').value);
-    document.getElementById('sumTotal').textContent = selectedPrice.toFixed(2).replace('.', ',') + ' €';
+    document.getElementById('sumTotal').textContent = getTotalPrice().toFixed(2).replace('.', ',') + ' €';
+    if (selectedInsurance !== 'none' && insAmt > 0) {
+      document.getElementById('sumInsRow').style.display = 'flex';
+      document.getElementById('sumInsLabel').textContent = insLabels[selectedInsurance];
+      document.getElementById('sumIns').textContent = '+' + insAmt.toFixed(2).replace('.', ',') + ' €';
+    } else {
+      document.getElementById('sumInsRow').style.display = 'none';
+    }
   }
 
   async function initStripe() {
@@ -494,14 +588,16 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          trailer_id:     trailerId,
-          pricing_type:   selectedPricing,
-          start_time:     new Date(document.getElementById('startTime').value).toISOString(),
-          end_time:       new Date(document.getElementById('endTime').value).toISOString(),
-          customer_name:  `${document.getElementById('custFirstName').value.trim()} ${document.getElementById('custLastName').value.trim()}`,
-          customer_email: document.getElementById('custEmail').value.trim(),
-          customer_phone: document.getElementById('custPhone').value.trim(),
-          customer_address: document.getElementById('custAddress').value.trim()
+          trailer_id:       trailerId,
+          pricing_type:     selectedPricing,
+          start_time:       new Date(document.getElementById('startTime').value).toISOString(),
+          end_time:         new Date(document.getElementById('endTime').value).toISOString(),
+          customer_name:    `${document.getElementById('custFirstName').value.trim()} ${document.getElementById('custLastName').value.trim()}`,
+          customer_email:   document.getElementById('custEmail').value.trim(),
+          customer_phone:   document.getElementById('custPhone').value.trim(),
+          customer_address: document.getElementById('custAddress').value.trim(),
+          insurance_type:   selectedInsurance,
+          insurance_amount: getInsuranceAmount()
         })
       });
 

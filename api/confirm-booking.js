@@ -41,12 +41,16 @@ module.exports = async (req, res) => {
     const return_token = crypto.randomBytes(32).toString('hex');
     const access_code = Math.floor(100000 + Math.random() * 900000).toString();
 
+    const insType   = meta.insurance_type   || 'none';
+    const insAmount = parseFloat(meta.insurance_amount || '0') || 0;
+
     const { data: booking, error: bookingError } = await supabase
       .from('bookings').insert({
         trailer_id: meta.trailer_id, customer_name: meta.customer_name,
         customer_email: meta.customer_email, customer_phone: meta.customer_phone || null,
         start_time: meta.start_time, end_time: meta.end_time,
         pricing_type: meta.pricing_type, total_amount: amount,
+        insurance_type: insType, insurance_amount: insAmount,
         stripe_payment_intent_id: payment_intent_id,
         stripe_customer_id: pi.customer, stripe_payment_method_id: pi.payment_method,
         status: 'confirmed', access_code, return_token
@@ -77,6 +81,7 @@ module.exports = async (req, res) => {
             </div>
             <table style="width:100%;border-collapse:collapse;margin-bottom:24px;">
               <tr><td style="color:#888;padding:9px 0;border-bottom:1px solid #2a2a2a;font-size:.88rem;">Tarif</td><td style="text-align:right;padding:9px 0;border-bottom:1px solid #2a2a2a;font-size:.88rem;">${PRICING_LABEL[meta.pricing_type]}</td></tr>
+              <tr><td style="color:#888;padding:9px 0;border-bottom:1px solid #2a2a2a;font-size:.88rem;">Schutzpaket</td><td style="text-align:right;padding:9px 0;border-bottom:1px solid #2a2a2a;font-size:.88rem;">${insType === 'none' ? 'Kein Schutz' : insType === 'basis' ? 'Basis Schutz (500 € SB)' : 'Premium Schutz (50 € SB)'}</td></tr>
               <tr><td style="color:#888;padding:9px 0;border-bottom:1px solid #2a2a2a;font-size:.88rem;">Von</td><td style="text-align:right;padding:9px 0;border-bottom:1px solid #2a2a2a;font-size:.88rem;">${fmt(meta.start_time)}</td></tr>
               <tr><td style="color:#888;padding:9px 0;border-bottom:1px solid #2a2a2a;font-size:.88rem;">Bis</td><td style="text-align:right;padding:9px 0;border-bottom:1px solid #2a2a2a;font-size:.88rem;">${fmt(meta.end_time)}</td></tr>
               <tr><td style="color:#888;padding:9px 0;font-size:.88rem;">Bezahlt</td><td style="text-align:right;padding:9px 0;color:#E85D00;font-weight:700;font-size:1rem;">${amount.toFixed(2)} €</td></tr>

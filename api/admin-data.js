@@ -27,7 +27,8 @@ module.exports = async (req, res) => {
         status, access_code, actual_return_time,
         late_fee_amount, late_fee_payment_intent_id,
         stripe_payment_intent_id, created_at,
-        return_photo_url, trailers(name)
+        return_photo_url, insurance_type, insurance_amount,
+        trailers(name)
       `)
       .order('created_at', { ascending: false });
 
@@ -50,6 +51,10 @@ module.exports = async (req, res) => {
       avg_value: paidBookings.length
         ? paidBookings.reduce((sum, b) => sum + (b.total_amount || 0), 0) / paidBookings.length
         : 0,
+      insurance_revenue: paidBookings.reduce((sum, b) => sum + (b.insurance_amount || 0), 0),
+      insurance_basis_count:   paidBookings.filter(b => b.insurance_type === 'basis').length,
+      insurance_premium_count: paidBookings.filter(b => b.insurance_type === 'premium').length,
+      insurance_none_count:    paidBookings.filter(b => !b.insurance_type || b.insurance_type === 'none').length,
     };
 
     return res.status(200).json({ bookings, stats });
