@@ -369,9 +369,27 @@
     });
   }
 
+  // Eingeloggte User-Daten vorausfüllen
+  async function prefillUserData() {
+    const saved = localStorage.getItem('st_session');
+    if (!saved) return;
+    try {
+      const { access_token } = JSON.parse(saved);
+      const res = await fetch('https://zcjlfatuelhkghtdyrqh.supabase.co/auth/v1/user', {
+        headers: { apikey: 'sb_publishable_cX1r2GLuIkxEPIpkFKdXaQ_RtP7eDOf', Authorization: `Bearer ${access_token}` }
+      });
+      if (!res.ok) return;
+      const user = await res.json();
+      const name = user.user_metadata?.full_name || '';
+      if (name) document.getElementById('custName').value  = name;
+      if (user.email) document.getElementById('custEmail').value = user.email;
+    } catch(e) {}
+  }
+
   // Heute als Standardwert setzen
   window.addEventListener('DOMContentLoaded', async () => {
     await loadTrailer();
+    await prefillUserData();
     const now = new Date();
     now.setMinutes(0, 0, 0);
     now.setHours(now.getHours() + 1);

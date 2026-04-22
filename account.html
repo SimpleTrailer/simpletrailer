@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mein Konto – SimpleTrailer</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0D0D0D; --s1: #161616; --s2: #1E1E1E;
+      --orange: #E85D00; --orange-h: #FF6A00;
+      --white: #FFFFFF; --gray: #888888; --border: #383838;
+      --font: 'Inter', system-ui, sans-serif;
+    }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--white); font-family: var(--font); min-height: 100vh; -webkit-font-smoothing: antialiased; }
+
+    nav { background: rgba(13,13,13,.95); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); padding: 0 5%; height: 64px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+    .logo { font-size: 1.2rem; font-weight: 800; text-decoration: none; letter-spacing: -.03em; }
+    .logo span:first-child { color: var(--white); }
+    .logo span:last-child  { color: var(--orange); }
+    .back-link { color: var(--gray); text-decoration: none; font-size: .88rem; display: flex; align-items: center; gap: 6px; transition: color .2s; }
+    .back-link:hover { color: var(--white); }
+
+    .page { max-width: 600px; margin: 0 auto; padding: 48px 20px 80px; }
+
+    .card { background: var(--s1); border: 1.5px solid var(--border); border-radius: 16px; padding: 28px; margin-bottom: 20px; }
+
+    .page-title { font-size: 1.6rem; font-weight: 800; letter-spacing: -.04em; margin-bottom: 6px; }
+    .page-sub   { color: var(--gray); font-size: .9rem; margin-bottom: 32px; }
+
+    /* TABS */
+    .tabs { display: flex; gap: 4px; background: var(--s1); border: 1.5px solid var(--border); border-radius: 10px; padding: 4px; margin-bottom: 24px; }
+    .tab { flex: 1; text-align: center; padding: 9px; border-radius: 7px; font-size: .88rem; font-weight: 600; cursor: pointer; border: none; background: transparent; color: var(--gray); transition: all .2s; font-family: var(--font); }
+    .tab.active { background: var(--orange); color: #fff; }
+
+    /* FORM */
+    .field-group { margin-bottom: 16px; }
+    .field-label { font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--gray); margin-bottom: 6px; display: block; }
+    .field-input { width: 100%; background: #0D0D0D; border: 1.5px solid var(--border); border-radius: 8px; color: var(--white); padding: 11px 14px; font-size: .9rem; font-family: var(--font); outline: none; transition: border-color .2s; -webkit-appearance: none; }
+    .field-input:focus { border-color: var(--orange); }
+
+    .btn { display: inline-flex; align-items: center; justify-content: center; padding: 13px 28px; border-radius: 8px; font-weight: 600; font-size: .95rem; cursor: pointer; border: none; text-decoration: none; transition: background .2s, transform .15s; font-family: var(--font); width: 100%; }
+    .btn:active { transform: scale(.97); }
+    .btn-orange { background: var(--orange); color: #fff; }
+    .btn-orange:hover { background: var(--orange-h); }
+    .btn-outline { background: transparent; color: var(--white); border: 1.5px solid var(--border); }
+    .btn-outline:hover { border-color: #666; }
+
+    .error-msg { color: #f87171; font-size: .82rem; margin-top: 8px; display: none; text-align: center; }
+    .success-msg { color: #4ade80; font-size: .82rem; margin-top: 8px; display: none; text-align: center; }
+
+    .divider { display: flex; align-items: center; gap: 12px; margin: 20px 0; color: var(--gray); font-size: .8rem; }
+    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    /* ACCOUNT VIEW */
+    .account-header { display: flex; align-items: center; gap: 16px; margin-bottom: 28px; }
+    .account-avatar { width: 52px; height: 52px; border-radius: 50%; background: var(--orange); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 800; flex-shrink: 0; }
+    .account-name { font-size: 1.1rem; font-weight: 700; letter-spacing: -.02em; }
+    .account-email { color: var(--gray); font-size: .85rem; margin-top: 2px; }
+
+    /* BOOKINGS */
+    .bookings-title { font-size: .7rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--orange); margin-bottom: 16px; }
+    .booking-item { background: var(--s2); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+    .booking-item:last-child { margin-bottom: 0; }
+    .booking-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+    .booking-ref { font-weight: 700; font-size: .9rem; letter-spacing: -.01em; }
+    .booking-status { font-size: .72rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; padding: 3px 10px; border-radius: 20px; }
+    .status-confirmed { background: rgba(232,93,0,.15); color: var(--orange); }
+    .status-returned  { background: rgba(34,197,94,.12); color: #4ade80; }
+    .status-active    { background: rgba(59,130,246,.15); color: #60a5fa; }
+    .booking-detail { font-size: .82rem; color: var(--gray); display: flex; flex-direction: column; gap: 4px; }
+    .booking-detail span { display: flex; gap: 6px; }
+    .booking-detail strong { color: var(--white); }
+    .booking-amount { font-size: 1rem; font-weight: 800; color: var(--orange); margin-top: 10px; }
+
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--gray); }
+    .empty-state .icon { font-size: 2.5rem; margin-bottom: 12px; }
+    .empty-state p { margin-bottom: 20px; }
+
+    .logout-btn { background: transparent; border: 1.5px solid var(--border); color: var(--gray); border-radius: 8px; padding: 10px; font-size: .85rem; font-family: var(--font); cursor: pointer; width: 100%; transition: all .2s; margin-top: 8px; }
+    .logout-btn:hover { border-color: #f87171; color: #f87171; }
+
+    .loading { text-align: center; padding: 40px; color: var(--gray); }
+
+    @media (max-width: 640px) {
+      .page { padding: 24px 16px 60px; }
+      .card { padding: 20px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="logo"><span>Simple</span><span>Trailer</span></a>
+  <a href="index.html" class="back-link">← Startseite</a>
+</nav>
+
+<div class="page">
+
+  <!-- LOADING -->
+  <div id="viewLoading" class="loading">Wird geladen...</div>
+
+  <!-- AUTH VIEW (Login / Registrierung) -->
+  <div id="viewAuth" style="display:none;">
+    <h1 class="page-title">Mein Konto</h1>
+    <p class="page-sub">Melde dich an um deine Buchungen zu sehen.</p>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('login')">Anmelden</button>
+      <button class="tab" onclick="switchTab('register')">Registrieren</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="tabLogin">
+      <div class="card">
+        <div class="field-group">
+          <label class="field-label">E-Mail</label>
+          <input type="email" class="field-input" id="loginEmail" placeholder="deine@email.de" />
+        </div>
+        <div class="field-group">
+          <label class="field-label">Passwort</label>
+          <input type="password" class="field-input" id="loginPassword" placeholder="••••••••" />
+        </div>
+        <div class="error-msg" id="loginError"></div>
+        <div style="margin-top:20px;">
+          <button class="btn btn-orange" onclick="login()">Anmelden</button>
+        </div>
+        <div style="text-align:center;margin-top:14px;">
+          <a href="#" onclick="showReset()" style="color:var(--gray);font-size:.82rem;text-decoration:none;">Passwort vergessen?</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="tabRegister" style="display:none;">
+      <div class="card">
+        <div class="field-group">
+          <label class="field-label">Name</label>
+          <input type="text" class="field-input" id="regName" placeholder="Max Mustermann" />
+        </div>
+        <div class="field-group">
+          <label class="field-label">E-Mail</label>
+          <input type="email" class="field-input" id="regEmail" placeholder="deine@email.de" />
+        </div>
+        <div class="field-group">
+          <label class="field-label">Passwort</label>
+          <input type="password" class="field-input" id="regPassword" placeholder="Mindestens 6 Zeichen" />
+        </div>
+        <div class="error-msg" id="regError"></div>
+        <div class="success-msg" id="regSuccess"></div>
+        <div style="margin-top:20px;">
+          <button class="btn btn-orange" onclick="register()">Konto erstellen</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESET -->
+    <div id="tabReset" style="display:none;">
+      <div class="card">
+        <p style="color:var(--gray);font-size:.88rem;margin-bottom:20px;">Gib deine E-Mail ein — wir schicken dir einen Link zum Zurücksetzen.</p>
+        <div class="field-group">
+          <label class="field-label">E-Mail</label>
+          <input type="email" class="field-input" id="resetEmail" placeholder="deine@email.de" />
+        </div>
+        <div class="error-msg" id="resetError"></div>
+        <div class="success-msg" id="resetSuccess"></div>
+        <div style="margin-top:20px;">
+          <button class="btn btn-orange" onclick="sendReset()">Link senden</button>
+        </div>
+        <div style="text-align:center;margin-top:14px;">
+          <a href="#" onclick="switchTab('login')" style="color:var(--gray);font-size:.82rem;text-decoration:none;">← Zurück zum Login</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ACCOUNT VIEW (eingeloggt) -->
+  <div id="viewAccount" style="display:none;">
+    <div class="card">
+      <div class="account-header">
+        <div class="account-avatar" id="avatarInitial">?</div>
+        <div>
+          <div class="account-name" id="accountName">–</div>
+          <div class="account-email" id="accountEmail">–</div>
+        </div>
+      </div>
+      <a href="booking.html" class="btn btn-orange" style="margin-bottom:12px;">+ Neuen Anhänger buchen</a>
+      <button class="logout-btn" onclick="logout()">Abmelden</button>
+    </div>
+
+    <div class="card">
+      <div class="bookings-title">Meine Buchungen</div>
+      <div id="bookingsList"><div class="loading">Buchungen werden geladen...</div></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const SUPABASE_URL  = 'https://zcjlfatuelhkghtdyrqh.supabase.co';
+  const SUPABASE_ANON = 'sb_publishable_cX1r2GLuIkxEPIpkFKdXaQ_RtP7eDOf';
+
+  let currentUser = null;
+  let authToken   = null;
+
+  const statusLabel = { confirmed: 'Bestätigt', returned: 'Zurückgegeben', active: 'Aktiv', pending: 'Ausstehend' };
+  const statusClass = { confirmed: 'status-confirmed', returned: 'status-returned', active: 'status-active', pending: 'status-confirmed' };
+  const pricingLabel = { '3h': '3 Stunden', day: 'Ganzer Tag', weekend: 'Wochenende' };
+
+  function fmt(d) {
+    return new Date(d).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  }
+
+  async function supabaseFetch(path, options = {}) {
+    const headers = { apikey: SUPABASE_ANON, 'Content-Type': 'application/json', ...(options.headers || {}) };
+    if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+    const res = await fetch(`${SUPABASE_URL}${path}`, { ...options, headers });
+    return res;
+  }
+
+  async function init() {
+    document.getElementById('viewLoading').style.display = 'block';
+
+    // Session aus localStorage wiederherstellen
+    const saved = localStorage.getItem('st_session');
+    if (saved) {
+      try {
+        const session = JSON.parse(saved);
+        // Token validieren
+        const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+          headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${session.access_token}` }
+        });
+        if (res.ok) {
+          const user = await res.json();
+          authToken   = session.access_token;
+          currentUser = user;
+          showAccount();
+          return;
+        }
+      } catch(e) {}
+      localStorage.removeItem('st_session');
+    }
+
+    showAuth();
+  }
+
+  function showAuth() {
+    document.getElementById('viewLoading').style.display  = 'none';
+    document.getElementById('viewAuth').style.display     = 'block';
+    document.getElementById('viewAccount').style.display  = 'none';
+  }
+
+  function showAccount() {
+    document.getElementById('viewLoading').style.display  = 'none';
+    document.getElementById('viewAuth').style.display     = 'none';
+    document.getElementById('viewAccount').style.display  = 'block';
+
+    const name = currentUser.user_metadata?.full_name || currentUser.email.split('@')[0];
+    document.getElementById('accountName').textContent  = name;
+    document.getElementById('accountEmail').textContent = currentUser.email;
+    document.getElementById('avatarInitial').textContent = name.charAt(0).toUpperCase();
+
+    loadBookings();
+  }
+
+  async function loadBookings() {
+    const list = document.getElementById('bookingsList');
+    try {
+      const res = await supabaseFetch(`/rest/v1/bookings?select=*,trailers(name)&customer_email=eq.${encodeURIComponent(currentUser.email)}&order=created_at.desc`);
+      const bookings = await res.json();
+
+      if (!bookings.length) {
+        list.innerHTML = `<div class="empty-state"><div class="icon">📋</div><p>Noch keine Buchungen.</p><a href="booking.html" class="btn btn-orange" style="width:auto;padding:11px 24px;">Jetzt buchen</a></div>`;
+        return;
+      }
+
+      list.innerHTML = bookings.map(b => `
+        <div class="booking-item">
+          <div class="booking-top">
+            <div class="booking-ref">#${b.id.slice(0,8).toUpperCase()}</div>
+            <span class="booking-status ${statusClass[b.status] || 'status-confirmed'}">${statusLabel[b.status] || b.status}</span>
+          </div>
+          <div class="booking-detail">
+            <span>🚛 <strong>${b.trailers?.name || 'Anhänger'}</strong></span>
+            <span>📅 <strong>${pricingLabel[b.pricing_type] || b.pricing_type}</strong></span>
+            <span>▶ Von: <strong>${fmt(b.start_time)}</strong></span>
+            <span>⏹ Bis: <strong>${fmt(b.end_time)}</strong></span>
+            ${b.access_code ? `<span>🔑 Code: <strong style="letter-spacing:.1em;">${b.access_code}</strong></span>` : ''}
+          </div>
+          <div class="booking-amount">${(b.total_amount + (b.late_fee_amount || 0)).toFixed(2)} €</div>
+        </div>
+      `).join('');
+    } catch(e) {
+      list.innerHTML = '<div class="empty-state"><p>Buchungen konnten nicht geladen werden.</p></div>';
+    }
+  }
+
+  function switchTab(tab) {
+    document.getElementById('tabLogin').style.display   = tab === 'login'    ? 'block' : 'none';
+    document.getElementById('tabRegister').style.display = tab === 'register' ? 'block' : 'none';
+    document.getElementById('tabReset').style.display   = tab === 'reset'    ? 'block' : 'none';
+    document.querySelectorAll('.tab').forEach((t, i) => {
+      t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'register'));
+    });
+  }
+
+  function showReset() {
+    document.getElementById('tabLogin').style.display    = 'none';
+    document.getElementById('tabRegister').style.display = 'none';
+    document.getElementById('tabReset').style.display    = 'block';
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  }
+
+  async function login() {
+    const email    = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const errEl    = document.getElementById('loginError');
+    errEl.style.display = 'none';
+
+    if (!email || !password) { errEl.textContent = 'Bitte alle Felder ausfüllen.'; errEl.style.display = 'block'; return; }
+
+    try {
+      const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+        method: 'POST',
+        headers: { apikey: SUPABASE_ANON, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error_description || data.msg || 'Anmeldung fehlgeschlagen');
+
+      authToken   = data.access_token;
+      currentUser = data.user;
+      localStorage.setItem('st_session', JSON.stringify({ access_token: data.access_token }));
+      showAccount();
+    } catch(e) {
+      errEl.textContent = e.message === 'Invalid login credentials' ? 'E-Mail oder Passwort falsch.' : e.message;
+      errEl.style.display = 'block';
+    }
+  }
+
+  async function register() {
+    const name     = document.getElementById('regName').value.trim();
+    const email    = document.getElementById('regEmail').value.trim();
+    const password = document.getElementById('regPassword').value;
+    const errEl    = document.getElementById('regError');
+    const okEl     = document.getElementById('regSuccess');
+    errEl.style.display = 'none'; okEl.style.display = 'none';
+
+    if (!name || !email || !password) { errEl.textContent = 'Bitte alle Felder ausfüllen.'; errEl.style.display = 'block'; return; }
+    if (password.length < 6) { errEl.textContent = 'Passwort muss mindestens 6 Zeichen haben.'; errEl.style.display = 'block'; return; }
+
+    try {
+      const res = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
+        method: 'POST',
+        headers: { apikey: SUPABASE_ANON, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, data: { full_name: name } })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error_description || data.msg || 'Registrierung fehlgeschlagen');
+
+      if (data.access_token) {
+        authToken   = data.access_token;
+        currentUser = data.user;
+        localStorage.setItem('st_session', JSON.stringify({ access_token: data.access_token }));
+        showAccount();
+      } else {
+        okEl.textContent = 'Konto erstellt! Bitte bestätige deine E-Mail und melde dich an.';
+        okEl.style.display = 'block';
+      }
+    } catch(e) {
+      errEl.textContent = e.message;
+      errEl.style.display = 'block';
+    }
+  }
+
+  async function sendReset() {
+    const email  = document.getElementById('resetEmail').value.trim();
+    const errEl  = document.getElementById('resetError');
+    const okEl   = document.getElementById('resetSuccess');
+    errEl.style.display = 'none'; okEl.style.display = 'none';
+
+    if (!email) { errEl.textContent = 'Bitte E-Mail eingeben.'; errEl.style.display = 'block'; return; }
+
+    try {
+      await fetch(`${SUPABASE_URL}/auth/v1/recover`, {
+        method: 'POST',
+        headers: { apikey: SUPABASE_ANON, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      okEl.textContent = 'Link gesendet! Schau in dein Postfach.';
+      okEl.style.display = 'block';
+    } catch(e) {
+      errEl.textContent = 'Fehler beim Senden.'; errEl.style.display = 'block';
+    }
+  }
+
+  function logout() {
+    localStorage.removeItem('st_session');
+    authToken = null; currentUser = null;
+    showAuth();
+  }
+
+  init();
+</script>
+</body>
+</html>
