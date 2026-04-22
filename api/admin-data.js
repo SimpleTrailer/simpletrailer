@@ -33,14 +33,23 @@ module.exports = async (req, res) => {
 
     if (error) throw error;
 
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    const paidBookings = bookings.filter(b => ['confirmed', 'active', 'returned'].includes(b.status));
+
     const stats = {
       total: bookings.length,
+      pending: bookings.filter(b => b.status === 'pending').length,
       confirmed: bookings.filter(b => b.status === 'confirmed').length,
       active: bookings.filter(b => b.status === 'active').length,
       returned: bookings.filter(b => b.status === 'returned').length,
-      revenue: bookings
-        .filter(b => ['confirmed', 'returned'].includes(b.status))
-        .reduce((sum, b) => sum + b.total_amount + (b.late_fee_amount || 0), 0)
+      revenue: paidBookings.reduce((sum, b) => sum + (b.total_amount || 0) + (b.late_fee_amount || 0), 0),
+      revenue_month: paidBookings
+        .filter(b => b.created_at >= monthStart)
+        .reduce((sum, b) => sum + (b.total_amount || 0) + (b.late_fee_amount || 0), 0),
+      avg_value: paidBookings.length
+        ? paidBookings.reduce((sum, b) => sum + (b.total_amount || 0), 0) / paidBookings.length
+        : 0,
     };
 
     return res.status(200).json({ bookings, stats });
