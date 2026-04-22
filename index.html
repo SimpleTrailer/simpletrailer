@@ -1541,6 +1541,62 @@
       track.appendChild(clone);
     });
   }
+
+  // TRAILER CAROUSEL – Auto-scroll auf Mobile, pausiert beim Swipen
+  (function() {
+    const grid = document.querySelector('.trailers-grid');
+    if (!grid) return;
+
+    // Nur auf Mobile aktivieren
+    const mq = window.matchMedia('(max-width: 767px)');
+    if (!mq.matches) return;
+
+    const cardWidth = () => grid.querySelector('.trailer-card').offsetWidth + 14; // gap
+    let isPaused = false;
+    let autoTimer = null;
+    let currentIndex = 0;
+    const totalCards = grid.querySelectorAll('.trailer-card').length;
+
+    function scrollToCard(index) {
+      grid.scrollTo({ left: index * cardWidth(), behavior: 'smooth' });
+    }
+
+    function next() {
+      if (isPaused) return;
+      currentIndex = (currentIndex + 1) % totalCards;
+      scrollToCard(currentIndex);
+    }
+
+    function startAuto() {
+      clearInterval(autoTimer);
+      autoTimer = setInterval(next, 2800);
+    }
+
+    // Pause beim Anfassen, Resume danach
+    grid.addEventListener('touchstart', () => {
+      isPaused = true;
+      clearInterval(autoTimer);
+    }, { passive: true });
+
+    grid.addEventListener('touchend', () => {
+      // Aktuellen Index aus Scroll-Position ableiten
+      currentIndex = Math.round(grid.scrollLeft / cardWidth());
+      setTimeout(() => {
+        isPaused = false;
+        startAuto();
+      }, 3500); // 3,5 Sek. Pause nach Wischen
+    }, { passive: true });
+
+    // Startet erst wenn Sektion sichtbar
+    const sectionObserver = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) startAuto();
+        else { clearInterval(autoTimer); }
+      });
+    }, { threshold: 0.3 });
+
+    sectionObserver.observe(grid.closest('section') || grid);
+  })();
 </script>
 </body>
 </html>
