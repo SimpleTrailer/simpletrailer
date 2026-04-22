@@ -874,7 +874,24 @@
       .hero-inner { grid-template-columns: 1fr; gap: 40px; }
       #map { height: 320px; }
       .trailer-grid { grid-template-columns: 1fr; gap: 32px; }
-      .trailers-grid { grid-template-columns: 1fr; gap: 16px; margin-top: 32px; }
+      .trailers-grid {
+        display: flex;
+        flex-direction: row;
+        overflow-x: auto;
+        gap: 14px;
+        margin-top: 32px;
+        padding-bottom: 12px;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }
+      .trailers-grid::-webkit-scrollbar { display: none; }
+      .trailers-grid .trailer-card {
+        min-width: 80vw;
+        max-width: 80vw;
+        flex-shrink: 0;
+        scroll-snap-align: start;
+      }
       .steps { grid-template-columns: 1fr 1fr; gap: 36px; }
       .steps::before { display: none; }
       .pricing-grid { grid-template-columns: 1fr; max-width: 400px; margin: 0 auto; }
