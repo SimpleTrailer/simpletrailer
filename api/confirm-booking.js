@@ -65,7 +65,7 @@ module.exports = async (req, res) => {
     const returnUrl   = `${siteUrl}/return.html?id=${booking.id}&token=${return_token}`;
     const precheckUrl = `${siteUrl}/precheck?id=${booking.id}&token=${precheck_token}`;
 
-    await resend.emails.send({
+    try { await resend.emails.send({
       from: 'SimpleTrailer <buchung@simpletrailer.de>',
       to: meta.customer_email,
       subject: `✅ Buchung bestätigt #${booking.id.slice(0, 8).toUpperCase()} – SimpleTrailer`,
@@ -102,10 +102,10 @@ module.exports = async (req, res) => {
           <p style="color:#444;font-size:.72rem;text-align:center;margin-top:24px;">SimpleTrailer · Bremen · info@simpletrailer.de</p>
         </div>
       </body></html>`
-    });
+    }); } catch(emailErr) { console.error('E-Mail Fehler:', emailErr.message); }
 
     return res.status(200).json({
-      booking_id: booking.id, access_code, return_token,
+      booking_id: booking.id, return_token, precheck_url: precheckUrl,
       start_time: meta.start_time, end_time: meta.end_time,
       amount, trailer_name: 'PKW-Anhänger mit Plane'
     });

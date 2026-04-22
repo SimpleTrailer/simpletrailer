@@ -58,7 +58,7 @@
   <div id="successView" style="display:none;">
     <div class="icon">🎉</div>
     <h1>Buchung bestätigt!</h1>
-    <p class="sub">Deine Bestätigungs-E-Mail ist unterwegs.<br>Hier sind alle Details für deine Abholung.</p>
+    <p class="sub">Zahlung erfolgreich. Führe jetzt den Vorab-Check durch um deinen Zugangscode zu erhalten.</p>
 
     <div class="card">
       <div class="booking-num">
@@ -66,22 +66,21 @@
         <div class="num" id="bookingNum">–</div>
       </div>
 
-      <div class="code-box">
-        <div class="label">Zugangscode Schloss</div>
-        <div class="code" id="accessCode">–</div>
-        <div class="hint">Diesen Code am Zahlenschloss des Anhängers eingeben</div>
-      </div>
-
-      <table>
+      <table style="margin-bottom:20px;">
         <tr><td>Anhänger</td><td>PKW-Anhänger mit Plane</td></tr>
         <tr><td>Von</td><td id="fromDate">–</td></tr>
         <tr><td>Bis</td><td id="toDate">–</td></tr>
         <tr><td>Bezahlt</td><td style="color:var(--orange);font-weight:700;" id="paidAmount">–</td></tr>
       </table>
+
+      <div style="background:#0a1f0a;border:1.5px solid #22c55e;border-radius:12px;padding:20px;text-align:center;">
+        <p style="color:#4ade80;font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin:0 0 6px;">Schritt 1 – Vor Abholung</p>
+        <p style="font-size:.88rem;margin:0 0 14px;line-height:1.5;">Mache ein Foto des Anhängers und bestätige den Zustand –<br>erst dann erhältst du den <strong>Zugangscode</strong> für das Schloss.</p>
+        <a id="precheckLink" href="#" class="btn btn-orange" style="background:#22c55e;color:#000;margin-bottom:0;">📷 Vorab-Check starten →</a>
+      </div>
     </div>
 
-    <a id="returnLink" href="#" class="btn btn-orange">Rückgabe-Link öffnen →</a>
-    <p style="color:var(--gray);font-size:.78rem;">Der Rückgabe-Link wurde auch per E-Mail gesendet.</p>
+    <p style="color:var(--gray);font-size:.78rem;margin-top:8px;">Der Link wurde auch per E-Mail gesendet – schau dort nach falls du diese Seite schließt.</p>
   </div>
 
   <!-- Fehler -->
@@ -120,14 +119,10 @@
       if (!res.ok) throw new Error(data.error || 'Bestätigung fehlgeschlagen');
 
       document.getElementById('bookingNum').textContent  = '#' + data.booking_id.slice(0, 8).toUpperCase();
-      document.getElementById('accessCode').textContent  = data.access_code;
       document.getElementById('fromDate').textContent    = fmtDate(data.start_time);
       document.getElementById('toDate').textContent      = fmtDate(data.end_time);
       document.getElementById('paidAmount').textContent  = data.amount.toFixed(2).replace('.', ',') + ' €';
-
-      // Return-Link bauen (wird auch per E-Mail gesendet)
-      const returnUrl = `/return.html?id=${data.booking_id}&token=${data.return_token || ''}`;
-      document.getElementById('returnLink').href = returnUrl;
+      document.getElementById('precheckLink').href       = data.precheck_url || '#';
 
       document.getElementById('loadingView').style.display = 'none';
       document.getElementById('successView').style.display = 'block';
