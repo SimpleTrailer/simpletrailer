@@ -610,16 +610,6 @@
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Fehler beim Laden der Zahlung');
 
-      // Summary mit Server-Preisen aktualisieren (verhindert Abweichungen)
-      document.getElementById('sumBase').textContent  = data.base_amount.toFixed(2).replace('.', ',') + ' €';
-      document.getElementById('sumTotal').textContent = data.amount.toFixed(2).replace('.', ',') + ' €';
-      if (data.insurance_amount > 0) {
-        document.getElementById('sumInsRow').style.display = 'flex';
-        document.getElementById('sumIns').textContent = '+' + data.insurance_amount.toFixed(2).replace('.', ',') + ' €';
-      } else {
-        document.getElementById('sumInsRow').style.display = 'none';
-      }
-
       stripeElements = stripeClient.elements({ clientSecret: data.client_secret, appearance: {
         theme: 'night',
         variables: {
