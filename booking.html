@@ -312,7 +312,7 @@
 
   // Trailer aus Supabase laden
   async function loadTrailer() {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/trailers?select=*&limit=1`, {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/trailers?select=*&is_available=eq.true&limit=1`, {
       headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` }
     });
     const data = await res.json();
