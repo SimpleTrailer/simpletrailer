@@ -169,12 +169,10 @@
   async function loadBooking() {
     if (!bookingId || !precheckToken) return showError('Ungültiger Link.');
     try {
-      const res  = await fetch(`${SUPABASE_URL}/rest/v1/bookings?select=id,customer_name,start_time,end_time,pricing_type,total_amount,insurance_type,precheck_completed_at,status&id=eq.${bookingId}`, {
-        headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` }
-      });
+      const res  = await fetch(`/api/get-precheck?id=${bookingId}&token=${precheckToken}`);
       const data = await res.json();
-      if (!data || !data[0]) return showError('Buchung nicht gefunden.');
-      booking = data[0];
+      if (!res.ok) return showError(data.error || 'Buchung nicht gefunden.');
+      booking = data.booking;
 
       if (booking.status === 'returned') return showError('Diese Buchung ist bereits abgeschlossen.');
 
