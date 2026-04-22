@@ -356,6 +356,9 @@
       const data = await res.json();
       if (!res.ok) throw new Error(data.error_description || data.msg || 'Login fehlgeschlagen');
 
+      if (data.user.email !== 'admin@simpletrailer.de') {
+        throw new Error('Kein Zugriff auf diesen Bereich.');
+      }
       authToken = data.access_token;
       document.getElementById('adminEmail').textContent = email;
       document.getElementById('loginView').style.display = 'none';
