@@ -878,6 +878,12 @@
         overflow: hidden;
         margin-top: 32px;
       }
+      .trailers-grid-wrapper.scroll-mode {
+        overflow-x: scroll;
+        overflow-y: hidden;
+        scrollbar-width: none;
+      }
+      .trailers-grid-wrapper.scroll-mode::-webkit-scrollbar { display: none; }
       .trailers-grid {
         display: flex;
         flex-direction: row;
@@ -885,7 +891,10 @@
         width: max-content;
         animation: trailers-scroll 12s linear infinite;
       }
-      .trailers-grid.paused { animation-play-state: paused; }
+      .trailers-grid-wrapper.scroll-mode .trailers-grid {
+        animation: none;
+        transform: none !important;
+      }
       @keyframes trailers-scroll {
         from { transform: translateX(0); }
         to   { transform: translateX(-50%); }
@@ -1547,23 +1556,33 @@
     });
   }
 
-  // TRAILER CAROUSEL – Karten klonen + Touch-Pause
+  // TRAILER CAROUSEL – CSS-Animation + nahtloser Wechsel zu nativem Scroll beim Swipen
   (function() {
     if (!window.matchMedia('(max-width: 767px)').matches) return;
 
-    const grid = document.querySelector('.trailers-grid');
-    if (!grid) return;
+    const wrapper = document.querySelector('.trailers-grid-wrapper');
+    const grid    = document.querySelector('.trailers-grid');
+    if (!grid || !wrapper) return;
 
-    // Karten klonen für nahtlosen Loop (wie Reviews)
-    const originals = Array.from(grid.children);
-    originals.forEach(card => {
+    // Karten klonen für nahtlosen Loop
+    Array.from(grid.children).forEach(card => {
       const clone = card.cloneNode(true);
       clone.setAttribute('aria-hidden', 'true');
       grid.appendChild(clone);
     });
 
-    // Stopp beim Antippen
-    grid.addEventListener('touchstart', () => { grid.classList.add('paused'); }, { passive: true });
+    wrapper.addEventListener('touchstart', () => {
+      if (wrapper.classList.contains('scroll-mode')) return;
+
+      // Aktuelle visuelle Position aus der laufenden CSS-Animation auslesen
+      const tx = new DOMMatrixReadOnly(getComputedStyle(grid).transform).m41;
+
+      // Auf Scroll-Modus umschalten (Animation stoppt per CSS)
+      wrapper.classList.add('scroll-mode');
+
+      // ScrollLeft so setzen dass der visuelle Sprung 0 ist
+      wrapper.scrollLeft = -tx;
+    }, { passive: true });
   })();
 </script>
 </body>
