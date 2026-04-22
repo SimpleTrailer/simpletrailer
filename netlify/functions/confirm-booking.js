@@ -125,6 +125,7 @@ exports.handler = async (event) => {
       body: JSON.stringify({
         booking_id: booking.id,
         access_code,
+        return_token,
         start_time: meta.start_time,
         end_time: meta.end_time,
         amount,
