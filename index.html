@@ -222,12 +222,16 @@
       display: flex;
       flex-direction: column;
       gap: 14px;
+      overflow: hidden;
+      box-sizing: border-box;
+      width: 100%;
     }
 
     .booking-fields {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 12px;
+      width: 100%;
     }
 
     .field-label {
@@ -241,6 +245,8 @@
 
     .field-input {
       width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
       background: #0D0D0D;
       border: 1.5px solid var(--border);
       border-radius: 8px;
@@ -250,6 +256,8 @@
       font-family: var(--font);
       outline: none;
       transition: border-color 0.2s;
+      -webkit-appearance: none;
+      appearance: none;
     }
     .field-input:focus { border-color: var(--orange); }
     .field-input::-webkit-calendar-picker-indicator { filter: invert(1) brightness(0.6); }

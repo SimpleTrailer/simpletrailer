@@ -70,11 +70,22 @@
     .field-input {
       width: 100%; box-sizing: border-box; background: #0D0D0D; border: 1.5px solid var(--border); border-radius: 8px;
       color: var(--white); padding: 11px 14px; font-size: .9rem; font-family: var(--font);
-      outline: none; transition: border-color .2s; max-width: 100%; overflow: hidden;
+      outline: none; transition: border-color .2s; max-width: 100%;
+      -webkit-appearance: none; appearance: none;
     }
     .field-input:focus { border-color: var(--orange); }
-    .field-input::-webkit-calendar-picker-indicator { filter: invert(1) brightness(.6); cursor: pointer; }
-    .field-group { overflow: hidden; }
+    .field-input::-webkit-calendar-picker-indicator {
+      filter: invert(1) brightness(.6); cursor: pointer;
+      border-radius: 4px; padding: 2px;
+    }
+    .field-group { overflow: hidden; width: 100%; }
+    /* Wrapper für datetime inputs – runde Ecken auf iOS */
+    .input-wrap {
+      border: 1.5px solid var(--border); border-radius: 8px;
+      background: #0D0D0D; overflow: hidden; transition: border-color .2s;
+    }
+    .input-wrap:focus-within { border-color: var(--orange); }
+    .input-wrap .field-input { border: none; border-radius: 0; background: transparent; }
     .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 
     /* PRICE SUMMARY */
@@ -217,11 +228,15 @@
       <div class="field-row">
         <div class="field-group">
           <label class="field-label">Startzeit</label>
-          <input type="datetime-local" class="field-input" id="startTime" />
+          <div class="input-wrap">
+            <input type="datetime-local" class="field-input" id="startTime" />
+          </div>
         </div>
         <div class="field-group">
           <label class="field-label">Endzeit (automatisch)</label>
-          <input type="datetime-local" class="field-input" id="endTime" readonly style="opacity:.6;cursor:not-allowed;" />
+          <div class="input-wrap" style="opacity:.6;">
+            <input type="datetime-local" class="field-input" id="endTime" readonly style="cursor:not-allowed;" />
+          </div>
         </div>
       </div>
       <div class="price-summary">
