@@ -163,8 +163,18 @@
       position: relative;
       overflow: hidden;
       background:
-        radial-gradient(ellipse 70% 60% at -5% 0%, rgba(232,93,0,0.13) 0%, transparent 65%),
+        radial-gradient(ellipse 80% 70% at -5% 10%, rgba(232,93,0,0.2) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 50% at 105% 85%, rgba(232,93,0,0.1) 0%, transparent 60%),
         var(--bg);
+    }
+    #hero::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle, rgba(232,93,0,0.06) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
     }
 
     #hero-canvas {
@@ -197,22 +207,65 @@
     }
 
     .hero-text h1 {
-      font-size: clamp(2.2rem, 4.5vw, 3.6rem);
+      font-size: clamp(2.6rem, 5vw, 4.2rem);
       font-weight: 800;
-      line-height: 1.08;
+      line-height: 1.05;
       letter-spacing: -0.04em;
-      margin-bottom: 16px;
+      margin-bottom: 20px;
     }
 
-    .hero-text h1 em { font-style: normal; color: var(--orange); }
+    .hero-text h1 em {
+      font-style: normal;
+      color: var(--orange);
+      position: relative;
+    }
+    .hero-text h1 em::after {
+      content: '';
+      position: absolute;
+      bottom: 2px; left: 0; right: 0;
+      height: 3px;
+      background: var(--orange);
+      border-radius: 2px;
+      opacity: .4;
+    }
 
     .hero-sub {
       font-size: 1.05rem;
       color: var(--gray);
-      margin-bottom: 36px;
+      margin-bottom: 24px;
       letter-spacing: -0.01em;
       line-height: 1.65;
     }
+
+    /* Trust Pills */
+    .hero-trust {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+    }
+    .trust-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 20px;
+      padding: 5px 12px;
+      font-size: .78rem;
+      font-weight: 600;
+      color: var(--gray);
+      letter-spacing: -.01em;
+      white-space: nowrap;
+    }
+    .trust-pill .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--orange);
+      flex-shrink: 0;
+    }
+    .trust-pill strong { color: var(--white); }
 
     .booking-box {
       background: rgba(26,26,26,0.9);
@@ -913,7 +966,14 @@
       <h1>Anhänger mieten.<br><em>Einfach.</em> Sofort.</h1>
       <p class="hero-sub">Einfach online buchen. Kein Papierkram, keine Kaution, keine Wartezeit. Fahr einfach los.</p>
 
+      <div class="hero-trust">
+        <div class="trust-pill"><span class="dot"></span><strong>Sofort</strong> verfügbar</div>
+        <div class="trust-pill"><span class="dot"></span><strong>Kein</strong> Papierkram</div>
+        <div class="trust-pill">📍 <strong>Bremen</strong></div>
+      </div>
+
       <div class="booking-box">
+        <p class="field-label" style="margin-bottom:4px;font-size:.65rem;letter-spacing:.12em;color:var(--orange);">WANN BRAUCHST DU EINEN ANHÄNGER?</p>
         <div class="booking-fields">
           <div>
             <p class="field-label">Von</p>
