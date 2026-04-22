@@ -29,11 +29,20 @@ module.exports = async (req, res) => {
     }
 
     const { data: existing } = await supabase
-      .from('bookings').select('id, access_code, return_token')
+      .from('bookings').select('id, access_code, return_token, precheck_token')
       .eq('stripe_payment_intent_id', payment_intent_id).maybeSingle();
 
     if (existing) {
-      return res.status(200).json({ booking_id: existing.id, access_code: existing.access_code, already_confirmed: true });
+      const siteUrlEx = process.env.SITE_URL || 'https://simpletrailer.de';
+      const precheckUrlEx = existing.precheck_token
+        ? `${siteUrlEx}/precheck?id=${existing.id}&token=${existing.precheck_token}`
+        : null;
+      return res.status(200).json({
+        booking_id: existing.id, already_confirmed: true,
+        precheck_url: precheckUrlEx,
+        return_token: existing.return_token,
+        start_time: null, end_time: null, amount: 0
+      });
     }
 
     const meta = pi.metadata;
