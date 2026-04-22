@@ -35,7 +35,7 @@ exports.handler = async (event) => {
         status, access_code, actual_return_time,
         late_fee_amount, late_fee_payment_intent_id,
         stripe_payment_intent_id, created_at,
-        trailers(name)
+        return_photo_url, trailers(name)
       `)
       .order('created_at', { ascending: false });
 
