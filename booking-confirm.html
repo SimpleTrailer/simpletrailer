@@ -109,7 +109,7 @@
     }
 
     try {
-      const res  = await fetch('/.netlify/functions/confirm-booking', {
+      const res  = await fetch('/api/confirm-booking', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ payment_intent_id: piId })

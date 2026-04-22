@@ -262,7 +262,7 @@
   async function loadData() {
     setTableLoading();
     try {
-      const res  = await fetch('/.netlify/functions/admin-data', {
+      const res  = await fetch('/api/admin-data', {
         headers: { Authorization: `Bearer ${authToken}` }
       });
       const data = await res.json();
