@@ -106,10 +106,27 @@
     /* ERROR */
     .error-msg { color: #f87171; font-size: .82rem; margin-top: 6px; display: none; }
 
-    @media (max-width: 600px) {
-      .pricing-grid { grid-template-columns: 1fr; }
+    @media (max-width: 640px) {
+      .page { padding: 24px 16px 60px; }
+      .card { padding: 20px 16px; }
+      .pricing-grid { grid-template-columns: 1fr; gap: 10px; }
+      .pricing-price { font-size: 1.5rem; }
       .field-row { grid-template-columns: 1fr; }
       .trailer-preview { flex-direction: column; align-items: flex-start; }
+      .trailer-img, .trailer-img-placeholder { width: 100%; height: 160px; }
+
+      /* Stepper: Labels ausblenden, nur Kreise zeigen */
+      .step-label { display: none; }
+      .step-item { flex: 0; }
+      .step-line { flex: 1; }
+      .stepper { margin-bottom: 32px; }
+
+      /* Buttons volle Breite */
+      .btn { font-size: .9rem; padding: 13px 16px; }
+
+      /* Summary */
+      .summary-row { font-size: .82rem; }
+      .summary-row span:last-child { text-align: right; max-width: 55%; word-break: break-word; white-space: normal; }
     }
   </style>
 </head>
@@ -368,6 +385,11 @@
 
     if (!valid) return;
 
+    if (!trailerId) {
+      alert('Anhänger konnte nicht geladen werden. Bitte Seite neu laden.');
+      return;
+    }
+
     goToStep(3);
     updateSummary();
     await initStripe();
@@ -427,7 +449,10 @@
       sessionStorage.setItem('st_pi_id', data.payment_intent_id);
 
     } catch (err) {
-      showPaymentError(err.message);
+      let msg = err.message;
+      if (msg === 'Failed to fetch') msg = 'Verbindung fehlgeschlagen. Bitte Seite neu laden.';
+      if (msg.includes('No API key')) msg = 'Zahlungssystem nicht konfiguriert. Bitte Betreiber kontaktieren.';
+      showPaymentError(msg);
       payBtn.textContent = 'Erneut versuchen';
       payBtn.disabled = false;
     }
