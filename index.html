@@ -877,20 +877,20 @@
       .trailers-grid {
         display: flex;
         flex-direction: row;
-        overflow-x: auto;
+        overflow-x: scroll;
         gap: 14px;
         margin-top: 32px;
         padding-bottom: 12px;
-        scroll-snap-type: x mandatory;
         -webkit-overflow-scrolling: touch;
         scrollbar-width: none;
+        scroll-snap-type: none;
       }
       .trailers-grid::-webkit-scrollbar { display: none; }
       .trailers-grid .trailer-card {
-        min-width: 80vw;
-        max-width: 80vw;
+        min-width: 78vw;
+        max-width: 78vw;
         flex-shrink: 0;
-        scroll-snap-align: start;
+        scroll-snap-align: none;
       }
       .steps { grid-template-columns: 1fr 1fr; gap: 36px; }
       .steps::before { display: none; }
@@ -1544,47 +1544,36 @@
 
   // TRAILER CAROUSEL – Endlos-Loop auf Mobile, stoppt beim Swipen
   (function() {
+    if (!window.matchMedia('(max-width: 767px)').matches) return;
+
     const grid = document.querySelector('.trailers-grid');
     if (!grid) return;
 
-    if (!window.matchMedia('(max-width: 767px)').matches) return;
-
     // Karten klonen für nahtlosen Loop
-    const originals = Array.from(grid.querySelectorAll('.trailer-card'));
+    const originals = Array.from(grid.children);
     originals.forEach(card => {
       const clone = card.cloneNode(true);
       clone.setAttribute('aria-hidden', 'true');
       grid.appendChild(clone);
     });
 
-    const speed = 0.5; // px pro Frame (~30px/Sek bei 60fps)
     let paused = false;
     let rafId = null;
+    const speed = 0.6;
 
-    function loop() {
+    function tick() {
       if (!paused) {
         grid.scrollLeft += speed;
-        // Wenn wir bei den Klonen angekommen sind → lautlos zurück
-        const halfWidth = grid.scrollWidth / 2;
-        if (grid.scrollLeft >= halfWidth) {
-          grid.scrollLeft -= halfWidth;
+        if (grid.scrollLeft >= grid.scrollWidth / 2) {
+          grid.scrollLeft = 0;
         }
       }
-      rafId = requestAnimationFrame(loop);
+      rafId = requestAnimationFrame(tick);
     }
 
-    grid.addEventListener('touchstart', () => { paused = true; }, { passive: true });
-    grid.addEventListener('touchend',   () => { paused = true; }, { passive: true }); // bleibt gestoppt
+    grid.addEventListener('touchstart', () => { paused = true; cancelAnimationFrame(rafId); }, { passive: true });
 
-    // Nur starten wenn Sektion sichtbar
-    const obs = new IntersectionObserver((entries) => {
-      entries.forEach(e => {
-        if (e.isIntersecting && !rafId) { rafId = requestAnimationFrame(loop); }
-        else if (!e.isIntersecting && rafId) { cancelAnimationFrame(rafId); rafId = null; }
-      });
-    }, { threshold: 0.2 });
-
-    obs.observe(grid.closest('section') || grid);
+    rafId = requestAnimationFrame(tick);
   })();
 </script>
 </body>
