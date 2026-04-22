@@ -1542,60 +1542,49 @@
     });
   }
 
-  // TRAILER CAROUSEL – Auto-scroll auf Mobile, pausiert beim Swipen
+  // TRAILER CAROUSEL – Endlos-Loop auf Mobile, stoppt beim Swipen
   (function() {
     const grid = document.querySelector('.trailers-grid');
     if (!grid) return;
 
-    // Nur auf Mobile aktivieren
-    const mq = window.matchMedia('(max-width: 767px)');
-    if (!mq.matches) return;
+    if (!window.matchMedia('(max-width: 767px)').matches) return;
 
-    const cardWidth = () => grid.querySelector('.trailer-card').offsetWidth + 14; // gap
-    let isPaused = false;
-    let autoTimer = null;
-    let currentIndex = 0;
-    const totalCards = grid.querySelectorAll('.trailer-card').length;
+    // Karten klonen für nahtlosen Loop
+    const originals = Array.from(grid.querySelectorAll('.trailer-card'));
+    originals.forEach(card => {
+      const clone = card.cloneNode(true);
+      clone.setAttribute('aria-hidden', 'true');
+      grid.appendChild(clone);
+    });
 
-    function scrollToCard(index) {
-      grid.scrollTo({ left: index * cardWidth(), behavior: 'smooth' });
+    const speed = 0.5; // px pro Frame (~30px/Sek bei 60fps)
+    let paused = false;
+    let rafId = null;
+
+    function loop() {
+      if (!paused) {
+        grid.scrollLeft += speed;
+        // Wenn wir bei den Klonen angekommen sind → lautlos zurück
+        const halfWidth = grid.scrollWidth / 2;
+        if (grid.scrollLeft >= halfWidth) {
+          grid.scrollLeft -= halfWidth;
+        }
+      }
+      rafId = requestAnimationFrame(loop);
     }
 
-    function next() {
-      if (isPaused) return;
-      currentIndex = (currentIndex + 1) % totalCards;
-      scrollToCard(currentIndex);
-    }
+    grid.addEventListener('touchstart', () => { paused = true; }, { passive: true });
+    grid.addEventListener('touchend',   () => { paused = true; }, { passive: true }); // bleibt gestoppt
 
-    function startAuto() {
-      clearInterval(autoTimer);
-      autoTimer = setInterval(next, 2800);
-    }
-
-    // Pause beim Anfassen, Resume danach
-    grid.addEventListener('touchstart', () => {
-      isPaused = true;
-      clearInterval(autoTimer);
-    }, { passive: true });
-
-    grid.addEventListener('touchend', () => {
-      // Aktuellen Index aus Scroll-Position ableiten
-      currentIndex = Math.round(grid.scrollLeft / cardWidth());
-      setTimeout(() => {
-        isPaused = false;
-        startAuto();
-      }, 3500); // 3,5 Sek. Pause nach Wischen
-    }, { passive: true });
-
-    // Startet erst wenn Sektion sichtbar
-    const sectionObserver = new IntersectionObserver((entries) => {
+    // Nur starten wenn Sektion sichtbar
+    const obs = new IntersectionObserver((entries) => {
       entries.forEach(e => {
-        if (e.isIntersecting) startAuto();
-        else { clearInterval(autoTimer); }
+        if (e.isIntersecting && !rafId) { rafId = requestAnimationFrame(loop); }
+        else if (!e.isIntersecting && rafId) { cancelAnimationFrame(rafId); rafId = null; }
       });
-    }, { threshold: 0.3 });
+    }, { threshold: 0.2 });
 
-    sectionObserver.observe(grid.closest('section') || grid);
+    obs.observe(grid.closest('section') || grid);
   })();
 </script>
 </body>
