@@ -252,21 +252,41 @@
   <div class="step-content" id="step2">
     <div class="card">
       <p class="field-label" style="margin-bottom:20px;">Deine Kontaktdaten</p>
-      <div class="field-group">
-        <label class="field-label">Name *</label>
-        <input type="text" class="field-input" id="custName" placeholder="Max Mustermann" />
-        <span class="error-msg" id="errName">Bitte Name eingeben</span>
+      <div class="field-row">
+        <div class="field-group">
+          <label class="field-label">Vorname *</label>
+          <input type="text" class="field-input" id="custFirstName" placeholder="Max" autocomplete="given-name" />
+          <span class="error-msg" id="errFirstName">Bitte Vorname eingeben</span>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Nachname *</label>
+          <input type="text" class="field-input" id="custLastName" placeholder="Mustermann" autocomplete="family-name" />
+          <span class="error-msg" id="errLastName">Bitte Nachname eingeben</span>
+        </div>
       </div>
       <div class="field-group">
         <label class="field-label">E-Mail *</label>
-        <input type="email" class="field-input" id="custEmail" placeholder="max@beispiel.de" />
+        <input type="email" class="field-input" id="custEmail" placeholder="max@beispiel.de" autocomplete="email" />
         <span class="error-msg" id="errEmail">Bitte gültige E-Mail eingeben</span>
       </div>
       <div class="field-group">
-        <label class="field-label">Telefon (optional)</label>
-        <input type="tel" class="field-input" id="custPhone" placeholder="+49 ..." />
+        <label class="field-label">Telefon *</label>
+        <input type="tel" class="field-input" id="custPhone" placeholder="+49 151 12345678" autocomplete="tel" />
+        <span class="error-msg" id="errPhone">Bitte Telefonnummer eingeben</span>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Adresse *</label>
+        <input type="text" class="field-input" id="custAddress" placeholder="Musterstraße 1, 28195 Bremen" autocomplete="street-address" />
+        <span class="error-msg" id="errAddress">Bitte Adresse eingeben</span>
       </div>
     </div>
+    <div class="card" style="display:flex;gap:14px;align-items:flex-start;">
+      <input type="checkbox" id="licenseCheck" style="width:18px;height:18px;margin-top:2px;accent-color:var(--orange);flex-shrink:0;cursor:pointer;" />
+      <label for="licenseCheck" style="font-size:.88rem;color:var(--gray);cursor:pointer;line-height:1.5;">
+        Ich bestätige dass ich einen gültigen <strong style="color:var(--white);">Führerschein Klasse B</strong> besitze und das Fahrzeug versichert ist.
+      </label>
+    </div>
+    <span class="error-msg" id="errLicense" style="margin-top:-8px;margin-bottom:12px;display:none;">Bitte Führerschein bestätigen</span>
     <button class="btn btn-orange" onclick="goStep3()">Weiter zur Zahlung →</button>
     <div style="text-align:center;margin-top:12px;">
       <a href="#" onclick="goToStep(1)" style="color:var(--gray);font-size:.85rem;text-decoration:none;">← Zurück</a>
@@ -380,9 +400,15 @@
       });
       if (!res.ok) return;
       const user = await res.json();
-      const name = user.user_metadata?.full_name || '';
-      if (name) document.getElementById('custName').value  = name;
-      if (user.email) document.getElementById('custEmail').value = user.email;
+      const firstName = user.user_metadata?.first_name || '';
+      const lastName  = user.user_metadata?.last_name  || '';
+      const phone     = user.user_metadata?.phone       || '';
+      const address   = user.user_metadata?.address     || '';
+      if (firstName) document.getElementById('custFirstName').value = firstName;
+      if (lastName)  document.getElementById('custLastName').value  = lastName;
+      if (user.email) document.getElementById('custEmail').value    = user.email;
+      if (phone)     document.getElementById('custPhone').value     = phone;
+      if (address)   document.getElementById('custAddress').value   = address;
     } catch(e) {}
   }
 
@@ -422,13 +448,21 @@
   }
 
   async function goStep3() {
-    const name  = document.getElementById('custName').value.trim();
-    const email = document.getElementById('custEmail').value.trim();
+    const firstName = document.getElementById('custFirstName').value.trim();
+    const lastName  = document.getElementById('custLastName').value.trim();
+    const email     = document.getElementById('custEmail').value.trim();
+    const phone     = document.getElementById('custPhone').value.trim();
+    const address   = document.getElementById('custAddress').value.trim();
+    const license   = document.getElementById('licenseCheck').checked;
     let valid = true;
 
-    document.getElementById('errName').style.display  = name  ? 'none' : 'block'; if (!name) valid = false;
-    document.getElementById('errEmail').style.display = email && /\S+@\S+\.\S+/.test(email) ? 'none' : 'block';
-    if (!email || !/\S+@\S+\.\S+/.test(email)) valid = false;
+    const show = (id, err) => { document.getElementById(id).style.display = err ? 'block' : 'none'; if (err) valid = false; };
+    show('errFirstName', !firstName);
+    show('errLastName',  !lastName);
+    show('errEmail',     !email || !/\S+@\S+\.\S+/.test(email));
+    show('errPhone',     !phone);
+    show('errAddress',   !address);
+    show('errLicense',   !license);
 
     if (!valid) return;
 
@@ -464,9 +498,10 @@
           pricing_type:   selectedPricing,
           start_time:     new Date(document.getElementById('startTime').value).toISOString(),
           end_time:       new Date(document.getElementById('endTime').value).toISOString(),
-          customer_name:  document.getElementById('custName').value.trim(),
+          customer_name:  `${document.getElementById('custFirstName').value.trim()} ${document.getElementById('custLastName').value.trim()}`,
           customer_email: document.getElementById('custEmail').value.trim(),
-          customer_phone: document.getElementById('custPhone').value.trim()
+          customer_phone: document.getElementById('custPhone').value.trim(),
+          customer_address: document.getElementById('custAddress').value.trim()
         })
       });
 
