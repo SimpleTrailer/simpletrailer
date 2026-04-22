@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vorab-Check – SimpleTrailer</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:#0D0D0D; --s1:#161616; --s2:#1E1E1E;
+      --orange:#E85D00; --white:#fff; --gray:#888; --border:#383838;
+      --green:#22c55e; --font:'Inter',system-ui,sans-serif;
+    }
+    body { background:var(--bg); color:var(--white); font-family:var(--font); min-height:100vh; -webkit-font-smoothing:antialiased; }
+    nav { background:rgba(13,13,13,.97); border-bottom:1px solid var(--border); padding:0 5%; height:60px; display:flex; align-items:center; }
+    .logo { font-size:1.1rem; font-weight:800; text-decoration:none; letter-spacing:-.03em; }
+    .logo span:first-child { color:var(--white); }
+    .logo span:last-child  { color:var(--orange); }
+    .page { max-width:560px; margin:0 auto; padding:40px 20px 80px; }
+    .card { background:var(--s1); border:1.5px solid var(--border); border-radius:16px; padding:28px; margin-bottom:16px; }
+    .step-badge { display:inline-flex; align-items:center; gap:8px; background:var(--s2); border:1px solid var(--border); border-radius:20px; padding:5px 12px; font-size:.72rem; font-weight:700; color:var(--gray); letter-spacing:.05em; text-transform:uppercase; margin-bottom:20px; }
+    h1 { font-size:1.6rem; font-weight:800; letter-spacing:-.03em; margin-bottom:6px; }
+    .sub { color:var(--gray); font-size:.88rem; margin-bottom:24px; line-height:1.5; }
+    .info-row { display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--border); font-size:.85rem; }
+    .info-row:last-child { border-bottom:none; }
+    .info-row .key { color:var(--gray); }
+    .info-row .val { font-weight:600; }
+
+    /* UPLOAD */
+    .upload-area { border:2px dashed var(--border); border-radius:12px; padding:32px 20px; text-align:center; cursor:pointer; transition:border-color .2s, background .2s; position:relative; }
+    .upload-area:hover, .upload-area.drag { border-color:var(--orange); background:#1a0d00; }
+    .upload-area input { position:absolute; inset:0; opacity:0; cursor:pointer; }
+    .upload-icon { font-size:2.5rem; margin-bottom:10px; }
+    .upload-label { font-size:.9rem; font-weight:600; margin-bottom:4px; }
+    .upload-sub { font-size:.75rem; color:var(--gray); }
+    .photo-preview { width:100%; border-radius:10px; margin-top:16px; display:none; }
+    .photo-name { font-size:.78rem; color:var(--green); margin-top:8px; display:none; }
+
+    /* CHECKLIST */
+    .check-item { display:flex; align-items:flex-start; gap:14px; padding:14px 0; border-bottom:1px solid var(--border); cursor:pointer; }
+    .check-item:last-child { border-bottom:none; }
+    .check-item input[type=checkbox] { width:20px; height:20px; margin-top:1px; accent-color:var(--orange); flex-shrink:0; cursor:pointer; }
+    .check-item label { font-size:.88rem; line-height:1.5; cursor:pointer; }
+    .check-item label strong { color:var(--white); }
+
+    /* BUTTON */
+    .btn { display:flex; align-items:center; justify-content:center; width:100%; padding:14px; border-radius:10px; font-size:1rem; font-weight:700; border:none; cursor:pointer; font-family:var(--font); transition:background .2s, transform .15s; }
+    .btn:active { transform:scale(.97); }
+    .btn-green { background:var(--green); color:#000; }
+    .btn-green:hover { background:#16a34a; }
+    .btn-green:disabled { background:#333; color:#666; cursor:not-allowed; transform:none; }
+    .error-msg { color:#f87171; font-size:.82rem; text-align:center; margin-top:12px; display:none; }
+
+    /* SUCCESS */
+    #successView { display:none; text-align:center; padding:20px 0; }
+    .access-code-box { background:#0a1f0a; border:2px solid var(--green); border-radius:14px; padding:28px; margin:24px 0; }
+    .access-code-label { font-size:.65rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--green); margin-bottom:8px; }
+    .access-code { font-size:3rem; font-weight:800; letter-spacing:.25em; color:var(--white); }
+    .access-code-hint { font-size:.78rem; color:var(--gray); margin-top:8px; }
+    .success-icon { font-size:3rem; margin-bottom:16px; }
+
+    /* LOADING / ERROR STATES */
+    #loadingView { text-align:center; padding:80px 20px; }
+    #errorView { display:none; text-align:center; padding:80px 20px; }
+    .spin { width:28px; height:28px; border:3px solid var(--border); border-top-color:var(--orange); border-radius:50%; animation:spin .8s linear infinite; margin:0 auto 14px; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="logo"><span>Simple</span><span>Trailer</span></a>
+</nav>
+
+<div class="page">
+
+  <div id="loadingView">
+    <div class="spin"></div>
+    <p style="color:var(--gray)">Buchung wird geladen…</p>
+  </div>
+
+  <div id="errorView">
+    <div style="font-size:2.5rem;margin-bottom:16px;">❌</div>
+    <h2 style="margin-bottom:8px;">Link ungültig</h2>
+    <p style="color:var(--gray)" id="errorMsg">Dieser Link ist nicht gültig oder bereits abgelaufen.</p>
+  </div>
+
+  <div id="mainView" style="display:none">
+
+    <div class="step-badge">📋 Vorab-Check · Schritt 1 von 2</div>
+    <h1>Vor der Abfahrt</h1>
+    <p class="sub">Mache ein Foto des Anhängers und bestätige den Zustand – danach erhältst du den Zugangscode.</p>
+
+    <!-- Buchungsinfo -->
+    <div class="card">
+      <div id="bookingInfo"></div>
+    </div>
+
+    <!-- Foto-Upload -->
+    <div class="card">
+      <p style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gray);margin-bottom:12px;">📷 Foto des Anhängers</p>
+      <div class="upload-area" id="uploadArea">
+        <input type="file" accept="image/*" capture="environment" id="photoInput" onchange="handlePhoto(this)" />
+        <div class="upload-icon">📸</div>
+        <div class="upload-label">Foto aufnehmen oder hochladen</div>
+        <div class="upload-sub">Zeige den gesamten Anhänger von vorne/hinten</div>
+      </div>
+      <img id="photoPreview" class="photo-preview" alt="Vorschau" />
+      <p class="photo-name" id="photoName"></p>
+    </div>
+
+    <!-- Checkliste -->
+    <div class="card">
+      <p style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gray);margin-bottom:4px;">Bestätigung</p>
+      <div class="check-item" onclick="toggle('checkCondition')">
+        <input type="checkbox" id="checkCondition" />
+        <label for="checkCondition">Ich bestätige, dass der Anhänger beim Abholen <strong>unbeschädigt und in ordnungsgemäßem Zustand</strong> ist. Sichtbare Vorschäden habe ich im Foto dokumentiert.</label>
+      </div>
+      <div class="check-item" onclick="toggle('checkLicense')">
+        <input type="checkbox" id="checkLicense" />
+        <label for="checkLicense">Ich besitze einen gültigen <strong>Führerschein Klasse B</strong> und mein Fahrzeug ist für den Anhängerbetrieb versichert.</label>
+      </div>
+      <div class="check-item" onclick="toggle('checkAgb')">
+        <input type="checkbox" id="checkAgb" />
+        <label for="checkAgb">Ich habe die <strong>Allgemeinen Geschäftsbedingungen</strong> von SimpleTrailer gelesen und akzeptiere diese. Bei Schäden hafte ich entsprechend dem gewählten Schutzpaket.</label>
+      </div>
+    </div>
+
+    <button class="btn btn-green" id="submitBtn" onclick="submitPrecheck()" disabled>
+      ✓ Bestätigen &amp; Zugangscode erhalten
+    </button>
+    <p class="error-msg" id="submitError"></p>
+
+    <!-- SUCCESS -->
+    <div id="successView">
+      <div class="success-icon">🎉</div>
+      <h2 style="font-size:1.5rem;font-weight:800;margin-bottom:8px;">Alles bestätigt!</h2>
+      <p style="color:var(--gray);margin-bottom:4px;">Hier ist dein Zugangscode für das Zahlenschloss:</p>
+      <div class="access-code-box">
+        <div class="access-code-label">Zugangscode</div>
+        <div class="access-code" id="accessCodeDisplay">––––––</div>
+        <div class="access-code-hint">Diesen Code am Zahlenschloss eingeben</div>
+      </div>
+      <p style="color:var(--gray);font-size:.82rem;">Gute Fahrt! Denk daran, den Anhänger rechtzeitig zurückzugeben.</p>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL  = 'https://zcjlfatuelhkghtdyrqh.supabase.co';
+  const SUPABASE_ANON = 'sb_publishable_cX1r2GLuIkxEPIpkFKdXaQ_RtP7eDOf';
+
+  const params     = new URLSearchParams(window.location.search);
+  const bookingId  = params.get('id');
+  const precheckToken = params.get('token');
+
+  let photoFile = null;
+  let booking   = null;
+
+  const fmtDate = iso => new Date(iso).toLocaleString('de-DE', {
+    day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'
+  });
+
+  const PRICING = { '3h':'3 Stunden', day:'Ganzer Tag', weekend:'Wochenende' };
+  const INS     = { none:'Kein Schutz', basis:'Basis Schutz (500 € SB)', premium:'Premium Schutz (50 € SB)' };
+
+  async function loadBooking() {
+    if (!bookingId || !precheckToken) return showError('Ungültiger Link.');
+    try {
+      const res  = await fetch(`${SUPABASE_URL}/rest/v1/bookings?select=id,customer_name,start_time,end_time,pricing_type,total_amount,insurance_type,precheck_completed_at,status&id=eq.${bookingId}`, {
+        headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` }
+      });
+      const data = await res.json();
+      if (!data || !data[0]) return showError('Buchung nicht gefunden.');
+      booking = data[0];
+
+      if (booking.status === 'returned') return showError('Diese Buchung ist bereits abgeschlossen.');
+
+      document.getElementById('loadingView').style.display = 'none';
+      document.getElementById('mainView').style.display = 'block';
+
+      document.getElementById('bookingInfo').innerHTML = `
+        <div class="info-row"><span class="key">Name</span><span class="val">${booking.customer_name}</span></div>
+        <div class="info-row"><span class="key">Tarif</span><span class="val">${PRICING[booking.pricing_type] || booking.pricing_type}</span></div>
+        <div class="info-row"><span class="key">Von</span><span class="val">${fmtDate(booking.start_time)}</span></div>
+        <div class="info-row"><span class="key">Bis</span><span class="val">${fmtDate(booking.end_time)}</span></div>
+        <div class="info-row"><span class="key">Schutzpaket</span><span class="val">${INS[booking.insurance_type || 'none']}</span></div>
+        <div class="info-row"><span class="key">Betrag</span><span class="val" style="color:var(--orange)">${(booking.total_amount||0).toFixed(2).replace('.',',')} €</span></div>
+      `;
+
+      if (booking.precheck_completed_at) {
+        // Bereits erledigt – Code direkt anzeigen
+        submitPrecheck(true);
+      }
+    } catch(e) {
+      showError('Fehler beim Laden der Buchung.');
+    }
+  }
+
+  function showError(msg) {
+    document.getElementById('loadingView').style.display = 'none';
+    document.getElementById('errorView').style.display = 'block';
+    document.getElementById('errorMsg').textContent = msg;
+  }
+
+  function toggle(id) {
+    const el = document.getElementById(id);
+    el.checked = !el.checked;
+    checkReady();
+  }
+
+  function checkReady() {
+    const allChecked = ['checkCondition','checkLicense','checkAgb'].every(id => document.getElementById(id).checked);
+    document.getElementById('submitBtn').disabled = !allChecked;
+  }
+
+  ['checkCondition','checkLicense','checkAgb'].forEach(id => {
+    document.getElementById(id).addEventListener('change', checkReady);
+  });
+
+  function handlePhoto(input) {
+    if (!input.files || !input.files[0]) return;
+    photoFile = input.files[0];
+    document.getElementById('photoName').textContent = '✓ ' + photoFile.name;
+    document.getElementById('photoName').style.display = 'block';
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = document.getElementById('photoPreview');
+      img.src = e.target.result;
+      img.style.display = 'block';
+    };
+    reader.readAsDataURL(photoFile);
+    checkReady();
+  }
+
+  async function uploadPhoto() {
+    if (!photoFile) return null;
+    const ext  = photoFile.name.split('.').pop();
+    const path = `precheck/${bookingId}-${Date.now()}.${ext}`;
+    const res  = await fetch(`${SUPABASE_URL}/storage/v1/object/precheck-photos/${path}`, {
+      method: 'POST',
+      headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}`, 'Content-Type': photoFile.type },
+      body: photoFile
+    });
+    if (!res.ok) return null;
+    return `${SUPABASE_URL}/storage/v1/object/public/precheck-photos/${path}`;
+  }
+
+  async function submitPrecheck(skipUpload = false) {
+    const btn = document.getElementById('submitBtn');
+    const err = document.getElementById('submitError');
+    err.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'Wird übermittelt…';
+
+    try {
+      let photoUrl = null;
+      if (!skipUpload && photoFile) photoUrl = await uploadPhoto();
+
+      const res  = await fetch('/api/confirm-precheck', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ booking_id: bookingId, precheck_token: precheckToken, photo_url: photoUrl })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Fehler');
+
+      // Formular ausblenden, Success anzeigen
+      document.querySelectorAll('.card, #submitBtn, .step-badge, h1, .sub, .error-msg').forEach(el => el.style.display = 'none');
+      document.getElementById('accessCodeDisplay').textContent = data.access_code;
+      document.getElementById('successView').style.display = 'block';
+
+    } catch(e) {
+      err.textContent = e.message;
+      err.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = '✓ Bestätigen & Zugangscode erhalten';
+    }
+  }
+
+  loadBooking();
+</script>
+</body>
+</html>

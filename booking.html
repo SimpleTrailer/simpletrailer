@@ -220,19 +220,19 @@
     <div class="card">
       <p class="field-label" style="margin-bottom:16px;">Tarif wählen</p>
       <div class="pricing-grid">
-        <label class="pricing-option" onclick="selectPricing('3h', 8)">
+        <label class="pricing-option" data-pricing="3h" onclick="selectPricing('3h')">
           <input type="radio" name="pricing" value="3h" />
           <div class="pricing-label">Kurztrip</div>
           <div class="pricing-price">8€</div>
           <div class="pricing-desc">3 Stunden</div>
         </label>
-        <label class="pricing-option selected" onclick="selectPricing('day', 25)">
+        <label class="pricing-option selected" data-pricing="day" onclick="selectPricing('day')">
           <input type="radio" name="pricing" value="day" checked />
           <div class="pricing-label">Ganzer Tag</div>
           <div class="pricing-price">25€</div>
           <div class="pricing-desc">24 Stunden</div>
         </label>
-        <label class="pricing-option" onclick="selectPricing('weekend', 45)">
+        <label class="pricing-option" data-pricing="weekend" onclick="selectPricing('weekend')">
           <input type="radio" name="pricing" value="weekend" />
           <div class="pricing-label">Wochenende</div>
           <div class="pricing-price">45€</div>
@@ -414,15 +414,16 @@
     document.getElementById('ins-premium-price').textContent = '+' + premiumAmt.toFixed(2).replace('.', ',') + ' €';
   }
 
+  let trailerPrices = { '3h': 8, day: 25, weekend: 45 };
+
   // Trailer aus Supabase laden
   async function loadTrailer() {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/trailers?select=*&is_available=eq.true&limit=1`, {
-      headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` }
-    });
-    const data = await res.json();
-    if (data && data[0]) {
-      trailerId = data[0].id;
-      if (!data[0].is_available) {
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/trailers?select=*&is_available=eq.true&limit=1`, {
+        headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` }
+      });
+      const data = await res.json();
+      if (!data || !data[0]) {
         document.querySelector('.page').innerHTML = `
           <div style="text-align:center;padding:60px 20px;">
             <div style="font-size:2rem;margin-bottom:16px;">😔</div>
@@ -430,13 +431,28 @@
             <p style="color:var(--gray);margin-bottom:24px;">Der Anhänger ist gerade gebucht. Schau später wieder vorbei.</p>
             <a href="index.html" class="btn btn-orange" style="display:inline-flex;width:auto;">Zurück zur Startseite</a>
           </div>`;
+        return;
       }
+      trailerId = data[0].id;
+      // Echte Preise aus Supabase laden
+      trailerPrices = {
+        '3h':     data[0].price_3h      || 8,
+        day:      data[0].price_day     || 25,
+        weekend:  data[0].price_weekend || 45
+      };
+      // Preise in den Karten aktualisieren
+      document.querySelector('[data-pricing="3h"] .pricing-price').textContent      = trailerPrices['3h'] + '€';
+      document.querySelector('[data-pricing="day"] .pricing-price').textContent     = trailerPrices['day'] + '€';
+      document.querySelector('[data-pricing="weekend"] .pricing-price').textContent = trailerPrices['weekend'] + '€';
+      selectedPrice = trailerPrices[selectedPricing];
+    } catch(e) {
+      console.error('loadTrailer:', e);
     }
   }
 
-  function selectPricing(type, price) {
+  function selectPricing(type) {
     selectedPricing = type;
-    selectedPrice   = price;
+    selectedPrice   = trailerPrices[type];
     document.querySelectorAll('.pricing-option').forEach(el => el.classList.remove('selected'));
     event.currentTarget.classList.add('selected');
     updatePriceDisplay();
@@ -604,6 +620,16 @@
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Fehler beim Laden der Zahlung');
+
+      // Summary mit Server-Preisen aktualisieren (verhindert Abweichungen)
+      document.getElementById('sumBase').textContent  = data.base_amount.toFixed(2).replace('.', ',') + ' €';
+      document.getElementById('sumTotal').textContent = data.amount.toFixed(2).replace('.', ',') + ' €';
+      if (data.insurance_amount > 0) {
+        document.getElementById('sumInsRow').style.display = 'flex';
+        document.getElementById('sumIns').textContent = '+' + data.insurance_amount.toFixed(2).replace('.', ',') + ' €';
+      } else {
+        document.getElementById('sumInsRow').style.display = 'none';
+      }
 
       stripeElements = stripeClient.elements({ clientSecret: data.client_secret, appearance: {
         theme: 'night',

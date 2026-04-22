@@ -38,8 +38,9 @@ module.exports = async (req, res) => {
 
     const meta = pi.metadata;
     const amount = pi.amount / 100;
-    const return_token = crypto.randomBytes(32).toString('hex');
-    const access_code = Math.floor(100000 + Math.random() * 900000).toString();
+    const return_token    = crypto.randomBytes(32).toString('hex');
+    const precheck_token  = crypto.randomBytes(32).toString('hex');
+    const access_code     = Math.floor(100000 + Math.random() * 900000).toString();
 
     const insType   = meta.insurance_type   || 'none';
     const insAmount = parseFloat(meta.insurance_amount || '0') || 0;
@@ -53,15 +54,16 @@ module.exports = async (req, res) => {
         insurance_type: insType, insurance_amount: insAmount,
         stripe_payment_intent_id: payment_intent_id,
         stripe_customer_id: pi.customer, stripe_payment_method_id: pi.payment_method,
-        status: 'confirmed', access_code, return_token
+        status: 'confirmed', access_code, return_token, precheck_token
       }).select().single();
 
     if (bookingError) throw bookingError;
 
     await supabase.from('trailers').update({ is_available: false }).eq('id', meta.trailer_id);
 
-    const siteUrl = process.env.SITE_URL || 'https://simpletrailer.de';
-    const returnUrl = `${siteUrl}/return.html?id=${booking.id}&token=${return_token}`;
+    const siteUrl     = process.env.SITE_URL || 'https://simpletrailer.de';
+    const returnUrl   = `${siteUrl}/return.html?id=${booking.id}&token=${return_token}`;
+    const precheckUrl = `${siteUrl}/precheck?id=${booking.id}&token=${precheck_token}`;
 
     await resend.emails.send({
       from: 'SimpleTrailer <buchung@simpletrailer.de>',
@@ -86,13 +88,16 @@ module.exports = async (req, res) => {
               <tr><td style="color:#888;padding:9px 0;border-bottom:1px solid #2a2a2a;font-size:.88rem;">Bis</td><td style="text-align:right;padding:9px 0;border-bottom:1px solid #2a2a2a;font-size:.88rem;">${fmt(meta.end_time)}</td></tr>
               <tr><td style="color:#888;padding:9px 0;font-size:.88rem;">Bezahlt</td><td style="text-align:right;padding:9px 0;color:#E85D00;font-weight:700;font-size:1rem;">${amount.toFixed(2)} €</td></tr>
             </table>
-            <div style="background:#1a0d00;border:1.5px solid #E85D00;border-radius:12px;padding:20px;margin-bottom:24px;text-align:center;">
-              <p style="color:#E85D00;font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin:0 0 6px;">Zugangscode Schloss</p>
-              <p style="font-weight:800;font-size:2.2rem;letter-spacing:.2em;margin:0;">${access_code}</p>
-              <p style="color:#888;font-size:.78rem;margin:8px 0 0;">Diesen Code am Zahlenschloss des Anhängers eingeben.</p>
+            <div style="background:#0a1f0a;border:1.5px solid #22c55e;border-radius:12px;padding:20px;margin-bottom:20px;">
+              <p style="color:#4ade80;font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin:0 0 6px;">Schritt 1 – Vor Abholung</p>
+              <p style="margin:0 0 12px;font-size:.9rem;">Mache ein <strong>Foto des Anhängers</strong> und bestätige den Zustand – erst dann wird dir der Zugangscode für das Schloss angezeigt.</p>
+              <a href="${precheckUrl}" style="display:inline-block;background:#22c55e;color:#000;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:700;font-size:.9rem;">📷 Vorab-Check starten →</a>
             </div>
-            <a href="${returnUrl}" style="display:block;text-align:center;background:#E85D00;color:#fff;text-decoration:none;padding:14px 20px;border-radius:8px;font-weight:700;font-size:.95rem;margin-bottom:12px;">Rückgabe bestätigen →</a>
-            <p style="color:#555;font-size:.75rem;text-align:center;margin:0;">Diesen Link bitte aufbewahren – du brauchst ihn bei der Rückgabe.</p>
+            <div style="background:#1a1a1a;border:1px solid #383838;border-radius:12px;padding:16px 20px;margin-bottom:20px;text-align:center;">
+              <p style="color:#888;font-size:.78rem;margin:0 0 4px;">Schritt 2 – Nach der Nutzung</p>
+              <a href="${returnUrl}" style="color:#E85D00;font-size:.85rem;font-weight:600;text-decoration:none;">Rückgabe bestätigen →</a>
+            </div>
+            <p style="color:#555;font-size:.75rem;text-align:center;margin:0;">Beide Links bitte aufbewahren.</p>
           </div>
           <p style="color:#444;font-size:.72rem;text-align:center;margin-top:24px;">SimpleTrailer · Bremen · info@simpletrailer.de</p>
         </div>
