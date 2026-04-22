@@ -641,6 +641,9 @@
           ? `<span style="color:var(--green)">✓ Abgebucht (${fmtEur(b.late_fee_amount)})</span>`
           : `<span style="color:var(--red)">✗ Fehlgeschlagen (${fmtEur(b.late_fee_amount)})</span>`)
       : '<span style="color:var(--gray)">Keine</span>';
+    const precheckPhotoHtml = b.precheck_photo_url
+      ? `<p class="section-tag">Vorher-Foto (Vorab-Check)</p><img src="${b.precheck_photo_url}" class="photo-preview" alt="Vorher-Foto" />`
+      : '';
     const photoHtml = b.return_photo_url
       ? `<p class="section-tag">Rückgabefoto</p><img src="${b.return_photo_url}" class="photo-preview" alt="Rückgabefoto" />`
       : '';
@@ -672,6 +675,7 @@
       <p class="section-tag">Zahlung</p>
       ${row('Stripe PI', b.stripe_payment_intent_id ? `<span class="mono">${b.stripe_payment_intent_id.slice(0,24)}…</span>` : '–')}
       ${row('Verspätungsaufpreis', lateStatus)}
+      ${precheckPhotoHtml}
       ${photoHtml}
     `;
     document.getElementById('modalBg').classList.add('open');
