@@ -402,6 +402,7 @@
     }
     .trailer-card:hover { border-color: #555; transform: translateY(-2px); }
     .trailer-card.unavailable { opacity: .75; }
+    .swipe-hint { display: none; }
 
     .trailer-card-img {
       width: 100%; aspect-ratio: 4/3;
@@ -875,34 +876,44 @@
       #map { height: 320px; }
       .trailer-grid { grid-template-columns: 1fr; gap: 32px; }
       .trailers-grid-wrapper {
-        overflow: hidden;
-        margin-top: 32px;
-      }
-      .trailers-grid-wrapper.scroll-mode {
         overflow-x: scroll;
         overflow-y: hidden;
         scrollbar-width: none;
+        margin-top: 16px;
       }
-      .trailers-grid-wrapper.scroll-mode::-webkit-scrollbar { display: none; }
+      .trailers-grid-wrapper::-webkit-scrollbar { display: none; }
       .trailers-grid {
         display: flex;
         flex-direction: row;
         gap: 16px;
         width: max-content;
-        animation: trailers-scroll 18s linear 2.5s infinite;
-      }
-      .trailers-grid-wrapper.scroll-mode .trailers-grid {
-        animation: none;
-        transform: none !important;
-      }
-      @keyframes trailers-scroll {
-        from { transform: translateX(0); }
-        to   { transform: translateX(-50%); }
+        padding-bottom: 4px;
+        scroll-snap-type: x mandatory;
       }
       .trailers-grid .trailer-card {
         min-width: 78vw;
         max-width: 78vw;
         flex-shrink: 0;
+        scroll-snap-align: start;
+      }
+      .swipe-hint {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 12px;
+        color: #666;
+        font-size: .78rem;
+        font-weight: 500;
+      }
+      .swipe-hint-arrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        animation: swipe-bounce 1.4s ease-in-out infinite;
+      }
+      @keyframes swipe-bounce {
+        0%, 100% { transform: translateX(0); }
+        50%       { transform: translateX(5px); }
       }
       .steps { grid-template-columns: 1fr 1fr; gap: 36px; }
       .steps::before { display: none; }
@@ -1031,9 +1042,13 @@
     <div class="reveal">
       <p class="section-tag">Unsere Anhänger</p>
       <h2 class="section-title">Für jeden Zweck der richtige.</h2>
+      <div class="swipe-hint" id="swipeHint">
+        <span class="swipe-hint-arrow">Wischen →</span>
+        <span>um alle Anhänger zu sehen</span>
+      </div>
     </div>
 
-    <div class="trailers-grid-wrapper">
+    <div class="trailers-grid-wrapper" id="trailersWrapper">
     <div class="trailers-grid">
 
       <!-- PKW-Anhänger mit Plane -->
@@ -1556,33 +1571,16 @@
     });
   }
 
-  // TRAILER CAROUSEL – CSS-Animation + nahtloser Wechsel zu nativem Scroll beim Swipen
+  // TRAILER SWIPE HINT – blendet sich aus sobald der User wischt
   (function() {
     if (!window.matchMedia('(max-width: 767px)').matches) return;
-
-    const wrapper = document.querySelector('.trailers-grid-wrapper');
-    const grid    = document.querySelector('.trailers-grid');
-    if (!grid || !wrapper) return;
-
-    // Karten klonen für nahtlosen Loop
-    Array.from(grid.children).forEach(card => {
-      const clone = card.cloneNode(true);
-      clone.setAttribute('aria-hidden', 'true');
-      grid.appendChild(clone);
-    });
-
-    wrapper.addEventListener('touchstart', () => {
-      if (wrapper.classList.contains('scroll-mode')) return;
-
-      // Aktuelle visuelle Position aus der laufenden CSS-Animation auslesen
-      const tx = new DOMMatrixReadOnly(getComputedStyle(grid).transform).m41;
-
-      // Auf Scroll-Modus umschalten (Animation stoppt per CSS)
-      wrapper.classList.add('scroll-mode');
-
-      // ScrollLeft so setzen dass der visuelle Sprung 0 ist
-      wrapper.scrollLeft = -tx;
-    }, { passive: true });
+    const hint    = document.getElementById('swipeHint');
+    const wrapper = document.getElementById('trailersWrapper');
+    if (!hint || !wrapper) return;
+    wrapper.addEventListener('scroll', () => {
+      hint.style.opacity = '0';
+      hint.style.transition = 'opacity .4s';
+    }, { once: true, passive: true });
   })();
 </script>
 </body>
