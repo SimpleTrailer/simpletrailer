@@ -66,7 +66,7 @@ module.exports = async (req, res) => {
         stripe_payment_intent_id: payment_intent_id,
         stripe_customer_id: pi.customer, stripe_payment_method_id: pi.payment_method,
         status: 'confirmed', access_code, return_token, precheck_token
-      }).select().single();
+      }).select('*, trailers(name)').single();
 
     if (bookingError) throw bookingError;
 
@@ -93,6 +93,7 @@ module.exports = async (req, res) => {
               <p style="font-weight:800;font-size:1.1rem;margin:0;">#${booking.id.slice(0, 8).toUpperCase()}</p>
             </div>
             <table style="width:100%;border-collapse:collapse;margin-bottom:24px;">
+              <tr><td style="color:#888;padding:9px 0;border-bottom:1px solid #2a2a2a;font-size:.88rem;">Anhänger</td><td style="text-align:right;padding:9px 0;border-bottom:1px solid #2a2a2a;font-size:.88rem;">${booking.trailers?.name || 'PKW-Anhänger'}</td></tr>
               <tr><td style="color:#888;padding:9px 0;border-bottom:1px solid #2a2a2a;font-size:.88rem;">Tarif</td><td style="text-align:right;padding:9px 0;border-bottom:1px solid #2a2a2a;font-size:.88rem;">${PRICING_LABEL[meta.pricing_type]}</td></tr>
               <tr><td style="color:#888;padding:9px 0;border-bottom:1px solid #2a2a2a;font-size:.88rem;">Schutzpaket</td><td style="text-align:right;padding:9px 0;border-bottom:1px solid #2a2a2a;font-size:.88rem;">${insType === 'none' ? 'Kein Schutz' : insType === 'basis' ? 'Basis Schutz (500 € SB)' : 'Premium Schutz (50 € SB)'}</td></tr>
               <tr><td style="color:#888;padding:9px 0;border-bottom:1px solid #2a2a2a;font-size:.88rem;">Von</td><td style="text-align:right;padding:9px 0;border-bottom:1px solid #2a2a2a;font-size:.88rem;">${fmt(meta.start_time)}</td></tr>
