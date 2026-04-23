@@ -301,8 +301,7 @@
     <!-- Availability Calendar -->
     <div class="card">
       <p class="field-label" style="margin-bottom:14px;">Verfügbarkeit</p>
-      <div id="calLoading" style="text-align:center;padding:20px;color:var(--gray);font-size:.85rem;">Wird geladen…</div>
-      <div id="calWrap" style="display:none;">
+      <div id="calWrap">
         <div class="cal-nav">
           <button class="cal-nav-btn" onclick="calPrev()">‹</button>
           <span class="cal-title" id="calTitle"></span>
@@ -931,14 +930,13 @@
   }
 
   async function loadAvailability() {
+    renderCalendar(); // Sofort mit grünen Punkten anzeigen
     try {
       const res  = await fetch('/api/get-availability');
       const data = await res.json();
       bookedRanges = data.booked || [];
+      renderCalendar(); // Nochmal mit echten Buchungen aktualisieren
     } catch(e) { bookedRanges = []; }
-    document.getElementById('calLoading').style.display = 'none';
-    document.getElementById('calWrap').style.display    = 'block';
-    renderCalendar();
   }
 
   // Session aus localStorage laden
