@@ -27,11 +27,10 @@ module.exports = async (req, res) => {
       const hours = (new Date(end) - new Date(start)) / 3600000;
       if (hours <= 0) return 0;
       if (hours <= 3)  return 8;
-      // Kalender-Tage (Europe/Berlin) zählen, nicht 24h-Blöcke
-      const toDate = iso => new Date(new Date(iso).toLocaleDateString('sv-SE', {timeZone:'Europe/Berlin'}));
-      const calDays = Math.round((toDate(end) - toDate(start)) / 86400000);
-      if (calDays <= 1) return 25;
-      return 25 + (calDays - 1) * 20;
+      // 2h Kulanz pro Tagesgrenze (identisch mit Frontend)
+      const extraDays = Math.max(0, Math.ceil((hours - 24 - 2) / 24));
+      if (extraDays === 0) return 25;
+      return 25 + extraDays * 20;
     }
 
     let baseAmount;

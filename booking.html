@@ -763,12 +763,9 @@
     const hours = (endMs - startMs) / 3600000;
     if (hours <= 0)  return null;
     if (hours <= 3)  return { base: 8,  extraDays: 0, label: 'Kurztrip (bis 3 Std.)' };
-    // Kalender-Tage zählen (nicht 24h-Blöcke) → 27.04 08:00 bis 29.04 09:00 = gleich wie 29.04 08:00
-    const sDay = new Date(startMs); sDay.setHours(0,0,0,0);
-    const eDay = new Date(endMs);   eDay.setHours(0,0,0,0);
-    const calDays  = Math.round((eDay - sDay) / 86400000);
-    if (calDays <= 1) return { base: 25, extraDays: 0, label: 'Ganzer Tag' };
-    const extraDays = calDays - 1;
+    // 2h Kulanz pro Tagesgrenze: 48h→45€, 49h→45€, 50h→45€, 51h→65€
+    const extraDays = Math.max(0, Math.ceil((hours - 24 - 2) / 24));
+    if (extraDays === 0) return { base: 25, extraDays: 0, label: 'Ganzer Tag' };
     return { base: 25 + extraDays * 20, extraDays, label: `${extraDays + 1} Tage` };
   }
 
@@ -883,7 +880,7 @@
       document.getElementById('pbDay1Line').innerHTML = `<span>Erster Tag</span><span>25,00 €</span>`;
       document.getElementById('pbExtraLine').style.display = 'none';
     }
-    document.getElementById('pbTotal').innerHTML = `<span>Mietpreis</span><span>${p.base.toFixed(2).replace('.',',')} €</span>`;
+    document.getElementById('pbTotal').textContent = p.base.toFixed(2).replace('.',',') + ' €';
     document.getElementById('priceBreakdown').style.display = 'block';
     updateInsurancePrices(p.base);
     renderCalendar();
