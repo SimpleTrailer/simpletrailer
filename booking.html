@@ -241,18 +241,21 @@
           <div class="pricing-label">Kurztrip</div>
           <div class="pricing-price">8€</div>
           <div class="pricing-desc">3 Stunden</div>
+          <div style="font-size:.65rem;color:#666;margin-top:4px;">≈ 2,67 €/Std.</div>
         </label>
         <label class="pricing-option selected" data-pricing="day" onclick="selectPricing('day')">
           <input type="radio" name="pricing" value="day" checked />
           <div class="pricing-label">Ganzer Tag</div>
           <div class="pricing-price">25€</div>
           <div class="pricing-desc">24 Stunden</div>
+          <div style="font-size:.65rem;color:#666;margin-top:4px;">≈ 1,04 €/Std.</div>
         </label>
         <label class="pricing-option" data-pricing="weekend" onclick="selectPricing('weekend')">
           <input type="radio" name="pricing" value="weekend" />
           <div class="pricing-label">Wochenende</div>
-          <div class="pricing-price">45€</div>
+          <div class="pricing-price">55€</div>
           <div class="pricing-desc">Fr–So</div>
+          <div style="font-size:.65rem;color:#666;margin-top:4px;">≈ 0,92 €/Std.</div>
         </label>
       </div>
     </div>
@@ -526,7 +529,7 @@
     document.getElementById('ins-premium-price').textContent = '+' + premiumAmt.toFixed(2).replace('.', ',') + ' €';
   }
 
-  let trailerPrices = { '3h': 8, day: 25, weekend: 45 };
+  let trailerPrices = { '3h': 8, day: 25, weekend: 55 };
 
   // Trailer aus Supabase laden
   async function loadTrailer() {
