@@ -166,6 +166,8 @@
     .cal-legend { display:flex; gap:14px; font-size:.72rem; color:var(--gray); flex-wrap:wrap; }
     .legend-dot { width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:4px; vertical-align:middle; }
     .cal-day.not-selectable { color:#333; cursor:default; background:#0d0d0d !important; border:1px solid #181818 !important; }
+    .cal-day.partial { background:#1a1200; color:#fbbf24; cursor:pointer; border:1px solid #92400e; }
+    .cal-day.partial:hover { background:#2d1f00; border-color:#f59e0b; }
     .cal-hint { font-size:.76rem; color:var(--orange); margin-top:10px; text-align:center; padding:8px; background:#1a0d00; border-radius:6px; border:1px dashed var(--orange); }
     /* MODE */
     .mode-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
@@ -386,6 +388,7 @@
         <p class="field-label" style="margin-bottom:0;">Verfügbarkeit</p>
         <div class="cal-legend">
           <span><span class="legend-dot" style="background:#4ade80;border:1px solid #166534;"></span>Verfügbar</span>
+          <span><span class="legend-dot" style="background:#fbbf24;border:1px solid #92400e;"></span>Teils frei</span>
           <span><span class="legend-dot" style="background:#f87171;border:1px solid #7f1d1d;"></span>Gebucht</span>
         </div>
       </div>
@@ -837,7 +840,10 @@
       const dow  = d0.getDay(); // 0=So,1=Mo,...,5=Fr,6=Sa
       const isWeekendDay = (dow === 5 || dow === 6 || dow === 0);
       const d1 = new Date(d0); d1.setHours(23,59,59,999);
-      const booked = !other && !past && bookedRanges.some(r =>
+      const fullyBooked   = !other && !past && bookedRanges.some(r =>
+        new Date(r.start_time) <= d0 && new Date(r.end_time) >= d1
+      );
+      const partialBooked = !fullyBooked && !other && !past && bookedRanges.some(r =>
         new Date(r.start_time) < d1 && new Date(r.end_time) > d0
       );
       const cell = document.createElement('div');
@@ -846,8 +852,15 @@
 
       if (other || past) {
         cls += ' other-month';
-      } else if (booked) {
+      } else if (fullyBooked) {
         cls += ' booked';
+      } else if (partialBooked) {
+        if (bookingMode === 'weekend' && !isWeekendDay) {
+          cls += ' not-selectable';
+        } else {
+          cls += ' partial';
+          clickable = true;
+        }
       } else if (bookingMode === 'weekend' && !isWeekendDay) {
         cls += ' not-selectable';
       } else {
