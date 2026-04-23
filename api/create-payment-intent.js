@@ -23,11 +23,15 @@ module.exports = async (req, res) => {
     if (trailerError || !trailer) return res.status(404).json({ error: 'Anhänger nicht gefunden' });
     if (!trailer.is_available) return res.status(400).json({ error: 'Anhänger ist gerade nicht verfügbar' });
 
-    let baseAmount;
-    if (pricing_type === '3h') baseAmount = trailer.price_3h;
-    else if (pricing_type === 'day') baseAmount = trailer.price_day;
-    else if (pricing_type === 'weekend') baseAmount = trailer.price_weekend;
-    else return res.status(400).json({ error: 'Ungültiger Tarif' });
+    function calcBaseAmount(start, end) {
+      const hours = (new Date(end) - new Date(start)) / 3600000;
+      if (hours <= 0) return 0;
+      if (hours <= 3)  return 8;
+      if (hours <= 24) return 25;
+      return 25 + Math.ceil((hours - 24) / 24) * 20;
+    }
+    const baseAmount = calcBaseAmount(start_time, end_time);
+    if (baseAmount <= 0) return res.status(400).json({ error: 'Ungültiger Zeitraum' });
 
     const insType   = ['basis','premium'].includes(insurance_type) ? insurance_type : 'none';
     const insRate   = insType === 'basis' ? 0.15 : insType === 'premium' ? 0.30 : 0;
