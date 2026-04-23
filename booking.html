@@ -168,6 +168,17 @@
     .cal-day.not-selectable { color:#333; cursor:default; background:#0d0d0d !important; border:1px solid #181818 !important; }
     .cal-day.partial { background:#1a1200; color:#fbbf24; cursor:pointer; border:1px solid #92400e; }
     .cal-day.partial:hover { background:#2d1f00; border-color:#f59e0b; }
+    .cal-day.partial::after {
+      content: attr(data-info);
+      position: absolute;
+      bottom: calc(100% + 7px);
+      left: 50%; transform: translateX(-50%);
+      background: #1a1200; border: 1px solid #f59e0b; color: #fbbf24;
+      padding: 4px 9px; border-radius: 6px; font-size: .66rem;
+      white-space: nowrap; pointer-events: none;
+      opacity: 0; transition: opacity .15s; z-index: 20;
+    }
+    .cal-day.partial:hover::after { opacity: 1; }
     .cal-hint { font-size:.76rem; color:var(--orange); margin-top:10px; text-align:center; padding:8px; background:#1a0d00; border-radius:6px; border:1px dashed var(--orange); }
     /* MODE */
     .mode-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
@@ -860,6 +871,15 @@
         } else {
           cls += ' partial';
           clickable = true;
+          const pb = bookedRanges.find(r => new Date(r.start_time) < d1 && new Date(r.end_time) > d0);
+          if (pb) {
+            const fmtT = dt => new Date(dt).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Berlin'});
+            const info = new Date(pb.start_time) <= d0
+              ? `Frei ab ${fmtT(pb.end_time)} Uhr`
+              : `Frei bis ${fmtT(pb.start_time)} Uhr`;
+            cell.dataset.info   = info;
+            cell.dataset.freeAt = info;
+          }
         }
       } else if (bookingMode === 'weekend' && !isWeekendDay) {
         cls += ' not-selectable';
@@ -873,7 +893,7 @@
       if (selSD && selED && dStr > selSD && dStr < selED) cls += ' in-range';
       cell.className   = cls;
       cell.textContent = date.getDate();
-      if (clickable) cell.addEventListener('click', () => handleCalDayClick(new Date(d0)));
+      if (clickable) cell.addEventListener('click', () => handleCalDayClick(new Date(d0), cell.dataset.freeAt || null));
       return cell;
     };
 
@@ -886,7 +906,8 @@
   function calPrev() { calMonth--; if (calMonth<0){calMonth=11;calYear--;} renderCalendar(); }
   function calNext() { calMonth++; if (calMonth>11){calMonth=0;calYear++;} renderCalendar(); }
 
-  function handleCalDayClick(d) {
+  function handleCalDayClick(d, freeAt) {
+    if (freeAt) updateCalHint(true, `⚠️ ${freeAt} – Uhrzeit entsprechend wählen`);
     if (bookingMode === 'weekend') {
       // Snap to Friday of that weekend
       const dow = d.getDay();
@@ -921,9 +942,12 @@
     calcDates();
   }
 
-  function updateCalHint(show) {
+  function updateCalHint(show, text) {
     const el = document.getElementById('calHint');
-    if (el) el.style.display = show ? 'block' : 'none';
+    if (!el) return;
+    if (text) el.textContent = text;
+    else el.textContent = '📅 Jetzt Enddatum im Kalender anklicken';
+    el.style.display = show ? 'block' : 'none';
   }
 
   async function loadAvailability() {
