@@ -132,6 +132,17 @@
     .ins-price.free { color: var(--gray); }
     .ins-badge { display: inline-block; font-size: .62rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; background: #1a3a1a; color: #22c55e; border-radius: 4px; padding: 2px 6px; margin-left: 6px; vertical-align: middle; }
 
+    /* ACCOUNT STEP */
+    .auth-tabs { display: flex; gap: 4px; background: var(--s2); border: 1.5px solid var(--border); border-radius: 10px; padding: 4px; margin-bottom: 20px; }
+    .auth-tab { flex: 1; text-align: center; padding: 9px; border-radius: 7px; font-size: .88rem; font-weight: 600; cursor: pointer; border: none; background: transparent; color: var(--gray); transition: all .2s; font-family: var(--font); }
+    .auth-tab.active { background: var(--orange); color: #fff; }
+    .logged-in-card { background: var(--s2); border: 1.5px solid #22c55e; border-radius: 12px; padding: 18px; display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+    .logged-in-avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--orange); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 800; flex-shrink: 0; }
+    .logged-in-name { font-weight: 700; font-size: .95rem; }
+    .logged-in-detail { font-size: .78rem; color: var(--gray); margin-top: 2px; }
+    .switch-account { background: none; border: none; color: var(--gray); font-size: .78rem; cursor: pointer; font-family: var(--font); text-decoration: underline; margin-top: 4px; padding: 0; }
+    .auth-success { color: #4ade80; font-size: .82rem; margin-top: 8px; display: none; text-align: center; }
+
     /* ERROR */
     .error-msg { color: #f87171; font-size: .82rem; margin-top: 6px; display: none; }
 
@@ -190,12 +201,17 @@
     <div class="step-line"></div>
     <div class="step-item">
       <div class="step-circle" id="sc2">2</div>
-      <span class="step-label" id="sl2">Deine Daten</span>
+      <span class="step-label" id="sl2">Konto</span>
     </div>
     <div class="step-line"></div>
     <div class="step-item">
       <div class="step-circle" id="sc3">3</div>
-      <span class="step-label" id="sl3">Zahlung</span>
+      <span class="step-label" id="sl3">Schutzpaket</span>
+    </div>
+    <div class="step-line"></div>
+    <div class="step-item">
+      <div class="step-circle" id="sc4">4</div>
+      <span class="step-label" id="sl4">Zahlung</span>
     </div>
   </div>
 
@@ -265,36 +281,123 @@
     <button class="btn btn-orange" onclick="goStep2()">Weiter →</button>
   </div>
 
-  <!-- STEP 2: Kundendaten -->
+  <!-- STEP 2: Konto -->
   <div class="step-content" id="step2">
+    <!-- Eingeloggt -->
+    <div id="loggedInView" style="display:none;">
+      <div class="logged-in-card">
+        <div class="logged-in-avatar" id="bookingAvatar">?</div>
+        <div style="flex:1">
+          <div class="logged-in-name" id="bookingName">–</div>
+          <div class="logged-in-detail" id="bookingEmail">–</div>
+          <div class="logged-in-detail" id="bookingPhone">–</div>
+          <button class="switch-account" onclick="switchBookingAccount()">Anderes Konto verwenden</button>
+        </div>
+        <span style="color:#22c55e;font-size:1.2rem;">✓</span>
+      </div>
+      <button class="btn btn-orange" onclick="goStep3()">Weiter →</button>
+      <div style="text-align:center;margin-top:12px;">
+        <a href="#" onclick="goToStep(1)" style="color:var(--gray);font-size:.85rem;text-decoration:none;">← Zurück</a>
+      </div>
+    </div>
+
+    <!-- Auth Formular -->
+    <div id="authFormView">
+      <div class="auth-tabs">
+        <button class="auth-tab active" onclick="switchAuthTab('login')">Anmelden</button>
+        <button class="auth-tab" onclick="switchAuthTab('register')">Registrieren</button>
+      </div>
+
+      <!-- LOGIN -->
+      <div id="authLogin">
+        <div class="card">
+          <div class="field-group">
+            <label class="field-label">E-Mail</label>
+            <input type="email" class="field-input" id="authLoginEmail" placeholder="deine@email.de" autocomplete="email" />
+          </div>
+          <div class="field-group">
+            <label class="field-label">Passwort</label>
+            <input type="password" class="field-input" id="authLoginPass" placeholder="••••••••" autocomplete="current-password" />
+          </div>
+          <div class="error-msg" id="authLoginErr" style="display:none;"></div>
+          <button class="btn btn-orange" style="margin-top:8px;" onclick="doBookingLogin()">Anmelden</button>
+          <div style="text-align:center;margin-top:12px;">
+            <a href="/account" style="color:var(--gray);font-size:.82rem;text-decoration:none;">Passwort vergessen?</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- REGISTER -->
+      <div id="authRegister" style="display:none;">
+        <div class="card">
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">Vorname *</label>
+              <input type="text" class="field-input" id="authRegFirst" placeholder="Max" autocomplete="given-name" />
+            </div>
+            <div class="field-group">
+              <label class="field-label">Nachname *</label>
+              <input type="text" class="field-input" id="authRegLast" placeholder="Mustermann" autocomplete="family-name" />
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">E-Mail *</label>
+            <input type="email" class="field-input" id="authRegEmail" placeholder="deine@email.de" autocomplete="email" />
+          </div>
+          <div class="field-group">
+            <label class="field-label">Telefon *</label>
+            <input type="tel" class="field-input" id="authRegPhone" placeholder="+49 151 12345678" autocomplete="tel" />
+          </div>
+          <div class="field-group">
+            <label class="field-label">Adresse *</label>
+            <input type="text" class="field-input" id="authRegAddress" placeholder="Musterstraße 1, 28195 Bremen" autocomplete="street-address" />
+          </div>
+          <div class="field-group">
+            <label class="field-label">Passwort *</label>
+            <input type="password" class="field-input" id="authRegPass" placeholder="Mindestens 6 Zeichen" autocomplete="new-password" />
+          </div>
+          <div class="error-msg" id="authRegErr" style="display:none;"></div>
+          <div class="auth-success" id="authRegOk"></div>
+          <button class="btn btn-orange" style="margin-top:8px;" onclick="doBookingRegister()">Konto erstellen & weiter</button>
+        </div>
+      </div>
+
+      <div style="text-align:center;margin-top:12px;">
+        <a href="#" onclick="goToStep(1)" style="color:var(--gray);font-size:.85rem;text-decoration:none;">← Zurück</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 3: Schutzpaket -->
+  <div class="step-content" id="step3">
     <div class="card">
-      <p class="field-label" style="margin-bottom:20px;">Deine Kontaktdaten</p>
-      <div class="field-row">
-        <div class="field-group">
-          <label class="field-label">Vorname *</label>
-          <input type="text" class="field-input" id="custFirstName" placeholder="Max" autocomplete="given-name" />
-          <span class="error-msg" id="errFirstName">Bitte Vorname eingeben</span>
+      <p class="field-label" style="margin-bottom:4px;">Schutzpaket wählen</p>
+      <p style="color:var(--gray);font-size:.78rem;margin-bottom:14px;">Begrenze deine Haftung bei Schäden am Anhänger.</p>
+      <div class="insurance-grid">
+        <div class="insurance-option selected" id="ins-none" onclick="selectInsurance('none')">
+          <div class="ins-radio"></div>
+          <div class="ins-body">
+            <div class="ins-name">Kein Schutz</div>
+            <div class="ins-desc">Volle Haftung bis 1.500 € bei Schäden</div>
+          </div>
+          <div class="ins-price free">0,00 €</div>
         </div>
-        <div class="field-group">
-          <label class="field-label">Nachname *</label>
-          <input type="text" class="field-input" id="custLastName" placeholder="Mustermann" autocomplete="family-name" />
-          <span class="error-msg" id="errLastName">Bitte Nachname eingeben</span>
+        <div class="insurance-option" id="ins-basis" onclick="selectInsurance('basis')">
+          <div class="ins-radio"></div>
+          <div class="ins-body">
+            <div class="ins-name">Basis Schutz <span class="ins-badge">Beliebt</span></div>
+            <div class="ins-desc">Selbstbeteiligung auf 500 € begrenzt · +15% vom Mietpreis</div>
+          </div>
+          <div class="ins-price" id="ins-basis-price">–</div>
         </div>
-      </div>
-      <div class="field-group">
-        <label class="field-label">E-Mail *</label>
-        <input type="email" class="field-input" id="custEmail" placeholder="max@beispiel.de" autocomplete="email" />
-        <span class="error-msg" id="errEmail">Bitte gültige E-Mail eingeben</span>
-      </div>
-      <div class="field-group">
-        <label class="field-label">Telefon *</label>
-        <input type="tel" class="field-input" id="custPhone" placeholder="+49 151 12345678" autocomplete="tel" />
-        <span class="error-msg" id="errPhone">Bitte Telefonnummer eingeben</span>
-      </div>
-      <div class="field-group">
-        <label class="field-label">Adresse *</label>
-        <input type="text" class="field-input" id="custAddress" placeholder="Musterstraße 1, 28195 Bremen" autocomplete="street-address" />
-        <span class="error-msg" id="errAddress">Bitte Adresse eingeben</span>
+        <div class="insurance-option" id="ins-premium" onclick="selectInsurance('premium')">
+          <div class="ins-radio"></div>
+          <div class="ins-body">
+            <div class="ins-name">Premium Schutz</div>
+            <div class="ins-desc">Selbstbeteiligung auf 50 € begrenzt · +30% vom Mietpreis</div>
+          </div>
+          <div class="ins-price" id="ins-premium-price">–</div>
+        </div>
       </div>
     </div>
     <div class="card" style="display:flex;gap:14px;align-items:flex-start;">
@@ -304,53 +407,17 @@
       </label>
     </div>
     <span class="error-msg" id="errLicense" style="margin-top:-8px;margin-bottom:12px;display:none;">Bitte Führerschein bestätigen</span>
-
-    <!-- INSURANCE -->
-    <div class="card" style="margin-top:4px;">
-      <p class="field-label" style="margin-bottom:4px;">Schutzpaket wählen</p>
-      <p style="color:var(--gray);font-size:.78rem;margin-bottom:14px;">Begrenze deine Haftung bei Schäden am Anhänger.</p>
-      <div class="insurance-grid">
-
-        <div class="insurance-option selected" id="ins-none" onclick="selectInsurance('none')">
-          <div class="ins-radio"></div>
-          <div class="ins-body">
-            <div class="ins-name">Kein Schutz</div>
-            <div class="ins-desc">Volle Haftung bis 1.500 € bei Schäden</div>
-          </div>
-          <div class="ins-price free">0,00 €</div>
-        </div>
-
-        <div class="insurance-option" id="ins-basis" onclick="selectInsurance('basis')">
-          <div class="ins-radio"></div>
-          <div class="ins-body">
-            <div class="ins-name">Basis Schutz <span class="ins-badge">Beliebt</span></div>
-            <div class="ins-desc">Selbstbeteiligung auf 500 € begrenzt · +15% vom Mietpreis</div>
-          </div>
-          <div class="ins-price" id="ins-basis-price">–</div>
-        </div>
-
-        <div class="insurance-option" id="ins-premium" onclick="selectInsurance('premium')">
-          <div class="ins-radio"></div>
-          <div class="ins-body">
-            <div class="ins-name">Premium Schutz</div>
-            <div class="ins-desc">Selbstbeteiligung auf 50 € begrenzt · +30% vom Mietpreis</div>
-          </div>
-          <div class="ins-price" id="ins-premium-price">–</div>
-        </div>
-
-      </div>
-    </div>
-
-    <button class="btn btn-orange" onclick="goStep3()">Weiter zur Zahlung →</button>
+    <button class="btn btn-orange" onclick="goStep4()">Weiter zur Zahlung →</button>
     <div style="text-align:center;margin-top:12px;">
-      <a href="#" onclick="goToStep(1)" style="color:var(--gray);font-size:.85rem;text-decoration:none;">← Zurück</a>
+      <a href="#" onclick="goToStep(2)" style="color:var(--gray);font-size:.85rem;text-decoration:none;">← Zurück</a>
     </div>
   </div>
 
-  <!-- STEP 3: Zahlung -->
-  <div class="step-content" id="step3">
+  <!-- STEP 4: Zahlung -->
+  <div class="step-content" id="step4">
     <div class="card" id="orderSummary">
       <p class="field-label" style="margin-bottom:16px;">Zusammenfassung</p>
+      <div class="summary-row"><span class="label">Kunde</span><span id="sumName">–</span></div>
       <div class="summary-row"><span class="label">Anhänger</span><span>PKW-Anhänger mit Plane</span></div>
       <div class="summary-row"><span class="label">Tarif</span><span id="sumTarif">–</span></div>
       <div class="summary-row"><span class="label">Mietpreis</span><span id="sumBase">–</span></div>
@@ -368,7 +435,7 @@
     </div>
 
     <div style="text-align:center;margin-top:12px;">
-      <a href="#" onclick="goToStep(2)" style="color:var(--gray);font-size:.85rem;text-decoration:none;">← Zurück</a>
+      <a href="#" onclick="goToStep(3)" style="color:var(--gray);font-size:.85rem;text-decoration:none;">← Zurück</a>
     </div>
   </div>
 
@@ -378,6 +445,9 @@
   const SUPABASE_URL  = 'https://zcjlfatuelhkghtdyrqh.supabase.co';
   const SUPABASE_ANON = 'sb_publishable_cX1r2GLuIkxEPIpkFKdXaQ_RtP7eDOf';
   const STRIPE_PK     = 'pk_test_51TOehyB86POpsdCdzLz5B5jj5mrCwx6i176AVIRaPwnynSxBDfdEcFCMo20wjNaxHVs10iYtdUvRTL3L2qGYtCTz00bjEzHFcZ';
+
+  let bookingUser   = null; // eingeloggter User für diese Buchung
+  let bookingToken  = null;
 
   const stripeClient = Stripe(STRIPE_PK);
 
@@ -478,33 +548,112 @@
     });
   }
 
-  // Eingeloggte User-Daten vorausfüllen
-  async function prefillUserData() {
+  // Session aus localStorage laden
+  async function checkExistingSession() {
     const saved = localStorage.getItem('st_session');
     if (!saved) return;
     try {
       const { access_token } = JSON.parse(saved);
-      const res = await fetch('https://zcjlfatuelhkghtdyrqh.supabase.co/auth/v1/user', {
-        headers: { apikey: 'sb_publishable_cX1r2GLuIkxEPIpkFKdXaQ_RtP7eDOf', Authorization: `Bearer ${access_token}` }
+      const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+        headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${access_token}` }
       });
-      if (!res.ok) return;
+      if (!res.ok) { localStorage.removeItem('st_session'); return; }
       const user = await res.json();
-      const firstName = user.user_metadata?.first_name || '';
-      const lastName  = user.user_metadata?.last_name  || '';
-      const phone     = user.user_metadata?.phone       || '';
-      const address   = user.user_metadata?.address     || '';
-      if (firstName) document.getElementById('custFirstName').value = firstName;
-      if (lastName)  document.getElementById('custLastName').value  = lastName;
-      if (user.email) document.getElementById('custEmail').value    = user.email;
-      if (phone)     document.getElementById('custPhone').value     = phone;
-      if (address)   document.getElementById('custAddress').value   = address;
+      bookingUser  = user;
+      bookingToken = access_token;
     } catch(e) {}
+  }
+
+  function showBookingLoggedIn() {
+    const meta = bookingUser?.user_metadata || {};
+    const name = `${meta.first_name || ''} ${meta.last_name || ''}`.trim() || bookingUser.email.split('@')[0];
+    document.getElementById('bookingAvatar').textContent = name.charAt(0).toUpperCase();
+    document.getElementById('bookingName').textContent   = name;
+    document.getElementById('bookingEmail').textContent  = bookingUser.email;
+    document.getElementById('bookingPhone').textContent  = meta.phone || '';
+    document.getElementById('loggedInView').style.display  = 'block';
+    document.getElementById('authFormView').style.display  = 'none';
+  }
+
+  function switchAuthTab(tab) {
+    document.getElementById('authLogin').style.display    = tab === 'login'    ? 'block' : 'none';
+    document.getElementById('authRegister').style.display = tab === 'register' ? 'block' : 'none';
+    document.querySelectorAll('.auth-tab').forEach((t, i) => {
+      t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'register'));
+    });
+  }
+
+  function switchBookingAccount() {
+    bookingUser = null; bookingToken = null;
+    localStorage.removeItem('st_session');
+    document.getElementById('loggedInView').style.display  = 'none';
+    document.getElementById('authFormView').style.display  = 'block';
+  }
+
+  async function doBookingLogin() {
+    const email = document.getElementById('authLoginEmail').value.trim();
+    const pass  = document.getElementById('authLoginPass').value;
+    const errEl = document.getElementById('authLoginErr');
+    errEl.style.display = 'none';
+    if (!email || !pass) { errEl.textContent = 'Bitte alle Felder ausfüllen.'; errEl.style.display = 'block'; return; }
+    try {
+      const res  = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+        method: 'POST',
+        headers: { apikey: SUPABASE_ANON, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password: pass })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error_description || 'Anmeldung fehlgeschlagen');
+      bookingUser  = data.user;
+      bookingToken = data.access_token;
+      localStorage.setItem('st_session', JSON.stringify({ access_token: data.access_token }));
+      showBookingLoggedIn();
+    } catch(e) {
+      errEl.textContent = e.message === 'Invalid login credentials' ? 'E-Mail oder Passwort falsch.' : e.message;
+      errEl.style.display = 'block';
+    }
+  }
+
+  async function doBookingRegister() {
+    const first   = document.getElementById('authRegFirst').value.trim();
+    const last    = document.getElementById('authRegLast').value.trim();
+    const email   = document.getElementById('authRegEmail').value.trim();
+    const phone   = document.getElementById('authRegPhone').value.trim();
+    const address = document.getElementById('authRegAddress').value.trim();
+    const pass    = document.getElementById('authRegPass').value;
+    const errEl   = document.getElementById('authRegErr');
+    const okEl    = document.getElementById('authRegOk');
+    errEl.style.display = 'none'; okEl.style.display = 'none';
+    if (!first || !last || !email || !phone || !address || !pass) {
+      errEl.textContent = 'Bitte alle Felder ausfüllen.'; errEl.style.display = 'block'; return;
+    }
+    if (pass.length < 6) { errEl.textContent = 'Passwort mind. 6 Zeichen.'; errEl.style.display = 'block'; return; }
+    try {
+      const res  = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
+        method: 'POST',
+        headers: { apikey: SUPABASE_ANON, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password: pass, data: { first_name: first, last_name: last, full_name: `${first} ${last}`, phone, address } })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error_description || data.msg || 'Registrierung fehlgeschlagen');
+      if (data.access_token) {
+        bookingUser  = data.user;
+        bookingToken = data.access_token;
+        localStorage.setItem('st_session', JSON.stringify({ access_token: data.access_token }));
+        showBookingLoggedIn();
+      } else {
+        okEl.textContent = 'Konto erstellt! Bitte bestätige deine E-Mail, dann kannst du dich anmelden.';
+        okEl.style.display = 'block';
+      }
+    } catch(e) {
+      errEl.textContent = e.message; errEl.style.display = 'block';
+    }
   }
 
   // Heute als Standardwert setzen
   window.addEventListener('DOMContentLoaded', async () => {
     await loadTrailer();
-    await prefillUserData();
+    await checkExistingSession();
     updatePriceDisplay();
     const now = new Date();
     now.setMinutes(0, 0, 0);
@@ -517,7 +666,7 @@
   function goToStep(n) {
     document.querySelectorAll('.step-content').forEach(el => el.classList.remove('active'));
     document.getElementById(`step${n}`).classList.add('active');
-    for (let i = 1; i <= 3; i++) {
+    for (let i = 1; i <= 4; i++) {
       const circle = document.getElementById(`sc${i}`);
       const label  = document.getElementById(`sl${i}`);
       circle.classList.remove('active', 'done');
@@ -535,33 +684,21 @@
     if (!start || !end) return alert('Bitte Startzeit wählen.');
     if (new Date(end) <= new Date(start)) return alert('Enddatum muss nach Startdatum liegen.');
     goToStep(2);
+    if (bookingUser) showBookingLoggedIn();
   }
 
-  async function goStep3() {
-    const firstName = document.getElementById('custFirstName').value.trim();
-    const lastName  = document.getElementById('custLastName').value.trim();
-    const email     = document.getElementById('custEmail').value.trim();
-    const phone     = document.getElementById('custPhone').value.trim();
-    const address   = document.getElementById('custAddress').value.trim();
-    const license   = document.getElementById('licenseCheck').checked;
-    let valid = true;
-
-    const show = (id, err) => { document.getElementById(id).style.display = err ? 'block' : 'none'; if (err) valid = false; };
-    show('errFirstName', !firstName);
-    show('errLastName',  !lastName);
-    show('errEmail',     !email || !/\S+@\S+\.\S+/.test(email));
-    show('errPhone',     !phone);
-    show('errAddress',   !address);
-    show('errLicense',   !license);
-
-    if (!valid) return;
-
-    if (!trailerId) {
-      alert('Anhänger konnte nicht geladen werden. Bitte Seite neu laden.');
-      return;
-    }
-
+  function goStep3() {
+    if (!bookingUser) return;
     goToStep(3);
+    updatePriceDisplay();
+  }
+
+  async function goStep4() {
+    const license = document.getElementById('licenseCheck').checked;
+    document.getElementById('errLicense').style.display = license ? 'none' : 'block';
+    if (!license) return;
+    if (!trailerId) { alert('Anhänger konnte nicht geladen werden. Bitte Seite neu laden.'); return; }
+    goToStep(4);
     updateSummary();
     await initStripe();
   }
@@ -570,11 +707,13 @@
     const tarifLabels = { '3h': '3 Stunden', day: 'Ganzer Tag', weekend: 'Wochenende' };
     const insLabels   = { basis: 'Basis Schutz (+15%)', premium: 'Premium Schutz (+30%)' };
     const insAmt = getInsuranceAmount();
-    document.getElementById('sumTarif').textContent = tarifLabels[selectedPricing];
-    document.getElementById('sumBase').textContent  = selectedPrice.toFixed(2).replace('.', ',') + ' €';
-    document.getElementById('sumVon').textContent   = fmtDate(document.getElementById('startTime').value);
-    document.getElementById('sumBis').textContent   = fmtDate(document.getElementById('endTime').value);
-    document.getElementById('sumTotal').textContent = getTotalPrice().toFixed(2).replace('.', ',') + ' €';
+    const meta   = bookingUser?.user_metadata || {};
+    const name   = `${meta.first_name || ''} ${meta.last_name || ''}`.trim() || bookingUser?.email || '–';
+    document.getElementById('sumTarif').textContent  = tarifLabels[selectedPricing];
+    document.getElementById('sumBase').textContent   = selectedPrice.toFixed(2).replace('.', ',') + ' €';
+    document.getElementById('sumVon').textContent    = fmtDate(document.getElementById('startTime').value);
+    document.getElementById('sumBis').textContent    = fmtDate(document.getElementById('endTime').value);
+    document.getElementById('sumTotal').textContent  = getTotalPrice().toFixed(2).replace('.', ',') + ' €';
     if (selectedInsurance !== 'none' && insAmt > 0) {
       document.getElementById('sumInsRow').style.display = 'flex';
       document.getElementById('sumInsLabel').textContent = insLabels[selectedInsurance];
@@ -582,6 +721,9 @@
     } else {
       document.getElementById('sumInsRow').style.display = 'none';
     }
+    // Kunde in Summary anzeigen
+    const nameRow = document.getElementById('sumName');
+    if (nameRow) nameRow.textContent = name;
   }
 
   async function initStripe() {
@@ -598,12 +740,13 @@
           pricing_type:     selectedPricing,
           start_time:       new Date(document.getElementById('startTime').value).toISOString(),
           end_time:         new Date(document.getElementById('endTime').value).toISOString(),
-          customer_name:    `${document.getElementById('custFirstName').value.trim()} ${document.getElementById('custLastName').value.trim()}`,
-          customer_email:   document.getElementById('custEmail').value.trim(),
-          customer_phone:   document.getElementById('custPhone').value.trim(),
-          customer_address: document.getElementById('custAddress').value.trim(),
+          customer_name:    `${bookingUser.user_metadata?.first_name || ''} ${bookingUser.user_metadata?.last_name || ''}`.trim() || bookingUser.email,
+          customer_email:   bookingUser.email,
+          customer_phone:   bookingUser.user_metadata?.phone   || '',
+          customer_address: bookingUser.user_metadata?.address || '',
           insurance_type:   selectedInsurance,
-          insurance_amount: getInsuranceAmount()
+          insurance_amount: getInsuranceAmount(),
+          user_id:          bookingUser.id
         })
       });
 

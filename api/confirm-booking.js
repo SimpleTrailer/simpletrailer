@@ -61,6 +61,8 @@ module.exports = async (req, res) => {
         start_time: meta.start_time, end_time: meta.end_time,
         pricing_type: meta.pricing_type, total_amount: amount,
         insurance_type: insType, insurance_amount: insAmount,
+        customer_address: meta.customer_address || null,
+        user_id: meta.user_id || null,
         stripe_payment_intent_id: payment_intent_id,
         stripe_customer_id: pi.customer, stripe_payment_method_id: pi.payment_method,
         status: 'confirmed', access_code, return_token, precheck_token
@@ -105,6 +107,10 @@ module.exports = async (req, res) => {
             <div style="background:#1a1a1a;border:1px solid #383838;border-radius:12px;padding:16px 20px;margin-bottom:20px;text-align:center;">
               <p style="color:#888;font-size:.78rem;margin:0 0 4px;">Schritt 2 – Nach der Nutzung</p>
               <a href="${returnUrl}" style="color:#E85D00;font-size:.85rem;font-weight:600;text-decoration:none;">Rückgabe bestätigen →</a>
+            </div>
+            <div style="background:#111;border-radius:10px;padding:16px 20px;margin-bottom:16px;">
+              <p style="color:#888;font-size:.78rem;margin:0 0 6px;">Alle Infos auf einen Blick:</p>
+              <p style="font-size:.85rem;margin:0;">Buchungsdetails, Schutzpaket, Vorab-Check und Rückgabe findest du jederzeit in deinem <a href="${siteUrl}/account" style="color:#E85D00;text-decoration:none;font-weight:600;">Kundenbereich →</a></p>
             </div>
             <p style="color:#555;font-size:.75rem;text-align:center;margin:0;">Beide Links bitte aufbewahren.</p>
           </div>

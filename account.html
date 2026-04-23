@@ -75,6 +75,17 @@
     .booking-detail strong { color: var(--white); }
     .booking-amount { font-size: 1rem; font-weight: 800; color: var(--orange); margin-top: 10px; }
 
+    /* ACTIVE BOOKING */
+    .active-booking-card { background: var(--s1); border: 2px solid #22c55e; border-radius: 16px; padding: 22px; margin-bottom: 20px; }
+    .active-booking-badge { display: inline-flex; align-items: center; gap: 6px; font-size: .68rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #4ade80; margin-bottom: 12px; }
+    .active-booking-ref { font-size: 1.1rem; font-weight: 800; letter-spacing: -.02em; margin-bottom: 4px; }
+    .active-booking-detail { font-size: .82rem; color: var(--gray); margin-bottom: 16px; line-height: 1.6; }
+    .action-btn { display: inline-flex; align-items: center; justify-content: center; padding: 12px 20px; border-radius: 8px; font-weight: 700; font-size: .88rem; cursor: pointer; border: none; text-decoration: none; transition: background .2s; font-family: var(--font); width: 100%; margin-bottom: 8px; }
+    .action-btn-green  { background: #22c55e; color: #000; }
+    .action-btn-green:hover  { background: #16a34a; }
+    .action-btn-orange { background: var(--orange); color: #fff; }
+    .action-btn-orange:hover { background: var(--orange-h); }
+
     .empty-state { text-align: center; padding: 40px 20px; color: var(--gray); }
     .empty-state .icon { font-size: 2.5rem; margin-bottom: 12px; }
     .empty-state p { margin-bottom: 20px; }
@@ -204,6 +215,11 @@
       <button class="logout-btn" onclick="logout()">Abmelden</button>
     </div>
 
+    <!-- Aktive Buchung -->
+    <div id="activeBooingWrap" style="display:none;">
+      <div class="active-booking-card" id="activeBookingCard"></div>
+    </div>
+
     <div class="card">
       <div class="bookings-title">Meine Buchungen</div>
       <div id="bookingsList"><div class="loading">Buchungen werden geladen...</div></div>
@@ -279,11 +295,25 @@
     loadBookings();
   }
 
+  const INS_LABEL = { none: 'Kein Schutz', basis: 'Basis Schutz (500 € SB)', premium: 'Premium Schutz (50 € SB)' };
+  const siteUrl = 'https://simpletrailer.de';
+
   async function loadBookings() {
     const list = document.getElementById('bookingsList');
     try {
-      const res = await supabaseFetch(`/rest/v1/bookings?select=*,trailers(name)&customer_email=eq.${encodeURIComponent(currentUser.email)}&order=created_at.desc`);
-      const bookings = await res.json();
+      const res = await fetch('/api/get-user-bookings', {
+        headers: { Authorization: `Bearer ${authToken}` }
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      const bookings = data.bookings;
+
+      // Aktive/bestätigte Buchung oben anzeigen
+      const activeBooking = bookings.find(b => ['confirmed', 'active'].includes(b.status));
+      if (activeBooking) {
+        document.getElementById('activeBooingWrap').style.display = 'block';
+        renderActiveBooking(activeBooking);
+      }
 
       if (!bookings.length) {
         list.innerHTML = `<div class="empty-state"><div class="icon">📋</div><p>Noch keine Buchungen.</p><a href="booking.html" class="btn btn-orange" style="width:auto;padding:11px 24px;">Jetzt buchen</a></div>`;
@@ -301,14 +331,40 @@
             <span>📅 <strong>${pricingLabel[b.pricing_type] || b.pricing_type}</strong></span>
             <span>▶ Von: <strong>${fmt(b.start_time)}</strong></span>
             <span>⏹ Bis: <strong>${fmt(b.end_time)}</strong></span>
-            ${b.access_code ? `<span>🔑 Code: <strong style="letter-spacing:.1em;">${b.access_code}</strong></span>` : ''}
+            <span>🛡 <strong>${INS_LABEL[b.insurance_type || 'none']}</strong></span>
           </div>
-          <div class="booking-amount">${(b.total_amount + (b.late_fee_amount || 0)).toFixed(2)} €</div>
+          <div class="booking-amount">${(b.total_amount + (b.late_fee_amount || 0)).toFixed(2).replace('.',',')} €</div>
         </div>
       `).join('');
     } catch(e) {
       list.innerHTML = '<div class="empty-state"><p>Buchungen konnten nicht geladen werden.</p></div>';
     }
+  }
+
+  function renderActiveBooking(b) {
+    const precheckDone = !!b.precheck_completed_at;
+    const precheckUrl  = b.precheck_token ? `/precheck?id=${b.id}&token=${b.precheck_token}` : null;
+    const returnUrl    = b.return_token   ? `/return.html?id=${b.id}&token=${b.return_token}` : null;
+
+    let actionHtml = '';
+    if (b.status === 'confirmed' && !precheckDone && precheckUrl) {
+      actionHtml = `<a href="${precheckUrl}" class="action-btn action-btn-green">📷 Vorab-Check starten → Zugangscode erhalten</a>`;
+    } else if (b.status === 'confirmed' && precheckDone && precheckUrl) {
+      actionHtml = `<a href="${precheckUrl}" class="action-btn action-btn-green">🔑 Zugangscode anzeigen</a>`;
+    }
+    if (returnUrl) {
+      actionHtml += `<a href="${returnUrl}" class="action-btn action-btn-orange">Rückgabe starten →</a>`;
+    }
+
+    document.getElementById('activeBookingCard').innerHTML = `
+      <div class="active-booking-badge">● Aktive Buchung</div>
+      <div class="active-booking-ref">#${b.id.slice(0,8).toUpperCase()} · ${b.trailers?.name || 'Anhänger'}</div>
+      <div class="active-booking-detail">
+        ${pricingLabel[b.pricing_type] || b.pricing_type} · Von ${fmt(b.start_time)} bis ${fmt(b.end_time)}<br>
+        ${INS_LABEL[b.insurance_type || 'none']} · <strong style="color:var(--orange)">${(b.total_amount||0).toFixed(2).replace('.',',')} €</strong>
+      </div>
+      ${actionHtml}
+    `;
   }
 
   function switchTab(tab) {
