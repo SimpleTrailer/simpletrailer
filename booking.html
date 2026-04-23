@@ -287,7 +287,7 @@
       </div>
     </div>
 
-    <!-- Mode Switch -->
+    <!-- Mode -->
     <div class="card">
       <p class="field-label" style="margin-bottom:12px;">Buchungsart</p>
       <div class="mode-grid">
@@ -309,46 +309,50 @@
       </div>
     </div>
 
-    <!-- Interactive Calendar -->
+    <!-- Date + Time -->
     <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
-        <div>
-          <p class="field-label" style="margin-bottom:2px;">Datum wählen</p>
-          <p id="calHint" style="font-size:.75rem;color:var(--orange);">Startdatum anklicken</p>
+      <p class="field-label" style="margin-bottom:16px;">Startdatum & Uhrzeit</p>
+      <div class="field-row">
+        <div class="field-group">
+          <label class="field-label">Datum</label>
+          <div class="input-wrap">
+            <input type="date" class="field-input" id="startDateInput" onchange="calcDates()" />
+          </div>
         </div>
-        <div class="cal-legend">
-          <span><span class="legend-dot" style="background:#22c55e;"></span>Frei</span>
-          <span><span class="legend-dot" style="background:#f87171;"></span>Gebucht</span>
+        <div class="field-group">
+          <label class="field-label">Uhrzeit</label>
+          <div class="input-wrap">
+            <select class="field-input" id="startHourInput" onchange="calcDates()" style="cursor:pointer;">
+              <option value="">Wählen</option>
+            </select>
+          </div>
         </div>
       </div>
-      <div class="cal-nav">
-        <button type="button" class="cal-nav-btn" onclick="calPrev()">‹</button>
-        <span class="cal-title" id="calTitle"></span>
-        <button type="button" class="cal-nav-btn" onclick="calNext()">›</button>
-      </div>
-      <div class="cal-weekdays">
-        <span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span>
-      </div>
-      <div class="cal-grid" id="calGrid"></div>
 
-      <!-- Start time (only for flexible) -->
-      <div id="timeRow" style="display:none;margin-top:14px;">
+      <!-- End date (only flexible) -->
+      <div id="endDateRow" style="margin-top:12px;display:none;">
         <div class="field-row">
           <div class="field-group">
-            <label class="field-label">Abholzeit</label>
+            <label class="field-label">Enddatum</label>
             <div class="input-wrap">
-              <select class="field-input" id="startHour" onchange="onTimeChange()" style="cursor:pointer;">
-                <option value="">Uhrzeit wählen</option>
+              <input type="date" class="field-input" id="endDateInput" onchange="calcDates()" />
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Uhrzeit</label>
+            <div class="input-wrap">
+              <select class="field-input" id="endHourInput" onchange="calcDates()" style="cursor:pointer;">
+                <option value="">Wählen</option>
               </select>
             </div>
           </div>
-          <div class="field-group" style="opacity:.6;">
-            <label class="field-label">Rückgabe (automatisch)</label>
-            <div class="input-wrap">
-              <div class="field-input" id="endTimeDisplay" style="background:var(--s2);color:var(--gray);display:flex;align-items:center;">–</div>
-            </div>
-          </div>
         </div>
+      </div>
+
+      <!-- Auto end display (weekend / week) -->
+      <div id="endAutoDisplay" style="display:none;margin-top:12px;background:var(--s2);border-radius:8px;padding:12px 14px;">
+        <span style="font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gray);">Rückgabe (automatisch)</span>
+        <div style="font-weight:700;font-size:.95rem;margin-top:3px;" id="endAutoText">–</div>
       </div>
 
       <div class="error-msg" id="dateError" style="margin-top:10px;"></div>
@@ -371,8 +375,26 @@
       </div>
     </div>
 
-    <input type="hidden" id="startDate" />
-    <input type="hidden" id="endDate" />
+    <!-- Availability Calendar (read-only) -->
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <p class="field-label" style="margin-bottom:0;">Verfügbarkeit</p>
+        <div class="cal-legend">
+          <span><span class="legend-dot" style="background:#22c55e;"></span>Frei</span>
+          <span><span class="legend-dot" style="background:#f87171;"></span>Gebucht</span>
+        </div>
+      </div>
+      <div class="cal-nav">
+        <button type="button" class="cal-nav-btn" onclick="calPrev()">‹</button>
+        <span class="cal-title" id="calTitle"></span>
+        <button type="button" class="cal-nav-btn" onclick="calNext()">›</button>
+      </div>
+      <div class="cal-weekdays">
+        <span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+
     <input type="hidden" id="startTime" />
     <input type="hidden" id="endTime" />
 
@@ -573,12 +595,16 @@
 
   const stripeClient = Stripe(STRIPE_PK);
 
-  let selectedPricing   = 'day';
-  let selectedPrice     = 25;
-  let selectedInsurance = 'none';
-  let insuranceRate     = 0;
-  let trailerId         = null;
-  let stripeElements    = null;
+  let trailerId      = null;
+  let stripeElements = null;
+
+  function getStartMs() { return new Date(document.getElementById('startTime').value).getTime() || 0; }
+  function getEndMs()   { return new Date(document.getElementById('endTime').value).getTime()   || 0; }
+
+  function updatePriceDisplay() {
+    const p = calcPrice(getStartMs(), getEndMs());
+    if (p) updateInsurancePrices(p.base);
+  }
 
   function selectInsurance(type) {
     selectedInsurance = type;
@@ -612,206 +638,53 @@
   }
 
 
-  /* ── MODE SWITCHER ────────────────────────────── */
+  /* ── HELPERS ──────────────────────────────────── */
+  function toDateStr(d) { return d.toISOString().split('T')[0]; }
+  function fmtDate(iso) { return new Date(iso).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
+  function fmtShort(ms) { return new Date(ms).toLocaleString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
+
+  /* ── MODE ─────────────────────────────────────── */
   function setMode(mode) {
     bookingMode = mode;
-    ['flexible','weekend','week'].forEach(m => {
-      document.getElementById('mode' + m.charAt(0).toUpperCase() + m.slice(1))
-        ?.classList.toggle('selected', m === mode);
+    ['Flexible','Weekend','Week'].forEach(m => {
+      const el = document.getElementById('mode' + m);
+      if (el) el.classList.toggle('selected', m.toLowerCase() === mode);
     });
-    // Reset selection
-    selStartDate = null; selEndDate = null; calSelStep = 'start';
-    document.getElementById('calHint').textContent = mode === 'weekend' ? 'Wochenende anklicken' : mode === 'week' ? 'Startdatum anklicken' : 'Startdatum anklicken';
-    document.getElementById('timeRow').style.display = 'none';
+    // Show/hide end date row
+    const endRow = document.getElementById('endDateRow');
+    const endAuto = document.getElementById('endAutoDisplay');
+    if (mode === 'flexible') {
+      endRow.style.display = 'block';
+      endAuto.style.display = 'none';
+    } else {
+      endRow.style.display = 'none';
+      endAuto.style.display = 'none';
+    }
     document.getElementById('priceBreakdown').style.display = 'none';
     document.getElementById('dateError').style.display = 'none';
-    renderCalendar();
-  }
-
-  function selectNextWeekend() {
-    // Find next Friday that's not booked
-    const today = new Date();
-    let fri = new Date(today);
-    // Find next Friday (day 5)
-    const daysUntilFri = (5 - fri.getDay() + 7) % 7 || 7;
-    fri.setDate(fri.getDate() + daysUntilFri);
-
-    // Try up to 8 weeks ahead to find a free weekend
-    for (let w = 0; w < 8; w++) {
-      const sun = new Date(fri);
-      sun.setDate(sun.getDate() + 2);
-      sun.setHours(20, 0, 0, 0);
-      fri.setHours(8, 0, 0, 0);
-      const overlap = bookedRanges.some(r =>
-        new Date(r.start_time) < sun && new Date(r.end_time) > fri
-      );
-      if (!overlap) {
-        const toDateStr = d => d.toISOString().split('T')[0];
-        document.getElementById('startDate').value = toDateStr(fri);
-        document.getElementById('startHour').value = '08:00';
-        document.getElementById('endDate').value   = toDateStr(sun);
-        document.getElementById('endHour').value   = '20:00';
-        onDateChange();
-        return;
-      }
-      fri.setDate(fri.getDate() + 7);
-    }
-    // No free weekend found
-    document.getElementById('dateError').textContent = 'Kein freies Wochenende in den nächsten 8 Wochen verfügbar.';
-    document.getElementById('dateError').style.display = 'block';
+    calcDates();
   }
 
   /* ── TIME OPTIONS ─────────────────────────────── */
   function buildTimeOptions() {
-    const sel = document.getElementById('startHour');
-    for (let h = 6; h <= 21; h++) {
-      const val = `${String(h).padStart(2,'0')}:00`;
-      const opt = document.createElement('option');
-      opt.value = val; opt.textContent = val + ' Uhr';
-      sel.appendChild(opt);
-    }
-  }
-
-  /* ── CALENDAR SELECTION ───────────────────────── */
-  let selStartDate = null; // 'YYYY-MM-DD'
-  let selEndDate   = null;
-  let calSelStep   = 'start'; // 'start' | 'end'
-
-  function onCalDayClick(dateStr) {
-    const errEl = document.getElementById('dateError');
-    errEl.style.display = 'none';
-
-    if (bookingMode === 'weekend') {
-      // Auto-select Fr–So around clicked date
-      const d = new Date(dateStr + 'T12:00:00');
-      const dow = d.getDay(); // 0=Sun
-      const fri = new Date(d);
-      if (dow === 6) fri.setDate(d.getDate() - 1);      // Sa → Fr
-      else if (dow === 0) fri.setDate(d.getDate() - 2); // So → Fr
-      else { const df = (5 - dow + 7) % 7; fri.setDate(d.getDate() + (df === 0 ? 0 : df)); } // nearest Fr
-      const sun = new Date(fri); sun.setDate(fri.getDate() + 2);
-      selStartDate = toDateStr(fri);
-      selEndDate   = toDateStr(sun);
-      buildDateTimes('08:00', '20:00');
-      return;
-    }
-    if (bookingMode === 'week') {
-      const d   = new Date(dateStr + 'T12:00:00');
-      const end = new Date(d); end.setDate(d.getDate() + 6);
-      selStartDate = dateStr;
-      selEndDate   = toDateStr(end);
-      buildDateTimes('08:00', '08:00');
-      return;
-    }
-    // Flexible mode
-    if (calSelStep === 'start') {
-      selStartDate = dateStr;
-      selEndDate   = null;
-      calSelStep   = 'end';
-      document.getElementById('calHint').textContent = 'Enddatum anklicken';
-      document.getElementById('priceBreakdown').style.display = 'none';
-      document.getElementById('timeRow').style.display = 'none';
-    } else {
-      if (dateStr < selStartDate) {
-        selEndDate   = selStartDate;
-        selStartDate = dateStr;
-      } else {
-        selEndDate = dateStr;
+    ['startHourInput','endHourInput'].forEach(id => {
+      const sel = document.getElementById(id);
+      if (!sel) return;
+      for (let h = 6; h <= 21; h++) {
+        const val = `${String(h).padStart(2,'0')}:00`;
+        const opt = document.createElement('option');
+        opt.value = val; opt.textContent = val + ' Uhr';
+        sel.appendChild(opt);
       }
-      calSelStep = 'start';
-      document.getElementById('calHint').textContent = 'Startdatum anklicken';
-      if (!document.getElementById('startHour').value) {
-        document.getElementById('startHour').value = '08:00';
-      }
-      document.getElementById('timeRow').style.display = 'block';
-      buildDateTimes(document.getElementById('startHour').value || '08:00', '18:00');
-    }
-    renderCalendar();
+    });
   }
 
-  function onTimeChange() {
-    if (selStartDate && selEndDate) {
-      buildDateTimes(document.getElementById('startHour').value || '08:00', '18:00');
-    }
-  }
-
-  function toDateStr(d) {
-    return d.toISOString().split('T')[0];
-  }
-
-  function buildDateTimes(startH, endH) {
-    if (!selStartDate || !selEndDate) return;
-    const startMs = new Date(`${selStartDate}T${startH}:00`).getTime();
-    const endMs   = new Date(`${selEndDate}T${endH}:00`).getTime();
-
-    // Check overlap
-    const errEl = document.getElementById('dateError');
-    const overlap = bookedRanges.some(r =>
-      new Date(r.start_time) < new Date(endMs) && new Date(r.end_time) > new Date(startMs)
-    );
-    if (overlap) {
-      errEl.textContent = 'Der Anhänger ist in diesem Zeitraum bereits gebucht.';
-      errEl.style.display = 'block';
-      document.getElementById('priceBreakdown').style.display = 'none';
-      return;
-    }
-    errEl.style.display = 'none';
-
-    document.getElementById('startTime').value = new Date(startMs).toISOString();
-    document.getElementById('endTime').value   = new Date(endMs).toISOString();
-
-    // End time display
-    const fmtShort = ms => new Date(ms).toLocaleString('de-DE', { weekday:'short', day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
-    document.getElementById('endTimeDisplay').textContent = fmtShort(endMs);
-
-    updatePriceBreakdown(startMs, endMs, startH, endH);
-    renderCalendar();
-  }
-
-  function updatePriceBreakdown(startMs, endMs, startH, endH) {
-    const p = calcPrice(startMs, endMs);
-    if (!p) return;
-    const insAmt = Math.round(p.base * insuranceRate * 100) / 100;
-
-    const fmtFull = ms => new Date(ms).toLocaleString('de-DE', { weekday:'short', day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
-    document.getElementById('pbStart').textContent   = fmtFull(startMs);
-    document.getElementById('pbEnd').textContent     = fmtFull(endMs);
-
-    const hours = (endMs - startMs) / 3600000;
-    const days  = Math.floor(hours / 24);
-    const remH  = Math.round(hours % 24);
-    document.getElementById('pbDuration').textContent = 'Dauer: ' + (days > 0 ? `${days} Tag${days>1?'e':''}${remH>0?', '+remH+' Std.':''}` : `${Math.round(hours)} Std.`);
-
-    if (p.isWeekend) {
-      document.getElementById('pbDay1Line').innerHTML  = `<span>Wochenende Festpreis (Fr–So)</span><span>55,00 €</span>`;
-      document.getElementById('pbExtraLine').style.display = 'none';
-    } else if (p.isWeek) {
-      document.getElementById('pbDay1Line').innerHTML  = `<span>🔥 1 Woche Festpreis (7 Tage)</span><span>119,00 €</span>`;
-      document.getElementById('pbExtraLine').innerHTML = `<span style="color:var(--gray);font-size:.75rem;">Spare 26 € vs. täglich (145 €)</span><span style="color:#22c55e;font-size:.78rem;">–26 €</span>`;
-      document.getElementById('pbExtraLine').style.display = 'flex';
-    } else if (hours <= 3) {
-      document.getElementById('pbDay1Line').innerHTML  = `<span>Kurztrip (bis 3 Std.)</span><span>8,00 €</span>`;
-      document.getElementById('pbExtraLine').style.display = 'none';
-    } else if (p.extraDays > 0) {
-      document.getElementById('pbDay1Line').innerHTML  = `<span>Erster Tag</span><span>25,00 €</span>`;
-      document.getElementById('pbExtraLine').style.display = 'flex';
-      document.getElementById('pbExtraLine').innerHTML = `<span>${p.extraDays} weitere${p.extraDays>1?'':'r'} Tag${p.extraDays>1?'e':''} × 20 €</span><span>${(p.extraDays*20).toFixed(2).replace('.',',')} €</span>`;
-    } else {
-      document.getElementById('pbDay1Line').innerHTML  = `<span>Erster Tag</span><span>25,00 €</span>`;
-      document.getElementById('pbExtraLine').style.display = 'none';
-    }
-
-    document.getElementById('pbTotal').innerHTML = `<span>Mietpreis</span><span>${p.base.toFixed(2).replace('.',',')} €</span>`;
-    document.getElementById('priceBreakdown').style.display = 'block';
-    updateInsurancePrices(p.base);
-  }
-
-  /* ── PRICE CALC ────────────────────────────────── */
+  /* ── PRICE CALC ───────────────────────────────── */
   function calcPrice(startMs, endMs) {
     if (bookingMode === 'weekend') return { base: 55,  extraDays: 0, label: 'Wochenende (Fr–So)', isWeekend: true };
-    if (bookingMode === 'week')    return { base: 119, extraDays: 0, label: '1 Woche (7 Tage)',   isWeek: true };
+    if (bookingMode === 'week')    return { base: 119, extraDays: 0, label: '1 Woche (7 Tage)',   isWeek:    true };
     const hours = (endMs - startMs) / 3600000;
-    if (hours <= 0) return null;
+    if (hours <= 0)  return null;
     if (hours <= 3)  return { base: 8,  extraDays: 0, label: 'Kurztrip (bis 3 Std.)' };
     if (hours <= 24) return { base: 25, extraDays: 0, label: 'Ganzer Tag' };
     const extraDays = Math.ceil((hours - 24) / 24);
@@ -819,223 +692,170 @@
   }
 
   function getInsuranceAmount() {
-    const p = calcPrice(getStartMs(), getEndMs());
-    if (!p) return 0;
+    const sMs = new Date(document.getElementById('startTime').value).getTime() || 0;
+    const eMs = new Date(document.getElementById('endTime').value).getTime()   || 0;
+    const p = calcPrice(sMs, eMs); if (!p) return 0;
     return Math.round(p.base * insuranceRate * 100) / 100;
   }
 
   function getTotalPrice() {
-    const p = calcPrice(getStartMs(), getEndMs());
-    if (!p) return 0;
+    const sMs = new Date(document.getElementById('startTime').value).getTime() || 0;
+    const eMs = new Date(document.getElementById('endTime').value).getTime()   || 0;
+    const p = calcPrice(sMs, eMs); if (!p) return 0;
     return p.base + getInsuranceAmount();
   }
 
-  function getStartMs() {
-    const d = document.getElementById('startDate').value;
-    const h = document.getElementById('startHour').value;
-    if (!d || !h) return 0;
-    return new Date(`${d}T${h}:00`).getTime();
+  function updateInsurancePrices(base) {
+    const b = document.getElementById('ins-basis-price');
+    const p = document.getElementById('ins-premium-price');
+    if (b) b.textContent = '+' + (Math.round(base*.15*100)/100).toFixed(2).replace('.',',') + ' €';
+    if (p) p.textContent = '+' + (Math.round(base*.30*100)/100).toFixed(2).replace('.',',') + ' €';
   }
 
-  function getEndMs() {
-    const d = document.getElementById('endDate').value;
-    const h = document.getElementById('endHour').value;
-    if (!d || !h) return 0;
-    return new Date(`${d}T${h}:00`).getTime();
-  }
-
-  /* ── DATE CHANGE (legacy, unused) ─────────────── */
-  function onDateChange() { return; }
-  function _onDateChange_unused() {
-    const startMs = getStartMs();
-    const endMs   = getEndMs();
+  /* ── CALC DATES (called on any input change) ──── */
+  function calcDates() {
     const errEl   = document.getElementById('dateError');
+    const startD  = document.getElementById('startDateInput').value;
+    const startH  = document.getElementById('startHourInput').value || '08:00';
     errEl.style.display = 'none';
 
-    // Sync hidden inputs
-    if (startMs) document.getElementById('startTime').value = new Date(startMs).toISOString();
-    if (endMs)   document.getElementById('endTime').value   = new Date(endMs).toISOString();
+    if (!startD) { document.getElementById('priceBreakdown').style.display = 'none'; renderCalendar(); return; }
 
-    if (!startMs || !endMs) {
-      document.getElementById('priceBreakdown').style.display = 'none';
-      renderCalendar();
-      return;
+    const startMs = new Date(`${startD}T${startH}:00`).getTime();
+    let   endMs, endLabel;
+
+    if (bookingMode === 'weekend') {
+      const fri = new Date(`${startD}T${startH}:00`);
+      // Snap to Friday
+      const dow = fri.getDay();
+      const toFri = dow <= 5 ? (5 - dow + 7) % 7 : 6;
+      fri.setDate(fri.getDate() + toFri);
+      const sun = new Date(fri); sun.setDate(fri.getDate() + 2); sun.setHours(20,0,0,0);
+      fri.setHours(8,0,0,0);
+      endMs = sun.getTime();
+      const endStr = toDateStr(sun);
+      endLabel = fmtShort(sun.getTime());
+      document.getElementById('endAutoText').textContent = endLabel;
+      document.getElementById('endAutoDisplay').style.display = 'block';
+      document.getElementById('startDateInput').value = toDateStr(fri);
+      document.getElementById('startHourInput').value = '08:00';
+    } else if (bookingMode === 'week') {
+      const end = new Date(`${startD}T${startH}:00`);
+      end.setDate(end.getDate() + 7);
+      endMs = end.getTime();
+      document.getElementById('endAutoText').textContent = fmtShort(endMs);
+      document.getElementById('endAutoDisplay').style.display = 'block';
+    } else {
+      // Flexible
+      const endD = document.getElementById('endDateInput').value;
+      const endH = document.getElementById('endHourInput').value || '18:00';
+      if (!endD) { document.getElementById('priceBreakdown').style.display = 'none'; renderCalendar(); return; }
+      endMs = new Date(`${endD}T${endH}:00`).getTime();
+      if (endMs <= startMs) {
+        errEl.textContent = 'Enddatum muss nach Startdatum liegen.'; errEl.style.display = 'block';
+        document.getElementById('priceBreakdown').style.display = 'none'; return;
+      }
     }
 
-    if (endMs <= startMs) {
-      errEl.textContent = 'Enddatum muss nach dem Startdatum liegen.';
-      errEl.style.display = 'block';
-      document.getElementById('priceBreakdown').style.display = 'none';
-      renderCalendar();
-      return;
-    }
-
-    const hours = (endMs - startMs) / 3600000;
-    if (hours < 1) {
-      errEl.textContent = 'Mindestmietdauer ist 1 Stunde.';
-      errEl.style.display = 'block';
-      document.getElementById('priceBreakdown').style.display = 'none';
-      return;
-    }
-    if (hours > 30 * 24) {
-      errEl.textContent = 'Maximale Mietdauer ist 30 Tage.';
-      errEl.style.display = 'block';
-      document.getElementById('priceBreakdown').style.display = 'none';
-      return;
-    }
-
-    // Check overlap with booked ranges
+    // Overlap check
     const overlap = bookedRanges.some(r =>
       new Date(r.start_time) < new Date(endMs) && new Date(r.end_time) > new Date(startMs)
     );
     if (overlap) {
-      errEl.textContent = 'Der Anhänger ist in diesem Zeitraum bereits gebucht. Bitte einen anderen Zeitraum wählen.';
+      errEl.textContent = 'Der Anhänger ist in diesem Zeitraum bereits gebucht.';
       errEl.style.display = 'block';
-      document.getElementById('priceBreakdown').style.display = 'none';
-      renderCalendar();
-      return;
+      document.getElementById('priceBreakdown').style.display = 'none'; return;
     }
 
-    // Show price breakdown
-    const p = calcPrice(startMs, endMs);
-    const fmtShort = ms => new Date(ms).toLocaleString('de-DE', { weekday:'short', day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
-    const totalHours = Math.floor(hours);
-    const days  = Math.floor(totalHours / 24);
-    const remH  = totalHours % 24;
-    const durLabel = days > 0
-      ? `${days} Tag${days > 1 ? 'e' : ''}${remH > 0 ? ', ' + remH + ' Std.' : ''}`
-      : `${totalHours} Std.`;
+    document.getElementById('startTime').value = new Date(startMs).toISOString();
+    document.getElementById('endTime').value   = new Date(endMs).toISOString();
 
+    // Price breakdown
+    const p = calcPrice(startMs, endMs);
+    if (!p) return;
+    const hours = (endMs - startMs) / 3600000;
+    const days  = Math.floor(hours / 24);
+    const remH  = Math.round(hours % 24);
     document.getElementById('pbStart').textContent    = fmtShort(startMs);
     document.getElementById('pbEnd').textContent      = fmtShort(endMs);
-    document.getElementById('pbDuration').textContent = 'Dauer: ' + durLabel;
+    document.getElementById('pbDuration').textContent = 'Dauer: ' + (days > 0 ? `${days} Tag${days>1?'e':''}${remH>0?', '+remH+' Std.':''}` : `${Math.round(hours)} Std.`);
+
     if (p.isWeekend) {
-      document.getElementById('pbDay1Line').innerHTML  = `<span>Wochenende Festpreis (Fr–So)</span><span>55,00 €</span>`;
+      document.getElementById('pbDay1Line').innerHTML = `<span>Wochenende Festpreis (Fr–So)</span><span>55,00 €</span>`;
       document.getElementById('pbExtraLine').style.display = 'none';
     } else if (p.isWeek) {
-      document.getElementById('pbDay1Line').innerHTML  = `<span>🔥 1 Woche Festpreis (7 Tage)</span><span>119,00 €</span>`;
+      document.getElementById('pbDay1Line').innerHTML = `<span>🔥 1 Woche Festpreis (7 Tage)</span><span>119,00 €</span>`;
       document.getElementById('pbExtraLine').innerHTML = `<span style="color:var(--gray);font-size:.75rem;">Spare 26 € vs. täglich (145 €)</span><span style="color:#22c55e;font-size:.78rem;">–26 €</span>`;
       document.getElementById('pbExtraLine').style.display = 'flex';
     } else if (hours <= 3) {
-      document.getElementById('pbDay1Line').innerHTML  = `<span>Kurztrip (bis 3 Std.)</span><span>8,00 €</span>`;
+      document.getElementById('pbDay1Line').innerHTML = `<span>Kurztrip (bis 3 Std.)</span><span>8,00 €</span>`;
       document.getElementById('pbExtraLine').style.display = 'none';
     } else if (p.extraDays > 0) {
-      document.getElementById('pbDay1Line').innerHTML  = `<span>Erster Tag</span><span>25,00 €</span>`;
+      document.getElementById('pbDay1Line').innerHTML = `<span>Erster Tag</span><span>25,00 €</span>`;
+      document.getElementById('pbExtraLine').innerHTML = `<span>${p.extraDays} weitere${p.extraDays>1?'':'r'} Tag${p.extraDays>1?'e':''} × 20 €</span><span>${(p.extraDays*20).toFixed(2).replace('.',',')} €</span>`;
       document.getElementById('pbExtraLine').style.display = 'flex';
-      document.getElementById('pbExtraLine').innerHTML = `<span>${p.extraDays} weitere${p.extraDays > 1 ? '' : 'r'} Tag${p.extraDays > 1 ? 'e' : ''} × 20 €</span><span>${(p.extraDays * 20).toFixed(2).replace('.',',')} €</span>`;
     } else {
-      document.getElementById('pbDay1Line').innerHTML  = `<span>Erster Tag</span><span>25,00 €</span>`;
+      document.getElementById('pbDay1Line').innerHTML = `<span>Erster Tag</span><span>25,00 €</span>`;
       document.getElementById('pbExtraLine').style.display = 'none';
     }
-
     document.getElementById('pbTotal').innerHTML = `<span>Mietpreis</span><span>${p.base.toFixed(2).replace('.',',')} €</span>`;
     document.getElementById('priceBreakdown').style.display = 'block';
-
-    // Update insurance prices
     updateInsurancePrices(p.base);
     renderCalendar();
   }
 
-  function updateInsurancePrices(base) {
-    const basisEl   = document.getElementById('ins-basis-price');
-    const premiumEl = document.getElementById('ins-premium-price');
-    if (basisEl)   basisEl.textContent   = '+' + (Math.round(base * 0.15 * 100) / 100).toFixed(2).replace('.',',') + ' €';
-    if (premiumEl) premiumEl.textContent = '+' + (Math.round(base * 0.30 * 100) / 100).toFixed(2).replace('.',',') + ' €';
-  }
-
-  function fmtDate(isoStr) {
-    return new Date(isoStr).toLocaleString('de-DE', {
-      day: '2-digit', month: '2-digit', year: 'numeric',
-      hour: '2-digit', minute: '2-digit'
-    });
-  }
-
-  /* ── CALENDAR ──────────────────────────────────── */
+  /* ── CALENDAR (read-only availability) ────────── */
   function initCalendar() {
-    const now = new Date();
-    calYear  = now.getFullYear();
-    calMonth = now.getMonth();
+    const now = new Date(); calYear = now.getFullYear(); calMonth = now.getMonth();
   }
 
   function renderCalendar() {
-    const title = new Date(calYear, calMonth, 1)
-      .toLocaleString('de-DE', { month: 'long', year: 'numeric' });
-    document.getElementById('calTitle').textContent =
-      title.charAt(0).toUpperCase() + title.slice(1);
+    const title = new Date(calYear, calMonth, 1).toLocaleString('de-DE',{month:'long',year:'numeric'});
+    document.getElementById('calTitle').textContent = title.charAt(0).toUpperCase() + title.slice(1);
+    const grid    = document.getElementById('calGrid'); grid.innerHTML = '';
+    const first   = new Date(calYear, calMonth, 1);
+    const last    = new Date(calYear, calMonth + 1, 0);
+    const today   = new Date(); today.setHours(0,0,0,0);
+    let dow = first.getDay(); dow = dow === 0 ? 6 : dow - 1;
 
-    const grid     = document.getElementById('calGrid');
-    grid.innerHTML = '';
-    const firstDay = new Date(calYear, calMonth, 1);
-    const lastDay  = new Date(calYear, calMonth + 1, 0);
-    let startDow   = firstDay.getDay();
-    startDow = startDow === 0 ? 6 : startDow - 1;
-    const today    = new Date(); today.setHours(0,0,0,0);
+    const selSD = document.getElementById('startTime').value ? toDateStr(new Date(document.getElementById('startTime').value)) : null;
+    const selED = document.getElementById('endTime').value   ? toDateStr(new Date(document.getElementById('endTime').value))   : null;
 
     const makeCell = (date, other) => {
-      const cell  = document.createElement('div');
-      const d0    = new Date(date); d0.setHours(0,0,0,0);
-      const dStr  = toDateStr(d0);
-      const isPast    = d0 < today;
-      const isBooked  = isDateFullyBooked(d0);
-      const isTodayCl = d0.getTime() === today.getTime();
-
+      const d0  = new Date(date); d0.setHours(0,0,0,0);
+      const dStr = toDateStr(d0);
+      const past = d0 < today;
+      const d1 = new Date(d0); d1.setHours(23,59,59,999);
+      const booked = !other && !past && bookedRanges.some(r => new Date(r.start_time) <= d0 && new Date(r.end_time) >= d1);
+      const cell = document.createElement('div');
       let cls = 'cal-day';
-      if (other)   cls += ' other-month';
-      else if (isPast)  cls += ' past';
-      else if (isBooked) cls += ' booked';
-      else cls += ' available';
-      if (isTodayCl) cls += ' today';
-
-      // Selection highlighting
-      if (selStartDate && dStr === selStartDate) cls += ' sel-start';
-      if (selEndDate   && dStr === selEndDate)   cls += ' sel-end';
-      if (selStartDate && selEndDate && dStr > selStartDate && dStr < selEndDate) cls += ' in-range';
-
-      cell.className = cls;
+      if (other || past) cls += ' other-month';
+      else if (booked)   cls += ' booked';
+      else               cls += ' available';
+      if (selSD && dStr === selSD) cls += ' sel-start';
+      if (selED && dStr === selED) cls += ' sel-end';
+      if (selSD && selED && dStr > selSD && dStr < selED) cls += ' in-range';
+      cell.className   = cls;
       cell.textContent = date.getDate();
-
-      if (!other && !isPast && !isBooked) {
-        cell.onclick = () => onCalDayClick(dStr);
-      }
       return cell;
     };
 
-    for (let i = 0; i < startDow; i++)
-      grid.appendChild(makeCell(new Date(calYear, calMonth, i - startDow + 1), true));
-    for (let d = 1; d <= lastDay.getDate(); d++)
-      grid.appendChild(makeCell(new Date(calYear, calMonth, d), false));
-    const total = startDow + lastDay.getDate();
-    const rem   = total % 7 === 0 ? 0 : 7 - (total % 7);
-    for (let i = 1; i <= rem; i++)
-      grid.appendChild(makeCell(new Date(calYear, calMonth + 1, i), true));
+    for (let i = 0; i < dow; i++) grid.appendChild(makeCell(new Date(calYear, calMonth, i-dow+1), true));
+    for (let d = 1; d <= last.getDate(); d++) grid.appendChild(makeCell(new Date(calYear, calMonth, d), false));
+    const tot = dow + last.getDate(), rem = tot%7===0 ? 0 : 7-tot%7;
+    for (let i = 1; i <= rem; i++) grid.appendChild(makeCell(new Date(calYear, calMonth+1, i), true));
   }
 
-  function isDateFullyBooked(d0) {
-    const d1 = new Date(d0); d1.setHours(23,59,59,999);
-    return bookedRanges.some(r =>
-      new Date(r.start_time) <= d0 && new Date(r.end_time) >= d1
-    );
-  }
-
-  function calPrev() {
-    calMonth--;
-    if (calMonth < 0) { calMonth = 11; calYear--; }
-    renderCalendar();
-  }
-
-  function calNext() {
-    calMonth++;
-    if (calMonth > 11) { calMonth = 0; calYear++; }
-    renderCalendar();
-  }
+  function calPrev() { calMonth--; if (calMonth<0){calMonth=11;calYear--;} renderCalendar(); }
+  function calNext() { calMonth++; if (calMonth>11){calMonth=0;calYear++;} renderCalendar(); }
 
   async function loadAvailability() {
-    renderCalendar(); // Sofort mit grünen Punkten anzeigen
+    renderCalendar();
     try {
-      const res  = await fetch('/api/get-availability');
+      const res = await fetch('/api/get-availability');
       const data = await res.json();
       bookedRanges = data.booked || [];
-      renderCalendar(); // Nochmal mit echten Buchungen aktualisieren
+      renderCalendar();
     } catch(e) { bookedRanges = []; }
   }
 
@@ -1187,10 +1007,7 @@
 
     // Modus aus URL-Parameter setzen (z.B. ?mode=weekend)
     const urlMode = new URLSearchParams(window.location.search).get('mode');
-    if (urlMode === 'weekend' || urlMode === 'week') {
-      setMode(urlMode);
-    }
-
+    setMode(urlMode === 'weekend' || urlMode === 'week' ? urlMode : 'flexible');
   });
 
   function goToStep(n) {
