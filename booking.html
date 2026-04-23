@@ -165,6 +165,8 @@
     .cal-day.sel-end.in-range { border-radius:0 6px 6px 0; }
     .cal-legend { display:flex; gap:14px; font-size:.72rem; color:var(--gray); flex-wrap:wrap; }
     .legend-dot { width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:4px; vertical-align:middle; }
+    .cal-day.not-selectable { color:#333; cursor:default; background:#0d0d0d !important; border:1px solid #181818 !important; }
+    .cal-hint { font-size:.76rem; color:var(--orange); margin-top:10px; text-align:center; padding:8px; background:#1a0d00; border-radius:6px; border:1px dashed var(--orange); }
     /* MODE */
     .mode-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
     .mode-option { border:1.5px solid var(--border); border-radius:12px; padding:12px 10px; cursor:pointer; background:var(--s2); text-align:center; transition:all .2s; font-family:var(--font); color:var(--white); }
@@ -396,6 +398,7 @@
         <span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span>
       </div>
       <div class="cal-grid" id="calGrid"></div>
+      <div id="calHint" class="cal-hint" style="display:none;">📅 Jetzt Enddatum im Kalender anklicken</div>
     </div>
 
     <input type="hidden" id="startTime" />
@@ -595,6 +598,7 @@
   let selectedInsurance = 'none';
   let insuranceRate     = 0;
   let bookingMode       = 'flexible'; // 'flexible' | 'weekend' | 'week'
+  let calClickState     = 'start';   // 'start' | 'end' — for flexible mode only
 
   const stripeClient = Stripe(STRIPE_PK);
 
@@ -649,6 +653,8 @@
   /* ── MODE ─────────────────────────────────────── */
   function setMode(mode) {
     bookingMode = mode;
+    calClickState = 'start';
+    updateCalHint(false);
     ['Flexible','Weekend','Week'].forEach(m => {
       const el = document.getElementById('mode' + m);
       if (el) el.classList.toggle('selected', m.toLowerCase() === mode);
@@ -828,18 +834,31 @@
       const d0  = new Date(date); d0.setHours(0,0,0,0);
       const dStr = toDateStr(d0);
       const past = d0 < today;
+      const dow  = d0.getDay(); // 0=So,1=Mo,...,5=Fr,6=Sa
+      const isWeekendDay = (dow === 5 || dow === 6 || dow === 0);
       const d1 = new Date(d0); d1.setHours(23,59,59,999);
       const booked = !other && !past && bookedRanges.some(r => new Date(r.start_time) <= d0 && new Date(r.end_time) >= d1);
       const cell = document.createElement('div');
       let cls = 'cal-day';
-      if (other || past) cls += ' other-month';
-      else if (booked)   cls += ' booked';
-      else               cls += ' available';
+      let clickable = false;
+
+      if (other || past) {
+        cls += ' other-month';
+      } else if (booked) {
+        cls += ' booked';
+      } else if (bookingMode === 'weekend' && !isWeekendDay) {
+        cls += ' not-selectable';
+      } else {
+        cls += ' available';
+        clickable = true;
+      }
+
       if (selSD && dStr === selSD) cls += ' sel-start';
       if (selED && dStr === selED) cls += ' sel-end';
       if (selSD && selED && dStr > selSD && dStr < selED) cls += ' in-range';
       cell.className   = cls;
       cell.textContent = date.getDate();
+      if (clickable) cell.addEventListener('click', () => handleCalDayClick(new Date(d0)));
       return cell;
     };
 
@@ -851,6 +870,46 @@
 
   function calPrev() { calMonth--; if (calMonth<0){calMonth=11;calYear--;} renderCalendar(); }
   function calNext() { calMonth++; if (calMonth>11){calMonth=0;calYear++;} renderCalendar(); }
+
+  function handleCalDayClick(d) {
+    if (bookingMode === 'weekend') {
+      // Snap to Friday of that weekend
+      const dow = d.getDay();
+      if (dow === 6) d.setDate(d.getDate() - 1);       // Sa → Fr
+      else if (dow === 0) d.setDate(d.getDate() - 2);  // So → Fr
+      document.getElementById('startDateInput').value = toDateStr(d);
+      document.getElementById('startHourInput').value = '08:00';
+
+    } else if (bookingMode === 'week') {
+      document.getElementById('startDateInput').value = toDateStr(d);
+      if (!document.getElementById('startHourInput').value)
+        document.getElementById('startHourInput').value = '08:00';
+
+    } else {
+      // flexible: 1. Klick = Start, 2. Klick = Ende
+      const startD = document.getElementById('startDateInput').value;
+      const dStr   = toDateStr(d);
+      if (!startD || calClickState === 'start' || dStr <= startD) {
+        document.getElementById('startDateInput').value = dStr;
+        document.getElementById('endDateInput').value   = '';
+        document.getElementById('endHourInput').value   = '';
+        calClickState = 'end';
+        updateCalHint(true);
+      } else {
+        document.getElementById('endDateInput').value = dStr;
+        if (!document.getElementById('endHourInput').value)
+          document.getElementById('endHourInput').value = '18:00';
+        calClickState = 'start';
+        updateCalHint(false);
+      }
+    }
+    calcDates();
+  }
+
+  function updateCalHint(show) {
+    const el = document.getElementById('calHint');
+    if (el) el.style.display = show ? 'block' : 'none';
+  }
 
   async function loadAvailability() {
     renderCalendar();
