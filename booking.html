@@ -837,7 +837,9 @@
       const dow  = d0.getDay(); // 0=So,1=Mo,...,5=Fr,6=Sa
       const isWeekendDay = (dow === 5 || dow === 6 || dow === 0);
       const d1 = new Date(d0); d1.setHours(23,59,59,999);
-      const booked = !other && !past && bookedRanges.some(r => new Date(r.start_time) <= d0 && new Date(r.end_time) >= d1);
+      const booked = !other && !past && bookedRanges.some(r =>
+        new Date(r.start_time) < d1 && new Date(r.end_time) > d0
+      );
       const cell = document.createElement('div');
       let cls = 'cal-day';
       let clickable = false;
