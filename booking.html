@@ -1085,6 +1085,12 @@
     await loadTrailer();
     await checkExistingSession();
 
+    // Modus aus URL-Parameter setzen (z.B. ?mode=weekend)
+    const urlMode = new URLSearchParams(window.location.search).get('mode');
+    if (urlMode === 'weekend' || urlMode === 'week') {
+      setMode(urlMode);
+    }
+
     const today    = new Date().toISOString().split('T')[0];
     const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
     const tStr     = tomorrow.toISOString().split('T')[0];
