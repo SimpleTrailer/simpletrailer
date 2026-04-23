@@ -941,6 +941,11 @@
       const partialBooked = !fullyBooked && !other && !past && bookedRanges.some(r =>
         new Date(r.start_time) < d1 && new Date(r.end_time) > d0
       );
+      // Woche-Modus: ganzes 7-Tage-Fenster muss frei sein
+      const weekEnd = new Date(d0); weekEnd.setDate(d0.getDate() + 7);
+      const weekBlocked = bookingMode === 'week' && !other && !past &&
+        bookedRanges.some(r => new Date(r.start_time) < weekEnd && new Date(r.end_time) > d0);
+
       const cell = document.createElement('div');
       let cls = 'cal-day';
       let clickable = false;
@@ -950,7 +955,7 @@
       } else if (fullyBooked) {
         cls += ' booked';
       } else if (partialBooked) {
-        if (bookingMode === 'weekend' && !isWeekendDay) {
+        if ((bookingMode === 'weekend' && !isWeekendDay) || weekBlocked) {
           cls += ' not-selectable';
         } else {
           cls += ' partial';
@@ -965,7 +970,7 @@
             cell.dataset.freeAt = info;
           }
         }
-      } else if (bookingMode === 'weekend' && !isWeekendDay) {
+      } else if ((bookingMode === 'weekend' && !isWeekendDay) || weekBlocked) {
         cls += ' not-selectable';
       } else {
         cls += ' available';
