@@ -258,25 +258,48 @@
     </div>
 
     <div class="card">
+      <p class="field-label" style="margin-bottom:16px;">Abholzeitpunkt</p>
       <div class="field-row">
         <div class="field-group">
-          <label class="field-label">Startzeit</label>
+          <label class="field-label">Datum</label>
           <div class="input-wrap">
-            <input type="datetime-local" class="field-input" id="startTime" />
+            <input type="date" class="field-input" id="startDate" onchange="updateEndTime()" />
           </div>
         </div>
         <div class="field-group">
-          <label class="field-label">Endzeit (automatisch)</label>
-          <div class="input-wrap" style="opacity:.6;">
-            <input type="datetime-local" class="field-input" id="endTime" readonly style="cursor:not-allowed;" />
+          <label class="field-label">Uhrzeit</label>
+          <div class="input-wrap">
+            <select class="field-input" id="startHour" onchange="updateEndTime()" style="cursor:pointer;">
+              <option value="">Uhrzeit wählen</option>
+            </select>
           </div>
         </div>
       </div>
+
+      <!-- Zeitraum-Übersicht -->
+      <div id="timeOverview" style="display:none;background:var(--s2);border-radius:10px;padding:14px 16px;margin-bottom:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+          <div>
+            <div style="font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gray);margin-bottom:3px;">Abholung</div>
+            <div style="font-weight:700;font-size:.95rem;" id="displayStart">–</div>
+          </div>
+          <div style="color:var(--gray);font-size:1.2rem;">→</div>
+          <div>
+            <div style="font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gray);margin-bottom:3px;">Rückgabe</div>
+            <div style="font-weight:700;font-size:.95rem;" id="displayEnd">–</div>
+          </div>
+        </div>
+      </div>
+
       <div class="price-summary">
         <span class="price-summary-label">Gesamtbetrag</span>
         <span class="price-summary-amount" id="priceDisplay">25,00 €</span>
       </div>
     </div>
+
+    <!-- hidden fields for compatibility -->
+    <input type="hidden" id="startTime" />
+    <input type="hidden" id="endTime" />
 
     <button class="btn btn-orange" onclick="goStep2()">Weiter →</button>
   </div>
@@ -537,27 +560,48 @@
     updateEndTime();
   }
 
+  function buildTimeOptions() {
+    const sel = document.getElementById('startHour');
+    for (let h = 6; h <= 21; h++) {
+      ['00','30'].forEach(m => {
+        if (h === 21 && m === '30') return;
+        const val = `${String(h).padStart(2,'0')}:${m}`;
+        const opt = document.createElement('option');
+        opt.value = val; opt.textContent = val + ' Uhr';
+        sel.appendChild(opt);
+      });
+    }
+  }
+
   function updateEndTime() {
-    const start = document.getElementById('startTime').value;
-    if (!start) return;
-    const startDate = new Date(start);
+    const dateVal = document.getElementById('startDate').value;
+    const hourVal = document.getElementById('startHour').value;
+    if (!dateVal || !hourVal) {
+      document.getElementById('timeOverview').style.display = 'none';
+      return;
+    }
+    const [h, m] = hourVal.split(':').map(Number);
+    const startDate = new Date(`${dateVal}T${hourVal}:00`);
+    document.getElementById('startTime').value = startDate.toISOString();
+
     let endDate;
-    if (selectedPricing === '3h')      endDate = new Date(startDate.getTime() + 3 * 3600000);
-    else if (selectedPricing === 'day') endDate = new Date(startDate.getTime() + 24 * 3600000);
-    else {
-      // Weekend: nächster Sonntag 20 Uhr
+    if (selectedPricing === '3h') {
+      endDate = new Date(startDate.getTime() + 3 * 3600000);
+    } else if (selectedPricing === 'day') {
+      endDate = new Date(startDate.getTime() + 24 * 3600000);
+    } else {
       endDate = new Date(startDate);
       const day = endDate.getDay();
-      const daysToSunday = day === 0 ? 0 : 7 - day;
+      const daysToSunday = day === 0 ? 7 : 7 - day;
       endDate.setDate(endDate.getDate() + daysToSunday);
       endDate.setHours(20, 0, 0, 0);
     }
-    document.getElementById('endTime').value = toLocalInput(endDate);
-  }
+    document.getElementById('endTime').value = endDate.toISOString();
 
-  function toLocalInput(date) {
-    const off = date.getTimezoneOffset() * 60000;
-    return new Date(date.getTime() - off).toISOString().slice(0, 16);
+    const fmtShort = d => d.toLocaleString('de-DE', { weekday:'short', day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+    document.getElementById('displayStart').textContent = fmtShort(startDate);
+    document.getElementById('displayEnd').textContent   = fmtShort(endDate);
+    document.getElementById('timeOverview').style.display = 'block';
   }
 
   function fmtDate(isoStr) {
@@ -671,6 +715,10 @@
     if (!first || !last || !email || !phone || !address || !pass) {
       errEl.textContent = 'Bitte alle Felder ausfüllen.'; errEl.style.display = 'block'; return;
     }
+    const phoneDigits = phone.replace(/[\s\-\(\)\+]/g, '');
+    if (!/^\d{7,15}$/.test(phoneDigits)) {
+      errEl.textContent = 'Bitte gültige Telefonnummer eingeben (z.B. +49 151 12345678).'; errEl.style.display = 'block'; return;
+    }
     if (pass.length < 6) { errEl.textContent = 'Passwort mind. 6 Zeichen.'; errEl.style.display = 'block'; return; }
     try {
       const res  = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
@@ -703,14 +751,20 @@
 
   // Heute als Standardwert setzen
   window.addEventListener('DOMContentLoaded', async () => {
+    buildTimeOptions();
     await loadTrailer();
     await checkExistingSession();
     updatePriceDisplay();
-    const now = new Date();
-    now.setMinutes(0, 0, 0);
-    now.setHours(now.getHours() + 1);
-    document.getElementById('startTime').value = toLocalInput(now);
-    document.getElementById('startTime').addEventListener('change', updateEndTime);
+
+    // Standardwerte: morgen, 08:00
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const yyyy = tomorrow.getFullYear();
+    const mm   = String(tomorrow.getMonth() + 1).padStart(2, '0');
+    const dd   = String(tomorrow.getDate()).padStart(2, '0');
+    document.getElementById('startDate').value = `${yyyy}-${mm}-${dd}`;
+    document.getElementById('startDate').min   = new Date().toISOString().split('T')[0];
+    document.getElementById('startHour').value = '08:00';
     updateEndTime();
   });
 
@@ -730,10 +784,14 @@
   }
 
   function goStep2() {
+    const dateVal = document.getElementById('startDate').value;
+    const hourVal = document.getElementById('startHour').value;
+    if (!dateVal) return alert('Bitte Datum wählen.');
+    if (!hourVal) return alert('Bitte Uhrzeit wählen.');
     const start = document.getElementById('startTime').value;
     const end   = document.getElementById('endTime').value;
-    if (!start || !end) return alert('Bitte Startzeit wählen.');
-    if (new Date(end) <= new Date(start)) return alert('Enddatum muss nach Startdatum liegen.');
+    if (!start || !end) return alert('Bitte Datum und Uhrzeit wählen.');
+    if (new Date(start) < new Date()) return alert('Startzeit muss in der Zukunft liegen.');
     goToStep(2);
     if (bookingUser) showBookingLoggedIn();
   }

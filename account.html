@@ -422,6 +422,8 @@
     errEl.style.display = 'none'; okEl.style.display = 'none';
 
     if (!firstName || !lastName || !email || !phone || !address || !password) { errEl.textContent = 'Bitte alle Felder ausfüllen.'; errEl.style.display = 'block'; return; }
+    const phoneDigits = phone.replace(/[\s\-\(\)\+]/g, '');
+    if (!/^\d{7,15}$/.test(phoneDigits)) { errEl.textContent = 'Bitte gültige Telefonnummer eingeben (z.B. +49 151 12345678).'; errEl.style.display = 'block'; return; }
     if (password.length < 6) { errEl.textContent = 'Passwort muss mindestens 6 Zeichen haben.'; errEl.style.display = 'block'; return; }
 
     try {
