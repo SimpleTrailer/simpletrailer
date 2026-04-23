@@ -322,9 +322,28 @@
           <div class="error-msg" id="authLoginErr" style="display:none;"></div>
           <button class="btn btn-orange" style="margin-top:8px;" onclick="doBookingLogin()">Anmelden</button>
           <div style="text-align:center;margin-top:12px;">
-            <a href="/account" style="color:var(--gray);font-size:.82rem;text-decoration:none;">Passwort vergessen?</a>
+            <a href="#" onclick="showBookingReset()" style="color:var(--gray);font-size:.82rem;text-decoration:none;">Passwort vergessen?</a>
           </div>
         </div>
+      </div>
+
+      <!-- RESET (innerhalb Login-Tab) -->
+      <div id="authReset" style="display:none;">
+        <div class="card">
+          <p style="color:var(--gray);font-size:.85rem;margin-bottom:16px;">Gib deine E-Mail ein – wir schicken dir einen Reset-Link.</p>
+          <div class="field-group">
+            <label class="field-label">E-Mail</label>
+            <input type="email" class="field-input" id="authResetEmail" placeholder="deine@email.de" />
+          </div>
+          <div class="error-msg" id="authResetErr" style="display:none;"></div>
+          <div class="auth-success" id="authResetOk"></div>
+          <button class="btn btn-orange" style="margin-top:8px;" onclick="doBookingReset()">Reset-Link senden</button>
+          <div style="text-align:center;margin-top:12px;">
+            <a href="#" onclick="showBookingReset(false)" style="color:var(--gray);font-size:.82rem;text-decoration:none;">← Zurück zum Login</a>
+          </div>
+        </div>
+      </div>
+
       </div>
 
       <!-- REGISTER -->
@@ -578,9 +597,34 @@
   function switchAuthTab(tab) {
     document.getElementById('authLogin').style.display    = tab === 'login'    ? 'block' : 'none';
     document.getElementById('authRegister').style.display = tab === 'register' ? 'block' : 'none';
+    document.getElementById('authReset').style.display    = 'none';
     document.querySelectorAll('.auth-tab').forEach((t, i) => {
       t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'register'));
     });
+  }
+
+  function showBookingReset(show = true) {
+    document.getElementById('authLogin').style.display = show ? 'none' : 'block';
+    document.getElementById('authReset').style.display = show ? 'block' : 'none';
+  }
+
+  async function doBookingReset() {
+    const email = document.getElementById('authResetEmail').value.trim();
+    const errEl = document.getElementById('authResetErr');
+    const okEl  = document.getElementById('authResetOk');
+    errEl.style.display = 'none'; okEl.style.display = 'none';
+    if (!email) { errEl.textContent = 'Bitte E-Mail eingeben.'; errEl.style.display = 'block'; return; }
+    try {
+      await fetch(`${SUPABASE_URL}/auth/v1/recover`, {
+        method: 'POST',
+        headers: { apikey: SUPABASE_ANON, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      okEl.textContent = 'Link gesendet! Schau in dein Postfach.';
+      okEl.style.display = 'block';
+    } catch(e) {
+      errEl.textContent = 'Fehler beim Senden.'; errEl.style.display = 'block';
+    }
   }
 
   function switchBookingAccount() {
@@ -635,7 +679,14 @@
         body: JSON.stringify({ email, password: pass, data: { first_name: first, last_name: last, full_name: `${first} ${last}`, phone, address } })
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error_description || data.msg || 'Registrierung fehlgeschlagen');
+      if (!res.ok) {
+        const msg = data.error_description || data.msg || data.error || '';
+        if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already been registered')) {
+          errEl.innerHTML = 'Diese E-Mail ist bereits registriert. <a href="#" onclick="switchAuthTab(\'login\')" style="color:var(--orange)">Jetzt anmelden →</a>';
+          errEl.style.display = 'block'; return;
+        }
+        throw new Error(msg || 'Registrierung fehlgeschlagen');
+      }
       if (data.access_token) {
         bookingUser  = data.user;
         bookingToken = data.access_token;

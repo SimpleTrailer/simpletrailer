@@ -431,7 +431,14 @@
         body: JSON.stringify({ email, password, data: { first_name: firstName, last_name: lastName, full_name: `${firstName} ${lastName}`, phone, address } })
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error_description || data.msg || 'Registrierung fehlgeschlagen');
+      if (!res.ok) {
+        const msg = data.error_description || data.msg || data.error || '';
+        if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already been registered')) {
+          errEl.innerHTML = 'Diese E-Mail ist bereits registriert. <a href="#" onclick="switchTab(\'login\')" style="color:var(--orange)">Jetzt anmelden →</a>';
+          errEl.style.display = 'block'; return;
+        }
+        throw new Error(msg || 'Registrierung fehlgeschlagen');
+      }
 
       if (data.access_token) {
         authToken   = data.access_token;
