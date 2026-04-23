@@ -158,7 +158,7 @@
     .cal-day.today { outline:2px solid var(--border); }
     .cal-day.available { cursor:pointer; background:#0d2b18; color:#4ade80; border:1px solid #166534; }
     .cal-day.available:hover { background:#14532d; border-color:#22c55e; }
-    .cal-day.booked { background:#2d0d0d; color:#f87171; cursor:not-allowed; border:1px solid #7f1d1d; text-decoration:line-through; opacity:.75; }
+    .cal-day.booked { background:#200505; color:#ef4444; cursor:not-allowed; border:1px solid #b91c1c; text-decoration:line-through; }
     .cal-day.sel-start, .cal-day.sel-end { background:var(--orange) !important; color:#fff !important; border:none !important; border-radius:6px; font-weight:800; text-decoration:none !important; }
     .cal-day.in-range { background:#1a0d00; border-radius:0; color:var(--white); border:none; text-decoration:none; }
     .cal-day.sel-start.in-range { border-radius:6px 0 0 6px; }
@@ -166,14 +166,14 @@
     .cal-legend { display:flex; gap:14px; font-size:.72rem; color:var(--gray); flex-wrap:wrap; }
     .legend-dot { width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:4px; vertical-align:middle; }
     .cal-day.not-selectable { color:#333; cursor:default; background:#0d0d0d !important; border:1px solid #181818 !important; }
-    .cal-day.partial { background:#1a1200; color:#fbbf24; cursor:pointer; border:1px solid #92400e; }
-    .cal-day.partial:hover { background:#2d1f00; border-color:#f59e0b; }
+    .cal-day.partial { background:#141200; color:#fde047; cursor:pointer; border:1px solid #713f12; }
+    .cal-day.partial:hover { background:#1c1900; border-color:#ca8a04; }
     .cal-day.partial::after {
       content: attr(data-info);
       position: absolute;
       bottom: calc(100% + 7px);
       left: 50%; transform: translateX(-50%);
-      background: #1a1200; border: 1px solid #f59e0b; color: #fbbf24;
+      background: #141200; border: 1px solid #ca8a04; color: #fde047;
       padding: 4px 9px; border-radius: 6px; font-size: .66rem;
       white-space: nowrap; pointer-events: none;
       opacity: 0; transition: opacity .15s; z-index: 20;
@@ -399,8 +399,8 @@
         <p class="field-label" style="margin-bottom:0;">Verfügbarkeit</p>
         <div class="cal-legend">
           <span><span class="legend-dot" style="background:#4ade80;border:1px solid #166534;"></span>Verfügbar</span>
-          <span><span class="legend-dot" style="background:#fbbf24;border:1px solid #92400e;"></span>Teils frei</span>
-          <span><span class="legend-dot" style="background:#f87171;border:1px solid #7f1d1d;"></span>Gebucht</span>
+          <span><span class="legend-dot" style="background:#fde047;border:1px solid #713f12;"></span>Teils frei</span>
+          <span><span class="legend-dot" style="background:#ef4444;border:1px solid #b91c1c;"></span>Gebucht</span>
         </div>
       </div>
       <div class="cal-nav">
@@ -769,14 +769,16 @@
       document.getElementById('endAutoText').textContent = fmtShort(endMs);
       document.getElementById('endAutoDisplay').style.display = 'block';
     } else {
-      // Flexible
+      // Flexible – startTime früh setzen damit Kalender Start-Tag markiert
+      document.getElementById('startTime').value = new Date(startMs).toISOString();
+      document.getElementById('endTime').value   = '';
       const endD = document.getElementById('endDateInput').value;
       const endH = document.getElementById('endHourInput').value || '18:00';
       if (!endD) { document.getElementById('priceBreakdown').style.display = 'none'; renderCalendar(); return; }
       endMs = new Date(`${endD}T${endH}:00`).getTime();
       if (endMs <= startMs) {
         errEl.textContent = 'Enddatum muss nach Startdatum liegen.'; errEl.style.display = 'block';
-        document.getElementById('priceBreakdown').style.display = 'none'; return;
+        document.getElementById('priceBreakdown').style.display = 'none'; renderCalendar(); return;
       }
     }
 
@@ -925,7 +927,7 @@
       // flexible: 1. Klick = Start, 2. Klick = Ende
       const startD = document.getElementById('startDateInput').value;
       const dStr   = toDateStr(d);
-      if (!startD || calClickState === 'start' || dStr <= startD) {
+      if (!startD || calClickState === 'start' || dStr < startD) {
         document.getElementById('startDateInput').value = dStr;
         document.getElementById('endDateInput').value   = '';
         document.getElementById('endHourInput').value   = '';
