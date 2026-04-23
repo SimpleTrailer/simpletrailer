@@ -31,7 +31,7 @@ module.exports = async (req, res) => {
       // 2h Kulanz pro Tagesgrenze (identisch mit Frontend)
       const extraDays = Math.max(0, Math.ceil((hours - 24 - 2) / 24));
       if (extraDays === 0) return 25;
-      return 25 + extraDays * 20;
+      return 25 + extraDays * 22;
     }
 
     let baseAmount;
