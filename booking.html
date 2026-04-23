@@ -132,6 +132,15 @@
     .ins-price.free { color: var(--gray); }
     .ins-badge { display: inline-block; font-size: .62rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; background: #1a3a1a; color: #22c55e; border-radius: 4px; padding: 2px 6px; margin-left: 6px; vertical-align: middle; }
 
+    /* MODE SWITCHER */
+    .mode-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .mode-option { border:1.5px solid var(--border); border-radius:12px; padding:14px 16px; cursor:pointer; transition:all .2s; background:var(--s2); text-align:center; }
+    .mode-option:hover { border-color:#555; }
+    .mode-option.selected { border-color:var(--orange); background:#1a0d00; }
+    .mode-icon { font-size:1.4rem; margin-bottom:6px; }
+    .mode-name { font-weight:700; font-size:.9rem; margin-bottom:3px; }
+    .mode-desc { font-size:.75rem; color:var(--gray); line-height:1.4; }
+
     /* CALENDAR */
     .cal-nav { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
     .cal-nav-btn { background:var(--s2); border:1.5px solid var(--border); color:var(--white); width:32px; height:32px; border-radius:6px; cursor:pointer; font-size:1.1rem; font-family:var(--font); display:flex; align-items:center; justify-content:center; transition:border-color .2s; }
@@ -267,6 +276,23 @@
       </div>
     </div>
 
+    <!-- Mode Switch -->
+    <div class="card" style="padding:20px 24px;">
+      <p class="field-label" style="margin-bottom:12px;">Buchungsart wählen</p>
+      <div class="mode-grid">
+        <div class="mode-option selected" id="modeFlexible" onclick="setMode('flexible')">
+          <div class="mode-icon">📅</div>
+          <div class="mode-name">Flexibel</div>
+          <div class="mode-desc">Beliebiger Zeitraum<br>Preis nach Dauer</div>
+        </div>
+        <div class="mode-option" id="modeWeekend" onclick="setMode('weekend')">
+          <div class="mode-icon">🎉</div>
+          <div class="mode-name">Wochenende</div>
+          <div class="mode-desc">Freitag bis Sonntag<br><strong style="color:var(--orange)">Festpreis 55 €</strong></div>
+        </div>
+      </div>
+    </div>
+
     <!-- Availability Calendar -->
     <div class="card">
       <p class="field-label" style="margin-bottom:14px;">Verfügbarkeit</p>
@@ -308,7 +334,7 @@
           </div>
         </div>
       </div>
-      <div class="field-row" style="margin-top:12px;">
+      <div class="field-row" style="margin-top:12px;" id="endDateRow">
         <div class="field-group">
           <label class="field-label">Enddatum</label>
           <div class="input-wrap">
@@ -535,12 +561,13 @@
   const SUPABASE_ANON = 'sb_publishable_cX1r2GLuIkxEPIpkFKdXaQ_RtP7eDOf';
   const STRIPE_PK     = 'pk_test_51TOehyB86POpsdCdzLz5B5jj5mrCwx6i176AVIRaPwnynSxBDfdEcFCMo20wjNaxHVs10iYtdUvRTL3L2qGYtCTz00bjEzHFcZ';
 
-  let bookingUser  = null;
-  let bookingToken = null;
-  let bookedRanges = [];
+  let bookingUser    = null;
+  let bookingToken   = null;
+  let bookedRanges   = [];
   let calYear, calMonth;
   let selectedInsurance = 'none';
   let insuranceRate     = 0;
+  let bookingMode       = 'flexible'; // 'flexible' | 'weekend'
 
   const stripeClient = Stripe(STRIPE_PK);
 
@@ -583,6 +610,56 @@
   }
 
 
+  /* ── MODE SWITCHER ────────────────────────────── */
+  function setMode(mode) {
+    bookingMode = mode;
+    document.getElementById('modeFlexible').classList.toggle('selected', mode === 'flexible');
+    document.getElementById('modeWeekend').classList.toggle('selected', mode === 'weekend');
+
+    const endRow = document.getElementById('endDateRow');
+    if (mode === 'weekend') {
+      // Auto-select next available Friday
+      endRow.style.display = 'none';
+      selectNextWeekend();
+    } else {
+      endRow.style.display = '';
+      onDateChange();
+    }
+  }
+
+  function selectNextWeekend() {
+    // Find next Friday that's not booked
+    const today = new Date();
+    let fri = new Date(today);
+    // Find next Friday (day 5)
+    const daysUntilFri = (5 - fri.getDay() + 7) % 7 || 7;
+    fri.setDate(fri.getDate() + daysUntilFri);
+
+    // Try up to 8 weeks ahead to find a free weekend
+    for (let w = 0; w < 8; w++) {
+      const sun = new Date(fri);
+      sun.setDate(sun.getDate() + 2);
+      sun.setHours(20, 0, 0, 0);
+      fri.setHours(8, 0, 0, 0);
+      const overlap = bookedRanges.some(r =>
+        new Date(r.start_time) < sun && new Date(r.end_time) > fri
+      );
+      if (!overlap) {
+        const toDateStr = d => d.toISOString().split('T')[0];
+        document.getElementById('startDate').value = toDateStr(fri);
+        document.getElementById('startHour').value = '08:00';
+        document.getElementById('endDate').value   = toDateStr(sun);
+        document.getElementById('endHour').value   = '20:00';
+        onDateChange();
+        return;
+      }
+      fri.setDate(fri.getDate() + 7);
+    }
+    // No free weekend found
+    document.getElementById('dateError').textContent = 'Kein freies Wochenende in den nächsten 8 Wochen verfügbar.';
+    document.getElementById('dateError').style.display = 'block';
+  }
+
   /* ── TIME OPTIONS ─────────────────────────────── */
   function buildTimeOptions() {
     ['startHour','endHour'].forEach(id => {
@@ -601,6 +678,7 @@
 
   /* ── PRICE CALC ────────────────────────────────── */
   function calcPrice(startMs, endMs) {
+    if (bookingMode === 'weekend') return { base: 55, extraDays: 0, label: 'Wochenende (Fr–So)', isWeekend: true };
     const hours = (endMs - startMs) / 3600000;
     if (hours <= 0) return null;
     if (hours <= 3)  return { base: 8,  extraDays: 0, label: 'Kurztrip (bis 3 Std.)' };
@@ -699,15 +777,18 @@
     document.getElementById('pbStart').textContent    = fmtShort(startMs);
     document.getElementById('pbEnd').textContent      = fmtShort(endMs);
     document.getElementById('pbDuration').textContent = 'Dauer: ' + durLabel;
-    document.getElementById('pbDay1Line').innerHTML   = `<span>Erster Tag</span><span>25,00 €</span>`;
-
-    if (p.extraDays > 0) {
+    if (p.isWeekend) {
+      document.getElementById('pbDay1Line').innerHTML  = `<span>Wochenende Festpreis</span><span>55,00 €</span>`;
+      document.getElementById('pbExtraLine').style.display = 'none';
+    } else if (hours <= 3) {
+      document.getElementById('pbDay1Line').innerHTML  = `<span>Kurztrip (bis 3 Std.)</span><span>8,00 €</span>`;
+      document.getElementById('pbExtraLine').style.display = 'none';
+    } else if (p.extraDays > 0) {
+      document.getElementById('pbDay1Line').innerHTML  = `<span>Erster Tag</span><span>25,00 €</span>`;
       document.getElementById('pbExtraLine').style.display = 'flex';
       document.getElementById('pbExtraLine').innerHTML = `<span>${p.extraDays} weitere${p.extraDays > 1 ? '' : 'r'} Tag${p.extraDays > 1 ? 'e' : ''} × 20 €</span><span>${(p.extraDays * 20).toFixed(2).replace('.',',')} €</span>`;
-    } else if (hours <= 3) {
-      document.getElementById('pbDay1Line').innerHTML = `<span>Kurztrip (bis 3 Std.)</span><span>8,00 €</span>`;
-      document.getElementById('pbExtraLine').style.display = 'none';
     } else {
+      document.getElementById('pbDay1Line').innerHTML  = `<span>Erster Tag</span><span>25,00 €</span>`;
       document.getElementById('pbExtraLine').style.display = 'none';
     }
 
