@@ -27,6 +27,7 @@ module.exports = async (req, res) => {
       const hours = (new Date(end) - new Date(start)) / 3600000;
       if (hours <= 0) return 0;
       if (hours <= 3)  return 8;
+      if (hours <= 6)  return 15;
       // 2h Kulanz pro Tagesgrenze (identisch mit Frontend)
       const extraDays = Math.max(0, Math.ceil((hours - 24 - 2) / 24));
       if (extraDays === 0) return 25;
@@ -34,7 +35,7 @@ module.exports = async (req, res) => {
     }
 
     let baseAmount;
-    if (booking_mode === 'weekend') baseAmount = 55;
+    if (booking_mode === 'weekend') baseAmount = 59;
     else if (booking_mode === 'week') baseAmount = 119;
     else baseAmount = calcBaseAmount(start_time, end_time);
 

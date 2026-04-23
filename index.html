@@ -574,7 +574,7 @@
 
     .pricing-grid {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
+      grid-template-columns: repeat(6, 1fr);
       gap: 16px;
       margin-top: 18px;
       align-items: stretch;
@@ -917,7 +917,8 @@
       .steps { grid-template-columns: 1fr 1fr; gap: 36px; }
       .steps::before { display: none; }
       .pricing-grid { grid-template-columns: 1fr 1fr; gap: 12px; max-width: none; }
-      .pricing-grid .price-card:last-child { grid-column: 1 / -1; }
+      .pricing-grid .price-card:last-child, .pricing-grid .price-card:nth-last-child(2) { grid-column: span 1; }
+      .pricing-grid .price-card:nth-child(6) { grid-column: 1 / -1; }
       .reviews-grid { grid-template-columns: 1fr; max-width: 420px; margin: 0 auto; }
       .contact-grid { grid-template-columns: 1fr; }
       .footer-top { flex-direction: column; }
@@ -1181,6 +1182,21 @@
         <a href="booking.html?mode=flexible" class="btn btn-outline">Buchen</a>
       </div>
 
+      <!-- HALBER TAG -->
+      <div class="price-card reveal">
+        <div class="card-header"><p class="price-label">Halber Tag</p></div>
+        <div class="price-amount">
+          <span class="currency">€</span><span class="big">15</span><span class="period">/ bis 6 Std.</span>
+        </div>
+        <p class="price-sub">≈ 2,50 € / Stunde</p>
+        <ul class="price-features">
+          <li>Ideal für Einkäufe & Transporte</li>
+          <li>Schloss per Zahlencode</li>
+          <li>Keine Kaution nötig</li>
+        </ul>
+        <a href="booking.html?mode=flexible" class="btn btn-outline">Buchen</a>
+      </div>
+
       <!-- GANZER TAG -->
       <div class="price-card featured reveal">
         <span class="card-badge orange">Meist gebucht</span>
@@ -1202,9 +1218,9 @@
         <span class="card-badge" style="background:#0f2d0f;color:#4ade80;border:1px solid #22c55e;">Wochenend-Deal</span>
         <div class="card-header"><p class="price-label">Wochenende</p></div>
         <div class="price-amount">
-          <span class="currency">€</span><span class="big">55</span><span class="period">/ Fr–So</span>
+          <span class="currency">€</span><span class="big">59</span><span class="period">/ Fr–So</span>
         </div>
-        <p class="price-sub">Festpreis · ≈ 18,33 € / Tag</p>
+        <p class="price-sub">Festpreis · ≈ 19,67 € / Tag</p>
         <ul class="price-features">
           <li>Freitag bis Sonntag</li>
           <li>Ideal für Umzüge</li>
@@ -1239,9 +1255,9 @@
         <p class="price-sub">Preis nach Dauer · frei wählbar</p>
         <ul class="price-features">
           <li>Bis 3 Std.: <strong style="color:var(--white)">8 €</strong></li>
-          <li>Erster Tag: <strong style="color:var(--white)">25 €</strong></li>
+          <li>Bis 6 Std.: <strong style="color:var(--white)">15 €</strong></li>
+          <li>Bis 24 Std.: <strong style="color:var(--white)">25 €</strong></li>
           <li>Jeder weitere Tag: <strong style="color:var(--white)">+20 €</strong></li>
-          <li>Von 3 Std. bis 30 Tage</li>
         </ul>
         <a href="booking.html?mode=flexible" class="btn btn-outline">Individuell buchen</a>
       </div>

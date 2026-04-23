@@ -317,13 +317,24 @@
         <button type="button" class="mode-option" id="modeWeekend" onclick="setMode('weekend')">
           <div class="mode-icon">🎉</div>
           <div class="mode-name">Wochenende</div>
-          <div class="mode-desc">Fr–So Festpreis<br><strong style="color:var(--orange)">55 €</strong></div>
+          <div class="mode-desc">Fr–So Festpreis<br><strong style="color:var(--orange)">59 €</strong></div>
         </button>
         <button type="button" class="mode-option" id="modeWeek" onclick="setMode('week')">
           <div class="mode-icon">🔥</div>
           <div class="mode-name">1 Woche</div>
           <div class="mode-desc">7 Tage Festpreis<br><strong style="color:#f59e0b">119 €</strong></div>
         </button>
+      </div>
+
+      <!-- Preisstaffel für Individuell -->
+      <div id="flexPriceInfo" style="margin-top:14px;background:#111;border-radius:10px;padding:12px 14px;display:block;">
+        <p style="font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gray);margin-bottom:8px;">Preisstaffel</p>
+        <div style="display:grid;grid-template-columns:1fr auto;gap:4px 16px;font-size:.82rem;">
+          <span style="color:var(--gray);">bis 3 Std.</span><span style="font-weight:700;">8 €</span>
+          <span style="color:var(--gray);">bis 6 Std.</span><span style="font-weight:700;">15 €</span>
+          <span style="color:var(--gray);">bis 24 Std.</span><span style="font-weight:700;">25 €</span>
+          <span style="color:var(--gray);">jeder weitere Tag</span><span style="font-weight:700;">+20 €</span>
+        </div>
       </div>
     </div>
 
@@ -681,12 +692,15 @@
     // Show/hide end date row
     const endRow = document.getElementById('endDateRow');
     const endAuto = document.getElementById('endAutoDisplay');
+    const flexInfo = document.getElementById('flexPriceInfo');
     if (mode === 'flexible') {
       endRow.style.display = 'block';
       endAuto.style.display = 'none';
+      if (flexInfo) flexInfo.style.display = 'block';
     } else {
       endRow.style.display = 'none';
       endAuto.style.display = 'none';
+      if (flexInfo) flexInfo.style.display = 'none';
     }
     document.getElementById('priceBreakdown').style.display = 'none';
     document.getElementById('dateError').style.display = 'none';
@@ -758,12 +772,13 @@
 
   /* ── PRICE CALC ───────────────────────────────── */
   function calcPrice(startMs, endMs) {
-    if (bookingMode === 'weekend') return { base: 55,  extraDays: 0, label: 'Wochenende (Fr–So)', isWeekend: true };
+    if (bookingMode === 'weekend') return { base: 59,  extraDays: 0, label: 'Wochenende (Fr–So)', isWeekend: true };
     if (bookingMode === 'week')    return { base: 119, extraDays: 0, label: '1 Woche (7 Tage)',   isWeek:    true };
     const hours = (endMs - startMs) / 3600000;
     if (hours <= 0)  return null;
     if (hours <= 3)  return { base: 8,  extraDays: 0, label: 'Kurztrip (bis 3 Std.)' };
-    // 2h Kulanz pro Tagesgrenze: 48h→45€, 49h→45€, 50h→45€, 51h→65€
+    if (hours <= 6)  return { base: 15, extraDays: 0, label: 'Halber Tag (bis 6 Std.)' };
+    // 2h Kulanz pro Tagesgrenze
     const extraDays = Math.max(0, Math.ceil((hours - 24 - 2) / 24));
     if (extraDays === 0) return { base: 25, extraDays: 0, label: 'Ganzer Tag' };
     return { base: 25 + extraDays * 20, extraDays, label: `${extraDays + 1} Tage` };
@@ -863,7 +878,7 @@
     document.getElementById('pbDuration').textContent = 'Dauer: ' + (days > 0 ? `${days} Tag${days>1?'e':''}${remH>0?', '+remH+' Std.':''}` : `${Math.round(hours)} Std.`);
 
     if (p.isWeekend) {
-      document.getElementById('pbDay1Line').innerHTML = `<span>Wochenende Festpreis (Fr–So)</span><span>55,00 €</span>`;
+      document.getElementById('pbDay1Line').innerHTML = `<span>Wochenende Festpreis (Fr–So)</span><span>59,00 €</span>`;
       document.getElementById('pbExtraLine').style.display = 'none';
     } else if (p.isWeek) {
       document.getElementById('pbDay1Line').innerHTML = `<span>🔥 1 Woche Festpreis (7 Tage)</span><span>119,00 €</span>`;
@@ -871,6 +886,9 @@
       document.getElementById('pbExtraLine').style.display = 'flex';
     } else if (hours <= 3) {
       document.getElementById('pbDay1Line').innerHTML = `<span>Kurztrip (bis 3 Std.)</span><span>8,00 €</span>`;
+      document.getElementById('pbExtraLine').style.display = 'none';
+    } else if (hours <= 6) {
+      document.getElementById('pbDay1Line').innerHTML = `<span>Halber Tag (bis 6 Std.)</span><span>15,00 €</span>`;
       document.getElementById('pbExtraLine').style.display = 'none';
     } else if (p.extraDays > 0) {
       document.getElementById('pbDay1Line').innerHTML = `<span>Erster Tag</span><span>25,00 €</span>`;
