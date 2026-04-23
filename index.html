@@ -596,6 +596,9 @@
     .price-card:hover { border-color: #555; transform: translateY(-3px) !important; }
     .price-card.featured { border-color: var(--orange); background: #1a0d00; }
     .price-card.featured:hover { border-color: var(--orange-hover); }
+    .price-card.featured-green { border-color: #22c55e; background: #0a1f0a; }
+    .price-card.featured-green:hover { border-color: #4ade80; }
+    .price-card.featured-green .price-features li::before { background-color: #0a1f0a; }
 
     .card-header { margin-bottom: 14px; }
     .price-label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gray); }
@@ -1195,8 +1198,8 @@
       </div>
 
       <!-- WOCHENENDE -->
-      <div class="price-card reveal">
-        <span class="card-badge deal">% Wochenend-Deal</span>
+      <div class="price-card featured-green reveal">
+        <span class="card-badge deal"><span style="font-size:.85rem;font-weight:900;">%</span> Wochenend-Deal</span>
         <div class="card-header"><p class="price-label">Wochenende</p></div>
         <div class="price-amount">
           <span class="currency">€</span><span class="big">55</span><span class="period">/ Fr–So</span>
