@@ -576,6 +576,7 @@
       display: grid;
       grid-template-columns: repeat(5, 1fr);
       gap: 16px;
+      margin-top: 18px;
       align-items: stretch;
     }
 
@@ -583,10 +584,12 @@
       background: var(--s2);
       border: 1.5px solid var(--border);
       border-radius: 16px;
-      padding: 24px 22px;
+      padding: 28px 22px 24px;
       display: flex;
       flex-direction: column;
       gap: 0;
+      position: relative;
+      overflow: visible;
       transition: opacity 0.65s ease, transform 0.65s ease, border-color 0.2s;
     }
 
@@ -594,12 +597,17 @@
     .price-card.featured { border-color: var(--orange); background: #1a0d00; }
     .price-card.featured:hover { border-color: var(--orange-hover); }
 
-    .card-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+    .card-header { margin-bottom: 14px; }
     .price-label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gray); }
-    .card-badge { display: inline-flex; align-items: center; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; padding: 3px 9px; border-radius: 20px; white-space: nowrap; }
+    .card-badge {
+      position: absolute; top: -13px; left: 50%; transform: translateX(-50%);
+      display: inline-flex; align-items: center; white-space: nowrap;
+      font-size: 0.62rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+      padding: 4px 12px; border-radius: 20px;
+    }
     .card-badge.orange { background: var(--orange); color: #fff; }
     .card-badge.amber  { background: #2d1a00; color: #f59e0b; border: 1px solid #d97706; }
-    .card-badge.indigo { background: #1a1a2e; color: #818cf8; border: 1px solid #3730a3; }
+    .card-badge.green  { background: #0f2d0f; color: #22c55e; border: 1px solid #22c55e; }
 
     .price-amount { display: flex; align-items: baseline; gap: 4px; margin-bottom: 4px; }
     .price-amount .big { font-size: 3rem; font-weight: 800; letter-spacing: -0.05em; line-height: 1; }
@@ -1172,10 +1180,8 @@
 
       <!-- GANZER TAG -->
       <div class="price-card featured reveal">
-        <div class="card-header">
-          <p class="price-label">Ganzer Tag</p>
-          <span class="card-badge orange">Meist gebucht</span>
-        </div>
+        <span class="card-badge orange">Meist gebucht</span>
+        <div class="card-header"><p class="price-label">Ganzer Tag</p></div>
         <div class="price-amount">
           <span class="currency">€</span><span class="big">25</span><span class="period">/ 24 Std.</span>
         </div>
@@ -1190,10 +1196,8 @@
 
       <!-- WOCHENENDE -->
       <div class="price-card reveal">
-        <div class="card-header">
-          <p class="price-label">Wochenende</p>
-          <span class="card-badge indigo">🏠 Umzug</span>
-        </div>
+        <span class="card-badge green">Festpreis</span>
+        <div class="card-header"><p class="price-label">Wochenende</p></div>
         <div class="price-amount">
           <span class="currency">€</span><span class="big">55</span><span class="period">/ Fr–So</span>
         </div>
@@ -1208,14 +1212,12 @@
 
       <!-- WOCHE -->
       <div class="price-card week-card reveal" style="border-color:#d97706;background:#120d00;">
-        <div class="card-header">
-          <p class="price-label">1 Woche</p>
-          <span class="card-badge amber">🔥 Sparangebot</span>
-        </div>
+        <span class="card-badge amber">🔥 Sparangebot</span>
+        <div class="card-header"><p class="price-label">1 Woche</p></div>
         <div class="price-amount">
-          <span class="currency">€</span><span class="big" style="color:#f59e0b;">129</span><span class="period">/ 7 Tage</span>
+          <span class="currency">€</span><span class="big" style="color:#f59e0b;">119</span><span class="period">/ 7 Tage</span>
         </div>
-        <p class="price-sub">≈ 18,43 € / Tag &nbsp;<span class="save">spare 16 €</span> <span class="price-old">145 €</span></p>
+        <p class="price-sub">≈ 17,00 € / Tag &nbsp;<span class="save">spare 26 €</span> <span class="price-old">145 €</span></p>
         <ul class="price-features">
           <li>7 Tage ab Startdatum</li>
           <li>Perfekt für den Urlaub</li>
@@ -1233,6 +1235,7 @@
         </div>
         <p class="price-sub">Preis nach Dauer · frei wählbar</p>
         <ul class="price-features">
+          <li>Bis 3 Std.: <strong style="color:var(--white)">8 €</strong></li>
           <li>Erster Tag: <strong style="color:var(--white)">25 €</strong></li>
           <li>Jeder weitere Tag: <strong style="color:var(--white)">+20 €</strong></li>
           <li>2 bis 30 Tage buchbar</li>
