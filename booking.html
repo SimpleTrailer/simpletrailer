@@ -660,7 +660,12 @@
 
 
   /* ── HELPERS ──────────────────────────────────── */
-  function toDateStr(d) { return d.toISOString().split('T')[0]; }
+  function toDateStr(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2,'0');
+    const dd = String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${dd}`;
+  }
   function fmtDate(iso) { return new Date(iso).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
   function fmtShort(ms) { return new Date(ms).toLocaleString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
 
@@ -702,6 +707,51 @@
     });
   }
 
+  /* ── TIME CONSTRAINTS (verhindert Doppelbuchungen) ─ */
+  function getHourRange(dateStr, role) {
+    const d0 = new Date(`${dateStr}T00:00:00`);
+    const d1 = new Date(`${dateStr}T23:59:59`);
+    let minH = 6, maxH = 21;
+    for (const r of bookedRanges) {
+      const rS = new Date(r.start_time);
+      const rE = new Date(r.end_time);
+      if (rS >= d1 || rE <= d0) continue; // kein Overlap
+      if (role === 'start') {
+        // Buchung endet an diesem Tag → früheste Startzeit = Buchungsende
+        if (rE > d0 && rE < d1) minH = Math.max(minH, rE.getHours() + (rE.getMinutes() > 0 ? 1 : 0));
+        // Buchung beginnt an diesem Tag → späteste Startzeit = vor Buchungsbeginn
+        if (rS > d0 && rS < d1) maxH = Math.min(maxH, rS.getHours() - 1);
+      } else {
+        // Buchung beginnt an diesem Tag → späteste Rückgabe = Buchungsbeginn
+        if (rS > d0 && rS < d1) maxH = Math.min(maxH, rS.getHours());
+        // Buchung endet an diesem Tag → früheste Rückgabe = nach Buchungsende
+        if (rE > d0 && rE < d1) minH = Math.max(minH, rE.getHours() + (rE.getMinutes() > 0 ? 1 : 0));
+      }
+    }
+    return { min: minH, max: maxH };
+  }
+
+  function rebuildSelect(id, minH, maxH) {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">Wählen</option>';
+    for (let h = minH; h <= maxH; h++) {
+      const v = `${String(h).padStart(2,'0')}:00`;
+      const o = document.createElement('option');
+      o.value = v; o.textContent = v + ' Uhr';
+      sel.appendChild(o);
+    }
+    sel.value = sel.querySelector(`option[value="${cur}"]`) ? cur : '';
+  }
+
+  function refreshTimeDropdowns() {
+    const startD = document.getElementById('startDateInput').value;
+    const endD   = document.getElementById('endDateInput').value;
+    if (startD) { const c = getHourRange(startD, 'start'); rebuildSelect('startHourInput', c.min, c.max); }
+    if (endD && bookingMode === 'flexible') { const c = getHourRange(endD, 'end'); rebuildSelect('endHourInput', c.min, c.max); }
+  }
+
   /* ── PRICE CALC ───────────────────────────────── */
   function calcPrice(startMs, endMs) {
     if (bookingMode === 'weekend') return { base: 55,  extraDays: 0, label: 'Wochenende (Fr–So)', isWeekend: true };
@@ -737,12 +787,14 @@
 
   /* ── CALC DATES (called on any input change) ──── */
   function calcDates() {
-    const errEl   = document.getElementById('dateError');
-    const startD  = document.getElementById('startDateInput').value;
-    const startH  = document.getElementById('startHourInput').value || '08:00';
+    const errEl  = document.getElementById('dateError');
+    const startD = document.getElementById('startDateInput').value;
     errEl.style.display = 'none';
 
     if (!startD) { document.getElementById('priceBreakdown').style.display = 'none'; renderCalendar(); return; }
+
+    refreshTimeDropdowns();
+    const startH = document.getElementById('startHourInput').value || '08:00';
 
     const startMs = new Date(`${startD}T${startH}:00`).getTime();
     let   endMs, endLabel;
