@@ -574,7 +574,7 @@
 
     .pricing-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       gap: 20px;
       align-items: stretch;
     }
@@ -918,7 +918,8 @@
       }
       .steps { grid-template-columns: 1fr 1fr; gap: 36px; }
       .steps::before { display: none; }
-      .pricing-grid { grid-template-columns: 1fr; max-width: 400px; margin: 0 auto; }
+      .pricing-grid { grid-template-columns: 1fr 1fr; max-width: 480px; margin: 0 auto; }
+      .pricing-grid .price-card:last-child { grid-column: 1 / -1; }
       .reviews-grid { grid-template-columns: 1fr; max-width: 420px; margin: 0 auto; }
       .contact-grid { grid-template-columns: 1fr; }
       .footer-top { flex-direction: column; }
@@ -1213,11 +1214,23 @@
         <a href="booking.html" class="btn btn-outline">Jetzt buchen</a>
       </div>
 
-    </div>
+      <div class="price-card reveal" style="border-color:#333;">
+        <p class="price-label">Flexibel</p>
+        <div class="price-amount" style="margin-bottom:16px;">
+          <span class="currency">€</span>
+          <span class="big" style="font-size:2.2rem;">8–</span>
+          <span class="period">/ nach Dauer</span>
+        </div>
+        <ul class="price-features" style="margin-bottom:16px;">
+          <li>Bis 3 Std. → <strong style="color:var(--white)">8 €</strong></li>
+          <li>Bis 24 Std. → <strong style="color:var(--white)">25 €</strong></li>
+          <li>Jeder weitere Tag → <strong style="color:var(--white)">+20 €</strong></li>
+          <li>z.B. 3 Tage = 65 € · 1 Woche = 145 €</li>
+        </ul>
+        <a href="booking.html" class="btn btn-outline">Individuell buchen</a>
+      </div>
 
-    <p class="reveal" style="text-align:center;color:var(--text-muted);font-size:.85rem;margin-top:24px;">
-      Flexibel buchbar: 3 Tage = 65 € &nbsp;·&nbsp; 1 Woche = 145 € &nbsp;·&nbsp; 2 Wochen = 285 €
-    </p>
+    </div>
   </div>
 </section>
 
