@@ -574,8 +574,8 @@
 
     .pricing-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 20px;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px;
       align-items: stretch;
     }
 
@@ -918,7 +918,7 @@
       }
       .steps { grid-template-columns: 1fr 1fr; gap: 36px; }
       .steps::before { display: none; }
-      .pricing-grid { grid-template-columns: 1fr 1fr; max-width: 480px; margin: 0 auto; }
+      .pricing-grid { grid-template-columns: 1fr 1fr; gap: 12px; max-width: none; }
       .pricing-grid .price-card:last-child { grid-column: 1 / -1; }
       .reviews-grid { grid-template-columns: 1fr; max-width: 420px; margin: 0 auto; }
       .contact-grid { grid-template-columns: 1fr; }
@@ -1168,6 +1168,7 @@
 
     <div class="pricing-grid">
 
+      <!-- KURZTRIP -->
       <div class="price-card reveal">
         <p class="price-label">Kurztrip</p>
         <div class="price-amount">
@@ -1176,16 +1177,17 @@
           <span class="period">/ bis 3 Std.</span>
         </div>
         <ul class="price-features">
-          <li>Bis zu 3 Stunden</li>
-          <li>Führerschein B reicht</li>
-          <li>Code per App / E-Mail</li>
+          <li>Spontan & sofort buchbar</li>
+          <li>Schloss per Zahlencode</li>
+          <li>Keine Kaution</li>
         </ul>
-        <a href="booking.html" class="btn btn-outline">Jetzt buchen</a>
+        <a href="booking.html" class="btn btn-outline">Buchen</a>
       </div>
 
+      <!-- GANZER TAG -->
       <div class="price-card featured reveal">
-        <span class="popular-badge">Beliebt</span>
-        <p class="price-label">Erster Tag</p>
+        <span class="popular-badge">Meist gebucht</span>
+        <p class="price-label">Ganzer Tag</p>
         <div class="price-amount">
           <span class="currency">€</span>
           <span class="big">25</span>
@@ -1193,13 +1195,15 @@
         </div>
         <ul class="price-features">
           <li>Volle 24 Stunden</li>
-          <li>Führerschein B reicht</li>
-          <li>Code per App / E-Mail</li>
+          <li>Schloss per Zahlencode</li>
+          <li>Keine Kaution</li>
         </ul>
-        <a href="booking.html" class="btn btn-orange">Jetzt buchen</a>
+        <a href="booking.html" class="btn btn-orange">Buchen</a>
       </div>
 
+      <!-- WOCHENENDE -->
       <div class="price-card reveal">
+        <span class="popular-badge" style="background:#1a1a2e;color:#818cf8;border-color:#3730a3;">🏠 Umzugs-Tipp</span>
         <p class="price-label">Wochenende</p>
         <div class="price-amount">
           <span class="currency">€</span>
@@ -1207,25 +1211,42 @@
           <span class="period">/ Fr–So</span>
         </div>
         <ul class="price-features">
-          <li>Festpreis Freitag–Sonntag</li>
-          <li>Ideal für Umzüge</li>
-          <li>Code per App / E-Mail</li>
+          <li>Festpreis Fr. bis So.</li>
+          <li>Ideal für Umzüge & Projekte</li>
+          <li>Keine Kaution</li>
         </ul>
-        <a href="booking.html" class="btn btn-outline">Jetzt buchen</a>
+        <a href="booking.html" class="btn btn-outline">Buchen</a>
       </div>
 
-      <div class="price-card reveal" style="border-color:#333;">
-        <p class="price-label">Flexibel</p>
-        <div class="price-amount" style="margin-bottom:16px;">
+      <!-- WOCHE -->
+      <div class="price-card reveal" style="border-color:#d97706;">
+        <span class="popular-badge" style="background:#2d1a00;color:#f59e0b;border-color:#d97706;">🔥 Bestes Angebot</span>
+        <p class="price-label">1 Woche</p>
+        <div class="price-amount">
           <span class="currency">€</span>
-          <span class="big" style="font-size:2.2rem;">8–</span>
-          <span class="period">/ nach Dauer</span>
+          <span class="big">129</span>
+          <span class="period">/ 7 Tage</span>
         </div>
-        <ul class="price-features" style="margin-bottom:16px;">
-          <li>Bis 3 Std. → <strong style="color:var(--white)">8 €</strong></li>
-          <li>Bis 24 Std. → <strong style="color:var(--white)">25 €</strong></li>
-          <li>Jeder weitere Tag → <strong style="color:var(--white)">+20 €</strong></li>
-          <li>z.B. 3 Tage = 65 € · 1 Woche = 145 €</li>
+        <ul class="price-features">
+          <li>Nur <strong style="color:var(--white)">18,43 €/Tag</strong></li>
+          <li>Spare 16 € vs. täglich</li>
+          <li>Perfekt für den Urlaub</li>
+        </ul>
+        <a href="booking.html" class="btn btn-outline" style="border-color:#d97706;color:#f59e0b;">Buchen</a>
+      </div>
+
+      <!-- FLEXIBEL -->
+      <div class="price-card reveal">
+        <p class="price-label">Individuell</p>
+        <div class="price-amount">
+          <span class="currency" style="font-size:1rem;margin-top:4px;">ab</span>
+          <span class="big" style="font-size:2.4rem;">8€</span>
+        </div>
+        <ul class="price-features">
+          <li>Frei wählbarer Zeitraum</li>
+          <li>Erster Tag <strong style="color:var(--white)">25 €</strong></li>
+          <li>+20 € pro weiterer Tag</li>
+          <li style="color:#666;">2–30 Tage buchbar</li>
         </ul>
         <a href="booking.html" class="btn btn-outline">Individuell buchen</a>
       </div>

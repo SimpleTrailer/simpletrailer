@@ -279,16 +279,21 @@
     <!-- Mode Switch -->
     <div class="card" style="padding:20px 24px;">
       <p class="field-label" style="margin-bottom:12px;">Buchungsart wählen</p>
-      <div class="mode-grid">
+      <div class="mode-grid" style="grid-template-columns:1fr 1fr 1fr;">
         <div class="mode-option selected" id="modeFlexible" onclick="setMode('flexible')">
           <div class="mode-icon">📅</div>
-          <div class="mode-name">Flexibel</div>
-          <div class="mode-desc">Beliebiger Zeitraum<br>Preis nach Dauer</div>
+          <div class="mode-name">Individuell</div>
+          <div class="mode-desc">Beliebiger Zeitraum<br><span style="color:var(--gray)">ab 8 € / Dauer</span></div>
         </div>
         <div class="mode-option" id="modeWeekend" onclick="setMode('weekend')">
           <div class="mode-icon">🎉</div>
           <div class="mode-name">Wochenende</div>
           <div class="mode-desc">Freitag bis Sonntag<br><strong style="color:var(--orange)">Festpreis 55 €</strong></div>
+        </div>
+        <div class="mode-option" id="modeWeek" onclick="setMode('week')">
+          <div class="mode-icon">🔥</div>
+          <div class="mode-name">1 Woche</div>
+          <div class="mode-desc">7 Tage ab Startdatum<br><strong style="color:#f59e0b">Festpreis 129 €</strong></div>
         </div>
       </div>
     </div>
@@ -567,7 +572,7 @@
   let calYear, calMonth;
   let selectedInsurance = 'none';
   let insuranceRate     = 0;
-  let bookingMode       = 'flexible'; // 'flexible' | 'weekend'
+  let bookingMode       = 'flexible'; // 'flexible' | 'weekend' | 'week'
 
   const stripeClient = Stripe(STRIPE_PK);
 
@@ -613,18 +618,34 @@
   /* ── MODE SWITCHER ────────────────────────────── */
   function setMode(mode) {
     bookingMode = mode;
-    document.getElementById('modeFlexible').classList.toggle('selected', mode === 'flexible');
-    document.getElementById('modeWeekend').classList.toggle('selected', mode === 'weekend');
-
+    ['flexible','weekend','week'].forEach(m => {
+      document.getElementById('mode' + m.charAt(0).toUpperCase() + m.slice(1))
+        ?.classList.toggle('selected', m === mode);
+    });
     const endRow = document.getElementById('endDateRow');
     if (mode === 'weekend') {
-      // Auto-select next available Friday
       endRow.style.display = 'none';
       selectNextWeekend();
+    } else if (mode === 'week') {
+      endRow.style.display = 'none';
+      selectNextWeek();
     } else {
       endRow.style.display = '';
       onDateChange();
     }
+  }
+
+  function selectNextWeek() {
+    const start = document.getElementById('startDate').value
+      ? new Date(`${document.getElementById('startDate').value}T08:00:00`)
+      : (() => { const d = new Date(); d.setDate(d.getDate()+1); d.setHours(8,0,0,0); return d; })();
+
+    const end = new Date(start.getTime() + 7 * 24 * 3600000);
+    document.getElementById('startDate').value = start.toISOString().split('T')[0];
+    document.getElementById('startHour').value = '08:00';
+    document.getElementById('endDate').value   = end.toISOString().split('T')[0];
+    document.getElementById('endHour').value   = '08:00';
+    onDateChange();
   }
 
   function selectNextWeekend() {
@@ -678,7 +699,8 @@
 
   /* ── PRICE CALC ────────────────────────────────── */
   function calcPrice(startMs, endMs) {
-    if (bookingMode === 'weekend') return { base: 55, extraDays: 0, label: 'Wochenende (Fr–So)', isWeekend: true };
+    if (bookingMode === 'weekend') return { base: 55,  extraDays: 0, label: 'Wochenende (Fr–So)', isWeekend: true };
+    if (bookingMode === 'week')    return { base: 129, extraDays: 0, label: '1 Woche (7 Tage)',   isWeek: true };
     const hours = (endMs - startMs) / 3600000;
     if (hours <= 0) return null;
     if (hours <= 3)  return { base: 8,  extraDays: 0, label: 'Kurztrip (bis 3 Std.)' };
@@ -778,8 +800,12 @@
     document.getElementById('pbEnd').textContent      = fmtShort(endMs);
     document.getElementById('pbDuration').textContent = 'Dauer: ' + durLabel;
     if (p.isWeekend) {
-      document.getElementById('pbDay1Line').innerHTML  = `<span>Wochenende Festpreis</span><span>55,00 €</span>`;
+      document.getElementById('pbDay1Line').innerHTML  = `<span>Wochenende Festpreis (Fr–So)</span><span>55,00 €</span>`;
       document.getElementById('pbExtraLine').style.display = 'none';
+    } else if (p.isWeek) {
+      document.getElementById('pbDay1Line').innerHTML  = `<span>🔥 1 Woche Festpreis (7 Tage)</span><span>129,00 €</span>`;
+      document.getElementById('pbExtraLine').innerHTML = `<span style="color:var(--gray);font-size:.75rem;">Spare 16 € vs. täglich (145 €)</span><span style="color:#22c55e;font-size:.78rem;">–16 €</span>`;
+      document.getElementById('pbExtraLine').style.display = 'flex';
     } else if (hours <= 3) {
       document.getElementById('pbDay1Line').innerHTML  = `<span>Kurztrip (bis 3 Std.)</span><span>8,00 €</span>`;
       document.getElementById('pbExtraLine').style.display = 'none';
