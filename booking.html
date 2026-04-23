@@ -715,19 +715,23 @@
     for (const r of bookedRanges) {
       const rS = new Date(r.start_time);
       const rE = new Date(r.end_time);
-      if (rS >= d1 || rE <= d0) continue; // kein Overlap
+      if (rS >= d1 || rE <= d0) continue;
+
       if (role === 'start') {
-        // Buchung endet an diesem Tag → früheste Startzeit = Buchungsende
-        if (rE > d0 && rE < d1) minH = Math.max(minH, rE.getHours() + (rE.getMinutes() > 0 ? 1 : 0));
-        // Buchung beginnt an diesem Tag → späteste Startzeit = vor Buchungsbeginn
-        if (rS > d0 && rS < d1) maxH = Math.min(maxH, rS.getHours() - 1);
-      } else {
-        // Buchung beginnt an diesem Tag → späteste Rückgabe = Buchungsbeginn
-        if (rS > d0 && rS < d1) maxH = Math.min(maxH, rS.getHours());
-        // Buchung endet an diesem Tag → früheste Rückgabe = nach Buchungsende
-        if (rE > d0 && rE < d1) minH = Math.max(minH, rE.getHours() + (rE.getMinutes() > 0 ? 1 : 0));
+        // Buchung endet innerhalb dieses Tages → Abholung erst nach Rückgabe möglich
+        if (rE > d0 && rE <= d1) {
+          const h = rE.getHours() + (rE.getMinutes() > 0 ? 1 : 0);
+          minH = Math.max(minH, Math.min(h, 21));
+        }
+      } else { // role === 'end'
+        // Buchung beginnt innerhalb dieses Tages → Rückgabe vor Buchungsbeginn
+        if (rS >= d0 && rS < d1) {
+          maxH = Math.min(maxH, rS.getHours());
+        }
       }
     }
+    // Sicherheits-Fallback falls kein gültiger Bereich
+    if (minH > maxH) return { min: 6, max: 21 };
     return { min: minH, max: maxH };
   }
 
