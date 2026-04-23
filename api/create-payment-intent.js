@@ -11,7 +11,7 @@ module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
   try {
-    const { trailer_id, pricing_type, start_time, end_time, customer_name, customer_email, customer_phone, customer_address, insurance_type, insurance_amount, user_id } = req.body;
+    const { trailer_id, pricing_type, start_time, end_time, customer_name, customer_email, customer_phone, customer_address, insurance_type, insurance_amount, user_id, booking_mode } = req.body;
 
     if (!trailer_id || !pricing_type || !start_time || !end_time || !customer_name || !customer_email) {
       return res.status(400).json({ error: 'Fehlende Pflichtfelder' });
@@ -30,7 +30,12 @@ module.exports = async (req, res) => {
       if (hours <= 24) return 25;
       return 25 + Math.ceil((hours - 24) / 24) * 20;
     }
-    const baseAmount = calcBaseAmount(start_time, end_time);
+
+    let baseAmount;
+    if (booking_mode === 'weekend') baseAmount = 55;
+    else if (booking_mode === 'week') baseAmount = 119;
+    else baseAmount = calcBaseAmount(start_time, end_time);
+
     if (baseAmount <= 0) return res.status(400).json({ error: 'Ungültiger Zeitraum' });
 
     const insType   = ['basis','premium'].includes(insurance_type) ? insurance_type : 'none';

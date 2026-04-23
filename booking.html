@@ -1199,7 +1199,8 @@
           customer_address: bookingUser.user_metadata?.address || '',
           insurance_type:   selectedInsurance,
           insurance_amount: getInsuranceAmount(),
-          user_id:          bookingUser.id
+          user_id:          bookingUser.id,
+          booking_mode:     bookingMode
         })
       });
 
