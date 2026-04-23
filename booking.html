@@ -763,8 +763,12 @@
     const hours = (endMs - startMs) / 3600000;
     if (hours <= 0)  return null;
     if (hours <= 3)  return { base: 8,  extraDays: 0, label: 'Kurztrip (bis 3 Std.)' };
-    if (hours <= 24) return { base: 25, extraDays: 0, label: 'Ganzer Tag' };
-    const extraDays = Math.ceil((hours - 24) / 24);
+    // Kalender-Tage zählen (nicht 24h-Blöcke) → 27.04 08:00 bis 29.04 09:00 = gleich wie 29.04 08:00
+    const sDay = new Date(startMs); sDay.setHours(0,0,0,0);
+    const eDay = new Date(endMs);   eDay.setHours(0,0,0,0);
+    const calDays  = Math.round((eDay - sDay) / 86400000);
+    if (calDays <= 1) return { base: 25, extraDays: 0, label: 'Ganzer Tag' };
+    const extraDays = calDays - 1;
     return { base: 25 + extraDays * 20, extraDays, label: `${extraDays + 1} Tage` };
   }
 
