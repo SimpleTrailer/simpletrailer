@@ -1106,12 +1106,16 @@
       display: flex; align-items: center; transition: color .15s;
     }
     .modal-loc-gps-btn:hover { color: var(--orange-hover); }
+    #modalLocBanner { position: relative; z-index: 1100; }
+    .modal-loc-banner-row { z-index: 1100; }
     #modalLocSuggestDrop {
       display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0;
       background: #181818; border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 10px; z-index: 10; overflow: hidden;
+      border-radius: 10px; z-index: 1100; overflow: hidden;
       box-shadow: 0 8px 24px rgba(0,0,0,0.6);
     }
+    /* Leaflet panes haben z-index bis ~700, der Banner muss darüber liegen */
+    #modalListView #modalMap { position: relative; z-index: 1; }
     #modalDetailRouteWrap { margin-bottom: 14px; }
     #modalDetailRouteWrap .modal-route-card {
       border-radius: 0 0 10px 10px;
