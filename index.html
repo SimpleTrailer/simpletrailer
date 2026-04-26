@@ -951,9 +951,12 @@
       display: flex; align-items: center; gap: 12px;
       border: 1px solid #383838; border-radius: 10px;
       padding: 12px 14px; margin-bottom: 10px; background: #161616;
-      transition: border-color .15s;
+      transition: border-color .15s, background .15s, transform .15s;
+      cursor: pointer;
     }
-    .modal-trailer-card.unavail { background: #111; border-color: #252525; }
+    .modal-trailer-card:hover { border-color: var(--orange); background: #1c1612; }
+    .modal-trailer-card.unavail { background: #111; border-color: #252525; cursor: default; }
+    .modal-trailer-card.unavail:hover { border-color: #252525; background: #111; }
     .modal-trailer-thumb {
       width: 64px; height: 48px; border-radius: 7px; object-fit: cover;
       background: #1a1a1a; border: 1px solid #282828; flex-shrink: 0;
@@ -962,13 +965,72 @@
     .modal-trailer-info { flex: 1; min-width: 0; }
     .modal-trailer-name { font-weight: 700; font-size: .9rem; letter-spacing: -.02em; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .modal-trailer-sub  { color: #888; font-size: .75rem; line-height: 1.4; }
-    .modal-buchen-btn {
-      background: var(--orange); color: #fff; text-decoration: none;
-      padding: 8px 14px; border-radius: 8px; font-weight: 700;
-      font-size: .82rem; white-space: nowrap; flex-shrink: 0; transition: background .2s;
-    }
-    .modal-buchen-btn:hover { background: var(--orange-hover); }
+    .modal-card-chevron { color: #555; font-size: 1.3rem; flex-shrink: 0; transition: color .15s, transform .15s; }
+    .modal-trailer-card:hover .modal-card-chevron { color: var(--orange); transform: translateX(2px); }
     .modal-belegt { color: #555; font-size: .78rem; flex-shrink: 0; }
+
+    /* MODAL DETAIL VIEW */
+    .modal-back-btn {
+      background: none; border: none; color: #aaa; font-size: .82rem; font-weight: 600;
+      cursor: pointer; padding: 4px 8px 4px 4px; border-radius: 7px;
+      display: inline-flex; align-items: center; gap: 5px; font-family: var(--font);
+      letter-spacing: -.01em; transition: color .15s, background .15s;
+    }
+    .modal-back-btn:hover { color: #fff; background: #232323; }
+    .modal-detail-img {
+      width: 100%; aspect-ratio: 16/10; object-fit: cover;
+      background: #0e0e0e; display: block;
+    }
+    .modal-detail-img-placeholder {
+      width: 100%; aspect-ratio: 16/10; background: #0e0e0e;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 3rem; color: #444;
+    }
+    .modal-detail-body { padding: 18px 22px 22px; }
+    .modal-detail-name {
+      font-weight: 800; font-size: 1.15rem; letter-spacing: -.025em;
+      color: #fff; margin-bottom: 4px;
+    }
+    .modal-detail-meta {
+      font-size: .78rem; color: #888; margin-bottom: 14px;
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    }
+    .modal-detail-meta .dist {
+      color: var(--orange); font-weight: 700; letter-spacing: -.01em;
+    }
+    .modal-detail-status {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: .72rem; font-weight: 700; letter-spacing: -.01em;
+      padding: 3px 9px; border-radius: 999px;
+    }
+    .modal-detail-status.ok   { color: #4ade80; background: rgba(34,197,94,.10); border: 1px solid rgba(34,197,94,.25); }
+    .modal-detail-status.busy { color: #f87171; background: rgba(248,113,113,.10); border: 1px solid rgba(248,113,113,.25); }
+    .modal-spec-grid {
+      background: #111; border: 1px solid #252525; border-radius: 10px;
+      padding: 12px 14px; margin-bottom: 16px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .modal-spec-row {
+      display: flex; justify-content: space-between; align-items: baseline;
+      font-size: .8rem; gap: 12px;
+    }
+    .modal-spec-row .lbl { color: #888; }
+    .modal-spec-row .val { color: #fff; font-weight: 700; letter-spacing: -.01em; }
+    .modal-detail-bookbtn {
+      display: block; width: 100%; text-align: center;
+      background: var(--orange); color: #fff; text-decoration: none;
+      padding: 13px 16px; border-radius: 10px; font-weight: 800;
+      font-size: .92rem; letter-spacing: -.01em;
+      transition: background .2s, transform .15s;
+    }
+    .modal-detail-bookbtn:hover { background: var(--orange-hover); transform: translateY(-1px); }
+    .modal-detail-bookbtn.disabled {
+      background: #2a2a2a; color: #666; pointer-events: none;
+    }
+    .modal-detail-pickup {
+      font-size: .76rem; color: #888; margin-top: 12px; text-align: center;
+    }
+    .modal-detail-pickup strong { color: #ccc; }
 
     /* MAP FILTER */
     .map-filter-btn {
@@ -1730,12 +1792,30 @@
 <div id="trailerModal" onclick="if(event.target===this)closeTrailerModal()"
   style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9999;overflow-y:auto;padding:20px 16px;">
   <div style="max-width:480px;margin:0 auto;background:#1A1A1A;border-radius:16px;border:1px solid #383838;overflow:hidden;">
-    <div style="padding:20px 24px;border-bottom:1px solid #383838;display:flex;justify-content:space-between;align-items:center;">
-      <strong id="modalTitle" style="font-size:1.05rem;letter-spacing:-.02em;color:#fff;">Anhänger wählen</strong>
-      <button onclick="closeTrailerModal()" style="background:none;border:none;color:#666;font-size:1.6rem;cursor:pointer;line-height:1;padding:0 2px;transition:color .2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#666'">×</button>
+    <div style="padding:16px 22px;border-bottom:1px solid #383838;display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:54px;">
+      <div style="display:flex;align-items:center;gap:6px;min-width:0;flex:1;">
+        <button id="modalBackBtn" onclick="showModalList()" class="modal-back-btn" style="display:none;">
+          <span style="font-size:1.05rem;line-height:1;">←</span> Zurück
+        </button>
+        <strong id="modalTitle" style="font-size:1.02rem;letter-spacing:-.02em;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Anhänger wählen</strong>
+      </div>
+      <button onclick="closeTrailerModal()" style="background:none;border:none;color:#666;font-size:1.6rem;cursor:pointer;line-height:1;padding:0 2px;transition:color .2s;flex-shrink:0;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#666'">×</button>
     </div>
-    <div id="modalMap" style="height:200px;"></div>
-    <div id="modalTrailerList" style="padding:16px;"></div>
+    <!-- LIST VIEW -->
+    <div id="modalListView">
+      <div id="modalMap" style="height:200px;"></div>
+      <div id="modalTrailerList" style="padding:16px;"></div>
+    </div>
+    <!-- DETAIL VIEW -->
+    <div id="modalDetailView" style="display:none;">
+      <div id="modalDetailImgWrap"></div>
+      <div class="modal-detail-body">
+        <div id="modalDetailHeader"></div>
+        <div id="modalDetailSpecs"></div>
+        <a id="modalDetailBookBtn" href="#" class="modal-detail-bookbtn">Jetzt buchen →</a>
+        <div id="modalDetailPickup" class="modal-detail-pickup"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -2277,6 +2357,8 @@
   // TRAILER AUSWAHL MODAL
   let modalMap = null, modalMapMarkers = [], modalMode = 'flexible';
   let pendingStart = null, pendingEnd = null;
+  let modalTrailers = [];
+  const MODE_LABEL = { flexible: 'Individuell', day: 'Ganzer Tag', weekend: 'Wochenende', week: '1 Woche' };
 
   function openTrailerModal(mode, start, end) {
     modalMode    = mode  || 'flexible';
@@ -2284,12 +2366,96 @@
     pendingEnd   = end   || null;
     document.getElementById('trailerModal').style.display = 'block';
     document.body.style.overflow = 'hidden';
+    showModalList();
     buildModalContent();
   }
 
   function closeTrailerModal() {
     document.getElementById('trailerModal').style.display = 'none';
     document.body.style.overflow = '';
+    showModalList();
+    clearRoute();
+  }
+
+  function showModalList() {
+    document.getElementById('modalListView').style.display   = 'block';
+    document.getElementById('modalDetailView').style.display = 'none';
+    document.getElementById('modalBackBtn').style.display    = 'none';
+    document.getElementById('modalTitle').textContent =
+      `Anhänger wählen${MODE_LABEL[modalMode] ? ' – ' + MODE_LABEL[modalMode] : ''}`;
+    if (modalMap) setTimeout(() => modalMap.invalidateSize(), 50);
+  }
+
+  function showModalDetail(idx) {
+    const t = modalTrailers[idx];
+    if (!t) return;
+
+    document.getElementById('modalListView').style.display   = 'none';
+    document.getElementById('modalDetailView').style.display = 'block';
+    document.getElementById('modalBackBtn').style.display    = 'inline-flex';
+    document.getElementById('modalTitle').textContent        = t.name;
+
+    // Bild
+    const imgSrc = t.image_url || TYPE_IMAGES[t.type] || null;
+    document.getElementById('modalDetailImgWrap').innerHTML = imgSrc
+      ? `<img src="${imgSrc}" class="modal-detail-img" onerror="this.outerHTML='<div class=&quot;modal-detail-img-placeholder&quot;>🚛</div>'" />`
+      : `<div class="modal-detail-img-placeholder">🚛</div>`;
+
+    // Header (Name + Distanz + Status)
+    const distStr = (userLocation && t.lat && t.lng)
+      ? fmtDist(haversineKm(userLocation.lat, userLocation.lng, t.lat, t.lng))
+      : null;
+    const locStr = t._address || 'Bremen';
+    document.getElementById('modalDetailHeader').innerHTML = `
+      <div class="modal-detail-name">${t.name}</div>
+      <div class="modal-detail-meta">
+        <span>📍 ${locStr}</span>
+        ${distStr ? `<span class="dist">· ${distStr} entfernt</span>` : ''}
+      </div>
+      <div style="margin-bottom:14px;">
+        <span class="modal-detail-status ${t.is_available ? 'ok' : 'busy'}">
+          ${t.is_available ? '✓ Sofort verfügbar' : '✗ Aktuell belegt'}
+        </span>
+      </div>
+    `;
+
+    // Specs
+    document.getElementById('modalDetailSpecs').innerHTML = `
+      <div class="modal-spec-grid">
+        <div class="modal-spec-row"><span class="lbl">Ladefläche (L × B × H)</span><span class="val">251 × 137 × 130 cm</span></div>
+        <div class="modal-spec-row"><span class="lbl">Zul. Gesamtgewicht</span><span class="val">750 kg</span></div>
+        <div class="modal-spec-row"><span class="lbl">Max. Zuladung</span><span class="val">455 kg</span></div>
+        <div class="modal-spec-row"><span class="lbl">Bremse</span><span class="val">Ja</span></div>
+        <div class="modal-spec-row"><span class="lbl">Ab</span><span class="val">${t.price_kurztrip || 9} €</span></div>
+      </div>
+    `;
+
+    // Buchen-Button
+    const bookBtn = document.getElementById('modalDetailBookBtn');
+    if (t.is_available) {
+      const qs = new URLSearchParams({ trailer: t.id, mode: modalMode });
+      if (pendingStart) qs.set('prefill_start', pendingStart);
+      if (pendingEnd)   qs.set('prefill_end',   pendingEnd);
+      bookBtn.href = `booking.html?${qs.toString()}`;
+      bookBtn.textContent = 'Jetzt buchen →';
+      bookBtn.classList.remove('disabled');
+    } else {
+      bookBtn.href = '#';
+      bookBtn.textContent = 'Aktuell nicht verfügbar';
+      bookBtn.classList.add('disabled');
+    }
+
+    // Pickup-Hinweis
+    document.getElementById('modalDetailPickup').innerHTML =
+      `Abholung in <strong>${locStr}</strong>${distStr ? ` · <strong>${distStr}</strong> von dir` : ''}`;
+
+    // Route auf Hauptkarte zeichnen wenn Standort bekannt
+    if (userLocation && t.lat && t.lng) {
+      drawRoute(userLocation.lat, userLocation.lng, t.lat, t.lng);
+    }
+
+    // Detail-View nach oben scrollen
+    document.getElementById('trailerModal').scrollTop = 0;
   }
 
   async function buildModalContent() {
@@ -2327,9 +2493,6 @@
       const withCoords = trailers.filter(t => t.lat && t.lng);
       if (withCoords.length) modalMap.setView([withCoords[0].lat, withCoords[0].lng], 13);
 
-      const modeLabel = { flexible: 'Individuell', day: 'Ganzer Tag', weekend: 'Wochenende', week: '1 Woche' };
-      document.getElementById('modalTitle').textContent = `Anhänger wählen – ${modeLabel[modalMode] || ''}`;
-
       // Nach Entfernung sortieren wenn Standort bekannt
       if (userLocation) {
         trailers.forEach(t => {
@@ -2338,18 +2501,18 @@
         trailers.sort((a, b) => a._distKm - b._distKm);
       }
 
-      list.innerHTML = trailers.map(t => {
-        const qs = new URLSearchParams({ trailer: t.id, mode: modalMode });
-        if (pendingStart) qs.set('prefill_start', pendingStart);
-        if (pendingEnd)   qs.set('prefill_end',   pendingEnd);
-        const bookUrl  = `booking.html?${qs.toString()}`;
+      // Reverse-Geocoding fehlt vielleicht (Modal kann vor loadMapTrailers aufgerufen werden)
+      modalTrailers = trailers;
+
+      list.innerHTML = trailers.map((t, idx) => {
         const distStr  = (userLocation && t.lat && t.lng && t._distKm < 9999)
           ? fmtDist(t._distKm) : null;
         const locStr   = t._address || 'Bremen';
         const subLine  = [locStr, distStr ? distStr + ' entfernt' : null, `ab ${t.price_kurztrip || 9} €`]
           .filter(Boolean).join(' · ');
         const thumb    = trailerImg(t, 'modal-trailer-thumb');
-        return `<div class="modal-trailer-card${t.is_available ? '' : ' unavail'}">
+        const onClick  = t.is_available ? `onclick="showModalDetail(${idx})"` : '';
+        return `<div class="modal-trailer-card${t.is_available ? '' : ' unavail'}" ${onClick}>
           ${thumb}
           <div class="modal-trailer-info">
             <div class="modal-trailer-name">${t.name}</div>
@@ -2359,7 +2522,7 @@
             </div>
           </div>
           ${t.is_available
-            ? `<a href="${bookUrl}" class="modal-buchen-btn">Buchen →</a>`
+            ? `<span class="modal-card-chevron">›</span>`
             : `<span class="modal-belegt">Belegt</span>`}
         </div>`;
       }).join('') || '<p style="color:#666;text-align:center;padding:20px 0;">Keine Anhänger verfügbar.</p>';
