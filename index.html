@@ -385,12 +385,13 @@
     .map-search-btn:hover { background: var(--orange-hover); }
     .map-search-btn:disabled { background: #555; cursor: not-allowed; }
     .map-search-outer { flex: 1; position: relative; }
-    #mapSuggestDrop {
+    #mapSuggestDrop, #mobileSuggestDrop {
       display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0;
       background: #181818; border: 1px solid rgba(255,255,255,0.1);
       border-radius: 10px; z-index: 2000; overflow: hidden;
       box-shadow: 0 8px 24px rgba(0,0,0,0.6);
     }
+    .mobile-loc-row { position: relative; }
     .suggest-item {
       display: flex; align-items: center; gap: 9px;
       padding: 10px 14px; cursor: pointer; font-size: .84rem;
@@ -1288,12 +1289,13 @@
         <!-- Mobile-only: Standortsuche direkt in der Box -->
         <div class="mobile-loc-row" style="display:none;align-items:center;gap:0;background:#0D0D0D;border:1.5px solid rgba(255,255,255,0.08);border-radius:8px;overflow:hidden;">
           <svg style="margin-left:12px;flex-shrink:0;color:#555;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input type="text" id="mobileLocInput" class="field-input" style="border:none;background:transparent;padding:10px 10px;font-size:.88rem;" placeholder="Standort (optional)" autocomplete="off"
+          <input type="text" id="mobileLocInput" class="field-input" style="border:none;background:transparent;padding:10px 10px;font-size:.88rem;" placeholder="Standort (z.B. Bremen)" autocomplete="off"
             oninput="syncMobileLoc(this.value)"
             onkeydown="if(event.key==='Enter')this.blur()" />
           <button onclick="useMobileGPS()" style="background:none;border:none;color:#666;padding:0 12px;cursor:pointer;height:100%;display:flex;align-items:center;" title="GPS">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>
           </button>
+          <div id="mobileSuggestDrop"></div>
         </div>
         <button class="btn btn-orange" onclick="findTrailer()">Anhänger finden →</button>
       </div>
@@ -2174,11 +2176,52 @@
     if (!isOpen) item.classList.add('open');
   }
 
-  // MOBILE LOC SYNC
+  // MOBILE LOC SYNC + AUTOCOMPLETE
+  let _mobileAcTimer = null;
   function syncMobileLoc(val) {
     const inp = document.getElementById('mapSearchInput');
     if (inp) inp.value = val;
+    clearTimeout(_mobileAcTimer);
+    const q = (val || '').trim();
+    if (q.length < 2) { hideMobileSuggestions(); return; }
+    _mobileAcTimer = setTimeout(() => fetchMobileSuggestions(q), 280);
   }
+
+  async function fetchMobileSuggestions(q) {
+    try {
+      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q + ' Deutschland')}&format=json&limit=5&countrycodes=de&accept-language=de`;
+      const res = await fetch(url, { headers: { 'Accept-Language': 'de' } });
+      const data = await res.json();
+      const drop = document.getElementById('mobileSuggestDrop');
+      if (!drop) return;
+      if (!data.length) { drop.style.display = 'none'; return; }
+      drop.innerHTML = data.map(r => {
+        const parts = r.display_name.split(',');
+        const label = parts.slice(0, 2).join(',').trim();
+        return `<div class="suggest-item" onclick="selectMobileSuggestion(${r.lat},${r.lon},'${label.replace(/'/g,"\\'")}')">
+          <span class="suggest-icon"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 10-16 0c0 3 2.7 6.9 8 11.7z"/></svg></span>
+          ${label}
+        </div>`;
+      }).join('');
+      drop.style.display = 'block';
+    } catch(e) {}
+  }
+
+  function hideMobileSuggestions() {
+    const d = document.getElementById('mobileSuggestDrop');
+    if (d) d.style.display = 'none';
+  }
+
+  function selectMobileSuggestion(lat, lng, name) {
+    document.getElementById('mobileLocInput').value = name;
+    const mapInp = document.getElementById('mapSearchInput');
+    if (mapInp) mapInp.value = name;
+    hideMobileSuggestions();
+  }
+
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.mobile-loc-row')) hideMobileSuggestions();
+  });
   function useMobileGPS() {
     const btn  = document.getElementById('geoLocBtn');
     const label = document.getElementById('geoLocLabel');

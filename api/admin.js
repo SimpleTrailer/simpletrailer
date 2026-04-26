@@ -38,6 +38,13 @@ module.exports = async (req, res) => {
         dl_classes:     u.user_metadata?.dl_classes     || [],
         dl_expires_at:  u.user_metadata?.dl_expires_at  || null,
         dl_verified_at: u.user_metadata?.dl_verified_at || null,
+        dl_first_name:  u.user_metadata?.dl_first_name  || '',
+        dl_last_name:   u.user_metadata?.dl_last_name   || '',
+        dl_dob:         u.user_metadata?.dl_dob         || null,
+        dl_doc_number:  u.user_metadata?.dl_doc_number  || null,
+        dl_doc_type:    u.user_metadata?.dl_doc_type    || null,
+        dl_issuing_country: u.user_metadata?.dl_issuing_country || null,
+        dl_session_id:  u.user_metadata?.dl_session_id  || null,
       })).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
       return res.status(200).json({ users });
     }

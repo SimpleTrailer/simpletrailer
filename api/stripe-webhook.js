@@ -77,11 +77,19 @@ async function handleIdentityEvent(event) {
 
     meta.dl_status      = 'verified';
     meta.dl_verified_at = new Date().toISOString();
+    meta.dl_session_id  = session.id;
     meta.dl_first_name  = out.first_name || doc.first_name || null;
     meta.dl_last_name   = out.last_name  || doc.last_name  || null;
     meta.dl_expires_at  = doc.expiration_date
       ? `${doc.expiration_date.year}-${String(doc.expiration_date.month).padStart(2,'0')}-${String(doc.expiration_date.day).padStart(2,'0')}`
       : null;
+    meta.dl_dob = (out.dob || doc.dob)
+      ? `${(out.dob || doc.dob).year}-${String((out.dob || doc.dob).month).padStart(2,'0')}-${String((out.dob || doc.dob).day).padStart(2,'0')}`
+      : null;
+    meta.dl_doc_type    = doc.type || null;
+    meta.dl_issuing_country = doc.issuing_country || null;
+    meta.dl_doc_number  = doc.number || null;
+    meta.dl_address     = out.address || null;
     // Stripe Identity gibt keine Klassen aus → für PKW-Anhänger <750kg reicht B
     // Wir gehen von Klasse B aus, sobald ein gültiger Führerschein verifiziert wurde
     meta.dl_classes = ['B'];

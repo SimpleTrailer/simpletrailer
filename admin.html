@@ -599,13 +599,6 @@
 
     const initials = u => ((u.first_name?.[0] || '') + (u.last_name?.[0] || '') || u.email?.[0] || '?').toUpperCase();
     const fullName = u => [u.first_name, u.last_name].filter(Boolean).join(' ') || '–';
-    const dlBadge = (status) => {
-      const s = status || 'unverified';
-      if (s === 'verified')  return '<span class="badge badge-ok">✓ Verifiziert</span>';
-      if (s === 'pending')   return '<span class="badge" style="background:rgba(234,179,8,.12);color:#facc15;border:1px solid rgba(234,179,8,.3)">⏳ Pending</span>';
-      if (s === 'failed')    return '<span class="badge badge-no">✗ Fehler</span>';
-      return '<span class="badge" style="background:rgba(255,255,255,.06);color:#888;border:1px solid var(--border)">○ Offen</span>';
-    };
 
     const rows = list.map(u => `
       <tr onclick="openUserModal(${JSON.stringify(u).replace(/"/g,'&quot;')})" style="cursor:pointer">
@@ -705,11 +698,30 @@
       ${row('Registriert', fmtDate(u.created_at))}
       ${row('Letzter Login', fmtDate(u.last_sign_in_at))}
 
+      <p class="section-tag">Führerschein</p>
+      ${row('Status', dlBadge(u.dl_status))}
+      ${(u.dl_first_name || u.dl_last_name) ? row('Name lt. FS', [u.dl_first_name, u.dl_last_name].filter(Boolean).join(' ')) : ''}
+      ${u.dl_dob ? row('Geburtsdatum', new Date(u.dl_dob).toLocaleDateString('de-DE')) : ''}
+      ${u.dl_classes?.length ? row('Klasse', u.dl_classes.join(', ')) : ''}
+      ${u.dl_expires_at ? row('Gültig bis', new Date(u.dl_expires_at).toLocaleDateString('de-DE')) : ''}
+      ${u.dl_doc_number ? row('FS-Nummer', u.dl_doc_number) : ''}
+      ${u.dl_issuing_country ? row('Ausstellungsland', u.dl_issuing_country) : ''}
+      ${u.dl_verified_at ? row('Verifiziert am', fmtDate(u.dl_verified_at)) : ''}
+      ${u.dl_status === 'verified' && u.dl_session_id ? `<div style="margin-top:10px;"><a href="https://dashboard.stripe.com/identity/verification-sessions/${u.dl_session_id}" target="_blank" style="color:var(--orange);font-size:.82rem;text-decoration:none;font-weight:600;">→ Bilder im Stripe Dashboard ansehen</a><div style="color:#555;font-size:.72rem;margin-top:4px;">Originalbilder verfügbar 30 Tage nach Verifikation</div></div>` : ''}
+
       <p class="section-tag">Buchungen</p>
       ${row('Anzahl', u.bookings_count)}
       ${row('Umsatz', u.bookings_total > 0 ? fmtEur(u.bookings_total) : '–')}
     `;
     document.getElementById('modalBg').classList.add('open');
+  }
+
+  function dlBadge(status) {
+    const s = status || 'unverified';
+    if (s === 'verified')  return '<span class="badge badge-ok">✓ Verifiziert</span>';
+    if (s === 'pending')   return '<span class="badge" style="background:rgba(234,179,8,.12);color:#facc15;border:1px solid rgba(234,179,8,.3)">⏳ Pending</span>';
+    if (s === 'failed')    return '<span class="badge badge-no">✗ Fehler</span>';
+    return '<span class="badge" style="background:rgba(255,255,255,.06);color:#888;border:1px solid var(--border)">○ Offen</span>';
   }
 
   function closeModal(e) {

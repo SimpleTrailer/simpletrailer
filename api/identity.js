@@ -35,6 +35,11 @@ module.exports = async (req, res) => {
       dl_expires_at:    m.dl_expires_at  || null,
       dl_first_name:    m.dl_first_name  || null,
       dl_last_name:     m.dl_last_name   || null,
+      dl_dob:           m.dl_dob         || null,
+      dl_doc_number:    m.dl_doc_number  || null,
+      dl_doc_type:      m.dl_doc_type    || null,
+      dl_issuing_country: m.dl_issuing_country || null,
+      dl_session_id:    m.dl_session_id  || null,
       dl_verified_at:   m.dl_verified_at || null,
       dl_failure_reason: m.dl_failure_reason || null
     });
