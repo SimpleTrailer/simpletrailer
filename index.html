@@ -574,7 +574,7 @@
 
     .pricing-grid {
       display: grid;
-      grid-template-columns: repeat(6, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       gap: 16px;
       margin-top: 18px;
       align-items: stretch;
@@ -917,8 +917,6 @@
       .steps { grid-template-columns: 1fr 1fr; gap: 36px; }
       .steps::before { display: none; }
       .pricing-grid { grid-template-columns: 1fr 1fr; gap: 12px; max-width: none; }
-      .pricing-grid .price-card:last-child, .pricing-grid .price-card:nth-last-child(2) { grid-column: span 1; }
-      .pricing-grid .price-card:nth-child(6) { grid-column: 1 / -1; }
       .reviews-grid { grid-template-columns: 1fr; max-width: 420px; margin: 0 auto; }
       .contact-grid { grid-template-columns: 1fr; }
       .footer-top { flex-direction: column; }
@@ -1167,34 +1165,21 @@
 
     <div class="pricing-grid">
 
-      <!-- KURZTRIP -->
+      <!-- INDIVIDUELL -->
       <div class="price-card reveal">
-        <div class="card-header"><p class="price-label">Kurztrip</p></div>
+        <div class="card-header"><p class="price-label">Individuell</p></div>
         <div class="price-amount">
-          <span class="currency">€</span><span class="big">9</span><span class="period">/ bis 3 Std.</span>
+          <span class="currency" style="font-size:.85rem;padding-bottom:5px;">ab</span>
+          <span class="big" style="font-size:2.6rem;">9€</span>
         </div>
-        <p class="price-sub">≈ 3,00 € / Stunde</p>
+        <p class="price-sub">Preis nach Dauer · frei wählbar</p>
         <ul class="price-features">
-          <li>Spontan & sofort buchbar</li>
-          <li>Schloss per Zahlencode</li>
-          <li>Keine Kaution nötig</li>
+          <li>Bis 3 Std.: <strong style="color:var(--white)">9 €</strong></li>
+          <li>Bis 6 Std.: <strong style="color:var(--white)">18 €</strong></li>
+          <li>Bis 24 Std.: <strong style="color:var(--white)">29 €</strong></li>
+          <li>Jeder weitere Tag: <strong style="color:var(--white)">24 €</strong></li>
         </ul>
-        <a href="booking.html?mode=flexible" class="btn btn-outline">Buchen</a>
-      </div>
-
-      <!-- HALBER TAG -->
-      <div class="price-card reveal">
-        <div class="card-header"><p class="price-label">Halber Tag</p></div>
-        <div class="price-amount">
-          <span class="currency">€</span><span class="big">18</span><span class="period">/ bis 6 Std.</span>
-        </div>
-        <p class="price-sub">≈ 3,00 € / Stunde</p>
-        <ul class="price-features">
-          <li>Ideal für Einkäufe & Transporte</li>
-          <li>Schloss per Zahlencode</li>
-          <li>Keine Kaution nötig</li>
-        </ul>
-        <a href="booking.html?mode=flexible" class="btn btn-outline">Buchen</a>
+        <a href="booking.html?mode=flexible" class="btn btn-outline">Individuell buchen</a>
       </div>
 
       <!-- GANZER TAG -->
@@ -1210,7 +1195,7 @@
           <li>Schloss per Zahlencode</li>
           <li>Keine Kaution nötig</li>
         </ul>
-        <a href="booking.html?mode=flexible" class="btn btn-orange">Buchen</a>
+        <a href="booking.html?mode=day" class="btn btn-orange">Buchen</a>
       </div>
 
       <!-- WOCHENENDE -->
@@ -1245,22 +1230,6 @@
         <a href="booking.html?mode=week" class="btn btn-outline" style="border-color:#d97706;color:#f59e0b;">Buchen</a>
       </div>
 
-      <!-- INDIVIDUELL -->
-      <div class="price-card reveal">
-        <div class="card-header"><p class="price-label">Individuell</p></div>
-        <div class="price-amount">
-          <span class="currency" style="font-size:.85rem;padding-bottom:5px;">ab</span>
-          <span class="big" style="font-size:2.6rem;">9€</span>
-        </div>
-        <p class="price-sub">Preis nach Dauer · frei wählbar</p>
-        <ul class="price-features">
-          <li>Bis 3 Std.: <strong style="color:var(--white)">9 €</strong></li>
-          <li>Bis 6 Std.: <strong style="color:var(--white)">18 €</strong></li>
-          <li>Bis 24 Std.: <strong style="color:var(--white)">29 €</strong></li>
-          <li>Jeder weitere Tag: <strong style="color:var(--white)">24 €</strong></li>
-        </ul>
-        <a href="booking.html?mode=flexible" class="btn btn-outline">Individuell buchen</a>
-      </div>
 
     </div>
   </div>

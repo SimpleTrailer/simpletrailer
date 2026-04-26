@@ -181,7 +181,7 @@
     .cal-day.partial:hover::after { opacity: 1; }
     .cal-hint { font-size:.76rem; color:var(--orange); margin-top:10px; text-align:center; padding:8px; background:#1a0d00; border-radius:6px; border:1px dashed var(--orange); }
     /* MODE */
-    .mode-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+    .mode-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
     .mode-option { border:1.5px solid var(--border); border-radius:12px; padding:12px 10px; cursor:pointer; background:var(--s2); text-align:center; transition:all .2s; font-family:var(--font); color:var(--white); }
     .mode-option:hover { border-color:#555; }
     .mode-option.selected { border-color:var(--orange); background:#1a0d00; }
@@ -312,7 +312,12 @@
         <button type="button" class="mode-option selected" id="modeFlexible" onclick="setMode('flexible')">
           <div class="mode-icon">📅</div>
           <div class="mode-name">Individuell</div>
-          <div class="mode-desc">Beliebiger Zeitraum<br><span style="color:var(--gray)">ab 8 €</span></div>
+          <div class="mode-desc">Beliebiger Zeitraum<br><span style="color:var(--gray)">ab 9 €</span></div>
+        </button>
+        <button type="button" class="mode-option" id="modeDay" onclick="setMode('day')">
+          <div class="mode-icon">☀️</div>
+          <div class="mode-name">Ganzer Tag</div>
+          <div class="mode-desc">24 Std. Festpreis<br><strong style="color:var(--orange)">29 €</strong></div>
         </button>
         <button type="button" class="mode-option" id="modeWeekend" onclick="setMode('weekend')">
           <div class="mode-icon">🎉</div>
@@ -691,7 +696,7 @@
     bookingMode = mode;
     calClickState = 'start';
     updateCalHint(false);
-    ['Flexible','Weekend','Week'].forEach(m => {
+    ['Flexible','Day','Weekend','Week'].forEach(m => {
       const el = document.getElementById('mode' + m);
       if (el) el.classList.toggle('selected', m.toLowerCase() === mode);
     });
@@ -780,6 +785,7 @@
   function calcPrice(startMs, endMs) {
     if (bookingMode === 'weekend') return { base: 59,  extraDays: 0, label: 'Wochenende (Fr–So)', isWeekend: true };
     if (bookingMode === 'week')    return { base: 119, extraDays: 0, label: '1 Woche (7 Tage)',   isWeek:    true };
+    if (bookingMode === 'day')     return { base: 29,  extraDays: 0, label: 'Ganzer Tag',          isDay:     true };
     const hours = (endMs - startMs) / 3600000;
     if (hours <= 0)  return null;
     if (hours <= 3)  return { base: 9,  extraDays: 0, label: 'Kurztrip (bis 3 Std.)' };
@@ -840,6 +846,10 @@
       document.getElementById('endAutoDisplay').style.display = 'block';
       document.getElementById('startDateInput').value = toDateStr(fri);
       document.getElementById('startHourInput').value = '08:00';
+    } else if (bookingMode === 'day') {
+      endMs = new Date(`${startD}T${startH}:00`).getTime() + 24 * 3600000;
+      document.getElementById('endAutoText').textContent = fmtShort(endMs);
+      document.getElementById('endAutoDisplay').style.display = 'block';
     } else if (bookingMode === 'week') {
       const end = new Date(`${startD}T${startH}:00`);
       end.setDate(end.getDate() + 7);
@@ -883,7 +893,10 @@
     document.getElementById('pbEnd').textContent      = fmtShort(endMs);
     document.getElementById('pbDuration').textContent = 'Dauer: ' + (days > 0 ? `${days} Tag${days>1?'e':''}${remH>0?', '+remH+' Std.':''}` : `${Math.round(hours)} Std.`);
 
-    if (p.isWeekend) {
+    if (p.isDay) {
+      document.getElementById('pbDay1Line').innerHTML = `<span>Ganzer Tag (24 Std.)</span><span>29,00 €</span>`;
+      document.getElementById('pbExtraLine').style.display = 'none';
+    } else if (p.isWeekend) {
       document.getElementById('pbDay1Line').innerHTML = `<span>Wochenende Festpreis (Fr–So)</span><span>59,00 €</span>`;
       document.getElementById('pbExtraLine').innerHTML = `<span style="color:#4ade80;font-size:.75rem;">≈ 19,67 € / Tag · spare 18 € vs. einzeln (77 €)</span><span style="color:#4ade80;font-size:.78rem;">–18 €</span>`;
       document.getElementById('pbExtraLine').style.display = 'flex';
@@ -997,7 +1010,11 @@
 
   function handleCalDayClick(d, freeAt) {
     if (freeAt) updateCalHint(true, `⚠️ ${freeAt} – Uhrzeit entsprechend wählen`);
-    if (bookingMode === 'weekend') {
+    if (bookingMode === 'day') {
+      document.getElementById('startDateInput').value = toDateStr(d);
+      if (!document.getElementById('startHourInput').value)
+        document.getElementById('startHourInput').value = '08:00';
+    } else if (bookingMode === 'weekend') {
       // Snap to Friday of that weekend
       const dow = d.getDay();
       if (dow === 6) d.setDate(d.getDate() - 1);       // Sa → Fr
@@ -1242,7 +1259,7 @@
       showBookingLoggedIn();
     } else {
       const urlMode = new URLSearchParams(window.location.search).get('mode');
-      setMode(urlMode === 'weekend' || urlMode === 'week' ? urlMode : 'flexible');
+      setMode(['weekend', 'week', 'day'].includes(urlMode) ? urlMode : 'flexible');
     }
   });
 

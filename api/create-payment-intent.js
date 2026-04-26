@@ -37,6 +37,7 @@ module.exports = async (req, res) => {
     let baseAmount;
     if (booking_mode === 'weekend') baseAmount = 59;
     else if (booking_mode === 'week') baseAmount = 119;
+    else if (booking_mode === 'day')  baseAmount = 29;
     else baseAmount = calcBaseAmount(start_time, end_time);
 
     if (baseAmount <= 0) return res.status(400).json({ error: 'Ungültiger Zeitraum' });
