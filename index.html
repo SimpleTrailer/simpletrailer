@@ -335,22 +335,64 @@
 
     /* MAP */
     .map-wrapper { position: relative; }
+    .map-inner   { position: relative; }
 
     .map-badge {
       position: absolute;
-      top: 14px;
-      left: 50%;
+      top: 14px; left: 50%;
       transform: translateX(-50%);
       background: var(--orange);
       color: var(--white);
-      font-size: 0.78rem;
-      font-weight: 700;
+      font-size: 0.78rem; font-weight: 700;
       letter-spacing: -0.01em;
-      padding: 6px 14px;
-      border-radius: 20px;
-      z-index: 500;
-      white-space: nowrap;
+      padding: 6px 14px; border-radius: 20px;
+      z-index: 500; white-space: nowrap;
       box-shadow: 0 2px 16px rgba(232,93,0,0.45);
+    }
+
+    /* LOCATION SEARCH */
+    .map-search-row {
+      display: flex; gap: 8px; align-items: stretch; margin-bottom: 10px;
+    }
+    .map-search-wrap {
+      flex: 1; display: flex; align-items: center;
+      background: rgba(22,22,22,0.88);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px; overflow: hidden;
+      backdrop-filter: blur(10px);
+      transition: border-color .2s;
+    }
+    .map-search-wrap:focus-within { border-color: rgba(232,93,0,0.55); }
+    .map-search-icon { padding: 0 10px 0 12px; color: #555; display: flex; align-items: center; flex-shrink: 0; }
+    .map-search-field {
+      flex: 1; background: transparent; border: none; outline: none;
+      color: var(--white); font-size: .86rem; font-family: var(--font);
+      padding: 11px 0; min-width: 0;
+    }
+    .map-search-field::placeholder { color: #484848; }
+    .map-search-btn {
+      background: var(--orange); color: #fff; border: none;
+      padding: 0 18px; font-size: .8rem; font-weight: 700;
+      cursor: pointer; font-family: var(--font);
+      transition: background .2s; white-space: nowrap; align-self: stretch;
+    }
+    .map-search-btn:hover { background: var(--orange-hover); }
+    .map-search-btn:disabled { background: #555; cursor: not-allowed; }
+    .map-loc-btn {
+      background: rgba(22,22,22,0.88);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px; color: #888;
+      padding: 10px 14px; font-size: .78rem; font-weight: 600;
+      cursor: pointer; font-family: var(--font);
+      display: flex; align-items: center; gap: 6px;
+      transition: all .2s; white-space: nowrap;
+      backdrop-filter: blur(10px); flex-shrink: 0;
+    }
+    .map-loc-btn:hover { border-color: rgba(255,255,255,0.28); color: #fff; }
+    .map-loc-btn.loading { color: var(--orange); border-color: rgba(232,93,0,0.4); }
+    @media (max-width: 640px) {
+      .map-search-row { flex-direction: column; }
+      .map-loc-btn { justify-content: center; }
     }
 
     /* SECTION COMMONS */
@@ -1139,9 +1181,28 @@
     </div>
 
     <div class="map-wrapper">
-      <div class="map-badge">📍 <span id="mapBadgeText">Wird geladen…</span></div>
-      <div id="map"></div>
-      <div id="trailerFilters" style="position:absolute;bottom:14px;left:14px;z-index:1000;display:flex;gap:6px;flex-wrap:wrap;"></div>
+      <!-- Standort-Suche -->
+      <div class="map-search-row">
+        <div class="map-search-wrap">
+          <span class="map-search-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </span>
+          <input type="text" id="mapSearchInput" class="map-search-field"
+            placeholder="Ort oder Adresse eingeben…"
+            onkeydown="if(event.key==='Enter')searchMapLocation()" />
+          <button class="map-search-btn" id="mapSearchBtn" onclick="searchMapLocation()">Suchen</button>
+        </div>
+        <button class="map-loc-btn" id="geoLocBtn" onclick="useMyLocation()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>
+          <span id="geoLocLabel">Mein Standort</span>
+        </button>
+      </div>
+      <!-- Karte -->
+      <div class="map-inner">
+        <div class="map-badge">📍 <span id="mapBadgeText">Wird geladen…</span></div>
+        <div id="map"></div>
+        <div id="trailerFilters" style="position:absolute;bottom:14px;left:14px;z-index:1000;display:flex;gap:6px;flex-wrap:wrap;"></div>
+      </div>
     </div>
   </div>
   <div class="hero-fade"></div>
@@ -1683,6 +1744,108 @@
   }
 
   let allTrailers = [], allMarkers = [], activeFilter = 'all';
+  let userLocation = null, userMarker = null;
+
+  /* ── HAVERSINE ───────────────────────────────── */
+  function haversineKm(lat1, lng1, lat2, lng2) {
+    const R = 6371, rad = Math.PI / 180;
+    const dLat = (lat2 - lat1) * rad, dLng = (lng2 - lng1) * rad;
+    const a = Math.sin(dLat/2)**2 + Math.cos(lat1*rad)*Math.cos(lat2*rad)*Math.sin(dLng/2)**2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  }
+
+  function fmtDist(km) {
+    return km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`;
+  }
+
+  /* ── POPUP CONTENT ───────────────────────────── */
+  function makePopupContent(t, distKm) {
+    const statusText = t.is_available
+      ? `<span style="color:#22c55e;font-weight:700;">✓ Verfügbar</span>`
+      : `<span style="color:#f87171;">Aktuell belegt</span>`;
+    const bookBtn = t.is_available
+      ? `<button onclick="goBook('${t.id}')" style="display:block;width:100%;margin-top:8px;background:#E85D00;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-weight:700;font-size:.82rem;cursor:pointer;font-family:inherit;">Jetzt buchen →</button>`
+      : '';
+    const distLine = distKm != null
+      ? `<span style="font-size:.8rem;color:#60a5fa;font-weight:600;display:block;margin:2px 0;">📍 ${fmtDist(distKm)} entfernt</span>`
+      : '';
+    return `<div style="min-width:160px;font-family:system-ui,sans-serif;">
+      <strong style="font-size:.95rem;">${t.name}</strong><br>
+      <span style="font-size:.78rem;color:#666;">${t.type || ''}</span><br>
+      <span style="font-size:.82rem;">ab ${t.price_kurztrip || 9} €</span><br>
+      ${distLine}${statusText}${bookBtn}</div>`;
+  }
+
+  /* ── STANDORT SETZEN ─────────────────────────── */
+  function setUserLocation(lat, lng) {
+    userLocation = { lat, lng };
+    if (userMarker) userMarker.remove();
+    userMarker = L.circleMarker([lat, lng], {
+      radius: 9, color: '#3b82f6', fillColor: '#60a5fa', fillOpacity: 0.9, weight: 3
+    }).addTo(map).bindPopup('<strong style="font-family:system-ui">Dein Standort</strong>');
+    map.setView([lat, lng], 13, { animate: true });
+
+    // Popup-Inhalte aller Anhänger mit Entfernung aktualisieren
+    allMarkers.forEach(({ marker, trailer }) => {
+      if (!trailer.lat || !trailer.lng) return;
+      const km = haversineKm(lat, lng, trailer.lat, trailer.lng);
+      marker.setPopupContent(makePopupContent(trailer, km));
+    });
+
+    // Badge aktualisieren
+    const nearest = allTrailers
+      .filter(t => t.lat && t.lng)
+      .map(t => ({ t, km: haversineKm(lat, lng, t.lat, t.lng) }))
+      .sort((a, b) => a.km - b.km);
+    if (nearest.length) {
+      document.getElementById('mapBadgeText').textContent =
+        `Nächster: ${fmtDist(nearest[0].km)} · ${allTrailers.filter(t=>t.is_available).length} verfügbar`;
+    }
+  }
+
+  /* ── STANDORT-SUCHE ──────────────────────────── */
+  async function searchMapLocation() {
+    const q = document.getElementById('mapSearchInput').value.trim();
+    if (!q) return;
+    const btn = document.getElementById('mapSearchBtn');
+    btn.textContent = '…'; btn.disabled = true;
+    try {
+      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q + ' Deutschland')}&format=json&limit=1&countrycodes=de`;
+      const res  = await fetch(url, { headers: { 'Accept-Language': 'de' } });
+      const data = await res.json();
+      if (data && data[0]) {
+        setUserLocation(parseFloat(data[0].lat), parseFloat(data[0].lon));
+      } else {
+        alert('Ort nicht gefunden. Bitte genauer eingeben (z.B. „Neustadt Bremen").');
+      }
+    } catch(e) {
+      alert('Suche fehlgeschlagen. Bitte erneut versuchen.');
+    } finally {
+      btn.textContent = 'Suchen'; btn.disabled = false;
+    }
+  }
+
+  /* ── GPS-STANDORT ────────────────────────────── */
+  function useMyLocation() {
+    if (!navigator.geolocation) { alert('Geolocation wird nicht unterstützt.'); return; }
+    const btn   = document.getElementById('geoLocBtn');
+    const label = document.getElementById('geoLocLabel');
+    btn.classList.add('loading');
+    label.textContent = 'Wird ermittelt…';
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        setUserLocation(pos.coords.latitude, pos.coords.longitude);
+        btn.classList.remove('loading');
+        label.textContent = 'Mein Standort';
+      },
+      () => {
+        btn.classList.remove('loading');
+        label.textContent = 'Mein Standort';
+        alert('Standort konnte nicht ermittelt werden. Bitte Standortzugriff erlauben.');
+      },
+      { timeout: 10000, maximumAge: 60000 }
+    );
+  }
 
   function selectModeAndScroll(mode) {
     sessionStorage.setItem('st_pending_mode', mode);
@@ -1734,19 +1897,8 @@
       allTrailers.forEach(t => {
         if (!t.lat || !t.lng) return;
         const marker = L.marker([t.lat, t.lng], { icon: makeIcon(t.is_available) });
-        const statusText = t.is_available
-          ? `<span style="color:#22c55e;font-weight:700;">✓ Verfügbar</span>`
-          : `<span style="color:#f87171;">Aktuell belegt</span>`;
-        const bookBtn = t.is_available
-          ? `<button onclick="goBook('${t.id}')" style="display:block;width:100%;margin-top:8px;background:#E85D00;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-weight:700;font-size:.82rem;cursor:pointer;font-family:inherit;">Jetzt buchen →</button>`
-          : '';
-        marker.bindPopup(`
-          <div style="min-width:160px;font-family:system-ui,sans-serif;">
-            <strong style="font-size:.95rem;">${t.name}</strong><br>
-            <span style="font-size:.78rem;color:#666;">${t.type || ''}</span><br>
-            <span style="font-size:.82rem;">ab ${t.price_kurztrip || 9} €</span><br>
-            ${statusText}${bookBtn}
-          </div>`);
+        const distKm = userLocation ? haversineKm(userLocation.lat, userLocation.lng, t.lat, t.lng) : null;
+        marker.bindPopup(makePopupContent(t, distKm));
         marker.addTo(map);
         allMarkers.push({ marker, trailer: t });
       });
@@ -1984,18 +2136,28 @@
       const modeLabel = { flexible: 'Individuell', day: 'Ganzer Tag', weekend: 'Wochenende', week: '1 Woche' };
       document.getElementById('modalTitle').textContent = `Anhänger wählen – ${modeLabel[modalMode] || ''}`;
 
+      // Nach Entfernung sortieren wenn Standort bekannt
+      if (userLocation) {
+        trailers.forEach(t => {
+          t._distKm = (t.lat && t.lng) ? haversineKm(userLocation.lat, userLocation.lng, t.lat, t.lng) : 9999;
+        });
+        trailers.sort((a, b) => a._distKm - b._distKm);
+      }
+
       list.innerHTML = trailers.map(t => {
         const qs = new URLSearchParams({ trailer: t.id, mode: modalMode });
         if (pendingStart) qs.set('prefill_start', pendingStart);
         if (pendingEnd)   qs.set('prefill_end',   pendingEnd);
-        const bookUrl = `booking.html?${qs.toString()}`;
+        const bookUrl  = `booking.html?${qs.toString()}`;
+        const distStr  = (userLocation && t.lat && t.lng && t._distKm < 9999)
+          ? fmtDist(t._distKm) : 'Bremen';
         return `<div style="border:1px solid ${t.is_available ? '#383838' : '#252525'};border-radius:10px;
           padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:14px;
           background:${t.is_available ? '#161616' : '#111'};">
           <span style="font-size:1.15rem;flex-shrink:0;">${t.is_available ? '🟢' : '🔴'}</span>
           <div style="flex:1;min-width:0;">
             <div style="font-weight:700;font-size:.95rem;letter-spacing:-.02em;margin-bottom:3px;">${t.name}</div>
-            <div style="color:#888;font-size:.78rem;">📍 Bremen &nbsp;·&nbsp; ab ${t.price_kurztrip || 9} €</div>
+            <div style="color:#888;font-size:.78rem;">📍 ${distStr} &nbsp;·&nbsp; ab ${t.price_kurztrip || 9} €</div>
           </div>
           ${t.is_available
             ? `<a href="${bookUrl}" style="background:#E85D00;color:#fff;text-decoration:none;
