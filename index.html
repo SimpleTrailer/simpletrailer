@@ -1064,6 +1064,54 @@
       border: 1px solid #2a2a2a;
       border-bottom: none;
     }
+
+    /* Standort-Banner im Modal */
+    #modalLocBanner {
+      background: linear-gradient(180deg, rgba(232,93,0,0.10) 0%, rgba(232,93,0,0.04) 100%);
+      border-bottom: 1px solid rgba(232,93,0,0.18);
+      padding: 12px 16px 14px;
+    }
+    .modal-loc-banner-title {
+      font-size: .85rem; font-weight: 700; color: #fff;
+      margin-bottom: 6px; letter-spacing: -.01em;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .modal-loc-banner-optional {
+      font-size: .65rem; font-weight: 600; color: #888;
+      background: rgba(255,255,255,0.06); padding: 2px 7px;
+      border-radius: 999px; letter-spacing: .04em; text-transform: uppercase;
+    }
+    .modal-loc-banner-perks {
+      display: flex; flex-wrap: wrap; gap: 4px 12px;
+      font-size: .72rem; color: #aaa;
+      margin-bottom: 10px;
+    }
+    .modal-loc-banner-perks span { white-space: nowrap; }
+    .modal-loc-gps-label {
+      margin-left: 5px; font-size: .76rem; font-weight: 700; letter-spacing: -.01em;
+      color: var(--orange);
+    }
+    .modal-loc-banner-row {
+      display: flex; align-items: stretch; gap: 0;
+      background: #0d0d0d; border: 1.5px solid rgba(255,255,255,0.08);
+      border-radius: 8px; overflow: visible; position: relative;
+    }
+    .modal-loc-banner-row input {
+      flex: 1; min-width: 0; background: transparent; border: none; color: #fff;
+      padding: 9px 12px; font-size: .85rem; font-family: inherit; outline: none;
+    }
+    .modal-loc-gps-btn {
+      background: none; border: none; color: var(--orange);
+      padding: 0 12px; cursor: pointer; flex-shrink: 0;
+      display: flex; align-items: center; transition: color .15s;
+    }
+    .modal-loc-gps-btn:hover { color: var(--orange-hover); }
+    #modalLocSuggestDrop {
+      display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+      background: #181818; border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px; z-index: 10; overflow: hidden;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+    }
     #modalDetailRouteWrap { margin-bottom: 14px; }
     #modalDetailRouteWrap .modal-route-card {
       border-radius: 0 0 10px 10px;
@@ -1846,6 +1894,26 @@
     </div>
     <!-- LIST VIEW -->
     <div id="modalListView">
+      <div id="modalLocBanner" style="display:none;">
+        <div class="modal-loc-banner-title">📍 Wo bist du? <span class="modal-loc-banner-optional">optional</span></div>
+        <div class="modal-loc-banner-perks">
+          <span>✓ Nächster Anhänger zuerst</span>
+          <span>✓ Route auf der Karte</span>
+          <span>✓ Fahrtzeit mit Auto</span>
+        </div>
+        <div class="modal-loc-banner-row">
+          <input type="text" id="modalLocInput" placeholder="Adresse oder Stadt…" autocomplete="off"
+            oninput="onModalLocInput(this.value)" />
+          <button onclick="useMyLocation()" class="modal-loc-gps-btn" title="Mein Standort verwenden">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+              <circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/>
+              <line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/>
+            </svg>
+            <span class="modal-loc-gps-label">GPS</span>
+          </button>
+          <div id="modalLocSuggestDrop"></div>
+        </div>
+      </div>
       <div id="modalMap" style="height:200px;"></div>
       <div id="modalTrailerList" style="padding:16px;"></div>
     </div>
@@ -2034,8 +2102,17 @@
     // Route zur nächsten freien Station
     if (sortedAvail[0]) drawRoute(lat, lng, sortedAvail[0].lat, sortedAvail[0].lng);
 
-    // Modal öffnen (das einheitliche System)
-    openTrailerModal('flexible');
+    // Wenn das Modal bereits offen ist (User hat im Banner Standort eingegeben),
+    // nur Liste neu rendern + Banner ausblenden – KEIN erneutes Öffnen.
+    const modalEl = document.getElementById('trailerModal');
+    if (modalEl && modalEl.style.display !== 'none' && modalEl.style.display !== '') {
+      const banner = document.getElementById('modalLocBanner');
+      if (banner) banner.style.display = 'none';
+      buildModalContent();
+    } else {
+      // Modal noch zu → klassischer Flow: öffnen
+      openTrailerModal('flexible');
+    }
   }
 
   /* ── AUTOCOMPLETE ────────────────────────────── */
@@ -2297,6 +2374,10 @@
 
   document.addEventListener('click', e => {
     if (!e.target.closest('.mobile-loc-row')) hideMobileSuggestions();
+    if (!e.target.closest('#modalLocBanner')) {
+      const drop = document.getElementById('modalLocSuggestDrop');
+      if (drop) drop.style.display = 'none';
+    }
   });
   function useMobileGPS() {
     const btn  = document.getElementById('geoLocBtn');
@@ -2551,7 +2632,42 @@
     document.getElementById('modalBackBtn').style.display    = 'none';
     document.getElementById('modalTitle').textContent =
       `Anhänger wählen${MODE_LABEL[modalMode] ? ' – ' + MODE_LABEL[modalMode] : ''}`;
+    document.getElementById('modalLocBanner').style.display = userLocation ? 'none' : 'block';
     if (modalMap) setTimeout(() => modalMap.invalidateSize(), 50);
+  }
+
+  /* ── MODAL STANDORT-BANNER AUTOCOMPLETE ───────── */
+  let _modalLocAcTimer = null;
+  function onModalLocInput(val) {
+    clearTimeout(_modalLocAcTimer);
+    const q = (val || '').trim();
+    const drop = document.getElementById('modalLocSuggestDrop');
+    if (q.length < 2) { if (drop) drop.style.display = 'none'; return; }
+    _modalLocAcTimer = setTimeout(() => fetchModalLocSuggestions(q), 280);
+  }
+  async function fetchModalLocSuggestions(q) {
+    try {
+      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q + ' Deutschland')}&format=json&limit=5&countrycodes=de&accept-language=de`;
+      const res = await fetch(url, { headers: { 'Accept-Language': 'de' } });
+      const data = await res.json();
+      const drop = document.getElementById('modalLocSuggestDrop');
+      if (!drop) return;
+      if (!data.length) { drop.style.display = 'none'; return; }
+      drop.innerHTML = data.map(r => {
+        const parts = r.display_name.split(',');
+        const label = parts.slice(0, 2).join(',').trim();
+        return `<div class="suggest-item" onclick="selectModalLocSuggestion(${r.lat},${r.lon},'${label.replace(/'/g,"\\'")}')">
+          <span class="suggest-icon"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 10-16 0c0 3 2.7 6.9 8 11.7z"/></svg></span>
+          ${label}
+        </div>`;
+      }).join('');
+      drop.style.display = 'block';
+    } catch(e) {}
+  }
+  function selectModalLocSuggestion(lat, lng, name) {
+    document.getElementById('modalLocInput').value = name;
+    document.getElementById('modalLocSuggestDrop').style.display = 'none';
+    setUserLocation(parseFloat(lat), parseFloat(lng));
   }
 
   function showModalDetail(idx) {
