@@ -136,24 +136,36 @@
 
     .nav-cta { flex-shrink: 0; }
 
+    /* ACCOUNT ICON */
+    .nav-account-icon {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: rgba(255,255,255,0.05);
+      border: 1.5px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--gray); text-decoration: none;
+      transition: all .2s; flex-shrink: 0;
+    }
+    .nav-account-icon:hover {
+      border-color: #666; color: var(--white);
+      background: rgba(255,255,255,0.09);
+    }
+
     /* HAMBURGER */
     .hamburger {
-      display: none;
-      flex-direction: column;
-      gap: 5px;
-      cursor: pointer;
-      padding: 4px;
-      background: none;
-      border: none;
+      display: none; flex-direction: column; gap: 5px;
+      cursor: pointer; padding: 6px;
+      background: none; border: none;
     }
     .hamburger span {
-      display: block;
-      width: 24px;
-      height: 2px;
-      background: var(--white);
-      border-radius: 2px;
-      transition: all 0.3s;
+      display: block; width: 22px; height: 2px;
+      background: var(--white); border-radius: 2px;
+      transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                  opacity 0.25s ease, background 0.2s;
+      transform-origin: center;
     }
+    .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+    .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
     /* HERO */
     #hero {
@@ -513,12 +525,10 @@
       height: 2px;
       width: 0;
       background: linear-gradient(to right, var(--orange), rgba(232,93,0,0.25));
-      transition: width 1.4s cubic-bezier(0.4, 0, 0.2, 1);
       z-index: 1;
       pointer-events: none;
+      will-change: width;
     }
-
-    #how.line-active .steps-line { width: 92%; }
 
     .step { padding: 0 20px; }
 
@@ -975,20 +985,57 @@
     }
 
     @media (max-width: 640px) {
-      .nav-links, .nav-cta { display: none; }
+      .nav-cta { display: none !important; }
       .hamburger { display: flex; }
-      .nav-links.open {
+
+      /* Mobile nav – smooth slide + fade */
+      .nav-links {
         display: flex;
         flex-direction: column;
         position: fixed;
         top: 64px; left: 0; right: 0;
-        background: #0D0D0D;
+        background: rgba(10,10,10,0.98);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
         border-bottom: 1px solid var(--border);
-        padding: 20px 5%;
-        gap: 16px;
-        z-index: 999;
+        z-index: 998;
+        max-height: 0;
+        overflow: hidden;
+        opacity: 0;
+        padding: 0 6%;
+        gap: 0;
+        pointer-events: none;
+        transform: translateY(-6px);
+        transition:
+          max-height 0.42s cubic-bezier(0.4, 0, 0.2, 1),
+          opacity 0.32s ease,
+          transform 0.38s cubic-bezier(0.4, 0, 0.2, 1),
+          padding 0.38s cubic-bezier(0.4, 0, 0.2, 1);
       }
-      .nav-links.open + .nav-cta { display: flex; }
+      .nav-links.open {
+        max-height: 360px;
+        opacity: 1;
+        transform: translateY(0);
+        padding: 14px 6% 22px;
+        pointer-events: auto;
+        gap: 2px;
+      }
+      .nav-links li {
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+        transform: translateX(-6px);
+        opacity: 0;
+        transition: transform 0.3s, opacity 0.3s;
+      }
+      .nav-links.open li {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      .nav-links.open li:nth-child(1) { transition-delay: 0.05s; }
+      .nav-links.open li:nth-child(2) { transition-delay: 0.10s; }
+      .nav-links.open li:nth-child(3) { transition-delay: 0.15s; }
+      .nav-links.open li:nth-child(4) { transition-delay: 0.20s; }
+      .nav-links li:last-child { border-bottom: none; }
+      .nav-links li a { display: block; padding: 12px 0; font-size: .95rem; color: #bbb; }
 
       /* Steps: vertikale Timeline auf Mobile */
       .steps { grid-template-columns: 1fr; padding-left: 44px; }
@@ -1001,9 +1048,8 @@
         top: 8px; left: 14px;
         height: 0; width: 2px;
         background: linear-gradient(to bottom, var(--orange), rgba(232,93,0,.25));
-        transition: height 1.4s cubic-bezier(.4,0,.2,1);
+        will-change: height;
       }
-      #how.line-active .steps-line { width: 2px; height: calc(100% - 16px); }
       .step { padding: 0 0 36px; position: relative; }
       .step:last-child { padding-bottom: 0; }
       .step-num { font-size: 2.2rem; margin-bottom: 12px; gap: 8px; }
@@ -1046,6 +1092,11 @@
       <li><a href="account.html" id="navAccount">Mein Konto</a></li>
     </ul>
     <a href="#" onclick="openTrailerModal('flexible');return false;" class="btn btn-orange nav-cta">Jetzt buchen</a>
+    <a href="account.html" class="nav-account-icon" title="Mein Konto" aria-label="Mein Konto">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+      </svg>
+    </a>
     <button class="hamburger" id="hamburger" aria-label="Menü">
       <span></span><span></span><span></span>
     </button>
@@ -1705,8 +1756,14 @@
   // HAMBURGER
   const hamburger = document.getElementById('hamburger');
   const navLinks  = document.getElementById('navLinks');
-  hamburger.addEventListener('click', () => navLinks.classList.toggle('open'));
-  navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', () => navLinks.classList.remove('open')));
+  hamburger.addEventListener('click', () => {
+    const isOpen = navLinks.classList.toggle('open');
+    hamburger.classList.toggle('open', isOpen);
+  });
+  navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
+    navLinks.classList.remove('open');
+    hamburger.classList.remove('open');
+  }));
 
   // FAQ
   function toggleFaq(btn) {
@@ -1771,18 +1828,58 @@
 
   document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
 
-  // STEPS LINE – animiert sich von links nach rechts
-  const stepsLineObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('line-active');
-        stepsLineObserver.unobserve(entry.target);
-      }
-    });
-  }, { threshold: 0.4 });
+  // STEPS LINE – scroll-basiert, animiert hoch und runter
+  (function() {
+    const howEl = document.getElementById('how');
+    if (!howEl) return;
+    const line = howEl.querySelector('.steps-line');
+    if (!line) return;
 
-  const howSection = document.getElementById('how');
-  if (howSection) stepsLineObserver.observe(howSection);
+    let progress = 0, rafId = null;
+
+    function getTarget() {
+      const rect = howEl.getBoundingClientRect();
+      const vh   = window.innerHeight;
+      // 0 wenn Section-Oberkante unten im Viewport, 1 wenn Section gut sichtbar
+      const t = (vh * 0.78 - rect.top) / (rect.height * 0.55);
+      return Math.max(0, Math.min(1, t));
+    }
+
+    function applyLine() {
+      const isMobile = window.innerWidth <= 640;
+      if (isMobile) {
+        line.style.width  = '2px';
+        line.style.height = (progress * 100).toFixed(2) + '%';
+      } else {
+        line.style.height = '2px';
+        line.style.width  = (progress * 92).toFixed(2) + '%';
+      }
+    }
+
+    function tick() {
+      const target = getTarget();
+      const delta  = target - progress;
+      if (Math.abs(delta) > 0.0008) {
+        progress += delta * 0.09;
+        applyLine();
+        rafId = requestAnimationFrame(tick);
+      } else {
+        progress = target;
+        applyLine();
+        rafId = null;
+      }
+    }
+
+    window.addEventListener('scroll', () => {
+      if (!rafId) rafId = requestAnimationFrame(tick);
+    }, { passive: true });
+
+    window.addEventListener('resize', () => {
+      if (!rafId) rafId = requestAnimationFrame(tick);
+    }, { passive: true });
+
+    requestAnimationFrame(tick);
+  })();
 
   // REVIEWS – Karten klonen für nahtlose Endlosschleife
   const track = document.getElementById('reviewsTrack');
