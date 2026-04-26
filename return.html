@@ -169,7 +169,7 @@
     if (!bookingId || !returnToken) { showError('Ungültiger Link.'); return; }
 
     try {
-      const res  = await fetch(`/api/get-booking?id=${bookingId}&token=${returnToken}`);
+      const res  = await fetch(`/api/booking?id=${bookingId}&token=${returnToken}`);
       const data = await res.json();
 
       if (!res.ok) { showError(data.error || 'Buchung nicht gefunden'); return; }

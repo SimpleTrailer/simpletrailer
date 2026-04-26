@@ -169,7 +169,7 @@
   async function loadBooking() {
     if (!bookingId || !precheckToken) return showError('Ungültiger Link.');
     try {
-      const res  = await fetch(`/api/get-precheck?id=${bookingId}&token=${precheckToken}`);
+      const res  = await fetch(`/api/precheck?id=${bookingId}&token=${precheckToken}`);
       const data = await res.json();
       if (!res.ok) return showError(data.error || 'Buchung nicht gefunden.');
       booking = data.booking;
@@ -257,7 +257,7 @@
       let photoUrl = null;
       if (!skipUpload && photoFile) photoUrl = await uploadPhoto();
 
-      const res  = await fetch('/api/confirm-precheck', {
+      const res  = await fetch('/api/precheck', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ booking_id: bookingId, precheck_token: precheckToken, photo_url: photoUrl })

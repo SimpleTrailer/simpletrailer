@@ -216,6 +216,7 @@
 
     /* ERROR */
     .error-msg { color: #f87171; font-size: .82rem; margin-top: 6px; display: none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
     /* SLOT GRID */
     .slot-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
@@ -307,12 +308,17 @@
     <div class="step-line"></div>
     <div class="step-item">
       <div class="step-circle" id="sc3">3</div>
-      <span class="step-label" id="sl3">Schutzpaket</span>
+      <span class="step-label" id="sl3">Führerschein</span>
     </div>
     <div class="step-line"></div>
     <div class="step-item">
       <div class="step-circle" id="sc4">4</div>
-      <span class="step-label" id="sl4">Zahlung</span>
+      <span class="step-label" id="sl4">Schutzpaket</span>
+    </div>
+    <div class="step-line"></div>
+    <div class="step-item">
+      <div class="step-circle" id="sc5">5</div>
+      <span class="step-label" id="sl5">Zahlung</span>
     </div>
   </div>
 
@@ -575,8 +581,46 @@
     </div>
   </div>
 
-  <!-- STEP 3: Schutzpaket -->
+  <!-- STEP 3: Führerschein -->
   <div class="step-content" id="step3">
+    <div class="card" id="dlVerifiedBox" style="display:none;border-color:#166534;background:linear-gradient(180deg,#0a1f0a 0%,#0d2410 100%);">
+      <div style="display:flex;gap:14px;align-items:flex-start;">
+        <div style="width:42px;height:42px;border-radius:50%;background:#22c55e;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;">✓</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:700;font-size:1rem;margin-bottom:4px;">Führerschein bestätigt</div>
+          <div style="color:#9ca3af;font-size:.84rem;line-height:1.5;" id="dlVerifiedInfo">–</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="dlVerifyBox">
+      <p class="field-label" style="margin-bottom:8px;">Führerschein verifizieren</p>
+      <p style="color:var(--gray);font-size:.84rem;line-height:1.55;margin-bottom:18px;">
+        Vor deiner ersten Buchung prüfen wir einmalig deinen Führerschein – sicher über <strong style="color:#fff;">Stripe Identity</strong>. Du fotografierst Vorder- und Rückseite plus ein kurzes Selfie. Die Prüfung dauert ca. 30 Sekunden, danach kannst du jederzeit ohne erneute Verifikation buchen.
+      </p>
+      <div style="background:#0d0d0d;border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:16px;display:flex;flex-direction:column;gap:8px;font-size:.82rem;color:#aaa;">
+        <span>📄 Führerschein Klasse B (oder höher)</span>
+        <span>📷 Vorder- und Rückseite</span>
+        <span>🤳 Selfie zur Identitätsprüfung</span>
+        <span>🔒 DSGVO-konform · End-to-End verschlüsselt</span>
+      </div>
+      <button class="btn btn-orange" id="dlStartBtn" onclick="startIdentityVerification()">Jetzt verifizieren →</button>
+      <span class="error-msg" id="errDl" style="margin-top:10px;display:none;"></span>
+    </div>
+
+    <div class="card" id="dlPendingBox" style="display:none;text-align:center;">
+      <div class="spinner" style="margin:8px auto 16px;width:36px;height:36px;border:3px solid #2a2a2a;border-top-color:var(--orange);border-radius:50%;animation:spin 1s linear infinite;"></div>
+      <p style="font-weight:600;margin-bottom:4px;">Verifizierung läuft …</p>
+      <p style="color:var(--gray);font-size:.82rem;">Stripe prüft dein Dokument. Das dauert meist 5–30 Sekunden.</p>
+    </div>
+
+    <div style="text-align:center;margin-top:12px;">
+      <a href="#" onclick="goToStep(2)" style="color:var(--gray);font-size:.85rem;text-decoration:none;">← Zurück</a>
+    </div>
+  </div>
+
+  <!-- STEP 4: Schutzpaket -->
+  <div class="step-content" id="step4">
     <div class="card">
       <p class="field-label" style="margin-bottom:4px;">Schutzpaket wählen</p>
       <p style="color:var(--gray);font-size:.78rem;margin-bottom:14px;">Begrenze deine Haftung bei Schäden am Anhänger.</p>
@@ -607,21 +651,14 @@
         </div>
       </div>
     </div>
-    <div class="card" style="display:flex;gap:14px;align-items:flex-start;">
-      <input type="checkbox" id="licenseCheck" style="width:18px;height:18px;margin-top:2px;accent-color:var(--orange);flex-shrink:0;cursor:pointer;" />
-      <label for="licenseCheck" style="font-size:.88rem;color:var(--gray);cursor:pointer;line-height:1.5;">
-        Ich bestätige dass ich einen gültigen <strong style="color:var(--white);">Führerschein Klasse B</strong> besitze und das Fahrzeug versichert ist.
-      </label>
-    </div>
-    <span class="error-msg" id="errLicense" style="margin-top:-8px;margin-bottom:12px;display:none;">Bitte Führerschein bestätigen</span>
-    <button class="btn btn-orange" onclick="goStep4()">Weiter zur Zahlung →</button>
+    <button class="btn btn-orange" onclick="goStep5()">Weiter zur Zahlung →</button>
     <div style="text-align:center;margin-top:12px;">
-      <a href="#" onclick="goToStep(2)" style="color:var(--gray);font-size:.85rem;text-decoration:none;">← Zurück</a>
+      <a href="#" onclick="goToStep(3)" style="color:var(--gray);font-size:.85rem;text-decoration:none;">← Zurück</a>
     </div>
   </div>
 
-  <!-- STEP 4: Zahlung -->
-  <div class="step-content" id="step4">
+  <!-- STEP 5: Zahlung -->
+  <div class="step-content" id="step5">
     <div class="card" id="orderSummary">
       <p class="field-label" style="margin-bottom:16px;">Zusammenfassung</p>
       <div class="summary-row"><span class="label">Kunde</span><span id="sumName">–</span></div>
@@ -642,7 +679,7 @@
     </div>
 
     <div style="text-align:center;margin-top:12px;">
-      <a href="#" onclick="goToStep(3)" style="color:var(--gray);font-size:.85rem;text-decoration:none;">← Zurück</a>
+      <a href="#" onclick="goToStep(4)" style="color:var(--gray);font-size:.85rem;text-decoration:none;">← Zurück</a>
     </div>
   </div>
 
@@ -1467,7 +1504,7 @@
   function goToStep(n) {
     document.querySelectorAll('.step-content').forEach(el => el.classList.remove('active'));
     document.getElementById(`step${n}`).classList.add('active');
-    for (let i = 1; i <= 4; i++) {
+    for (let i = 1; i <= 5; i++) {
       const circle = document.getElementById(`sc${i}`);
       const label  = document.getElementById(`sl${i}`);
       circle.classList.remove('active', 'done');
@@ -1493,20 +1530,142 @@
     if (bookingUser) showBookingLoggedIn();
   }
 
-  function goStep3() {
+  async function goStep3() {
     if (!bookingUser) return;
     goToStep(3);
+    await refreshLicenseUI();
+  }
+
+  function goStep4() {
+    if (!bookingUser) return;
+    if (currentDlStatus !== 'verified') {
+      const err = document.getElementById('errDl');
+      err.textContent = 'Bitte zuerst Führerschein verifizieren.';
+      err.style.display = 'block';
+      return;
+    }
+    goToStep(4);
     updatePriceDisplay();
   }
 
-  async function goStep4() {
-    const license = document.getElementById('licenseCheck').checked;
-    document.getElementById('errLicense').style.display = license ? 'none' : 'block';
-    if (!license) return;
+  async function goStep5() {
     if (!trailerId) { alert('Anhänger konnte nicht geladen werden. Bitte Seite neu laden.'); return; }
-    goToStep(4);
+    if (currentDlStatus !== 'verified') { goToStep(3); return; }
+    goToStep(5);
     updateSummary();
     await initStripe();
+  }
+
+  /* ── Stripe Identity Führerschein-Verifikation ────────────────── */
+  let currentDlStatus = null;
+  let dlPollTimer = null;
+
+  async function fetchLicenseStatus() {
+    if (!bookingToken) return null;
+    try {
+      const res = await fetch('/api/identity', {
+        headers: { 'Authorization': `Bearer ${bookingToken}` }
+      });
+      if (!res.ok) return null;
+      return await res.json();
+    } catch { return null; }
+  }
+
+  async function refreshLicenseUI() {
+    const verifiedBox = document.getElementById('dlVerifiedBox');
+    const verifyBox   = document.getElementById('dlVerifyBox');
+    const pendingBox  = document.getElementById('dlPendingBox');
+    const info        = await fetchLicenseStatus();
+    const status      = info?.dl_status || 'unverified';
+    currentDlStatus   = status;
+
+    verifiedBox.style.display = 'none';
+    verifyBox.style.display   = 'none';
+    pendingBox.style.display  = 'none';
+    document.getElementById('errDl').style.display = 'none';
+
+    if (status === 'verified') {
+      verifiedBox.style.display = 'block';
+      const expires = info.dl_expires_at ? new Date(info.dl_expires_at).toLocaleDateString('de-DE') : '–';
+      const klass   = (info.dl_classes || []).join(', ') || 'B';
+      document.getElementById('dlVerifiedInfo').innerHTML =
+        `Klasse <strong style="color:#fff;">${klass}</strong> · gültig bis <strong style="color:#fff;">${expires}</strong>`;
+      // Auto-weiter nach kurzer Bestätigung
+      setTimeout(() => { if (currentDlStatus === 'verified') goStep4(); }, 900);
+      return;
+    }
+
+    if (status === 'pending') {
+      pendingBox.style.display = 'block';
+      startStatusPolling();
+      return;
+    }
+
+    verifyBox.style.display = 'block';
+    if (status === 'failed' && info.dl_failure_reason) {
+      const err = document.getElementById('errDl');
+      err.textContent = `Letzte Verifizierung fehlgeschlagen: ${info.dl_failure_reason}. Bitte erneut versuchen.`;
+      err.style.display = 'block';
+    }
+  }
+
+  async function startIdentityVerification() {
+    const btn = document.getElementById('dlStartBtn');
+    btn.disabled = true;
+    btn.textContent = 'Wird gestartet …';
+
+    try {
+      const res = await fetch('/api/identity', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${bookingToken}`, 'Content-Type': 'application/json' }
+      });
+      const data = await res.json();
+      if (!res.ok || !data.client_secret) throw new Error(data.error || 'Verifikation konnte nicht gestartet werden');
+
+      const result = await stripeClient.verifyIdentity(data.client_secret);
+
+      btn.disabled = false;
+      btn.textContent = 'Jetzt verifizieren →';
+
+      if (result.error) {
+        const err = document.getElementById('errDl');
+        err.textContent = result.error.message || 'Verifikation abgebrochen.';
+        err.style.display = 'block';
+        return;
+      }
+
+      // Stripe Modal geschlossen → Status pollen
+      document.getElementById('dlVerifyBox').style.display  = 'none';
+      document.getElementById('dlPendingBox').style.display = 'block';
+      startStatusPolling();
+    } catch (err) {
+      const errEl = document.getElementById('errDl');
+      errEl.textContent = err.message || 'Fehler beim Start der Verifikation.';
+      errEl.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Jetzt verifizieren →';
+    }
+  }
+
+  function startStatusPolling() {
+    if (dlPollTimer) clearInterval(dlPollTimer);
+    let elapsed = 0;
+    dlPollTimer = setInterval(async () => {
+      elapsed += 2;
+      const info = await fetchLicenseStatus();
+      const status = info?.dl_status || 'unverified';
+      if (status === 'verified' || status === 'failed' || status === 'unverified') {
+        clearInterval(dlPollTimer); dlPollTimer = null;
+        await refreshLicenseUI();
+      } else if (elapsed >= 90) {
+        clearInterval(dlPollTimer); dlPollTimer = null;
+        const err = document.getElementById('errDl');
+        err.textContent = 'Verifizierung dauert ungewöhnlich lange. Bitte später nochmal probieren.';
+        err.style.display = 'block';
+        document.getElementById('dlPendingBox').style.display = 'none';
+        document.getElementById('dlVerifyBox').style.display  = 'block';
+      }
+    }, 2000);
   }
 
   function updateSummary() {

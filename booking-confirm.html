@@ -113,7 +113,7 @@
     }
 
     try {
-      const res  = await fetch('/api/confirm-booking', {
+      const res  = await fetch('/api/booking', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ payment_intent_id: piId })

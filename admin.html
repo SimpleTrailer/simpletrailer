@@ -599,6 +599,13 @@
 
     const initials = u => ((u.first_name?.[0] || '') + (u.last_name?.[0] || '') || u.email?.[0] || '?').toUpperCase();
     const fullName = u => [u.first_name, u.last_name].filter(Boolean).join(' ') || '–';
+    const dlBadge = (status) => {
+      const s = status || 'unverified';
+      if (s === 'verified')  return '<span class="badge badge-ok">✓ Verifiziert</span>';
+      if (s === 'pending')   return '<span class="badge" style="background:rgba(234,179,8,.12);color:#facc15;border:1px solid rgba(234,179,8,.3)">⏳ Pending</span>';
+      if (s === 'failed')    return '<span class="badge badge-no">✗ Fehler</span>';
+      return '<span class="badge" style="background:rgba(255,255,255,.06);color:#888;border:1px solid var(--border)">○ Offen</span>';
+    };
 
     const rows = list.map(u => `
       <tr onclick="openUserModal(${JSON.stringify(u).replace(/"/g,'&quot;')})" style="cursor:pointer">
@@ -613,6 +620,7 @@
         </td>
         <td style="color:var(--gray);font-size:.78rem">${u.phone || '–'}</td>
         <td><span class="badge ${u.confirmed ? 'badge-ok' : 'badge-no'}">${u.confirmed ? 'Bestätigt' : 'Ausstehend'}</span></td>
+        <td>${dlBadge(u.dl_status)}</td>
         <td style="text-align:center;font-weight:600">${u.bookings_count}</td>
         <td style="font-weight:700">${u.bookings_total > 0 ? fmtEur(u.bookings_total) : '–'}</td>
         <td style="color:var(--gray);font-size:.78rem">${fmtDate(u.created_at).split(',')[0]}</td>
@@ -622,7 +630,7 @@
       <table>
         <thead>
           <tr>
-            <th>Nutzer</th><th>Telefon</th><th>Status</th>
+            <th>Nutzer</th><th>Telefon</th><th>Status</th><th>Führerschein</th>
             <th style="text-align:center">Buchungen</th><th>Umsatz</th><th>Registriert</th>
           </tr>
         </thead>

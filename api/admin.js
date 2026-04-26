@@ -34,6 +34,10 @@ module.exports = async (req, res) => {
         first_name: u.user_metadata?.first_name || '', last_name: u.user_metadata?.last_name || '',
         phone: u.user_metadata?.phone || '', confirmed: !!u.email_confirmed_at,
         bookings_count: byEmail[u.email]?.count || 0, bookings_total: byEmail[u.email]?.total || 0,
+        dl_status:      u.user_metadata?.dl_status      || 'unverified',
+        dl_classes:     u.user_metadata?.dl_classes     || [],
+        dl_expires_at:  u.user_metadata?.dl_expires_at  || null,
+        dl_verified_at: u.user_metadata?.dl_verified_at || null,
       })).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
       return res.status(200).json({ users });
     }

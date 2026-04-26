@@ -17,6 +17,22 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'Fehlende Pflichtfelder' });
     }
 
+    // Führerschein-Gate: nur verifizierte User dürfen Zahlung starten
+    if (!user_id) {
+      return res.status(403).json({ error: 'Anmeldung erforderlich' });
+    }
+    const { data: { user: licUser } } = await supabase.auth.admin.getUserById(user_id);
+    const dl = licUser?.user_metadata || {};
+    if (dl.dl_status !== 'verified') {
+      return res.status(403).json({ error: 'Führerschein nicht verifiziert', dl_status: dl.dl_status || 'unverified' });
+    }
+    if (dl.dl_expires_at && new Date(dl.dl_expires_at) < new Date(end_time)) {
+      return res.status(403).json({ error: 'Führerschein läuft vor Mietende ab' });
+    }
+    if (Array.isArray(dl.dl_classes) && !dl.dl_classes.some(c => c === 'B' || c === 'BE')) {
+      return res.status(403).json({ error: 'Klasse B oder BE erforderlich' });
+    }
+
     const { data: trailer, error: trailerError } = await supabase
       .from('trailers').select('*').eq('id', trailer_id).single();
 
