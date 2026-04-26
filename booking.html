@@ -434,6 +434,7 @@
           <div class="pb-divider"></div>
           <div class="pb-line" id="pbDay1Line"></div>
           <div class="pb-line" id="pbExtraLine" style="display:none;"></div>
+          <div class="pb-line" id="pbRemainLine" style="display:none;"></div>
           <div class="pb-divider"></div>
           <div class="pb-total"><span>Mietpreis</span><span id="pbTotal">–</span></div>
         </div>
@@ -955,16 +956,34 @@
 
   /* ── PRICE CALC ───────────────────────────────── */
   function calcPrice(startMs, endMs) {
-    if (bookingMode === 'weekend') return { base: trailerPrices.weekend,  extraDays: 0, label: 'Wochenende (Fr–So)', isWeekend: true };
-    if (bookingMode === 'week')    return { base: trailerPrices.week,     extraDays: 0, label: '1 Woche (7 Tage)',   isWeek:    true };
-    if (bookingMode === 'day')     return { base: trailerPrices.day,      extraDays: 0, label: 'Ganzer Tag',          isDay:     true };
+    if (bookingMode === 'weekend') return { base: trailerPrices.weekend, extraDays: 0, label: 'Wochenende (Fr–So)', isWeekend: true };
+    if (bookingMode === 'week')    return { base: trailerPrices.week,    extraDays: 0, label: '1 Woche (7 Tage)',   isWeek:    true };
+    if (bookingMode === 'day')     return { base: trailerPrices.day,     extraDays: 0, label: 'Ganzer Tag',         isDay:     true };
     const hours = (endMs - startMs) / 3600000;
-    if (hours <= 0)  return null;
-    if (hours <= 3)  return { base: trailerPrices.kurztrip, extraDays: 0, label: 'Kurztrip (bis 3 Std.)' };
-    if (hours <= 6)  return { base: trailerPrices.halftag,  extraDays: 0, label: 'Halber Tag (bis 6 Std.)' };
-    const extraDays = Math.max(0, Math.ceil((hours - 24 - 2) / 24));
-    if (extraDays === 0) return { base: trailerPrices.day, extraDays: 0, label: 'Ganzer Tag' };
-    return { base: trailerPrices.day + extraDays * trailerPrices.extra_day, extraDays, label: `${extraDays + 1} Tage` };
+    if (hours <= 0)       return null;
+    if (hours <= 3)       return { base: trailerPrices.kurztrip, extraDays: 0, label: 'Kurztrip (bis 3 Std.)' };
+    if (hours <= 6)       return { base: trailerPrices.halftag,  extraDays: 0, label: 'Halber Tag (bis 6 Std.)' };
+    if (hours <= 24 + 2)  return { base: trailerPrices.day,      extraDays: 0, label: 'Ganzer Tag' };
+
+    // Mehr als 26h: erster Tag + volle Extra-Tage + Restzeitstaffel
+    const GRACE        = 2;
+    const extraHours   = hours - 24 - GRACE;           // Stunden nach erstem Tag+Grace
+    const fullExtra    = Math.floor(extraHours / 24);  // volle 24h-Blöcke
+    const remainH      = extraHours % 24;              // verbleibende Reststunden
+
+    let remainPrice = 0, remainLabel = null;
+    if      (remainH <= 0) { remainPrice = 0; }
+    else if (remainH <= 3) { remainPrice = trailerPrices.kurztrip; remainLabel = 'Kurztrip'; }
+    else if (remainH <= 6) { remainPrice = trailerPrices.halftag;  remainLabel = 'Halber Tag'; }
+    else                   { remainPrice = trailerPrices.extra_day; } // > 6h Rest → ein weiterer Tag
+
+    const extraDays = fullExtra + (remainH > 6 ? 1 : 0);
+    const base = trailerPrices.day
+               + extraDays * trailerPrices.extra_day
+               + (remainLabel ? remainPrice : 0);
+
+    return { base, extraDays, remainLabel, remainPrice: remainLabel ? remainPrice : 0,
+             label: `${extraDays + 1} Tage${remainLabel ? ' + ' + remainLabel : ''}` };
   }
 
   function getInsuranceAmount() {
@@ -1064,30 +1083,35 @@
     document.getElementById('pbEnd').textContent      = fmtShort(endMs);
     document.getElementById('pbDuration').textContent = 'Dauer: ' + (days > 0 ? `${days} Tag${days>1?'e':''}${remH>0?', '+remH+' Std.':''}` : `${Math.round(hours)} Std.`);
 
+    const hideExtra = () => { document.getElementById('pbExtraLine').style.display = 'none'; document.getElementById('pbRemainLine').style.display = 'none'; };
     if (p.isDay) {
-      document.getElementById('pbDay1Line').innerHTML = `<span>Ganzer Tag (24 Std.)</span><span>29,00 €</span>`;
-      document.getElementById('pbExtraLine').style.display = 'none';
+      document.getElementById('pbDay1Line').innerHTML = `<span>Ganzer Tag (24 Std.)</span><span>29,00 €</span>`; hideExtra();
     } else if (p.isWeekend) {
       document.getElementById('pbDay1Line').innerHTML = `<span>Wochenende Festpreis (Fr–So)</span><span>59,00 €</span>`;
       document.getElementById('pbExtraLine').innerHTML = `<span style="color:var(--gray);font-size:.75rem;">≈ 19,67 € / Tag · vs. einzeln (77 €)</span><span style="color:#4ade80;font-size:.82rem;font-weight:700;">spare 18 €</span>`;
-      document.getElementById('pbExtraLine').style.display = 'flex';
+      document.getElementById('pbExtraLine').style.display = 'flex'; document.getElementById('pbRemainLine').style.display = 'none';
     } else if (p.isWeek) {
       document.getElementById('pbDay1Line').innerHTML = `<span>🔥 1 Woche Festpreis (7 Tage)</span><span>119,00 €</span>`;
       document.getElementById('pbExtraLine').innerHTML = `<span style="color:var(--gray);font-size:.75rem;">≈ 17,00 € / Tag · vs. einzeln (173 €)</span><span style="color:#4ade80;font-size:.82rem;font-weight:700;">spare 54 €</span>`;
-      document.getElementById('pbExtraLine').style.display = 'flex';
+      document.getElementById('pbExtraLine').style.display = 'flex'; document.getElementById('pbRemainLine').style.display = 'none';
     } else if (hours <= 3) {
-      document.getElementById('pbDay1Line').innerHTML = `<span>Kurztrip (bis 3 Std.)</span><span>9,00 €</span>`;
-      document.getElementById('pbExtraLine').style.display = 'none';
+      document.getElementById('pbDay1Line').innerHTML = `<span>Kurztrip (bis 3 Std.)</span><span>9,00 €</span>`; hideExtra();
     } else if (hours <= 6) {
-      document.getElementById('pbDay1Line').innerHTML = `<span>Halber Tag (bis 6 Std.)</span><span>18,00 €</span>`;
-      document.getElementById('pbExtraLine').style.display = 'none';
+      document.getElementById('pbDay1Line').innerHTML = `<span>Halber Tag (bis 6 Std.)</span><span>18,00 €</span>`; hideExtra();
     } else if (p.extraDays > 0) {
-      document.getElementById('pbDay1Line').innerHTML = `<span>Erster Tag</span><span>29,00 €</span>`;
-      document.getElementById('pbExtraLine').innerHTML = `<span>${p.extraDays} weitere${p.extraDays>1?'':'r'} Tag${p.extraDays>1?'e':''} × 24 €</span><span>${(p.extraDays*24).toFixed(2).replace('.',',')} €</span>`;
+      document.getElementById('pbDay1Line').innerHTML  = `<span>Erster Tag</span><span>29,00 €</span>`;
+      document.getElementById('pbExtraLine').innerHTML = `<span>${p.extraDays} weitere${p.extraDays>1?'':'r'} Tag${p.extraDays>1?'e':''} × ${trailerPrices.extra_day} €</span><span>${(p.extraDays * trailerPrices.extra_day).toFixed(2).replace('.',',')} €</span>`;
       document.getElementById('pbExtraLine').style.display = 'flex';
+      if (p.remainLabel) {
+        document.getElementById('pbRemainLine').innerHTML = `<span>${p.remainLabel}</span><span>${p.remainPrice.toFixed(2).replace('.',',')} €</span>`;
+        document.getElementById('pbRemainLine').style.display = 'flex';
+      } else {
+        document.getElementById('pbRemainLine').style.display = 'none';
+      }
     } else {
       document.getElementById('pbDay1Line').innerHTML = `<span>Erster Tag</span><span>29,00 €</span>`;
-      document.getElementById('pbExtraLine').style.display = 'none';
+      document.getElementById('pbExtraLine').style.display  = 'none';
+      document.getElementById('pbRemainLine').style.display = 'none';
     }
     document.getElementById('pbTotal').textContent = p.base.toFixed(2).replace('.',',') + ' €';
     document.getElementById('priceBreakdown').style.display = 'block';

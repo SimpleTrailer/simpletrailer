@@ -48,12 +48,21 @@ module.exports = async (req, res) => {
 
     function calcBaseAmount(start, end) {
       const hours = (new Date(end) - new Date(start)) / 3600000;
-      if (hours <= 0) return 0;
-      if (hours <= 3) return prices.kurztrip;
-      if (hours <= 6) return prices.halftag;
-      const extraDays = Math.max(0, Math.ceil((hours - 24 - 2) / 24));
-      if (extraDays === 0) return prices.day;
-      return prices.day + extraDays * prices.extra_day;
+      if (hours <= 0)      return 0;
+      if (hours <= 3)      return prices.kurztrip;
+      if (hours <= 6)      return prices.halftag;
+      if (hours <= 24 + 2) return prices.day;
+      // Mehr als 26h: erster Tag + volle Extra-Tage + Restzeitstaffel
+      const extraHours = hours - 24 - 2;
+      const fullExtra  = Math.floor(extraHours / 24);
+      const remainH    = extraHours % 24;
+      let remainPrice  = 0;
+      if      (remainH <= 0) remainPrice = 0;
+      else if (remainH <= 3) remainPrice = prices.kurztrip;
+      else if (remainH <= 6) remainPrice = prices.halftag;
+      else                   remainPrice = prices.extra_day;
+      const extraDays = fullExtra + (remainH > 6 ? 1 : 0);
+      return prices.day + extraDays * prices.extra_day + (remainH > 0 && remainH <= 6 ? remainPrice : 0);
     }
 
     let baseAmount;
