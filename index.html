@@ -1021,6 +1021,10 @@
     }
     .tsb-close-btn:hover { background: rgba(255,255,255,0.16); color: #fff; }
     .map-inner.sb-active .map-badge { left: auto; right: 14px; transform: none; }
+    .map-inner.sb-active #trailerFilters { left: 282px; }
+    @media (max-width: 680px) {
+      .map-inner.sb-active #trailerFilters { left: 14px; bottom: 58%; }
+    }
     @media (max-width: 680px) {
       #trailerSidebar {
         top: auto; left: 0; right: 0; bottom: 0; width: 100%;
@@ -1323,7 +1327,7 @@
       <div class="map-inner" id="mapInner">
         <div class="map-badge">📍 <span id="mapBadgeText">Wird geladen…</span></div>
         <div id="map"></div>
-        <div id="trailerFilters" style="position:absolute;bottom:14px;left:14px;z-index:1000;display:flex;gap:6px;flex-wrap:wrap;"></div>
+        <div id="trailerFilters" style="position:absolute;bottom:14px;left:14px;z-index:399;display:flex;gap:6px;flex-wrap:wrap;transition:left .35s cubic-bezier(.4,0,.2,1);"></div>
         <!-- Trailer Sidebar (erscheint wenn Standort gesetzt) -->
         <div id="trailerSidebar" style="display:none;">
           <button class="tsb-close-btn" onclick="closeTsb()" title="Schließen">×</button>
