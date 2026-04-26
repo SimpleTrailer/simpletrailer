@@ -1058,10 +1058,17 @@
       overflow: hidden;
     }
     .modal-detail-routemap {
-      height: 220px; width: 100%;
+      height: 200px; width: 100%;
       background: #0e0e0e;
-      border-top: 1px solid #2a2a2a;
-      border-bottom: 1px solid #2a2a2a;
+      border-radius: 10px 10px 0 0;
+      border: 1px solid #2a2a2a;
+      border-bottom: none;
+    }
+    #modalDetailRouteWrap { margin-bottom: 14px; }
+    #modalDetailRouteWrap .modal-route-card {
+      border-radius: 0 0 10px 10px;
+      border-top: none;
+      margin-bottom: 0;
     }
     .modal-detail-pickup {
       font-size: .76rem; color: #888; margin-top: 12px; text-align: center;
@@ -1845,10 +1852,12 @@
     <!-- DETAIL VIEW -->
     <div id="modalDetailView" style="display:none;">
       <div id="modalDetailImgWrap"></div>
-      <div id="modalDetailMap" class="modal-detail-routemap" style="display:none;"></div>
       <div class="modal-detail-body">
         <div id="modalDetailHeader"></div>
-        <div id="modalDetailRouteBox"></div>
+        <div id="modalDetailRouteWrap" style="display:none;">
+          <div id="modalDetailMap" class="modal-detail-routemap"></div>
+          <div id="modalDetailRouteBox"></div>
+        </div>
         <div id="modalDetailSpecs"></div>
         <a id="modalDetailBookBtn" href="#" class="modal-detail-bookbtn">Jetzt buchen →</a>
         <div id="modalDetailPickup" class="modal-detail-pickup"></div>
@@ -2472,12 +2481,12 @@
   const MODE_LABEL = { flexible: 'Individuell', day: 'Ganzer Tag', weekend: 'Wochenende', week: '1 Woche' };
 
   function renderModalDetailMap(trailer) {
-    const el = document.getElementById('modalDetailMap');
+    const wrap = document.getElementById('modalDetailRouteWrap');
     if (!userLocation || !trailer.lat || !trailer.lng) {
-      el.style.display = 'none';
+      wrap.style.display = 'none';
       return;
     }
-    el.style.display = 'block';
+    wrap.style.display = 'block';
     if (!modalDetailMap) {
       modalDetailMap = L.map('modalDetailMap', {
         zoomControl: false, scrollWheelZoom: false, dragging: false,
