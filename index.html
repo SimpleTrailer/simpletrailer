@@ -2273,8 +2273,8 @@
     function getTarget() {
       const rect = howEl.getBoundingClientRect();
       const vh   = window.innerHeight;
-      // Startet wenn Section 30% sichtbar, endet wenn Section 85% gescrollt
-      const t = (vh * 0.7 - rect.top) / (rect.height * 0.88);
+      // Startet wenn Section 20% sichtbar, endet wenn man fast unten durch ist
+      const t = (vh * 0.6 - rect.top) / (rect.height * 1.05);
       return Math.max(0, Math.min(1, t));
     }
 
