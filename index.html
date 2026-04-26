@@ -929,7 +929,7 @@
     .footer-bottom p { font-size: 0.8rem; color: #555; }
 
     /* INFO MODAL */
-    .info-overlay { position:fixed; inset:0; background:rgba(0,0,0,.88); z-index:9999; overflow-y:auto; padding:20px 16px; }
+    .info-overlay { position:fixed; inset:0; background:rgba(0,0,0,.88); z-index:10001; overflow-y:auto; padding:20px 16px; }
     .info-modal-inner { max-width:500px; margin:0 auto; background:#1A1A1A; border-radius:16px; border:1px solid #383838; overflow:hidden; }
     .info-section-title { font-size:.65rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:#E85D00; margin-bottom:10px; }
     .info-spec-row { display:flex; justify-content:space-between; align-items:center; padding:7px 0; border-bottom:1px solid #1e1e1e; font-size:.84rem; }
@@ -1057,20 +1057,11 @@
       border: 1px solid #383838;
       overflow: hidden;
     }
-    @media (min-width: 900px) {
-      .trailer-modal-bg {
-        background: linear-gradient(90deg,
-          rgba(0,0,0,.92) 0px,
-          rgba(0,0,0,.85) 480px,
-          rgba(0,0,0,.4) 560px,
-          rgba(0,0,0,0) 700px);
-        padding: 0;
-      }
-      .trailer-modal-panel {
-        max-width: 460px;
-        margin: 24px 0 24px 24px;
-        box-shadow: 0 25px 60px -15px rgba(0,0,0,0.7);
-      }
+    .modal-detail-routemap {
+      height: 220px; width: 100%;
+      background: #0e0e0e;
+      border-top: 1px solid #2a2a2a;
+      border-bottom: 1px solid #2a2a2a;
     }
     .modal-detail-pickup {
       font-size: .76rem; color: #888; margin-top: 12px; text-align: center;
@@ -1854,6 +1845,7 @@
     <!-- DETAIL VIEW -->
     <div id="modalDetailView" style="display:none;">
       <div id="modalDetailImgWrap"></div>
+      <div id="modalDetailMap" class="modal-detail-routemap" style="display:none;"></div>
       <div class="modal-detail-body">
         <div id="modalDetailHeader"></div>
         <div id="modalDetailRouteBox"></div>
@@ -2476,7 +2468,56 @@
   let modalMap = null, modalMapMarkers = [], modalMode = 'flexible';
   let pendingStart = null, pendingEnd = null;
   let modalTrailers = [];
+  let modalDetailMap = null, modalDetailMarkers = [], modalDetailRouteLayer = null;
   const MODE_LABEL = { flexible: 'Individuell', day: 'Ganzer Tag', weekend: 'Wochenende', week: '1 Woche' };
+
+  function renderModalDetailMap(trailer) {
+    const el = document.getElementById('modalDetailMap');
+    if (!userLocation || !trailer.lat || !trailer.lng) {
+      el.style.display = 'none';
+      return;
+    }
+    el.style.display = 'block';
+    if (!modalDetailMap) {
+      modalDetailMap = L.map('modalDetailMap', {
+        zoomControl: false, scrollWheelZoom: false, dragging: false,
+        touchZoom: false, doubleClickZoom: false, boxZoom: false, keyboard: false
+      }).setView([userLocation.lat, userLocation.lng], 13);
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '© OSM © CARTO', subdomains: 'abcd', maxZoom: 19
+      }).addTo(modalDetailMap);
+    }
+    setTimeout(() => modalDetailMap.invalidateSize(), 60);
+
+    modalDetailMarkers.forEach(m => m.remove());
+    modalDetailMarkers = [];
+    if (modalDetailRouteLayer) { modalDetailMap.removeLayer(modalDetailRouteLayer); modalDetailRouteLayer = null; }
+
+    const userM = L.circleMarker([userLocation.lat, userLocation.lng], {
+      radius: 7, color: '#3b82f6', fillColor: '#60a5fa', fillOpacity: 0.95, weight: 2.5
+    }).addTo(modalDetailMap);
+    modalDetailMarkers.push(userM);
+
+    const trailerM = L.circleMarker([trailer.lat, trailer.lng], {
+      radius: 9, color: '#E85D00', fillColor: '#E85D00', fillOpacity: 0.95, weight: 2.5
+    }).addTo(modalDetailMap);
+    modalDetailMarkers.push(trailerM);
+
+    const url = `https://router.project-osrm.org/route/v1/driving/${userLocation.lng},${userLocation.lat};${trailer.lng},${trailer.lat}?overview=full&geometries=geojson`;
+    fetch(url).then(r => r.json()).then(data => {
+      if (data.routes && data.routes[0]) {
+        const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+        modalDetailRouteLayer = L.polyline(coords, { color: '#E85D00', weight: 3.5, opacity: 0.9 }).addTo(modalDetailMap);
+        modalDetailMap.fitBounds(modalDetailRouteLayer.getBounds(), { padding: [30, 30] });
+        return { duration: data.routes[0].duration, distance: data.routes[0].distance };
+      }
+      const bounds = L.latLngBounds([[userLocation.lat, userLocation.lng], [trailer.lat, trailer.lng]]);
+      modalDetailMap.fitBounds(bounds, { padding: [30, 30] });
+    }).catch(() => {
+      const bounds = L.latLngBounds([[userLocation.lat, userLocation.lng], [trailer.lat, trailer.lng]]);
+      modalDetailMap.fitBounds(bounds, { padding: [30, 30] });
+    });
+  }
 
   function openTrailerModal(mode, start, end) {
     modalMode    = mode  || 'flexible';
@@ -2583,19 +2624,19 @@
     document.getElementById('modalDetailPickup').innerHTML =
       `Abholung in <strong>${locStr}</strong>${distStr ? ` · <strong>${distStr}</strong> von dir` : ''}`;
 
-    // Route auf Hauptkarte zeichnen + Auto-Zeit anzeigen
+    // Mini-Map mit Route im Detail-View
+    renderModalDetailMap(t);
+
+    // Auto-Zeit-Info aus OSRM holen (parallel zur Mini-Map, damit Box gefüllt wird)
     if (userLocation && t.lat && t.lng) {
-      drawRoute(userLocation.lat, userLocation.lng, t.lat, t.lng).then(routeInfo => {
+      const routeUrl = `https://router.project-osrm.org/route/v1/driving/${userLocation.lng},${userLocation.lat};${t.lng},${t.lat}?overview=false`;
+      fetch(routeUrl).then(r => r.json()).then(data => {
         const infoEl = document.getElementById('modalRouteInfo');
-        if (!infoEl) return;
-        if (routeInfo) {
-          const minutes = Math.round(routeInfo.duration / 60);
-          const km      = (routeInfo.distance / 1000).toFixed(1).replace('.', ',');
-          infoEl.innerHTML = `<span style="color:var(--orange);">${minutes} Min</span> · ${km} km`;
-        } else {
-          infoEl.textContent = 'Route nicht verfügbar';
-        }
-      });
+        if (!infoEl || !data.routes?.[0]) return;
+        const minutes = Math.round(data.routes[0].duration / 60);
+        const km      = (data.routes[0].distance / 1000).toFixed(1).replace('.', ',');
+        infoEl.innerHTML = `<span style="color:var(--orange);">${minutes} Min</span> · ${km} km`;
+      }).catch(() => {});
     }
 
     // Detail-View nach oben scrollen
