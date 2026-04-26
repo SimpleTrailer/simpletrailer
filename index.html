@@ -1766,9 +1766,11 @@
       transition:opacity .25s; opacity:1;
     `;
     hint.textContent = '🖱 Klicken zum Zoomen aktivieren';
-    // Auf Touch-Geräten: Hint ausblenden, Map immer interaktiv
+    // Auf Touch-Geräten: Hint ausblenden + Dragging deaktivieren
+    // → Seite scrollt normal, Pinch-Zoom + Buttons funktionieren noch
     if (window.matchMedia('(hover: none)').matches) {
       hint.style.display = 'none';
+      map.dragging.disable();
       map.scrollWheelZoom.enable();
     }
     document.getElementById('mapInner').appendChild(hint);
