@@ -1296,8 +1296,14 @@
       goToStep(2);
       showBookingLoggedIn();
     } else {
-      const urlMode = new URLSearchParams(window.location.search).get('mode');
+      const urlParams   = new URLSearchParams(window.location.search);
+      const urlMode     = urlParams.get('mode');
+      const prefillStart = urlParams.get('prefill_start');
+      const prefillEnd   = urlParams.get('prefill_end');
       setMode(['weekend', 'week', 'day'].includes(urlMode) ? urlMode : 'flexible');
+      if (prefillStart) document.getElementById('startDateInput').value = prefillStart;
+      if (prefillEnd)   document.getElementById('endDateInput').value   = prefillEnd;
+      if (prefillStart || prefillEnd) calcDates();
     }
   });
 
