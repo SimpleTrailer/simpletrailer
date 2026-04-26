@@ -46,8 +46,9 @@
     .step.reveal:nth-child(2)      { transition-delay: 0.1s; }
     .step.reveal:nth-child(3)      { transition-delay: 0.2s; }
     .step.reveal:nth-child(4)      { transition-delay: 0.3s; }
-    .price-card.reveal:nth-child(2){ transition-delay: 0.12s; }
-    .price-card.reveal:nth-child(3){ transition-delay: 0.24s; }
+    .price-card.reveal:nth-child(2){ transition-delay: 0.10s; }
+    .price-card.reveal:nth-child(3){ transition-delay: 0.20s; }
+    .price-card.reveal:nth-child(4){ transition-delay: 0.30s; }
     .review-card.reveal:nth-child(2){ transition-delay: 0.12s; }
     .review-card.reveal:nth-child(3){ transition-delay: 0.24s; }
     .faq-item.reveal:nth-child(2)  { transition-delay: 0.08s; }
@@ -179,6 +180,19 @@
         radial-gradient(ellipse 55% 55% at 105% 18%, rgba(232,93,0,0.18) 0%, transparent 58%),
         radial-gradient(ellipse 40% 40% at 110% 82%, rgba(232,93,0,0.07) 0%, transparent 55%),
         var(--bg);
+    }
+    #hero::before {
+      content: '';
+      position: absolute;
+      top: -20%; right: -20%;
+      width: 70%; height: 140%;
+      background: radial-gradient(ellipse, rgba(232,93,0,0.14) 0%, transparent 68%);
+      animation: heroBreath 6s ease-in-out infinite;
+      pointer-events: none; z-index: 0;
+    }
+    @keyframes heroBreath {
+      0%, 100% { opacity: 0.7; transform: scale(1); }
+      50%       { opacity: 1;   transform: scale(1.12); }
     }
     #hero::after {
       content: '';
@@ -1196,15 +1210,15 @@
       .step-num { font-size: 2.2rem; margin-bottom: 12px; gap: 8px; }
       .step-num::before { position: absolute; left: -30px; top: 10px; width: 14px; height: 14px; }
 
-      /* Booking-Box im Hero */
-      .booking-box { padding: 16px; gap: 12px; }
-      .booking-fields { grid-template-columns: 1fr; gap: 8px; }
-      .booking-fields .field-input {
-        font-size: 0.88rem;
-        padding: 11px 12px;
-        width: 100%;
-      }
-      .booking-fields .field-label { font-size: 0.65rem; margin-bottom: 4px; }
+      /* Booking-Box im Hero – Mobile 1-Flow */
+      .booking-box { padding: 16px; gap: 10px; }
+      .booking-fields { grid-template-columns: 1fr 1fr; gap: 8px; }
+      .booking-fields .field-input { font-size: 0.88rem; padding: 10px 10px; width: 100%; }
+      .booking-fields .field-label { font-size: 0.65rem; margin-bottom: 3px; }
+      /* Standortsuche in der Buchungsbox auf Mobile anzeigen */
+      .mobile-loc-row { display: flex !important; }
+      /* Separate Suchleiste auf Mobile ausblenden (ist jetzt in der Box) */
+      .map-search-row { display: none !important; }
 
       /* Formular */
       .form-row { grid-template-columns: 1fr; }
@@ -1268,6 +1282,16 @@
             <p class="field-label">Bis</p>
             <input type="date" class="field-input" id="dateTo" />
           </div>
+        </div>
+        <!-- Mobile-only: Standortsuche direkt in der Box -->
+        <div class="mobile-loc-row" style="display:none;align-items:center;gap:0;background:#0D0D0D;border:1.5px solid rgba(255,255,255,0.08);border-radius:8px;overflow:hidden;">
+          <svg style="margin-left:12px;flex-shrink:0;color:#555;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="mobileLocInput" class="field-input" style="border:none;background:transparent;padding:10px 10px;font-size:.88rem;" placeholder="Standort (optional)" autocomplete="off"
+            oninput="syncMobileLoc(this.value)"
+            onkeydown="if(event.key==='Enter')this.blur()" />
+          <button onclick="useMobileGPS()" style="background:none;border:none;color:#666;padding:0 12px;cursor:pointer;height:100%;display:flex;align-items:center;" title="GPS">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>
+          </button>
         </div>
         <button class="btn btn-orange" onclick="findTrailer()">Anhänger finden →</button>
       </div>
@@ -1793,7 +1817,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
   // MAP
-  const map = L.map('map', { zoomControl: true, scrollWheelZoom: false }).setView([53.0793, 8.8017], 13);
+  const map = L.map('map', { zoomControl: true, scrollWheelZoom: true }).setView([53.0793, 8.8017], 13);
 
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
     attribution: '© <a href="https://www.openstreetmap.org/copyright">OSM</a> © <a href="https://carto.com/">CARTO</a>',
@@ -2162,6 +2186,26 @@
     if (!isOpen) item.classList.add('open');
   }
 
+  // MOBILE LOC SYNC
+  function syncMobileLoc(val) {
+    const inp = document.getElementById('mapSearchInput');
+    if (inp) inp.value = val;
+  }
+  function useMobileGPS() {
+    const btn  = document.getElementById('geoLocBtn');
+    const label = document.getElementById('geoLocLabel');
+    // UI feedback on GPS button (mobile)
+    const mobileBtn = document.querySelector('.mobile-loc-row button[title=GPS]');
+    if (mobileBtn) { mobileBtn.style.color = 'var(--orange)'; }
+    useMyLocation();
+    // sync label back after location set
+    setTimeout(() => {
+      if (mobileBtn) mobileBtn.style.color = '';
+      const mInp = document.getElementById('mobileLocInput');
+      if (mInp && userLocation) mInp.value = 'GPS-Standort gesetzt ✓';
+    }, 1500);
+  }
+
   // DATES
   const today    = new Date().toISOString().split('T')[0];
   const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
@@ -2182,11 +2226,21 @@
     }
   });
 
-  function findTrailer() {
+  async function findTrailer() {
     const from = dateFrom.value;
     const to   = dateTo.value;
     if (!from || !to) { alert('Bitte Zeitraum wählen.'); return; }
     if (from >= to)   { alert('Das Enddatum muss nach dem Startdatum liegen.'); return; }
+    // Auf Mobile: Standort-Eingabe verarbeiten
+    const mobileLoc = (document.getElementById('mobileLocInput')?.value || '').trim();
+    if (mobileLoc && !mobileLoc.includes('GPS')) {
+      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(mobileLoc+' Deutschland')}&format=json&limit=1&countrycodes=de`;
+      try {
+        const res = await fetch(url, { headers: { 'Accept-Language': 'de' } });
+        const data = await res.json();
+        if (data && data[0]) setUserLocation(parseFloat(data[0].lat), parseFloat(data[0].lon));
+      } catch(e) {}
+    }
     openTrailerModal('flexible', from, to);
   }
 
