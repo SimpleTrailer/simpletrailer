@@ -973,6 +973,7 @@
       cursor: pointer; transition: background .15s;
     }
     .tsb-card:hover { background: rgba(232,93,0,0.07); }
+    .tsb-card.selected { border-left: 3px solid var(--orange); background: rgba(232,93,0,0.08); padding-left: 11px; }
     .tsb-card:last-child { border-bottom: none; }
     .tsb-thumb {
       width: 52px; height: 40px; border-radius: 7px;
@@ -1881,6 +1882,33 @@
     return `<div class="${cssClass}">🚛</div>`;
   }
 
+  /* ── ROUTE AUF DER KARTE ────────────────────── */
+  let routeLayer = null, selectedTsbIdx = -1;
+
+  async function drawRoute(uLat, uLng, tLat, tLng) {
+    if (routeLayer) { map.removeLayer(routeLayer); routeLayer = null; }
+    try {
+      const url = `https://router.project-osrm.org/route/v1/driving/${uLng},${uLat};${tLng},${tLat}?overview=full&geometries=geojson`;
+      const res  = await fetch(url);
+      const data = await res.json();
+      if (data.routes && data.routes[0]) {
+        const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+        routeLayer = L.polyline(coords, { color: '#E85D00', weight: 3.5, opacity: 0.85 }).addTo(map);
+        map.fitBounds(routeLayer.getBounds(), { padding: [70, 70], maxZoom: 15 });
+        return;
+      }
+    } catch(e) {}
+    // Fallback: gestrichelte Gerade
+    routeLayer = L.polyline([[uLat, uLng], [tLat, tLng]], {
+      color: '#E85D00', weight: 2.5, opacity: 0.6, dashArray: '8 6'
+    }).addTo(map);
+    map.fitBounds(routeLayer.getBounds(), { padding: [70, 70] });
+  }
+
+  function clearRoute() {
+    if (routeLayer) { map.removeLayer(routeLayer); routeLayer = null; }
+  }
+
   /* ── STANDORT SETZEN ─────────────────────────── */
   let sidebarTrailers = [];
 
@@ -1945,6 +1973,7 @@
 
   /* ── SIDEBAR LIST ────────────────────────────── */
   function showTsbList() {
+    clearRoute();
     document.getElementById('tsbListView').style.display = 'block';
     document.getElementById('tsbDetailView').style.display = 'none';
 
@@ -1955,11 +1984,14 @@
 
     document.getElementById('tsbListContent').innerHTML = all.slice(0, 8).map((t, i) => {
       const thumb = trailerImg(t, 'tsb-thumb');
-      return `<div class="tsb-card${t.is_available ? '' : ' unavail'}" onclick="showTsbDetail(${i})">
+      const distStr = t._distKm != null ? fmtDist(t._distKm) : '';
+      const locStr  = t._address || 'Bremen';
+      return `<div class="tsb-card${t.is_available ? '' : ' unavail'}${i === selectedTsbIdx ? ' selected' : ''}" onclick="showTsbDetail(${i})">
         ${thumb}
         <div class="tsb-card-info">
           <div class="tsb-card-name">${t.name}</div>
-          <div class="tsb-card-dist">${fmtDist(t._distKm)}</div>
+          <div style="font-size:.72rem;color:#666;margin-bottom:1px;">📍 ${locStr}</div>
+          <div class="tsb-card-dist">${distStr}</div>
           <div class="tsb-card-avail${t.is_available ? ' free' : ''}">
             ${t.is_available ? '✓ Verfügbar' : '✗ Belegt'}
           </div>
@@ -1971,16 +2003,21 @@
 
   /* ── SIDEBAR DETAIL ──────────────────────────── */
   function showTsbDetail(idx) {
+    selectedTsbIdx = idx;
     const t = sidebarTrailers[idx];
     document.getElementById('tsbListView').style.display = 'none';
     const dv = document.getElementById('tsbDetailView');
     dv.style.display = 'flex';
 
-    // Karte auf Anhänger fokussieren + Popup öffnen
+    // Route zeichnen oder zur Karte springen
     if (t.lat && t.lng) {
-      map.setView([t.lat, t.lng], 15, { animate: true });
-      const found = allMarkers.find(({ trailer }) => trailer.id === t.id);
-      if (found) setTimeout(() => found.marker.openPopup(), 450);
+      if (userLocation) {
+        drawRoute(userLocation.lat, userLocation.lng, t.lat, t.lng);
+      } else {
+        map.setView([t.lat, t.lng], 15, { animate: true });
+        const found = allMarkers.find(({ trailer }) => trailer.id === t.id);
+        if (found) setTimeout(() => found.marker.openPopup(), 450);
+      }
     }
 
     const bookUrl = `booking.html?trailer=${t.id}&mode=flexible`;
@@ -2000,7 +2037,7 @@
         : `<div style="background:#1a0505;border:1px solid #3a0a0a;border-radius:8px;padding:10px;text-align:center;font-size:.8rem;color:#f87171;margin-bottom:12px;">Aktuell belegt</div>`}
       <div class="tsb-pickup">
         <div class="tsb-pickup-lbl">Abhol- und Rückgabeort</div>
-        <div class="tsb-pickup-addr">📍 Bremen, Deutschland</div>
+        <div class="tsb-pickup-addr">📍 ${t._address || 'Bremen'}, Bremen</div>
       </div>
     `;
   }
@@ -2053,6 +2090,8 @@
 
   /* ── SIDEBAR SCHLIESSEN ──────────────────────── */
   function closeTsb() {
+    clearRoute();
+    selectedTsbIdx = -1;
     document.getElementById('trailerSidebar').style.display = 'none';
     document.getElementById('mapInner').classList.remove('sb-active');
     setTimeout(() => map.invalidateSize(), 50);
@@ -2147,6 +2186,17 @@
         btns.push(`<button class="map-filter-btn" data-type="${type}" onclick="filterMarkers('${type}')">${type}</button>`);
       });
       filterEl.innerHTML = btns.join('');
+
+      // Ort/Stadtteil via Reverse Geocoding laden
+      await Promise.all(allTrailers.map(async t => {
+        if (!t.lat || !t.lng) return;
+        try {
+          const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${t.lat}&lon=${t.lng}&format=json&accept-language=de`);
+          const d = await r.json();
+          t._address = d.address?.suburb || d.address?.quarter || d.address?.neighbourhood
+                    || d.address?.city_district || d.address?.city || 'Bremen';
+        } catch(e) { t._address = 'Bremen'; }
+      }));
 
       // Marker für jeden Anhänger
       allTrailers.forEach(t => {
