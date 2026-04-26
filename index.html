@@ -858,6 +858,23 @@
 
     .footer-bottom p { font-size: 0.8rem; color: #555; }
 
+    /* MAP FILTER */
+    .map-filter-btn {
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1.5px solid var(--border);
+      font-size: .78rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: var(--font);
+      letter-spacing: -.01em;
+      background: var(--s2);
+      color: var(--gray);
+      transition: all .2s;
+    }
+    .map-filter-btn:hover { border-color: #666; color: var(--white); }
+    .map-filter-btn.active { background: var(--orange); border-color: var(--orange); color: #fff; }
+
     /* LEAFLET */
     .leaflet-container { background: #141414 !important; }
     .leaflet-tile { filter: brightness(0.72) saturate(0.55); }
@@ -916,7 +933,7 @@
       }
       .steps { grid-template-columns: 1fr 1fr; gap: 36px; }
       .steps::before { display: none; }
-      .pricing-grid { grid-template-columns: 1fr 1fr; gap: 12px; max-width: none; }
+      .pricing-grid { grid-template-columns: 1fr 1fr; column-gap: 12px; row-gap: 20px; max-width: none; }
       .reviews-grid { grid-template-columns: 1fr; max-width: 420px; margin: 0 auto; }
       .contact-grid { grid-template-columns: 1fr; }
       .footer-top { flex-direction: column; }
@@ -1033,8 +1050,8 @@
 
     <div class="map-wrapper">
       <div class="map-badge">📍 <span id="mapBadgeText">Wird geladen…</span></div>
-      <div id="trailerFilters" style="position:absolute;top:12px;right:12px;z-index:1000;display:flex;gap:6px;flex-wrap:wrap;"></div>
       <div id="map"></div>
+      <div id="trailerFilters" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;"></div>
     </div>
   </div>
   <div class="hero-fade"></div>
@@ -1180,7 +1197,7 @@
           <li>Bis 24 Std.: <strong style="color:var(--white)">29 €</strong></li>
           <li>Jeder weitere Tag: <strong style="color:var(--white)">24 €</strong></li>
         </ul>
-        <a href="#" onclick="openTrailerModal('flexible');return false;" class="btn btn-outline">Individuell buchen</a>
+        <a href="#" onclick="openTrailerModal('flexible');return false;" class="btn btn-outline">Buchen</a>
       </div>
 
       <!-- GANZER TAG -->
@@ -1565,11 +1582,11 @@
       // Filter-Buttons aufbauen
       const types = [...new Set(allTrailers.map(t => t.type).filter(Boolean))];
       const filterEl = document.getElementById('trailerFilters');
-      const btnStyle = 'padding:6px 12px;border-radius:20px;border:none;font-size:.78rem;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s;';
-      filterEl.innerHTML = `<button class="map-filter-btn active" data-type="all" onclick="filterMarkers('all')" style="${btnStyle}background:#E85D00;color:#fff;">Alle</button>`;
+      const btns = [`<button class="map-filter-btn active" data-type="all" onclick="filterMarkers('all')">Alle</button>`];
       types.forEach(type => {
-        filterEl.innerHTML += `<button class="map-filter-btn" data-type="${type}" onclick="filterMarkers('${type}')" style="${btnStyle}background:rgba(0,0,0,0.7);color:#fff;backdrop-filter:blur(4px);">${type}</button>`;
+        btns.push(`<button class="map-filter-btn" data-type="${type}" onclick="filterMarkers('${type}')">${type}</button>`);
       });
+      filterEl.innerHTML = btns.join('');
 
       // Marker für jeden Anhänger
       allTrailers.forEach(t => {
