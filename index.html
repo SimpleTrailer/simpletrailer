@@ -994,7 +994,7 @@
       <li><a href="#faq">FAQ</a></li>
       <li><a href="account.html" id="navAccount">Mein Konto</a></li>
     </ul>
-    <a href="booking.html" class="btn btn-orange nav-cta">Jetzt buchen</a>
+    <a href="#" onclick="selectModeAndScroll('flexible');return false;" class="btn btn-orange nav-cta">Jetzt buchen</a>
     <button class="hamburger" id="hamburger" aria-label="Menü">
       <span></span><span></span><span></span>
     </button>
@@ -1071,7 +1071,7 @@
             <div class="trailer-card-spec">🏕 <span><strong>Plane</strong> inklusive</span></div>
             <div class="trailer-card-spec">🔑 <span><strong>Kontaktlose</strong> Abholung</span></div>
           </div>
-          <a href="booking.html" class="btn btn-orange" style="margin-top:auto;">Jetzt buchen →</a>
+          <a href="#" onclick="selectModeAndScroll('flexible');return false;" class="btn btn-orange" style="margin-top:auto;">Jetzt buchen →</a>
         </div>
       </div>
 
@@ -1611,7 +1611,7 @@
     const to   = document.getElementById('dateTo').value;
     if (!from || !to) { alert('Bitte Zeitraum wählen.'); return; }
     if (from >= to)   { alert('Das Enddatum muss nach dem Startdatum liegen.'); return; }
-    window.location.href = 'booking.html';
+    selectModeAndScroll('flexible');
   }
 
   function submitForm(e) {
