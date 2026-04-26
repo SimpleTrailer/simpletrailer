@@ -26,10 +26,10 @@
     .back-link:hover { color: var(--white); }
 
     /* LAYOUT */
-    .page { max-width: 900px; margin: 0 auto; padding: 48px 20px 80px; }
+    .page { max-width: 900px; margin: 0 auto; padding: 32px 20px 60px; }
 
     /* STEPPER */
-    .stepper { display: flex; align-items: center; gap: 0; margin-bottom: 48px; }
+    .stepper { display: flex; align-items: center; gap: 0; margin-bottom: 32px; }
     .step-item { display: flex; align-items: center; gap: 10px; flex: 1; }
     .step-item:last-child { flex: 0; }
     .step-circle {
@@ -45,7 +45,7 @@
     .step-line { flex: 1; height: 1px; background: var(--border); margin: 0 8px; }
 
     /* CARDS */
-    .card { background: var(--s1); border: 1.5px solid var(--border); border-radius: 16px; padding: 28px; margin-bottom: 20px; }
+    .card { background: var(--s1); border: 1.5px solid var(--border); border-radius: 16px; padding: 22px; margin-bottom: 14px; }
 
     /* TRAILER PREVIEW */
     .trailer-preview { display: flex; gap: 20px; align-items: center; }
@@ -66,28 +66,29 @@
     .pricing-desc  { font-size: .75rem; color: var(--gray); }
 
     /* DATETIME */
-    .field-group { margin-bottom: 16px; }
-    .field-label { font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--gray); margin-bottom: 6px; display: block; }
+    .field-group { margin-bottom: 12px; overflow: hidden; width: 100%; }
+    .field-label { font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--gray); margin-bottom: 5px; display: block; }
     .field-input {
       width: 100%; box-sizing: border-box; background: #0D0D0D; border: 1.5px solid var(--border); border-radius: 8px;
-      color: var(--white); padding: 11px 14px; font-size: .9rem; font-family: var(--font);
+      color: var(--white); padding: 0 12px; font-size: .88rem; font-family: var(--font);
       outline: none; transition: border-color .2s; max-width: 100%;
       -webkit-appearance: none; appearance: none;
+      height: 42px; line-height: 42px;
     }
     .field-input:focus { border-color: var(--orange); }
     .field-input::-webkit-calendar-picker-indicator {
       filter: invert(1) brightness(.6); cursor: pointer;
       border-radius: 4px; padding: 2px;
     }
-    .field-group { overflow: hidden; width: 100%; }
-    /* Wrapper für datetime inputs – runde Ecken auf iOS */
+    /* Wrapper für datetime inputs – gleiche Höhe für alle */
     .input-wrap {
       border: 1.5px solid var(--border); border-radius: 8px;
       background: #0D0D0D; overflow: hidden; transition: border-color .2s;
+      height: 42px; display: flex; align-items: center;
     }
     .input-wrap:focus-within { border-color: var(--orange); }
-    .input-wrap .field-input { border: none; border-radius: 0; background: transparent; }
-    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .input-wrap .field-input { border: none; border-radius: 0; background: transparent; height: 100%; line-height: normal; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
     /* PRICE SUMMARY */
     .price-summary { background: var(--s2); border-radius: 10px; padding: 16px; display: flex; justify-content: space-between; align-items: center; }
@@ -217,8 +218,8 @@
     .error-msg { color: #f87171; font-size: .82rem; margin-top: 6px; display: none; }
 
     @media (max-width: 640px) {
-      .page { padding: 24px 16px 60px; }
-      .card { padding: 20px 16px; }
+      .page { padding: 16px 14px 48px; }
+      .card { padding: 16px 14px; }
       .pricing-grid { grid-template-columns: 1fr; gap: 10px; }
       .pricing-price { font-size: 1.5rem; }
       .pricing-option { display: flex; align-items: center; text-align: left; gap: 16px; padding: 14px 16px; }
