@@ -217,6 +217,36 @@
     /* ERROR */
     .error-msg { color: #f87171; font-size: .82rem; margin-top: 6px; display: none; }
 
+    /* SLOT GRID */
+    .slot-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
+    .slot-btn {
+      padding:9px 4px; border-radius:8px; border:1.5px solid var(--border);
+      background:var(--s2); color:var(--white); font-size:.8rem; font-weight:600;
+      cursor:pointer; font-family:var(--font); transition:all .15s; text-align:center; line-height:1;
+    }
+    .slot-btn:hover:not(.blocked):not(.selected) { border-color:var(--orange); color:var(--orange); }
+    .slot-btn.blocked { background:#120808; border-color:#250a0a; color:#3a1010; text-decoration:line-through; cursor:not-allowed; }
+    .slot-btn.selected { background:var(--orange); border-color:var(--orange); color:#fff; }
+
+    /* INFO OVERLAY */
+    .info-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.88); z-index:9999; overflow-y:auto; padding:20px 16px; }
+    .info-modal-inner { max-width:500px; margin:0 auto; background:#1A1A1A; border-radius:16px; border:1px solid #383838; overflow:hidden; }
+    .info-section-title { font-size:.65rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--orange); margin-bottom:10px; }
+    .info-spec-row { display:flex; justify-content:space-between; align-items:center; padding:7px 0; border-bottom:1px solid #1e1e1e; font-size:.84rem; }
+    .info-spec-row:last-child { border-bottom:none; }
+    .info-spec-row .lbl { color:var(--gray); }
+    .info-spec-row .val { font-weight:600; }
+    .fs-cars { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px; }
+    .fs-car-btn { border:1.5px solid var(--border); border-radius:10px; padding:10px 6px; cursor:pointer; background:var(--s2); text-align:center; transition:all .2s; font-family:var(--font); color:var(--white); }
+    .fs-car-btn:hover { border-color:#555; }
+    .fs-car-btn.active { border-color:var(--orange); background:#1a0d00; }
+    .fs-car-icon { font-size:1.5rem; margin-bottom:3px; }
+    .fs-car-label { font-size:.72rem; font-weight:700; display:block; }
+    .fs-car-kg { font-size:.64rem; color:var(--gray); display:block; margin-top:1px; }
+    .fs-result { border-radius:10px; padding:12px 14px; margin-top:10px; font-size:.85rem; }
+    .fs-result.ok   { background:#071a07; border:1.5px solid #166534; }
+    .fs-result.warn { background:#1a0505; border:1.5px solid #991b1b; }
+
     @media (max-width: 640px) {
       .page { padding: 16px 14px 48px; }
       .card { padding: 16px 14px; }
@@ -295,8 +325,13 @@
         <img src="anhaenger.png" alt="Anhänger" class="trailer-img"
              onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
         <div class="trailer-img-placeholder" style="display:none;">📷</div>
-        <div>
-          <div class="trailer-name-big" id="trailerNameDisplay">PKW-Anhänger mit Plane</div>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
+            <div class="trailer-name-big" id="trailerNameDisplay" style="margin-bottom:0;">PKW-Anhänger mit Plane</div>
+            <button onclick="openInfoModal()" style="background:none;border:1.5px solid var(--border);color:var(--gray);border-radius:20px;padding:3px 10px;font-size:.7rem;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s;flex-shrink:0;white-space:nowrap;"
+              onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--orange)'"
+              onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--gray)'">ⓘ Details</button>
+          </div>
           <div class="trailer-tags">
             <span class="trailer-tag">bis 750 kg</span>
             <span class="trailer-tag">Führerschein B</span>
@@ -350,41 +385,32 @@
 
     <!-- Date + Time -->
     <div class="card">
-      <p class="field-label" style="margin-bottom:16px;">Startdatum & Uhrzeit</p>
-      <div class="field-row">
-        <div class="field-group">
-          <label class="field-label">Datum</label>
-          <div class="input-wrap">
-            <input type="date" class="field-input" id="startDateInput" onchange="calcDates()" />
-          </div>
+      <p class="field-label" style="margin-bottom:12px;">Datum & Uhrzeit</p>
+
+      <div class="field-group">
+        <label class="field-label">Abholung – Datum</label>
+        <div class="input-wrap">
+          <input type="date" class="field-input" id="startDateInput" onchange="calcDates()" />
         </div>
-        <div class="field-group">
-          <label class="field-label">Uhrzeit</label>
-          <div class="input-wrap">
-            <select class="field-input" id="startHourInput" onchange="calcDates()" style="cursor:pointer;">
-              <option value="">Wählen</option>
-            </select>
-          </div>
-        </div>
+      </div>
+      <input type="hidden" id="startHourInput" />
+      <div id="startSlotWrap" style="display:none;margin-top:10px;">
+        <label class="field-label" style="margin-bottom:8px;">Abholung – Uhrzeit wählen</label>
+        <div id="startSlotGrid" class="slot-grid"></div>
       </div>
 
       <!-- End date (only flexible) -->
       <div id="endDateRow" style="margin-top:12px;display:none;">
-        <div class="field-row">
-          <div class="field-group">
-            <label class="field-label">Enddatum</label>
-            <div class="input-wrap">
-              <input type="date" class="field-input" id="endDateInput" onchange="calcDates()" />
-            </div>
+        <div class="field-group" style="margin-top:8px;">
+          <label class="field-label">Rückgabe – Datum</label>
+          <div class="input-wrap">
+            <input type="date" class="field-input" id="endDateInput" onchange="calcDates()" />
           </div>
-          <div class="field-group">
-            <label class="field-label">Uhrzeit</label>
-            <div class="input-wrap">
-              <select class="field-input" id="endHourInput" onchange="calcDates()" style="cursor:pointer;">
-                <option value="">Wählen</option>
-              </select>
-            </div>
-          </div>
+        </div>
+        <input type="hidden" id="endHourInput" />
+        <div id="endSlotWrap" style="display:none;margin-top:10px;">
+          <label class="field-label" style="margin-bottom:8px;">Rückgabe – Uhrzeit wählen</label>
+          <div id="endSlotGrid" class="slot-grid"></div>
         </div>
       </div>
 
@@ -621,6 +647,50 @@
 
 </div>
 
+<!-- INFO MODAL -->
+<div id="infoOverlay" class="info-overlay" onclick="if(event.target===this)closeInfoModal()">
+  <div class="info-modal-inner">
+    <div style="padding:18px 22px;border-bottom:1px solid #383838;display:flex;justify-content:space-between;align-items:center;">
+      <strong style="font-size:1rem;letter-spacing:-.02em;">Anhänger-Details</strong>
+      <button onclick="closeInfoModal()" style="background:none;border:none;color:#666;font-size:1.6rem;cursor:pointer;line-height:1;padding:0 4px;">×</button>
+    </div>
+    <div style="padding:20px 22px;overflow-y:auto;max-height:80vh;">
+      <p class="info-section-title">Maße & Gewichte</p>
+      <div style="background:#111;border-radius:10px;padding:12px 14px;margin-bottom:18px;">
+        <div class="info-spec-row"><span class="lbl">Ladefläche (L × B × H)</span><span class="val">251 × 137 × 130 cm</span></div>
+        <div class="info-spec-row"><span class="lbl">Leergewicht</span><span class="val">295 kg</span></div>
+        <div class="info-spec-row"><span class="lbl">Zul. Gesamtgewicht</span><span class="val">750 kg</span></div>
+        <div class="info-spec-row"><span class="lbl">Max. Zuladung</span><span class="val">455 kg</span></div>
+        <div class="info-spec-row"><span class="lbl">Bremse</span><span class="val">Ja</span></div>
+        <div class="info-spec-row"><span class="lbl">Achsenanzahl</span><span class="val">1</span></div>
+      </div>
+      <p class="info-section-title">Ausstattung</p>
+      <div style="background:#111;border-radius:10px;padding:12px 14px;margin-bottom:18px;display:flex;flex-direction:column;gap:7px;font-size:.84rem;color:#aaa;">
+        <span>✓ Plane inkl. Gestell</span>
+        <span>✓ Zurrbügel zur Ladungssicherung</span>
+        <span>✓ Diebstahlsicherung (Codeschloss)</span>
+        <span>✓ Parkwarntafel · Stützrad</span>
+        <span>✓ 7-poliger Stecker (Adapter 13-polig verfügbar)</span>
+      </div>
+      <p class="info-section-title">Führerscheinrechner</p>
+      <div style="background:#111;border-radius:10px;padding:14px;">
+        <p style="font-size:.78rem;color:var(--gray);margin-bottom:12px;">Wähle dein Fahrzeug – wir zeigen dir welchen Führerschein du brauchst.</p>
+        <div class="fs-cars">
+          <button class="fs-car-btn" onclick="setFsCar(this,1100)"><div class="fs-car-icon">🚗</div><span class="fs-car-label">Kleinwagen</span><span class="fs-car-kg">~1.100 kg</span></button>
+          <button class="fs-car-btn active" onclick="setFsCar(this,1500)"><div class="fs-car-icon">🚙</div><span class="fs-car-label">Mittelklasse</span><span class="fs-car-kg">~1.500 kg</span></button>
+          <button class="fs-car-btn" onclick="setFsCar(this,2000)"><div class="fs-car-icon">🚐</div><span class="fs-car-label">Großes Fzg.</span><span class="fs-car-kg">~2.000 kg</span></button>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <label style="font-size:.75rem;color:var(--gray);white-space:nowrap;flex-shrink:0;">Eigenes Gewicht:</label>
+          <div class="input-wrap" style="flex:1;"><input type="number" class="field-input" id="fsCarWeight" value="1500" min="400" max="5000" oninput="calcFs()" /></div>
+          <span style="font-size:.78rem;color:var(--gray);flex-shrink:0;">kg</span>
+        </div>
+        <div id="fsResult" class="fs-result ok"><div id="fsResultText"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
   const SUPABASE_URL  = 'https://zcjlfatuelhkghtdyrqh.supabase.co';
   const SUPABASE_ANON = 'sb_publishable_cX1r2GLuIkxEPIpkFKdXaQ_RtP7eDOf';
@@ -730,17 +800,81 @@
   }
 
   /* ── TIME OPTIONS ─────────────────────────────── */
-  function buildTimeOptions() {
-    ['startHourInput','endHourInput'].forEach(id => {
-      const sel = document.getElementById(id);
-      if (!sel) return;
-      for (let h = 6; h <= 21; h++) {
-        const val = `${String(h).padStart(2,'0')}:00`;
-        const opt = document.createElement('option');
-        opt.value = val; opt.textContent = val + ' Uhr';
-        sel.appendChild(opt);
-      }
+  function buildTimeOptions() { /* replaced by slot grid */ }
+
+  function isHourBlocked(dateStr, hour) {
+    const slotMs = new Date(`${dateStr}T${String(hour).padStart(2,'0')}:00:00`).getTime();
+    return bookedRanges.some(r => {
+      const rS = new Date(r.start_time).getTime();
+      const rE = new Date(r.end_time).getTime();
+      return rS <= slotMs && rE > slotMs;
     });
+  }
+
+  function renderSlotGrid(gridId, inputId, minH, maxH, dateStr) {
+    const wrapId = gridId === 'startSlotGrid' ? 'startSlotWrap' : 'endSlotWrap';
+    const wrapEl = document.getElementById(wrapId);
+    if (!wrapEl) return;
+    if (!dateStr) { wrapEl.style.display = 'none'; return; }
+    wrapEl.style.display = 'block';
+    const grid   = document.getElementById(gridId);
+    const curVal = document.getElementById(inputId).value;
+    grid.innerHTML = '';
+    for (let h = 6; h <= 21; h++) {
+      const hStr    = `${String(h).padStart(2,'0')}:00`;
+      const blocked = h < minH || h > maxH || isHourBlocked(dateStr, h);
+      const sel     = curVal === hStr;
+      const btn     = document.createElement('button');
+      btn.type        = 'button';
+      btn.textContent = hStr;
+      btn.className   = `slot-btn${blocked ? ' blocked' : ''}${sel ? ' selected' : ''}`;
+      if (!blocked) {
+        const _h = h, _inputId = inputId, _gridId = gridId, _min = minH, _max = maxH, _date = dateStr;
+        btn.onclick = () => {
+          document.getElementById(_inputId).value = `${String(_h).padStart(2,'0')}:00`;
+          renderSlotGrid(_gridId, _inputId, _min, _max, _date);
+          calcDates();
+        };
+      }
+      grid.appendChild(btn);
+    }
+  }
+
+  /* INFO MODAL */
+  let _fsWeight = 1500;
+
+  function openInfoModal() {
+    document.getElementById('infoOverlay').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    document.getElementById('fsCarWeight').value = _fsWeight;
+    calcFs();
+  }
+
+  function closeInfoModal() {
+    document.getElementById('infoOverlay').style.display = 'none';
+    document.body.style.overflow = '';
+  }
+
+  function setFsCar(btn, weight) {
+    document.querySelectorAll('#infoOverlay .fs-car-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    _fsWeight = weight;
+    document.getElementById('fsCarWeight').value = weight;
+    calcFs();
+  }
+
+  function calcFs() {
+    const car     = parseInt(document.getElementById('fsCarWeight').value) || 1500;
+    _fsWeight     = car;
+    const trailer = 750;
+    const total   = car + trailer;
+    const ok      = trailer <= 750 && total <= 3500;
+    const resEl   = document.getElementById('fsResult');
+    const textEl  = document.getElementById('fsResultText');
+    resEl.className = `fs-result ${ok ? 'ok' : 'warn'}`;
+    textEl.innerHTML = ok
+      ? `✅ <strong>Führerschein Klasse B reicht</strong><br><span style="color:var(--gray);font-size:.77rem;">Fahrzeug ${car.toLocaleString()} kg + Anhänger ${trailer} kg = ${total.toLocaleString()} kg ≤ 3.500 kg</span>`
+      : `⚠️ <strong>Führerschein Klasse BE erforderlich</strong><br><span style="color:var(--gray);font-size:.77rem;">Fahrzeug ${car.toLocaleString()} kg + Anhänger ${trailer} kg = ${total.toLocaleString()} kg (über 3.500 kg)</span>`;
   }
 
   /* ── TIME CONSTRAINTS (verhindert Doppelbuchungen) ─ */
@@ -772,17 +906,15 @@
   }
 
   function rebuildSelect(id, minH, maxH) {
-    const sel = document.getElementById(id);
-    if (!sel) return;
-    const cur = sel.value;
-    sel.innerHTML = '<option value="">Wählen</option>';
-    for (let h = minH; h <= maxH; h++) {
-      const v = `${String(h).padStart(2,'0')}:00`;
-      const o = document.createElement('option');
-      o.value = v; o.textContent = v + ' Uhr';
-      sel.appendChild(o);
+    const dateStr = id === 'startHourInput'
+      ? document.getElementById('startDateInput').value
+      : document.getElementById('endDateInput').value;
+    const gridId  = id === 'startHourInput' ? 'startSlotGrid' : 'endSlotGrid';
+    const curH    = parseInt(document.getElementById(id).value);
+    if (curH && (curH < minH || curH > maxH || isHourBlocked(dateStr, curH))) {
+      document.getElementById(id).value = '';
     }
-    sel.value = sel.querySelector(`option[value="${cur}"]`) ? cur : '';
+    renderSlotGrid(gridId, id, minH, maxH, dateStr);
   }
 
   // Für "Ganzer Tag" Modus: prüft welche Startuhrzeiten ein konfliktfreies +24h-Fenster ergeben
