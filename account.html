@@ -337,14 +337,29 @@
     if (status === 'verified') {
       badge.textContent = '✓ Verifiziert';
       badge.style.cssText = 'font-size:.7rem;font-weight:700;padding:4px 10px;border-radius:999px;letter-spacing:.05em;text-transform:uppercase;background:rgba(34,197,94,.12);color:#4ade80;border:1px solid rgba(34,197,94,.3);';
-      const expires = info.dl_expires_at ? new Date(info.dl_expires_at).toLocaleDateString('de-DE') : '–';
+      const expires = info.dl_expires_at ? new Date(info.dl_expires_at).toLocaleDateString('de-DE') : null;
+      const dob     = info.dl_dob        ? new Date(info.dl_dob).toLocaleDateString('de-DE')        : null;
+      const verified = info.dl_verified_at ? new Date(info.dl_verified_at).toLocaleDateString('de-DE') : null;
       const klass   = (info.dl_classes || []).join(', ') || 'B';
-      const fname   = [info.dl_first_name, info.dl_last_name].filter(Boolean).join(' ') || currentUser.user_metadata?.first_name || '–';
+      const fname   = [info.dl_first_name, info.dl_last_name].filter(Boolean).join(' ') || null;
+      const expiryDate = info.dl_expires_at ? new Date(info.dl_expires_at) : null;
+      const expiringSoon = expiryDate && (expiryDate.getTime() - Date.now()) / (1000*60*60*24) < 90;
+      const expiredAlready = expiryDate && expiryDate.getTime() < Date.now();
+      const expiryNote = expiredAlready
+        ? '<div style="color:#f87171;font-size:.78rem;margin-top:10px;">⚠ Führerschein abgelaufen – bitte neu verifizieren um buchen zu können.</div>'
+        : (expiringSoon ? '<div style="color:#facc15;font-size:.78rem;margin-top:10px;">⚠ Läuft bald ab – ggf. neu verifizieren.</div>' : '');
+      const row = (label, val) => val
+        ? `<div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid #1f1f1f;"><span style="color:var(--gray);">${label}</span><span style="font-weight:600;text-align:right;">${val}</span></div>`
+        : '';
       body.innerHTML = `
-        <div style="display:flex;flex-direction:column;gap:8px;font-size:.85rem;">
-          <div style="display:flex;justify-content:space-between;gap:12px;"><span style="color:var(--gray);">Name</span><span style="font-weight:600;">${fname}</span></div>
-          <div style="display:flex;justify-content:space-between;gap:12px;"><span style="color:var(--gray);">Klasse</span><span style="font-weight:600;">${klass}</span></div>
-          <div style="display:flex;justify-content:space-between;gap:12px;"><span style="color:var(--gray);">Gültig bis</span><span style="font-weight:600;">${expires}</span></div>
+        <div style="font-size:.85rem;">
+          ${row('Name lt. Führerschein', fname)}
+          ${row('Geburtsdatum', dob)}
+          ${row('Klasse', klass)}
+          ${row('Gültig bis', expires)}
+          ${row('Ausstellungsland', info.dl_issuing_country)}
+          ${row('Verifiziert am', verified)}
+          ${expiryNote}
         </div>
       `;
       return;
