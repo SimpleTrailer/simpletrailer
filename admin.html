@@ -401,7 +401,7 @@
   async function loadData() {
     setTableLoading();
     try {
-      const res  = await fetch('/api/admin-data', { headers: { Authorization: `Bearer ${authToken}` } });
+      const res  = await fetch('/api/admin?section=data', { headers: { Authorization: `Bearer ${authToken}` } });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Fehler beim Laden');
       allBookings = data.bookings;
@@ -418,7 +418,7 @@
     document.getElementById('usersBody').innerHTML =
       '<div class="table-info"><div class="spin"></div><p>Lade Nutzer...</p></div>';
     try {
-      const res  = await fetch('/api/admin-users', { headers: { Authorization: `Bearer ${authToken}` } });
+      const res  = await fetch('/api/admin?section=users', { headers: { Authorization: `Bearer ${authToken}` } });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Fehler beim Laden');
       allUsers = data.users;
