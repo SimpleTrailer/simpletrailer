@@ -1843,6 +1843,20 @@
       ${distLine}${statusText}${bookBtn}</div>`;
   }
 
+  /* ── TRAILER BILDER ─────────────────────────── */
+  const TYPE_IMAGES = {
+    'Planenanhänger': 'anhaenger.png',
+    // Zukünftige Typen hier ergänzen:
+    // 'Kofferanhänger': 'koffer.png',
+    // 'Autotransporter': 'autotransporter.png',
+  };
+
+  function trailerImg(t, cssClass) {
+    const src = t.image_url || TYPE_IMAGES[t.type] || null;
+    if (src) return `<img src="${src}" class="${cssClass}" style="object-fit:cover;" onerror="this.outerHTML='<div class=&quot;${cssClass}&quot;>🚛</div>'" />`;
+    return `<div class="${cssClass}">🚛</div>`;
+  }
+
   /* ── STANDORT SETZEN ─────────────────────────── */
   let sidebarTrailers = [];
 
@@ -1916,9 +1930,7 @@
       `${avail.length} Anhänger verfügbar`;
 
     document.getElementById('tsbListContent').innerHTML = all.slice(0, 8).map((t, i) => {
-      const thumb = t.image_url
-        ? `<img src="${t.image_url}" class="tsb-thumb" onerror="this.outerHTML='<div class=tsb-thumb>🚛</div>'" />`
-        : `<div class="tsb-thumb">🚛</div>`;
+      const thumb = trailerImg(t, 'tsb-thumb');
       return `<div class="tsb-card${t.is_available ? '' : ' unavail'}" onclick="showTsbDetail(${i})">
         ${thumb}
         <div class="tsb-card-info">
@@ -1948,9 +1960,7 @@
     }
 
     const bookUrl = `booking.html?trailer=${t.id}&mode=flexible`;
-    const thumb   = t.image_url
-      ? `<img src="${t.image_url}" class="tsb-detail-img" onerror="this.outerHTML='<div class=tsb-detail-img>🚛</div>'" />`
-      : `<div class="tsb-detail-img">🚛</div>`;
+    const thumb   = trailerImg(t, 'tsb-detail-img');
 
     document.getElementById('tsbDetailBody').innerHTML = `
       ${thumb}
