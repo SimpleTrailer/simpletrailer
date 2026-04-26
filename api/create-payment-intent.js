@@ -36,21 +36,30 @@ module.exports = async (req, res) => {
     });
     if (overlap) return res.status(400).json({ error: 'Anhänger ist in diesem Zeitraum (inkl. Pufferzeit) bereits gebucht' });
 
+    // Preise aus Supabase laden (pro Anhänger unterschiedlich)
+    const prices = {
+      kurztrip:  trailer.price_kurztrip  || 9,
+      halftag:   trailer.price_halftag   || 18,
+      day:       trailer.price_day       || 29,
+      extra_day: trailer.price_extra_day || 24,
+      weekend:   trailer.price_weekend   || 59,
+      week:      trailer.price_week      || 119,
+    };
+
     function calcBaseAmount(start, end) {
       const hours = (new Date(end) - new Date(start)) / 3600000;
       if (hours <= 0) return 0;
-      if (hours <= 3)  return 9;
-      if (hours <= 6)  return 18;
-      // 2h Kulanz pro Tagesgrenze (identisch mit Frontend)
+      if (hours <= 3) return prices.kurztrip;
+      if (hours <= 6) return prices.halftag;
       const extraDays = Math.max(0, Math.ceil((hours - 24 - 2) / 24));
-      if (extraDays === 0) return 29;
-      return 29 + extraDays * 24;
+      if (extraDays === 0) return prices.day;
+      return prices.day + extraDays * prices.extra_day;
     }
 
     let baseAmount;
-    if (booking_mode === 'weekend') baseAmount = 59;
-    else if (booking_mode === 'week') baseAmount = 119;
-    else if (booking_mode === 'day')  baseAmount = 29;
+    if (booking_mode === 'weekend') baseAmount = prices.weekend;
+    else if (booking_mode === 'week') baseAmount = prices.week;
+    else if (booking_mode === 'day')  baseAmount = prices.day;
     else baseAmount = calcBaseAmount(start_time, end_time);
 
     if (baseAmount <= 0) return res.status(400).json({ error: 'Ungültiger Zeitraum' });

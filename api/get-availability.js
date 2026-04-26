@@ -8,10 +8,10 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
-    const { data, error } = await supabase
-      .from('bookings')
-      .select('start_time, end_time')
-      .in('status', ['confirmed', 'active']);
+    const trailer_id = req.query.trailer_id;
+    let query = supabase.from('bookings').select('start_time, end_time').in('status', ['confirmed', 'active']);
+    if (trailer_id) query = query.eq('trailer_id', trailer_id);
+    const { data, error } = await query;
 
     if (error) throw error;
     // 1 Stunde Pufferzeit nach jeder Buchung (verhindert Anschlussbuchungen ohne Puffer)
