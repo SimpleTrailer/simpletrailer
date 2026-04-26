@@ -1271,8 +1271,8 @@
   window.addEventListener('DOMContentLoaded', async () => {
     buildTimeOptions();
     initCalendar();
-    loadAvailability();
     await loadTrailer();
+    loadAvailability();
 
     // Auth-Callback aus Supabase-Bestätigungsmail erkennen (#access_token=...)
     const hash = window.location.hash;
