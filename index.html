@@ -924,6 +924,81 @@
     .fs-result.ok   { background:#071a07; border:1.5px solid #166534; }
     .fs-result.warn { background:#1a0505; border:1.5px solid #991b1b; }
 
+    /* TRAILER SIDEBAR */
+    #trailerSidebar {
+      position: absolute; top: 0; left: 0; bottom: 0;
+      width: 268px; z-index: 400; overflow-y: auto;
+      background: rgba(10,10,10,0.94);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-right: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px 0 0 16px;
+      display: flex; flex-direction: column;
+      scrollbar-width: thin; scrollbar-color: #2a2a2a transparent;
+      animation: tsbSlideIn .32s cubic-bezier(.4,0,.2,1) both;
+    }
+    @keyframes tsbSlideIn {
+      from { transform: translateX(-100%); opacity: 0; }
+      to   { transform: translateX(0); opacity: 1; }
+    }
+    .tsb-list-header {
+      padding: 14px 14px 10px; border-bottom: 1px solid rgba(255,255,255,0.06);
+      font-size: .68rem; font-weight: 700; letter-spacing: .08em;
+      text-transform: uppercase; color: var(--gray); flex-shrink: 0;
+    }
+    .tsb-card {
+      display: flex; align-items: center; gap: 10px;
+      padding: 11px 14px; border-bottom: 1px solid rgba(255,255,255,0.04);
+      cursor: pointer; transition: background .15s;
+    }
+    .tsb-card:hover { background: rgba(232,93,0,0.07); }
+    .tsb-card:last-child { border-bottom: none; }
+    .tsb-thumb {
+      width: 52px; height: 40px; border-radius: 7px;
+      background: #181818; border: 1px solid #252525;
+      object-fit: cover; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 1.3rem;
+    }
+    .tsb-card-info { flex: 1; min-width: 0; }
+    .tsb-card-name { font-size: .8rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 1px; }
+    .tsb-card-dist { font-size: .75rem; font-weight: 800; color: var(--orange); }
+    .tsb-card-avail { font-size: .68rem; color: #555; margin-top: 1px; }
+    .tsb-card-avail.free { color: #22c55e; }
+    .tsb-chevron { color: #444; font-size: .9rem; flex-shrink: 0; }
+    .tsb-back {
+      display: flex; align-items: center; gap: 7px;
+      padding: 13px 14px; background: none; border: none;
+      color: var(--gray); font-size: .82rem; cursor: pointer;
+      font-family: var(--font); border-bottom: 1px solid rgba(255,255,255,0.06);
+      width: 100%; text-align: left; transition: color .2s; flex-shrink: 0;
+    }
+    .tsb-back:hover { color: var(--white); }
+    .tsb-detail-body { padding: 14px; overflow-y: auto; }
+    .tsb-detail-img {
+      width: 100%; height: 100px; object-fit: cover;
+      border-radius: 10px; background: #181818; border: 1px solid #252525;
+      margin-bottom: 12px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem;
+    }
+    .tsb-detail-name { font-size: .92rem; font-weight: 800; letter-spacing: -.02em; margin-bottom: 2px; }
+    .tsb-detail-dist { font-size: .8rem; color: var(--orange); font-weight: 800; margin-bottom: 12px; }
+    .tsb-specs { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+    .tsb-specs td { padding: 5px 0; border-bottom: 1px solid #1a1a1a; font-size: .78rem; }
+    .tsb-specs td:first-child { color: var(--gray); }
+    .tsb-specs td:last-child { text-align: right; font-weight: 600; }
+    .tsb-specs tr:last-child td { border-bottom: none; }
+    .tsb-pickup { background: #111; border-radius: 8px; padding: 10px 12px; margin-top: 10px; }
+    .tsb-pickup-lbl { font-size: .65rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--gray); margin-bottom: 4px; }
+    .tsb-pickup-addr { font-size: .8rem; font-weight: 600; }
+    .map-inner.sb-active .map-badge { left: auto; right: 14px; transform: none; }
+    @media (max-width: 680px) {
+      #trailerSidebar {
+        top: auto; left: 0; right: 0; bottom: 0; width: 100%;
+        max-height: 52%; border-radius: 14px 14px 0 0;
+        border-right: none; border-top: 1px solid rgba(255,255,255,0.07);
+        animation: tsbSlideUp .32s cubic-bezier(.4,0,.2,1) both;
+      }
+      @keyframes tsbSlideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    }
+
     /* MAP FILTER */
     .map-filter-btn {
       padding: 5px 12px;
@@ -1034,6 +1109,10 @@
     @media (max-width: 640px) {
       .nav-cta { display: none !important; }
       .hamburger { display: flex; }
+      /* Account-Icon auf Mobile direkt neben Hamburger */
+      .nav-account-icon { margin-left: auto; }
+      /* Logo-Orange auf Mobile entfernen – zu viel Farbe */
+      .logo span:last-child { color: var(--white); }
 
       /* Mobile nav – smooth slide + fade */
       .nav-links {
@@ -1198,10 +1277,24 @@
         </button>
       </div>
       <!-- Karte -->
-      <div class="map-inner">
+      <div class="map-inner" id="mapInner">
         <div class="map-badge">📍 <span id="mapBadgeText">Wird geladen…</span></div>
         <div id="map"></div>
         <div id="trailerFilters" style="position:absolute;bottom:14px;left:14px;z-index:1000;display:flex;gap:6px;flex-wrap:wrap;"></div>
+        <!-- Trailer Sidebar (erscheint wenn Standort gesetzt) -->
+        <div id="trailerSidebar" style="display:none;">
+          <div id="tsbListView">
+            <div class="tsb-list-header" id="tsbListHeader">Anhänger in der Nähe</div>
+            <div id="tsbListContent"></div>
+          </div>
+          <div id="tsbDetailView" style="display:none;flex:1;flex-direction:column;overflow:hidden;">
+            <button class="tsb-back" onclick="showTsbList()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+              Zurück
+            </button>
+            <div id="tsbDetailBody" class="tsb-detail-body"></div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -1777,30 +1870,111 @@
   }
 
   /* ── STANDORT SETZEN ─────────────────────────── */
+  let sidebarTrailers = [];
+
   function setUserLocation(lat, lng) {
     userLocation = { lat, lng };
     if (userMarker) userMarker.remove();
     userMarker = L.circleMarker([lat, lng], {
-      radius: 9, color: '#3b82f6', fillColor: '#60a5fa', fillOpacity: 0.9, weight: 3
-    }).addTo(map).bindPopup('<strong style="font-family:system-ui">Dein Standort</strong>');
-    map.setView([lat, lng], 13, { animate: true });
+      radius: 8, color: '#3b82f6', fillColor: '#60a5fa', fillOpacity: 0.9, weight: 3
+    }).addTo(map).bindPopup('<strong style="font-family:system-ui,sans-serif">Dein Standort</strong>');
 
-    // Popup-Inhalte aller Anhänger mit Entfernung aktualisieren
+    // Popup-Inhalte mit Entfernung aktualisieren
     allMarkers.forEach(({ marker, trailer }) => {
       if (!trailer.lat || !trailer.lng) return;
-      const km = haversineKm(lat, lng, trailer.lat, trailer.lng);
-      marker.setPopupContent(makePopupContent(trailer, km));
+      marker.setPopupContent(makePopupContent(trailer, haversineKm(lat, lng, trailer.lat, trailer.lng)));
     });
 
-    // Badge aktualisieren
-    const nearest = allTrailers
+    // Trailers sortiert nach Entfernung
+    sidebarTrailers = allTrailers
       .filter(t => t.lat && t.lng)
-      .map(t => ({ t, km: haversineKm(lat, lng, t.lat, t.lng) }))
-      .sort((a, b) => a.km - b.km);
-    if (nearest.length) {
-      document.getElementById('mapBadgeText').textContent =
-        `Nächster: ${fmtDist(nearest[0].km)} · ${allTrailers.filter(t=>t.is_available).length} verfügbar`;
+      .map(t => ({ ...t, _distKm: haversineKm(lat, lng, t.lat, t.lng) }))
+      .sort((a, b) => a._distKm - b._distKm);
+
+    // Auto-Zoom: zeige User-Standort + alle verfügbaren Anhänger
+    const bounds = L.latLngBounds([[lat, lng]]);
+    sidebarTrailers.filter(t => t.is_available).forEach(t => bounds.extend([t.lat, t.lng]));
+    if (bounds.isValid()) map.fitBounds(bounds, { padding: [60, 60], maxZoom: 14 });
+
+    // Badge
+    const avail = sidebarTrailers.filter(t => t.is_available);
+    document.getElementById('mapBadgeText').textContent =
+      sidebarTrailers.length
+        ? `Nächster: ${fmtDist(sidebarTrailers[0]._distKm)} · ${avail.length} verfügbar`
+        : `${avail.length} verfügbar`;
+
+    // Sidebar anzeigen
+    showTsbList();
+    const sb = document.getElementById('trailerSidebar');
+    sb.style.display = 'flex';
+    document.getElementById('mapInner').classList.add('sb-active');
+    setTimeout(() => map.invalidateSize(), 50);
+  }
+
+  /* ── SIDEBAR LIST ────────────────────────────── */
+  function showTsbList() {
+    document.getElementById('tsbListView').style.display = 'block';
+    document.getElementById('tsbDetailView').style.display = 'none';
+
+    const avail = sidebarTrailers.filter(t => t.is_available);
+    const all   = sidebarTrailers;
+    document.getElementById('tsbListHeader').textContent =
+      `${avail.length} Anhänger verfügbar`;
+
+    document.getElementById('tsbListContent').innerHTML = all.slice(0, 8).map((t, i) => {
+      const thumb = t.image_url
+        ? `<img src="${t.image_url}" class="tsb-thumb" onerror="this.outerHTML='<div class=tsb-thumb>🚛</div>'" />`
+        : `<div class="tsb-thumb">🚛</div>`;
+      return `<div class="tsb-card${t.is_available ? '' : ' unavail'}" onclick="showTsbDetail(${i})">
+        ${thumb}
+        <div class="tsb-card-info">
+          <div class="tsb-card-name">${t.name}</div>
+          <div class="tsb-card-dist">${fmtDist(t._distKm)}</div>
+          <div class="tsb-card-avail${t.is_available ? ' free' : ''}">
+            ${t.is_available ? '✓ Verfügbar' : '✗ Belegt'}
+          </div>
+        </div>
+        <span class="tsb-chevron">›</span>
+      </div>`;
+    }).join('');
+  }
+
+  /* ── SIDEBAR DETAIL ──────────────────────────── */
+  function showTsbDetail(idx) {
+    const t = sidebarTrailers[idx];
+    document.getElementById('tsbListView').style.display = 'none';
+    const dv = document.getElementById('tsbDetailView');
+    dv.style.display = 'flex';
+
+    // Karte auf Anhänger fokussieren + Popup öffnen
+    if (t.lat && t.lng) {
+      map.setView([t.lat, t.lng], 15, { animate: true });
+      const found = allMarkers.find(({ trailer }) => trailer.id === t.id);
+      if (found) setTimeout(() => found.marker.openPopup(), 450);
     }
+
+    const bookUrl = `booking.html?trailer=${t.id}&mode=flexible`;
+    const thumb   = t.image_url
+      ? `<img src="${t.image_url}" class="tsb-detail-img" onerror="this.outerHTML='<div class=tsb-detail-img>🚛</div>'" />`
+      : `<div class="tsb-detail-img">🚛</div>`;
+
+    document.getElementById('tsbDetailBody').innerHTML = `
+      ${thumb}
+      <div class="tsb-detail-name">${t.name}</div>
+      <div class="tsb-detail-dist">📍 ${fmtDist(t._distKm)} entfernt</div>
+      <table class="tsb-specs">
+        <tr><td>Ladefläche</td><td>251 × 137 × 130 cm</td></tr>
+        <tr><td>Gesamtgewicht</td><td>750 kg</td></tr>
+        <tr><td>Zuladung</td><td>455 kg</td></tr>
+      </table>
+      ${t.is_available
+        ? `<a href="${bookUrl}" class="btn btn-orange" style="text-decoration:none;border:none;display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:12px;">Jetzt buchen →</a>`
+        : `<div style="background:#1a0505;border:1px solid #3a0a0a;border-radius:8px;padding:10px;text-align:center;font-size:.8rem;color:#f87171;margin-bottom:12px;">Aktuell belegt</div>`}
+      <div class="tsb-pickup">
+        <div class="tsb-pickup-lbl">Abhol- und Rückgabeort</div>
+        <div class="tsb-pickup-addr">📍 Bremen, Deutschland</div>
+      </div>
+    `;
   }
 
   /* ── STANDORT-SUCHE ──────────────────────────── */
