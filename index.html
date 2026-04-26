@@ -1023,7 +1023,7 @@
     .map-inner.sb-active .map-badge { left: auto; right: 14px; transform: none; }
     .map-inner.sb-active #trailerFilters { left: 282px; }
     @media (max-width: 680px) {
-      .map-inner.sb-active #trailerFilters { left: 14px; bottom: 58%; }
+      .map-inner.sb-active #trailerFilters { left: 14px; }
     }
     @media (max-width: 680px) {
       #trailerSidebar {
@@ -1327,7 +1327,7 @@
       <div class="map-inner" id="mapInner">
         <div class="map-badge">📍 <span id="mapBadgeText">Wird geladen…</span></div>
         <div id="map"></div>
-        <div id="trailerFilters" style="position:absolute;bottom:14px;left:14px;z-index:399;display:flex;gap:6px;flex-wrap:wrap;transition:left .35s cubic-bezier(.4,0,.2,1);"></div>
+        <div id="trailerFilters" style="position:absolute;bottom:14px;left:14px;z-index:600;display:flex;gap:6px;flex-wrap:wrap;transition:left .35s cubic-bezier(.4,0,.2,1);"></div>
         <!-- Trailer Sidebar (erscheint wenn Standort gesetzt) -->
         <div id="trailerSidebar" style="display:none;">
           <button class="tsb-close-btn" onclick="closeTsb()" title="Schließen">×</button>
@@ -1828,6 +1828,9 @@
     attribution: '© <a href="https://www.openstreetmap.org/copyright">OSM</a> © <a href="https://carto.com/">CARTO</a>',
     subdomains: 'abcd', maxZoom: 19
   }).addTo(map);
+
+  // Zoom-Buttons rechts oben – kein Konflikt mit Sidebar
+  map.zoomControl.setPosition('topright');
 
   // Scroll-Zoom: Klick auf Karte aktiviert, Klick außerhalb deaktiviert
   (function() {
