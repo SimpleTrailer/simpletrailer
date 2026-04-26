@@ -190,14 +190,6 @@
       z-index: 0;
     }
 
-    #hero-canvas {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-    }
-
     .hero-fade {
       position: absolute;
       bottom: 0; left: 0; right: 0;
@@ -1254,7 +1246,6 @@
 
 <!-- HERO -->
 <section id="hero">
-  <canvas id="hero-canvas"></canvas>
   <div class="hero-inner">
     <div class="hero-text">
       <p class="section-tag">Anhängervermietung Bremen</p>
@@ -1801,51 +1792,6 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-  // PARTICLE ANIMATION
-  (function() {
-    const canvas = document.getElementById('hero-canvas');
-    const ctx = canvas.getContext('2d');
-    let particles = [];
-    const COUNT = 32;
-
-    function resize() {
-      canvas.width = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
-    }
-
-    function createParticle() {
-      return {
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        r: Math.random() * 2 + 2,
-        dx: (Math.random() - 0.5) * 0.4,
-        dy: (Math.random() - 0.5) * 0.4,
-        alpha: Math.random() * 0.3 + 0.5
-      };
-    }
-
-    function init() { resize(); particles = Array.from({ length: COUNT }, createParticle); }
-
-    function draw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      particles.forEach(p => {
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(232, 93, 0, ${p.alpha})`;
-        ctx.fill();
-        p.x += p.dx; p.y += p.dy;
-        if (p.x < -10) p.x = canvas.width + 10;
-        if (p.x > canvas.width + 10) p.x = -10;
-        if (p.y < -10) p.y = canvas.height + 10;
-        if (p.y > canvas.height + 10) p.y = -10;
-      });
-      requestAnimationFrame(draw);
-    }
-
-    window.addEventListener('resize', resize);
-    init(); draw();
-  })();
-
   // MAP
   const map = L.map('map', { zoomControl: true, scrollWheelZoom: false }).setView([53.0793, 8.8017], 13);
 
