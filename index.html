@@ -2178,12 +2178,27 @@
 
   // MOBILE LOC SYNC + AUTOCOMPLETE
   let _mobileAcTimer = null;
+
+  const MOBILE_GPS_ITEM = `
+    <div class="suggest-item" onclick="useMobileGPSFromDrop()" style="background:rgba(232,93,0,0.08);border-bottom:1px solid rgba(232,93,0,0.2);">
+      <span class="suggest-icon" style="color:var(--orange);"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg></span>
+      <strong style="color:#fff;">Mein Standort verwenden</strong>
+    </div>
+  `;
+
+  function showMobileBaseOptions() {
+    const drop = document.getElementById('mobileSuggestDrop');
+    if (!drop) return;
+    drop.innerHTML = MOBILE_GPS_ITEM;
+    drop.style.display = 'block';
+  }
+
   function syncMobileLoc(val) {
     const inp = document.getElementById('mapSearchInput');
     if (inp) inp.value = val;
     clearTimeout(_mobileAcTimer);
     const q = (val || '').trim();
-    if (q.length < 2) { hideMobileSuggestions(); return; }
+    if (q.length < 2) { showMobileBaseOptions(); return; }
     _mobileAcTimer = setTimeout(() => fetchMobileSuggestions(q), 280);
   }
 
@@ -2194,8 +2209,7 @@
       const data = await res.json();
       const drop = document.getElementById('mobileSuggestDrop');
       if (!drop) return;
-      if (!data.length) { drop.style.display = 'none'; return; }
-      drop.innerHTML = data.map(r => {
+      const cityItems = data.map(r => {
         const parts = r.display_name.split(',');
         const label = parts.slice(0, 2).join(',').trim();
         return `<div class="suggest-item" onclick="selectMobileSuggestion(${r.lat},${r.lon},'${label.replace(/'/g,"\\'")}')">
@@ -2203,6 +2217,7 @@
           ${label}
         </div>`;
       }).join('');
+      drop.innerHTML = MOBILE_GPS_ITEM + cityItems;
       drop.style.display = 'block';
     } catch(e) {}
   }
@@ -2218,6 +2233,20 @@
     if (mapInp) mapInp.value = name;
     hideMobileSuggestions();
   }
+
+  function useMobileGPSFromDrop() {
+    hideMobileSuggestions();
+    useMobileGPS();
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const mInp = document.getElementById('mobileLocInput');
+    if (mInp) {
+      mInp.addEventListener('focus', () => {
+        if (!mInp.value.trim()) showMobileBaseOptions();
+      });
+    }
+  });
 
   document.addEventListener('click', e => {
     if (!e.target.closest('.mobile-loc-row')) hideMobileSuggestions();
