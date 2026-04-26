@@ -323,16 +323,14 @@
           <div class="mode-icon">🎉</div>
           <div class="mode-name">Wochenende</div>
           <div class="mode-desc">Fr–So · <strong style="color:var(--orange)">59 €</strong><br>
-            <span style="color:#4ade80;font-size:.68rem;font-weight:700;">≈ 19,67 € / Tag</span>
-            <span style="color:var(--gray);font-size:.65rem;"> · spare 18 €</span>
+            <span style="color:var(--gray);font-size:.68rem;">≈ 19,67 € / Tag · </span><span style="color:#4ade80;font-size:.72rem;font-weight:700;">spare 18 €</span>
           </div>
         </button>
         <button type="button" class="mode-option" id="modeWeek" onclick="setMode('week')">
           <div class="mode-icon">🔥</div>
           <div class="mode-name">1 Woche</div>
           <div class="mode-desc">7 Tage · <strong style="color:#f59e0b">119 €</strong><br>
-            <span style="color:#4ade80;font-size:.68rem;font-weight:700;">≈ 17,00 € / Tag</span>
-            <span style="color:var(--gray);font-size:.65rem;"> · spare 54 €</span>
+            <span style="color:var(--gray);font-size:.68rem;">≈ 17,00 € / Tag · </span><span style="color:#4ade80;font-size:.72rem;font-weight:700;">spare 54 €</span>
           </div>
         </button>
       </div>
@@ -927,11 +925,11 @@
       document.getElementById('pbExtraLine').style.display = 'none';
     } else if (p.isWeekend) {
       document.getElementById('pbDay1Line').innerHTML = `<span>Wochenende Festpreis (Fr–So)</span><span>59,00 €</span>`;
-      document.getElementById('pbExtraLine').innerHTML = `<span style="color:#4ade80;font-size:.75rem;">≈ 19,67 € / Tag · spare 18 € vs. einzeln (77 €)</span><span style="color:#4ade80;font-size:.78rem;">–18 €</span>`;
+      document.getElementById('pbExtraLine').innerHTML = `<span style="color:var(--gray);font-size:.75rem;">≈ 19,67 € / Tag · vs. einzeln (77 €)</span><span style="color:#4ade80;font-size:.82rem;font-weight:700;">spare 18 €</span>`;
       document.getElementById('pbExtraLine').style.display = 'flex';
     } else if (p.isWeek) {
       document.getElementById('pbDay1Line').innerHTML = `<span>🔥 1 Woche Festpreis (7 Tage)</span><span>119,00 €</span>`;
-      document.getElementById('pbExtraLine').innerHTML = `<span style="color:#4ade80;font-size:.75rem;">≈ 17,00 € / Tag · spare 54 € vs. einzeln (173 €)</span><span style="color:#4ade80;font-size:.78rem;">–54 €</span>`;
+      document.getElementById('pbExtraLine').innerHTML = `<span style="color:var(--gray);font-size:.75rem;">≈ 17,00 € / Tag · vs. einzeln (173 €)</span><span style="color:#4ade80;font-size:.82rem;font-weight:700;">spare 54 €</span>`;
       document.getElementById('pbExtraLine').style.display = 'flex';
     } else if (hours <= 3) {
       document.getElementById('pbDay1Line').innerHTML = `<span>Kurztrip (bis 3 Std.)</span><span>9,00 €</span>`;
