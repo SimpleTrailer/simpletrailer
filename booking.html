@@ -319,7 +319,7 @@
           <div class="mode-name">Wochenende</div>
           <div class="mode-desc">Fr–So · <strong style="color:var(--orange)">59 €</strong><br>
             <span style="color:#4ade80;font-size:.68rem;font-weight:700;">≈ 19,67 € / Tag</span>
-            <span style="color:var(--gray);font-size:.65rem;"> · spare 6 €</span>
+            <span style="color:var(--gray);font-size:.65rem;"> · spare 18 €</span>
           </div>
         </button>
         <button type="button" class="mode-option" id="modeWeek" onclick="setMode('week')">
@@ -327,7 +327,7 @@
           <div class="mode-name">1 Woche</div>
           <div class="mode-desc">7 Tage · <strong style="color:#f59e0b">119 €</strong><br>
             <span style="color:#4ade80;font-size:.68rem;font-weight:700;">≈ 17,00 € / Tag</span>
-            <span style="color:var(--gray);font-size:.65rem;"> · spare 38 €</span>
+            <span style="color:var(--gray);font-size:.65rem;"> · spare 54 €</span>
           </div>
         </button>
       </div>
@@ -336,10 +336,10 @@
       <div id="flexPriceInfo" style="margin-top:14px;background:#111;border-radius:10px;padding:12px 14px;display:block;">
         <p style="font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gray);margin-bottom:8px;">Preisstaffel</p>
         <div style="display:grid;grid-template-columns:1fr auto;gap:4px 16px;font-size:.82rem;">
-          <span style="color:var(--gray);">bis 3 Std.</span><span style="font-weight:700;">8 €</span>
-          <span style="color:var(--gray);">bis 6 Std.</span><span style="font-weight:700;">15 €</span>
-          <span style="color:var(--gray);">bis 24 Std.</span><span style="font-weight:700;">25 €</span>
-          <span style="color:var(--gray);">jeder weitere Tag</span><span style="font-weight:700;">+22 €</span>
+          <span style="color:var(--gray);">bis 3 Std.</span><span style="font-weight:700;">9 €</span>
+          <span style="color:var(--gray);">bis 6 Std.</span><span style="font-weight:700;">18 €</span>
+          <span style="color:var(--gray);">bis 24 Std.</span><span style="font-weight:700;">29 €</span>
+          <span style="color:var(--gray);">jeder weitere Tag</span><span style="font-weight:700;">+24 €</span>
         </div>
       </div>
     </div>
@@ -782,12 +782,12 @@
     if (bookingMode === 'week')    return { base: 119, extraDays: 0, label: '1 Woche (7 Tage)',   isWeek:    true };
     const hours = (endMs - startMs) / 3600000;
     if (hours <= 0)  return null;
-    if (hours <= 3)  return { base: 8,  extraDays: 0, label: 'Kurztrip (bis 3 Std.)' };
-    if (hours <= 6)  return { base: 15, extraDays: 0, label: 'Halber Tag (bis 6 Std.)' };
+    if (hours <= 3)  return { base: 9,  extraDays: 0, label: 'Kurztrip (bis 3 Std.)' };
+    if (hours <= 6)  return { base: 18, extraDays: 0, label: 'Halber Tag (bis 6 Std.)' };
     // 2h Kulanz pro Tagesgrenze
     const extraDays = Math.max(0, Math.ceil((hours - 24 - 2) / 24));
-    if (extraDays === 0) return { base: 25, extraDays: 0, label: 'Ganzer Tag' };
-    return { base: 25 + extraDays * 22, extraDays, label: `${extraDays + 1} Tage` };
+    if (extraDays === 0) return { base: 29, extraDays: 0, label: 'Ganzer Tag' };
+    return { base: 29 + extraDays * 24, extraDays, label: `${extraDays + 1} Tage` };
   }
 
   function getInsuranceAmount() {
@@ -885,24 +885,24 @@
 
     if (p.isWeekend) {
       document.getElementById('pbDay1Line').innerHTML = `<span>Wochenende Festpreis (Fr–So)</span><span>59,00 €</span>`;
-      document.getElementById('pbExtraLine').innerHTML = `<span style="color:#4ade80;font-size:.75rem;">≈ 19,67 € / Tag · spare 6 € vs. einzeln (65 €)</span><span style="color:#4ade80;font-size:.78rem;">–6 €</span>`;
+      document.getElementById('pbExtraLine').innerHTML = `<span style="color:#4ade80;font-size:.75rem;">≈ 19,67 € / Tag · spare 18 € vs. einzeln (77 €)</span><span style="color:#4ade80;font-size:.78rem;">–18 €</span>`;
       document.getElementById('pbExtraLine').style.display = 'flex';
     } else if (p.isWeek) {
       document.getElementById('pbDay1Line').innerHTML = `<span>🔥 1 Woche Festpreis (7 Tage)</span><span>119,00 €</span>`;
-      document.getElementById('pbExtraLine').innerHTML = `<span style="color:#4ade80;font-size:.75rem;">≈ 17,00 € / Tag · spare 38 € vs. einzeln (157 €)</span><span style="color:#4ade80;font-size:.78rem;">–38 €</span>`;
+      document.getElementById('pbExtraLine').innerHTML = `<span style="color:#4ade80;font-size:.75rem;">≈ 17,00 € / Tag · spare 54 € vs. einzeln (173 €)</span><span style="color:#4ade80;font-size:.78rem;">–54 €</span>`;
       document.getElementById('pbExtraLine').style.display = 'flex';
     } else if (hours <= 3) {
-      document.getElementById('pbDay1Line').innerHTML = `<span>Kurztrip (bis 3 Std.)</span><span>8,00 €</span>`;
+      document.getElementById('pbDay1Line').innerHTML = `<span>Kurztrip (bis 3 Std.)</span><span>9,00 €</span>`;
       document.getElementById('pbExtraLine').style.display = 'none';
     } else if (hours <= 6) {
-      document.getElementById('pbDay1Line').innerHTML = `<span>Halber Tag (bis 6 Std.)</span><span>15,00 €</span>`;
+      document.getElementById('pbDay1Line').innerHTML = `<span>Halber Tag (bis 6 Std.)</span><span>18,00 €</span>`;
       document.getElementById('pbExtraLine').style.display = 'none';
     } else if (p.extraDays > 0) {
-      document.getElementById('pbDay1Line').innerHTML = `<span>Erster Tag</span><span>25,00 €</span>`;
-      document.getElementById('pbExtraLine').innerHTML = `<span>${p.extraDays} weitere${p.extraDays>1?'':'r'} Tag${p.extraDays>1?'e':''} × 22 €</span><span>${(p.extraDays*22).toFixed(2).replace('.',',')} €</span>`;
+      document.getElementById('pbDay1Line').innerHTML = `<span>Erster Tag</span><span>29,00 €</span>`;
+      document.getElementById('pbExtraLine').innerHTML = `<span>${p.extraDays} weitere${p.extraDays>1?'':'r'} Tag${p.extraDays>1?'e':''} × 24 €</span><span>${(p.extraDays*24).toFixed(2).replace('.',',')} €</span>`;
       document.getElementById('pbExtraLine').style.display = 'flex';
     } else {
-      document.getElementById('pbDay1Line').innerHTML = `<span>Erster Tag</span><span>25,00 €</span>`;
+      document.getElementById('pbDay1Line').innerHTML = `<span>Erster Tag</span><span>29,00 €</span>`;
       document.getElementById('pbExtraLine').style.display = 'none';
     }
     document.getElementById('pbTotal').textContent = p.base.toFixed(2).replace('.',',') + ' €';

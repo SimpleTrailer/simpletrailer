@@ -26,12 +26,12 @@ module.exports = async (req, res) => {
     function calcBaseAmount(start, end) {
       const hours = (new Date(end) - new Date(start)) / 3600000;
       if (hours <= 0) return 0;
-      if (hours <= 3)  return 8;
-      if (hours <= 6)  return 15;
+      if (hours <= 3)  return 9;
+      if (hours <= 6)  return 18;
       // 2h Kulanz pro Tagesgrenze (identisch mit Frontend)
       const extraDays = Math.max(0, Math.ceil((hours - 24 - 2) / 24));
-      if (extraDays === 0) return 25;
-      return 25 + extraDays * 22;
+      if (extraDays === 0) return 29;
+      return 29 + extraDays * 24;
     }
 
     let baseAmount;
