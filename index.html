@@ -1766,6 +1766,11 @@
       transition:opacity .25s; opacity:1;
     `;
     hint.textContent = '🖱 Klicken zum Zoomen aktivieren';
+    // Auf Touch-Geräten: Hint ausblenden, Map immer interaktiv
+    if (window.matchMedia('(hover: none)').matches) {
+      hint.style.display = 'none';
+      map.scrollWheelZoom.enable();
+    }
     document.getElementById('mapInner').appendChild(hint);
 
     map.on('click', () => {
