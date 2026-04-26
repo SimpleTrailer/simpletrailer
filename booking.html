@@ -774,10 +774,39 @@
     sel.value = sel.querySelector(`option[value="${cur}"]`) ? cur : '';
   }
 
+  // Für "Ganzer Tag" Modus: prüft welche Startuhrzeiten ein konfliktfreies +24h-Fenster ergeben
+  function getHourRangeForDay(dateStr) {
+    const d0ms = new Date(`${dateStr}T00:00:00`).getTime();
+    let minH = 6, maxH = 21;
+    for (const r of bookedRanges) {
+      const rS = new Date(r.start_time).getTime();
+      const rE = new Date(r.end_time).getTime();
+      // Standard-Constraint: Buchung endet heute → frühestens danach starten
+      if (rE > d0ms && rE <= d0ms + 86400000 - 1) {
+        const h = new Date(rE).getHours() + (new Date(rE).getMinutes() > 0 ? 1 : 0);
+        minH = Math.max(minH, Math.min(h, 21));
+      }
+      // Ganzer-Tag-Constraint: Start T → Ende T+24h
+      // Konflikt wenn: rS < T+24h UND rE > T
+      // → geblockt wenn: rS-24h < T < rE
+      // → max. Startzeit auf diesem Tag = floor(rS-24h) wenn rS-24h auf diesem Tag liegt
+      const blockStartMs = rS - 86400000; // rS minus 24h
+      const hoursFromMidnight = (blockStartMs - d0ms) / 3600000;
+      if (hoursFromMidnight >= 6 && hoursFromMidnight < 22) {
+        maxH = Math.min(maxH, Math.floor(hoursFromMidnight));
+      }
+    }
+    if (minH > maxH) return { min: 6, max: 21 };
+    return { min: minH, max: maxH };
+  }
+
   function refreshTimeDropdowns() {
     const startD = document.getElementById('startDateInput').value;
     const endD   = document.getElementById('endDateInput').value;
-    if (startD) { const c = getHourRange(startD, 'start'); rebuildSelect('startHourInput', c.min, c.max); }
+    if (startD) {
+      const c = bookingMode === 'day' ? getHourRangeForDay(startD) : getHourRange(startD, 'start');
+      rebuildSelect('startHourInput', c.min, c.max);
+    }
     if (endD && bookingMode === 'flexible') { const c = getHourRange(endD, 'end'); rebuildSelect('endHourInput', c.min, c.max); }
   }
 
