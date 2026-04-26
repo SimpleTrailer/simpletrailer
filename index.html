@@ -1180,7 +1180,7 @@
           <li>Bis 24 Std.: <strong style="color:var(--white)">29 €</strong></li>
           <li>Jeder weitere Tag: <strong style="color:var(--white)">24 €</strong></li>
         </ul>
-        <a href="booking.html?mode=flexible" class="btn btn-outline">Individuell buchen</a>
+        <a href="#" onclick="selectModeAndScroll('flexible');return false;" class="btn btn-outline">Individuell buchen</a>
       </div>
 
       <!-- GANZER TAG -->
@@ -1196,7 +1196,7 @@
           <li>Schloss per Zahlencode</li>
           <li>Keine Kaution nötig</li>
         </ul>
-        <a href="booking.html?mode=day" class="btn btn-orange">Buchen</a>
+        <a href="#" onclick="selectModeAndScroll('day');return false;" class="btn btn-orange">Buchen</a>
       </div>
 
       <!-- WOCHENENDE -->
@@ -1212,7 +1212,7 @@
           <li>Ideal für Umzüge</li>
           <li>Keine Kaution nötig</li>
         </ul>
-        <a href="booking.html?mode=weekend" class="btn btn-outline">Buchen</a>
+        <a href="#" onclick="selectModeAndScroll('weekend');return false;" class="btn btn-outline">Buchen</a>
       </div>
 
       <!-- WOCHE -->
@@ -1228,7 +1228,7 @@
           <li>Perfekt für den Urlaub</li>
           <li>Keine Kaution nötig</li>
         </ul>
-        <a href="booking.html?mode=week" class="btn btn-outline" style="border-color:#d97706;color:#f59e0b;">Buchen</a>
+        <a href="#" onclick="selectModeAndScroll('week');return false;" class="btn btn-outline" style="border-color:#d97706;color:#f59e0b;">Buchen</a>
       </div>
 
 
@@ -1512,6 +1512,23 @@
 
   let allTrailers = [], allMarkers = [], activeFilter = 'all';
 
+  function selectModeAndScroll(mode) {
+    sessionStorage.setItem('st_pending_mode', mode);
+    document.querySelector('.map-wrapper').scrollIntoView({ behavior: 'smooth' });
+    document.getElementById('mapBadgeText').textContent = '👆 Anhänger auf der Karte wählen';
+    // Pins kurz pulsieren lassen
+    allMarkers.forEach(({ marker }) => {
+      const el = marker.getElement();
+      if (el) { el.style.animation = 'none'; el.style.transform = 'scale(1.3)'; setTimeout(() => el.style.transform = '', 600); }
+    });
+  }
+
+  function goBook(trailerId) {
+    const mode = sessionStorage.getItem('st_pending_mode') || 'flexible';
+    sessionStorage.removeItem('st_pending_mode');
+    window.location.href = `booking.html?trailer=${trailerId}&mode=${mode}`;
+  }
+
   function filterMarkers(type) {
     activeFilter = type;
     document.querySelectorAll('.map-filter-btn').forEach(b =>
@@ -1549,7 +1566,7 @@
           ? `<span style="color:#22c55e;font-weight:700;">✓ Verfügbar</span>`
           : `<span style="color:#f87171;">Aktuell belegt</span>`;
         const bookBtn = t.is_available
-          ? `<a href="booking.html?trailer=${t.id}" style="display:block;margin-top:8px;background:#E85D00;color:#fff;text-decoration:none;padding:8px 14px;border-radius:6px;font-weight:700;font-size:.82rem;text-align:center;">Jetzt buchen →</a>`
+          ? `<button onclick="goBook('${t.id}')" style="display:block;width:100%;margin-top:8px;background:#E85D00;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-weight:700;font-size:.82rem;cursor:pointer;font-family:inherit;">Jetzt buchen →</button>`
           : '';
         marker.bindPopup(`
           <div style="min-width:160px;font-family:system-ui,sans-serif;">
