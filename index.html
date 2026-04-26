@@ -176,8 +176,8 @@
       position: relative;
       overflow: hidden;
       background:
-        radial-gradient(ellipse 80% 70% at -5% 10%, rgba(232,93,0,0.2) 0%, transparent 60%),
-        radial-gradient(ellipse 50% 50% at 105% 85%, rgba(232,93,0,0.1) 0%, transparent 60%),
+        radial-gradient(ellipse 55% 55% at 105% 18%, rgba(232,93,0,0.18) 0%, transparent 58%),
+        radial-gradient(ellipse 40% 40% at 110% 82%, rgba(232,93,0,0.07) 0%, transparent 55%),
         var(--bg);
     }
     #hero::after {
@@ -378,6 +378,22 @@
     }
     .map-search-btn:hover { background: var(--orange-hover); }
     .map-search-btn:disabled { background: #555; cursor: not-allowed; }
+    .map-search-outer { flex: 1; position: relative; }
+    #mapSuggestDrop {
+      display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+      background: #181818; border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px; z-index: 2000; overflow: hidden;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+    }
+    .suggest-item {
+      display: flex; align-items: center; gap: 9px;
+      padding: 10px 14px; cursor: pointer; font-size: .84rem;
+      border-bottom: 1px solid rgba(255,255,255,0.04); transition: background .15s;
+      color: #ccc;
+    }
+    .suggest-item:last-child { border-bottom: none; }
+    .suggest-item:hover { background: rgba(232,93,0,0.1); color: #fff; }
+    .suggest-icon { color: var(--orange); flex-shrink: 0; }
     .map-loc-btn {
       background: rgba(22,22,22,0.88);
       border: 1px solid rgba(255,255,255,0.1);
@@ -988,6 +1004,15 @@
     .tsb-pickup { background: #111; border-radius: 8px; padding: 10px 12px; margin-top: 10px; }
     .tsb-pickup-lbl { font-size: .65rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--gray); margin-bottom: 4px; }
     .tsb-pickup-addr { font-size: .8rem; font-weight: 600; }
+    .tsb-close-btn {
+      position: absolute; top: 10px; right: 10px; z-index: 10;
+      width: 26px; height: 26px; border-radius: 50%;
+      background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);
+      color: #888; font-size: 1rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .2s; line-height: 1;
+    }
+    .tsb-close-btn:hover { background: rgba(255,255,255,0.16); color: #fff; }
     .map-inner.sb-active .map-badge { left: auto; right: 14px; transform: none; }
     @media (max-width: 680px) {
       #trailerSidebar {
@@ -1111,8 +1136,6 @@
       .hamburger { display: flex; }
       /* Account-Icon auf Mobile direkt neben Hamburger */
       .nav-account-icon { margin-left: auto; }
-      /* Logo-Orange auf Mobile entfernen – zu viel Farbe */
-      .logo span:last-child { color: var(--white); }
 
       /* Mobile nav – smooth slide + fade */
       .nav-links {
@@ -1262,14 +1285,18 @@
     <div class="map-wrapper">
       <!-- Standort-Suche -->
       <div class="map-search-row">
-        <div class="map-search-wrap">
-          <span class="map-search-icon">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          </span>
-          <input type="text" id="mapSearchInput" class="map-search-field"
-            placeholder="Ort oder Adresse eingeben…"
-            onkeydown="if(event.key==='Enter')searchMapLocation()" />
-          <button class="map-search-btn" id="mapSearchBtn" onclick="searchMapLocation()">Suchen</button>
+        <div class="map-search-outer">
+          <div class="map-search-wrap">
+            <span class="map-search-icon">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </span>
+            <input type="text" id="mapSearchInput" class="map-search-field"
+              placeholder="Ort oder Adresse eingeben…"
+              onkeydown="if(event.key==='Enter'){searchMapLocation();hideSuggestions();}"
+              autocomplete="off" />
+            <button class="map-search-btn" id="mapSearchBtn" onclick="searchMapLocation();hideSuggestions();">Suchen</button>
+          </div>
+          <div id="mapSuggestDrop"></div>
         </div>
         <button class="map-loc-btn" id="geoLocBtn" onclick="useMyLocation()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>
@@ -1283,6 +1310,7 @@
         <div id="trailerFilters" style="position:absolute;bottom:14px;left:14px;z-index:1000;display:flex;gap:6px;flex-wrap:wrap;"></div>
         <!-- Trailer Sidebar (erscheint wenn Standort gesetzt) -->
         <div id="trailerSidebar" style="display:none;">
+          <button class="tsb-close-btn" onclick="closeTsb()" title="Schließen">×</button>
           <div id="tsbListView">
             <div class="tsb-list-header" id="tsbListHeader">Anhänger in der Nähe</div>
             <div id="tsbListContent"></div>
@@ -1911,6 +1939,26 @@
     setTimeout(() => map.invalidateSize(), 50);
   }
 
+  /* ── SIDEBAR ÖFFNEN FÜR PIN-KLICK ───────────── */
+  function openTsbForTrailer(trailer) {
+    const t = {
+      ...trailer,
+      _distKm: userLocation ? haversineKm(userLocation.lat, userLocation.lng, trailer.lat, trailer.lng) : null
+    };
+    // Stelle sicher dass t in sidebarTrailers ist
+    if (!sidebarTrailers.find(s => s.id === t.id)) {
+      sidebarTrailers = [t, ...sidebarTrailers];
+    }
+    const idx = sidebarTrailers.findIndex(s => s.id === t.id);
+    // Sidebar anzeigen
+    const sb = document.getElementById('trailerSidebar');
+    sb.style.display = 'flex';
+    document.getElementById('mapInner').classList.add('sb-active');
+    setTimeout(() => map.invalidateSize(), 50);
+    // Direkt Detailansicht
+    showTsbDetail(idx >= 0 ? idx : 0);
+  }
+
   /* ── SIDEBAR LIST ────────────────────────────── */
   function showTsbList() {
     document.getElementById('tsbListView').style.display = 'block';
@@ -1975,6 +2023,59 @@
         <div class="tsb-pickup-addr">📍 Bremen, Deutschland</div>
       </div>
     `;
+  }
+
+  /* ── AUTOCOMPLETE ────────────────────────────── */
+  let _acTimer = null;
+  document.addEventListener('DOMContentLoaded', () => {
+    const inp = document.getElementById('mapSearchInput');
+    if (!inp) return;
+    inp.addEventListener('input', () => {
+      clearTimeout(_acTimer);
+      const q = inp.value.trim();
+      if (q.length < 2) { hideSuggestions(); return; }
+      _acTimer = setTimeout(() => fetchSuggestions(q), 280);
+    });
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.map-search-outer')) hideSuggestions();
+    });
+  });
+
+  async function fetchSuggestions(q) {
+    try {
+      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q + ' Deutschland')}&format=json&limit=5&countrycodes=de&accept-language=de`;
+      const res  = await fetch(url, { headers: { 'Accept-Language': 'de' } });
+      const data = await res.json();
+      const drop = document.getElementById('mapSuggestDrop');
+      if (!data.length) { drop.style.display = 'none'; return; }
+      drop.innerHTML = data.map(r => {
+        const parts = r.display_name.split(',');
+        const label = parts.slice(0, 2).join(',').trim();
+        return `<div class="suggest-item" onclick="selectSuggestion(${r.lat},${r.lon},'${label.replace(/'/g,"\\'")}')">
+          <span class="suggest-icon"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 10-16 0c0 3 2.7 6.9 8 11.7z"/></svg></span>
+          ${label}
+        </div>`;
+      }).join('');
+      drop.style.display = 'block';
+    } catch(e) {}
+  }
+
+  function hideSuggestions() {
+    const d = document.getElementById('mapSuggestDrop');
+    if (d) d.style.display = 'none';
+  }
+
+  function selectSuggestion(lat, lng, name) {
+    document.getElementById('mapSearchInput').value = name;
+    hideSuggestions();
+    setUserLocation(parseFloat(lat), parseFloat(lng));
+  }
+
+  /* ── SIDEBAR SCHLIESSEN ──────────────────────── */
+  function closeTsb() {
+    document.getElementById('trailerSidebar').style.display = 'none';
+    document.getElementById('mapInner').classList.remove('sb-active');
+    setTimeout(() => map.invalidateSize(), 50);
   }
 
   /* ── STANDORT-SUCHE ──────────────────────────── */
@@ -2073,6 +2174,7 @@
         const marker = L.marker([t.lat, t.lng], { icon: makeIcon(t.is_available) });
         const distKm = userLocation ? haversineKm(userLocation.lat, userLocation.lng, t.lat, t.lng) : null;
         marker.bindPopup(makePopupContent(t, distKm));
+        marker.on('click', () => openTsbForTrailer(t));
         marker.addTo(map);
         allMarkers.push({ marker, trailer: t });
       });
