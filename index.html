@@ -925,6 +925,22 @@
     .footer-col a:hover { color: var(--white); }
 
     .footer-bottom { border-top: 1px solid var(--border); padding-top: 24px; display: flex; align-items: center; justify-content: space-between; }
+    .footer-payments {
+      display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+      padding: 18px 0; border-top: 1px solid var(--border);
+    }
+    .footer-payments-label {
+      font-size: .72rem; color: #888; font-weight: 700;
+      letter-spacing: .08em; text-transform: uppercase;
+    }
+    .footer-pay-row { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+    .footer-pay-pill {
+      display: inline-flex; align-items: center; justify-content: center;
+      height: 22px; min-width: 30px; padding: 0 7px; border-radius: 4px;
+      font-size: .68rem; font-weight: 800; letter-spacing: -.01em;
+      font-family: -apple-system, system-ui, sans-serif;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
 
     .footer-bottom p { font-size: 0.8rem; color: #555; }
 
@@ -1829,6 +1845,17 @@
           <a href="mailto:info@simpletrailer.de">info@simpletrailer.de</a>
           <a href="#">Bremen, Deutschland</a>
         </div>
+      </div>
+    </div>
+    <div class="footer-payments">
+      <span class="footer-payments-label">Sicher bezahlen mit</span>
+      <div class="footer-pay-row">
+        <span class="footer-pay-pill" style="background:#1A1F71;color:#fff;">VISA</span>
+        <span class="footer-pay-pill" style="background:#fff;color:#000;padding:0 5px;"><svg width="20" height="12" viewBox="0 0 38 24" xmlns="http://www.w3.org/2000/svg"><circle cx="15" cy="12" r="9" fill="#EB001B"/><circle cx="23" cy="12" r="9" fill="#F79E1B"/><path d="M19 5.5a8.97 8.97 0 0 1 0 13 8.97 8.97 0 0 1 0-13z" fill="#FF5F00"/></svg></span>
+        <span class="footer-pay-pill" style="background:#000;color:#fff;">Pay</span>
+        <span class="footer-pay-pill" style="background:#fff;color:#000;">G Pay</span>
+        <span class="footer-pay-pill" style="background:#003087;color:#fff;">PayPal</span>
+        <span class="footer-pay-pill" style="background:#10298E;color:#fff;">SEPA</span>
       </div>
     </div>
     <div class="footer-bottom">
