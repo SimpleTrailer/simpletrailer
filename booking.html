@@ -1065,6 +1065,31 @@
     } catch(e) {}
   }
 
+  function saveBookingState() {
+    try {
+      localStorage.setItem('st_booking_pending', JSON.stringify({
+        mode:      bookingMode,
+        startDate: document.getElementById('startDateInput').value,
+        startHour: document.getElementById('startHourInput').value,
+        endDate:   document.getElementById('endDateInput').value || '',
+        endHour:   document.getElementById('endHourInput').value || '',
+        startTime: document.getElementById('startTime').value,
+        endTime:   document.getElementById('endTime').value,
+      }));
+    } catch(e) {}
+  }
+
+  function restoreBookingState(state) {
+    setMode(state.mode || 'flexible');
+    if (state.startDate) document.getElementById('startDateInput').value = state.startDate;
+    if (state.startHour) document.getElementById('startHourInput').value = state.startHour;
+    if (state.endDate)   document.getElementById('endDateInput').value   = state.endDate;
+    if (state.endHour)   document.getElementById('endHourInput').value   = state.endHour;
+    if (state.startTime) document.getElementById('startTime').value = state.startTime;
+    if (state.endTime)   document.getElementById('endTime').value   = state.endTime;
+    calcDates();
+  }
+
   function showBookingLoggedIn() {
     const meta = bookingUser?.user_metadata || {};
     const name = `${meta.first_name || ''} ${meta.last_name || ''}`.trim() || bookingUser.email.split('@')[0];
@@ -1162,7 +1187,7 @@
       const res  = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
         method: 'POST',
         headers: { apikey: SUPABASE_ANON, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password: pass, data: { first_name: first, last_name: last, full_name: `${first} ${last}`, phone, address } })
+        body: JSON.stringify({ email, password: pass, data: { first_name: first, last_name: last, full_name: `${first} ${last}`, phone, address }, redirect_to: window.location.href.split('#')[0] })
       });
       const data = await res.json();
       if (!res.ok) {
@@ -1179,7 +1204,8 @@
         localStorage.setItem('st_session', JSON.stringify({ access_token: data.access_token }));
         showBookingLoggedIn();
       } else {
-        okEl.textContent = 'Konto erstellt! Bitte bestätige deine E-Mail, dann kannst du dich anmelden.';
+        saveBookingState();
+        okEl.innerHTML = '✅ Bestätigungs-E-Mail gesendet!<br><span style="font-size:.82rem;color:var(--gray);">Klick auf den Link in der Mail – du kommst automatisch zurück zu deiner Buchung.</span>';
         okEl.style.display = 'block';
       }
     } catch(e) {
@@ -1187,17 +1213,37 @@
     }
   }
 
-  // Heute als Standardwert setzen
   window.addEventListener('DOMContentLoaded', async () => {
     buildTimeOptions();
     initCalendar();
     loadAvailability();
     await loadTrailer();
+
+    // Auth-Callback aus Supabase-Bestätigungsmail erkennen (#access_token=...)
+    const hash = window.location.hash;
+    if (hash.includes('access_token')) {
+      const params = new URLSearchParams(hash.slice(1));
+      const token  = params.get('access_token');
+      if (token) {
+        localStorage.setItem('st_session', JSON.stringify({ access_token: token }));
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
+    }
+
     await checkExistingSession();
 
-    // Modus aus URL-Parameter setzen (z.B. ?mode=weekend)
-    const urlMode = new URLSearchParams(window.location.search).get('mode');
-    setMode(urlMode === 'weekend' || urlMode === 'week' ? urlMode : 'flexible');
+    // Modus aus URL-Parameter (z.B. ?mode=weekend), nur wenn kein Buchungsstand wartet
+    const pending = localStorage.getItem('st_booking_pending');
+    if (pending && bookingUser) {
+      const state = JSON.parse(pending);
+      localStorage.removeItem('st_booking_pending');
+      restoreBookingState(state);
+      goToStep(2);
+      showBookingLoggedIn();
+    } else {
+      const urlMode = new URLSearchParams(window.location.search).get('mode');
+      setMode(urlMode === 'weekend' || urlMode === 'week' ? urlMode : 'flexible');
+    }
   });
 
   function goToStep(n) {
