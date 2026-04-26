@@ -21,7 +21,20 @@ module.exports = async (req, res) => {
       .from('trailers').select('*').eq('id', trailer_id).single();
 
     if (trailerError || !trailer) return res.status(404).json({ error: 'Anhänger nicht gefunden' });
-    if (!trailer.is_available) return res.status(400).json({ error: 'Anhänger ist gerade nicht verfügbar' });
+
+    // Overlap-Check inkl. 1h Pufferzeit nach jeder bestehenden Buchung
+    const BUFFER_MS = 60 * 60 * 1000;
+    const { data: existing_bookings } = await supabase
+      .from('bookings').select('start_time, end_time')
+      .eq('trailer_id', trailer_id).in('status', ['confirmed', 'active']);
+    const newStart = new Date(start_time).getTime();
+    const newEnd   = new Date(end_time).getTime();
+    const overlap = (existing_bookings || []).some(b => {
+      const bStart = new Date(b.start_time).getTime();
+      const bEnd   = new Date(b.end_time).getTime() + BUFFER_MS;
+      return bStart < newEnd && bEnd > newStart;
+    });
+    if (overlap) return res.status(400).json({ error: 'Anhänger ist in diesem Zeitraum (inkl. Pufferzeit) bereits gebucht' });
 
     function calcBaseAmount(start, end) {
       const hours = (new Date(end) - new Date(start)) / 3600000;

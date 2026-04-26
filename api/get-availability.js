@@ -14,7 +14,13 @@ module.exports = async (req, res) => {
       .in('status', ['confirmed', 'active']);
 
     if (error) throw error;
-    return res.status(200).json({ booked: data || [] });
+    // 1 Stunde Pufferzeit nach jeder Buchung (verhindert Anschlussbuchungen ohne Puffer)
+    const BUFFER_MS = 60 * 60 * 1000;
+    const booked = (data || []).map(b => ({
+      start_time: b.start_time,
+      end_time: new Date(new Date(b.end_time).getTime() + BUFFER_MS).toISOString()
+    }));
+    return res.status(200).json({ booked });
   } catch (err) {
     return res.status(500).json({ booked: [] });
   }
