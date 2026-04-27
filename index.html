@@ -1356,7 +1356,9 @@
       }
       .steps { grid-template-columns: 1fr 1fr; gap: 36px; }
       .steps::before { display: none; }
-      .pricing-grid { grid-template-columns: 1fr 1fr; column-gap: 12px; row-gap: 20px; max-width: none; }
+      /* minmax(0, 1fr) erlaubt Spalten kleiner als ihr min-content zu werden — sonst sprengen lange Texte (mit white-space:nowrap) das Grid */
+      .pricing-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 12px; row-gap: 20px; max-width: none; }
+      .price-card { min-width: 0; }
       .reviews-grid { grid-template-columns: 1fr; max-width: 420px; margin: 0 auto; }
       .contact-grid { grid-template-columns: 1fr; }
       .footer-top { flex-direction: column; }
