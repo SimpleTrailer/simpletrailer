@@ -512,6 +512,11 @@
           if (payload === '[DONE]') continue;
           try {
             const obj = JSON.parse(payload);
+            if (obj.status === 'checking_availability') {
+              if (firstChunk) {
+                botDiv.innerHTML = '<span class="stc-typing"><span></span><span></span><span></span></span> <em style="color:#888;font-size:.85em;">Prüfe Verfügbarkeit…</em>';
+              }
+            }
             if (obj.delta) {
               if (firstChunk) { botDiv.textContent = ''; firstChunk = false; }
               acc += obj.delta;

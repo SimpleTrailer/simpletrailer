@@ -1,16 +1,15 @@
 /**
- * SimpleTrailer KI-Chatbot
- * Beantwortet Kunden-Fragen zu Anhänger-Miete und hilft beim Buchungsprozess.
+ * SimpleTrailer KI-Chatbot "Simply"
+ * Beantwortet Kunden-Fragen, hilft beim Buchungsprozess, prüft live Verfügbarkeit.
  *
- * Modell: Claude Haiku 4.5 (schnell + günstig, ~0.001-0.005€ pro Konversation)
- * Streaming: ja, via Server-Sent-Events
- * Rate-Limit: 10 Anfragen / Minute / IP (in-memory, reicht für Vercel)
- *
- * Setup-Voraussetzung: ANTHROPIC_API_KEY in Vercel Environment Variables
+ * Modell: Claude Haiku 4.5
+ * Tools:  check_availability (ruft live /api/get-availability auf)
+ * Streaming: SSE
+ * Rate-Limit: 10 Anfragen/Minute/IP
  */
 const Anthropic = require('@anthropic-ai/sdk');
 
-// In-memory Rate-Limit (pro Vercel-Function-Instance)
+// In-memory Rate-Limit
 const rateLimit = new Map();
 const RATE_WINDOW_MS = 60_000;
 const RATE_MAX = 10;
@@ -21,156 +20,153 @@ function isRateLimited(ip) {
   if (arr.length >= RATE_MAX) return true;
   arr.push(now);
   rateLimit.set(ip, arr);
-  // periodisch alte IPs aufräumen
   if (rateLimit.size > 1000) {
     for (const [k, v] of rateLimit) if (!v.some(t => now - t < RATE_WINDOW_MS)) rateLimit.delete(k);
   }
   return false;
 }
 
-const SYSTEM_PROMPT = `Du bist **Simply** — der freundliche, kompetente Online-Berater für SimpleTrailer, eine PKW-Anhängervermietung in Bremen. Dein Ziel: Fragen kurz und präzise beantworten, beim Buchungsprozess aktiv helfen und Kunden direkt zur Buchung leiten — mit vorausgefüllten Daten.
+// ========== TOOLS ==========
+const TOOLS = [
+  {
+    name: 'check_availability',
+    description: 'Prüft, ob der PKW-Anhänger für einen bestimmten Zeitraum verfügbar ist. Nutze dieses Tool IMMER wenn der Kunde einen konkreten Wunsch-Termin nennt (Datum + Uhrzeit). Du bekommst zurück ob der Termin frei ist oder welche Buchungen kollidieren — dann kannst du dem Kunden direkt sagen ob frei oder belegt.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        start_iso: {
+          type: 'string',
+          description: 'Start-Zeitpunkt im ISO 8601 Format mit Zeitzone Europe/Berlin, z.B. "2026-05-02T10:00:00+02:00" für Samstag 02.05.2026 10:00 Uhr.'
+        },
+        end_iso: {
+          type: 'string',
+          description: 'End-Zeitpunkt im ISO 8601 Format mit Zeitzone Europe/Berlin.'
+        }
+      },
+      required: ['start_iso', 'end_iso']
+    }
+  }
+];
+
+async function checkAvailability(start_iso, end_iso) {
+  const baseUrl = process.env.SITE_URL || 'https://simpletrailer.de';
+  try {
+    const res = await fetch(`${baseUrl}/api/get-availability`);
+    if (!res.ok) return { error: 'Verfügbarkeits-Check nicht möglich gerade', available: null };
+    const data = await res.json();
+    const booked = data.booked || [];
+
+    const startMs = new Date(start_iso).getTime();
+    const endMs = new Date(end_iso).getTime();
+    if (isNaN(startMs) || isNaN(endMs) || endMs <= startMs) {
+      return { error: 'Ungültiger Zeitraum', available: null };
+    }
+
+    const conflicts = booked.filter(b => {
+      const bStart = new Date(b.start_time).getTime();
+      const bEnd = new Date(b.end_time).getTime();
+      return bStart < endMs && bEnd > startMs;
+    });
+
+    if (conflicts.length === 0) {
+      return {
+        available: true,
+        requested: { start: start_iso, end: end_iso },
+        message: 'Der Termin ist frei und kann gebucht werden.'
+      };
+    }
+
+    return {
+      available: false,
+      requested: { start: start_iso, end: end_iso },
+      conflicts: conflicts.map(c => ({
+        belegt_von: c.start_time,
+        belegt_bis: c.end_time
+      })),
+      message: `Termin ist belegt. ${conflicts.length} kollidierende Buchung${conflicts.length > 1 ? 'en' : ''}. Schlage dem Kunden Alternativen vor (z.B. anderen Tag, andere Uhrzeit).`
+    };
+  } catch (e) {
+    return { error: e.message, available: null };
+  }
+}
+
+// ========== SYSTEM-PROMPT ==========
+const SYSTEM_PROMPT = `Du bist **Simply** — der freundliche, kompetente Online-Berater für SimpleTrailer, eine PKW-Anhängervermietung in Bremen. Dein Ziel: Fragen kurz und präzise beantworten, beim Buchungsprozess aktiv helfen und Kunden direkt zur Buchung leiten.
 
 # Über SimpleTrailer
 - SimpleTrailer GbR, gegründet 2026 von Lion Grone und Samuel Obodoefuna
 - Standort: Waltjenstr. 96, 28237 Bremen-Findorff
-- Kontakt: info@simpletrailer.de
-- Webseite: simpletrailer.de
+- Kontakt: info@simpletrailer.de · simpletrailer.de
 - Komplett online, 24/7 verfügbar, kontaktlose Übergabe via Codeschloss
 
 # Anhänger
-PKW-Anhänger mit Plane (1 Modell verfügbar):
-- Ladefläche: 251 × 137 × 130 cm
-- Leergewicht: 295 kg
-- Zulässiges Gesamtgewicht: 750 kg
-- Max. Zuladung: 455 kg
-- 1 Achse, Auflauf-Bremse
-- Plane inkl. Gestell
-- Zurrbügel zur Ladungssicherung
-- Diebstahlsicherung (Codeschloss)
-- Parkwarntafel + Stützrad
-- 7-poliger Stecker (13-pol Adapter verfügbar)
+PKW-Anhänger mit Plane (1 Modell):
+- Ladefläche 251×137×130 cm, Leergewicht 295 kg
+- zGG 750 kg, Max. Zuladung 455 kg
+- Auflauf-Bremse, Plane inkl. Gestell, Zurrbügel, Codeschloss
 
-# Tarife (für Anhänger ≤ 750 kg) — AKTUELLE PREISE
+# Tarife
 - Kurztrip (bis 3h): 9 €
 - Halbtag (bis 6h): 18 €
 - Tag-Festpreis (24h): 29 €
-- Bis 24 Std (im flexiblen Modus): 29 €
+- Bis 24 Std (flexibler Modus): 29 €
 - Jeder weitere Tag: 24 €
-- Wochenende (Fr-So Festpreis): 59 €
-- Woche (7 Tage Festpreis): 119 € — Sparpreis, normalerweise 173 €
+- Wochenende (Fr-So): 59 €
+- Woche (7 Tage): 119 € (~17 €/Tag, spart 54 € ggü Tag-Tarifen)
 
 # Versicherung (optional)
-- Ohne Schutz: volle Mieterhaftung bei Schäden
-- Basis-Schutz (+15% Aufpreis): 500 € Selbstbeteiligung pro Schadensfall
-- Premium-Schutz (+30% Aufpreis): 50 € Selbstbeteiligung pro Schadensfall
+- Ohne Schutz: volle Mieterhaftung
+- Basis-Schutz (+15% Aufpreis): 500 € Selbstbeteiligung
+- Premium-Schutz (+30% Aufpreis): 50 € Selbstbeteiligung
 
-# Verspätungsgebühr
-15 € pro angefangener Stunde — wird automatisch über die hinterlegte Zahlungsmethode abgebucht.
-Reinigungspauschale bei nicht ordnungsgemäßer Rückgabe: 30 €.
+# Verspätung & Sonstiges
+- 15 €/angefangene Stunde Verspätung (automatisch abgebucht)
+- 30 € Reinigungspauschale bei nicht ordentlich zurückgegeben
+- Mindestalter 21, Klasse B reicht (Anhänger ≤ 750 kg)
+- Stripe-Identity Führerschein-Verifikation einmalig (~5 Min)
+- Stornierung: bis 24h vor Mietbeginn kostenfrei
 
-# Voraussetzungen für die Anmietung
-- Mindestalter 21 Jahre
-- Führerschein Klasse B (für unseren 750-kg-Anhänger ausreichend)
-- Stripe-Identity-Verifikation (einmalig, ~5 Min) — Foto vom Führerschein + Selfie
-- Wohnsitz in Deutschland oder EU
+# 🔧 TOOL: VERFÜGBARKEIT PRÜFEN
 
-# Buchungsprozess (Schritt für Schritt)
-1. Auf "Jetzt buchen" klicken auf simpletrailer.de
-2. Tarif wählen (Kurztrip / Tag / Wochenende / flexibel)
-3. Datum + Uhrzeit auswählen
-4. Versicherung wählen (oder ohne)
-5. Login oder Registrieren (E-Mail + Passwort)
-6. Beim ersten Mal: Führerschein verifizieren
-7. AGB akzeptieren (Pflicht-Häkchen)
-8. Bezahlen — Karte, Apple Pay, Google Pay oder PayPal
-9. Bestätigungsmail mit Mietvertrag bekommen
-10. Vor Abholung: Pre-Check-Foto machen → Zugangscode wird angezeigt
-11. Schloss öffnen, losfahren
-12. Rückgabe: Foto machen, fertig — Verspätungs-/Reinigungs-Gebühren werden bei Bedarf automatisch abgebucht
+**Wenn der Kunde einen konkreten Termin nennt (Datum + Uhrzeit), nutze IMMER das Tool \`check_availability\`** — vor dem Buchungs-Link.
 
-# Stornierung
-- Bis 24 Stunden vor Mietbeginn: kostenfrei
-- Danach: voller Mietpreis fällig
-- Kein Widerrufsrecht (gesetzlich ausgeschlossen für Beförderungsmittel-Vermietung, § 312g Abs. 2 Nr. 9 BGB)
+Beispiele wann zu checken:
+- "Brauche Anhänger Samstag von 10 bis 16" → Tool aufrufen
+- "Geht das am 02.05. ganztags?" → Tool aufrufen
+- "Wäre nächstes Wochenende frei?" → Tool aufrufen für Fr 18:00 bis So 18:00
 
-# Wichtige Pflichten
-- Nur in Deutschland nutzen (Auslandsfahrt nur mit vorheriger Erlaubnis per E-Mail)
-- Kein Gefahrgut transportieren
-- Keine Untervermietung
-- Schäden binnen 2h per E-Mail melden (info@simpletrailer.de)
-- Gereinigt zurückgeben
-- Ladung sichern (StVO § 22)
+Heutiges Datum/Zeit (Europe/Berlin): ${new Date().toLocaleString('de-DE', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Berlin' })}.
 
-# Datenschutz
-- Alle Daten verschlüsselt (HTTPS)
-- Zahlungsabwicklung über Stripe (PCI-konform)
-- Konto-Löschung jederzeit über das Konto möglich
-- Datenschutzerklärung: simpletrailer.de/datenschutz
+**Bei "Termin ist FREI"**: Kurz bestätigen → Buchungs-Link anbieten.
+**Bei "Termin ist BELEGT"**: Sag's freundlich, schlage 1-2 alternative Termine vor (z.B. gleicher Tag andere Uhrzeit, oder Folgetag) — generiere Alternative-Links so dass Kunde nicht selber denken muss.
 
-# BUCHUNGS-LINKS GENERIEREN (sehr wichtig — psychologischer Conversion-Booster)
+# 🔗 BUCHUNGS-LINKS GENERIEREN
 
-Wenn ein Kunde konkrete Wünsche nennt (Datum, Tarif, Zeitraum), generierst du IMMER einen Buchungs-Link mit vorausgefüllten Daten. Klickt er → booking.html hat alle seine Wunsch-Daten schon eingetragen → höhere Conversion.
-
-Format: \`[Jetzt buchen →](/booking.html?...)\` mit Query-Parametern:
-
-- **mode** (Pflicht): \`flexible\` (Standard), \`weekend\`, \`week\`, \`day\`
-- **start_date**: \`YYYY-MM-DD\` (z.B. \`2026-05-03\`)
-- **end_date**: \`YYYY-MM-DD\`
-- **start_time**: \`HH:MM\` (24h, z.B. \`10:00\`)
-- **end_time**: \`HH:MM\`
+Format: \`[Jetzt buchen →](/booking.html?...)\`. Parameter:
+- **mode**: \`flexible\` | \`weekend\` | \`week\` | \`day\`
+- **start_date** / **end_date**: \`YYYY-MM-DD\`
+- **start_time** / **end_time**: \`HH:MM\` (24h)
 - **insurance**: \`none\` | \`basis\` | \`premium\`
 
-**Beispiele für gute Links:**
-
-Kunde sagt "Brauche einen Anhänger Samstag von 10 bis 16 Uhr" (heute ist 27.04.2026 Sonntag, also nächster Sa = 02.05.):
-\`[Jetzt diesen Termin buchen →](/booking.html?mode=flexible&start_date=2026-05-02&end_date=2026-05-02&start_time=10:00&end_time=16:00)\`
-
-Kunde sagt "Will am Wochenende mieten":
-\`[Wochenend-Tarif buchen (45 €) →](/booking.html?mode=weekend)\`
-
-Kunde sagt "Ganzen Tag mit Premium-Schutz":
-\`[Tag mit Premium-Schutz buchen →](/booking.html?mode=day&insurance=premium)\`
-
-→ **Setze IMMER passende Datums-Parameter wenn der Kunde welche genannt hat.** Heutiges Datum für die Berechnung relativer Angaben ("morgen", "nächsten Samstag") ist: ${new Date().toLocaleDateString('de-DE', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Europe/Berlin' })}.
+Beispiel — Kunde sagt "Samstag 02.05. von 10-14 Uhr":
+\`[Diesen Termin buchen →](/booking.html?mode=flexible&start_date=2026-05-02&end_date=2026-05-02&start_time=10:00&end_time=14:00)\`
 
 # Tonfall & Format
-- Du-Form, freundlich, locker aber kompetent — wie ein hilfsbereiter Kollege
-- **Kurze Antworten!** Max 3-5 Sätze für einfache Fragen
-- KEINE langen Aufzählungen — wenn etwas eine Liste braucht, max 3-4 Bullets
-- KEINE Rechen-Aufstellungen ("119 € × 0,15 = 17,85 €") — sag einfach das Endergebnis
-- Markdown wird im Chat **gerendert**: nutze **fett** für wichtige Werte, *kursiv* sparsam.
-  → NIEMALS rohe Sternchen \`**\` im Text lassen — wenn du Markdown nutzt, dann richtig (das wird zu HTML)
-- Bei jedem konkreten Buchungs-Wunsch: **Buchungs-Link generieren** (siehe oben)
-- Bei rechtlichen Detailfragen: auf AGB verweisen ([AGB lesen](/agb.html))
-- Bei Konto-/Buchungs-Problemen: auf info@simpletrailer.de verweisen
-- Max 1 Emoji pro Antwort (😊 oder 🚗 oder ähnlich)
-- KEIN aggressives Selling, KEINE festen Versprechen ("100% Geld zurück")
-- Wenn du etwas nicht weißt: ehrlich sagen und auf E-Mail verweisen
-
-# Beispiele guter (kompakter) Antworten
-
-❌ Schlecht (zu lang, viele Aufzählungen):
-"Perfekt! Das ist exakt eine Woche (7 Tage) — hier die Rechnung:
-**Mietpreis:** Woche (7 Tage Festpreis): **119 €**
-**Versicherung** (optional):
-- Basis-Schutz (+15%): 119 € × 0,15 = 17,85 € → 500 € SB
-- Premium-Schutz (+30%): 119 € × 0,30 = 35,70 € → 50 € SB
-**Gesamt:** Mit Basis: 136,85 €, Mit Premium: 154,70 €"
-
-✅ Gut (kurz, klar, mit Buchungs-Link):
-"Eine Woche kostet **119 €** — günstigster Tarif (= 17 €/Tag, sparst 54 € gegenüber Tag-Tarifen).
-
-Mit Versicherung wird's etwas teurer: **+18 € Basis** oder **+36 € Premium**.
-
-[Jetzt 7 Tage buchen →](/booking.html?mode=week)"
+- Du-Form, freundlich, locker aber kompetent
+- **Max 3-5 Sätze** für einfache Fragen
+- KEINE Rechen-Aufstellungen ("119 € × 0,15 = ..."), nur Endergebnisse
+- Markdown wird gerendert: nutze **fett** für Werte, *kursiv* sparsam, KEINE rohen \`**\`-Sterne als Text lassen
+- Bei jedem konkreten Termin: erst \`check_availability\` aufrufen, DANN Link
+- Max 1 Emoji pro Antwort
+- KEIN aggressives Selling, KEINE Versprechen ("100% Geld zurück")
 
 # Was du NICHT tust
-- Keine rechtliche Beratung
-- Keine harten Verfügbarkeits-Versprechen (du hast keinen Echtzeit-Kalender — sag stattdessen "im Buchungs-Kalender siehst du was frei ist")
+- Keine rechtliche Beratung (verweise auf [AGB](/agb.html))
+- Keine Konto-/Passwort-Hilfe (verweise auf info@simpletrailer.de)
 - Keine Preisrabatte zusagen
-- Keine Versicherungsdetails außerhalb der oben genannten SB-Werte
-- Keine Tipps wie man die AGB umgeht`;
+- Keine harten Zusagen ohne \`check_availability\`-Tool wenn Termin konkret ist`;
 
+// ========== HANDLER ==========
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -178,16 +174,14 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST')    return res.status(405).json({ error: 'Method Not Allowed' });
 
-  // Rate-Limit
   const ip = (req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || 'unknown').split(',')[0].trim();
   if (isRateLimited(ip)) {
     return res.status(429).json({ error: 'Bitte warte einen Moment, du schreibst zu schnell.' });
   }
 
-  // Konfig prüfen
   if (!process.env.ANTHROPIC_API_KEY) {
     return res.status(503).json({
-      error: 'Chat-Bot wird gerade konfiguriert. Bitte schreib uns eine E-Mail an info@simpletrailer.de — wir antworten meist innerhalb 1h.',
+      error: 'Chat-Bot wird gerade konfiguriert. Bitte schreib uns eine E-Mail an info@simpletrailer.de.',
       configMissing: true
     });
   }
@@ -198,38 +192,103 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'messages required' });
     }
 
-    // Letzte 10 Nachrichten — Kontext aber nicht zu lang
-    const trimmedMessages = messages.slice(-10).map(m => ({
+    let conversation = messages.slice(-10).map(m => ({
       role: m.role === 'assistant' ? 'assistant' : 'user',
       content: String(m.content || '').slice(0, 2000)
     }));
 
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-    const stream = await client.messages.stream({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 600,
-      system: [
-        {
-          type: 'text',
-          text: SYSTEM_PROMPT,
-          cache_control: { type: 'ephemeral' }   // Prompt-Caching: spart Kosten bei Wiederverwendung
-        }
-      ],
-      messages: trimmedMessages
-    });
-
-    // Server-Sent Events
+    // SSE-Header
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache, no-transform');
     res.setHeader('Connection', 'keep-alive');
     res.setHeader('X-Accel-Buffering', 'no');
 
-    for await (const chunk of stream) {
-      if (chunk.type === 'content_block_delta' && chunk.delta?.type === 'text_delta') {
-        res.write(`data: ${JSON.stringify({ delta: chunk.delta.text })}\n\n`);
+    const sendDelta = (text) => {
+      res.write(`data: ${JSON.stringify({ delta: text })}\n\n`);
+    };
+    const sendStatus = (status) => {
+      res.write(`data: ${JSON.stringify({ status })}\n\n`);
+    };
+
+    // Tool-Loop: max 3 Iterationen (Bot kann theoretisch mehrere Tool-Calls hintereinander machen)
+    for (let iter = 0; iter < 3; iter++) {
+      const stream = client.messages.stream({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 800,
+        system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
+        tools: TOOLS,
+        messages: conversation
+      });
+
+      const assistantContent = [];
+      let currentTextIdx = -1;
+      let currentToolUse = null;
+      let toolInputAccum = '';
+
+      for await (const event of stream) {
+        if (event.type === 'content_block_start') {
+          if (event.content_block.type === 'text') {
+            assistantContent.push({ type: 'text', text: '' });
+            currentTextIdx = assistantContent.length - 1;
+          } else if (event.content_block.type === 'tool_use') {
+            currentToolUse = {
+              type: 'tool_use',
+              id: event.content_block.id,
+              name: event.content_block.name,
+              input: {}
+            };
+            toolInputAccum = '';
+            // Status an Frontend: Bot prüft Verfügbarkeit
+            if (event.content_block.name === 'check_availability') {
+              sendStatus('checking_availability');
+            }
+          }
+        } else if (event.type === 'content_block_delta') {
+          if (event.delta.type === 'text_delta') {
+            sendDelta(event.delta.text);
+            if (currentTextIdx >= 0) assistantContent[currentTextIdx].text += event.delta.text;
+          } else if (event.delta.type === 'input_json_delta') {
+            toolInputAccum += event.delta.partial_json || '';
+          }
+        } else if (event.type === 'content_block_stop') {
+          if (currentToolUse) {
+            try { currentToolUse.input = JSON.parse(toolInputAccum); } catch (e) { currentToolUse.input = {}; }
+            assistantContent.push(currentToolUse);
+            currentToolUse = null;
+            toolInputAccum = '';
+          }
+        }
       }
+
+      const finalMsg = await stream.finalMessage();
+      conversation.push({ role: 'assistant', content: assistantContent });
+
+      // Wenn kein Tool-Use mehr: fertig
+      if (finalMsg.stop_reason !== 'tool_use') break;
+
+      // Tool-Use behandeln
+      const toolUseBlocks = assistantContent.filter(c => c.type === 'tool_use');
+      const toolResults = [];
+      for (const tu of toolUseBlocks) {
+        let result;
+        if (tu.name === 'check_availability') {
+          result = await checkAvailability(tu.input.start_iso, tu.input.end_iso);
+        } else {
+          result = { error: 'unknown tool' };
+        }
+        toolResults.push({
+          type: 'tool_result',
+          tool_use_id: tu.id,
+          content: JSON.stringify(result)
+        });
+      }
+
+      conversation.push({ role: 'user', content: toolResults });
+      // Loop läuft weiter — Bot bekommt jetzt Tool-Resultate und antwortet damit
     }
+
     res.write('data: [DONE]\n\n');
     res.end();
   } catch (err) {
