@@ -110,6 +110,7 @@ module.exports = async (req, res) => {
 
       try { await resend.emails.send({
         from: 'SimpleTrailer <buchung@simpletrailer.de>',
+        reply_to: 'info@simpletrailer.de',
         to: meta.customer_email,
         subject: `✅ Buchung bestätigt #${booking.id.slice(0, 8).toUpperCase()} – SimpleTrailer`,
         html: `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0D0D0D;font-family:system-ui,sans-serif;color:#fff;">

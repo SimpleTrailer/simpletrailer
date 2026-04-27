@@ -39,6 +39,7 @@ module.exports = async (req, res) => {
       try {
         await resend.emails.send({
           from: 'SimpleTrailer <buchung@simpletrailer.de>',
+          reply_to: 'info@simpletrailer.de',
           to: b.customer_email,
           subject: `⏰ Erinnerung: Anhänger-Rückgabe in ca. 1 Stunde – SimpleTrailer`,
           html: `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0D0D0D;font-family:system-ui,sans-serif;color:#fff;">

@@ -86,6 +86,7 @@ module.exports = async (req, res) => {
 
     await resend.emails.send({
       from: 'SimpleTrailer <buchung@simpletrailer.de>',
+      reply_to: 'info@simpletrailer.de',
       to: booking.customer_email,
       subject: `Rückgabe bestätigt #${bookingRef} – SimpleTrailer`,
       html: `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0D0D0D;font-family:system-ui,sans-serif;color:#fff;">
