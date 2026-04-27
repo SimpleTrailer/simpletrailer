@@ -5,6 +5,42 @@
 [functions]
   node_bundler = "esbuild"
 
+# /api/* Pfade auf Netlify Functions umleiten
+# (alte Vercel-URLs bleiben so erreichbar — Stripe-Webhook etc. brauchen keine Anpassung)
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+  force = true
+
+# Saubere URLs (Vercel hatte das in vercel.json)
+[[redirects]]
+  from = "/admin"
+  to = "/admin.html"
+  status = 200
+[[redirects]]
+  from = "/booking"
+  to = "/booking.html"
+  status = 200
+[[redirects]]
+  from = "/return"
+  to = "/return.html"
+  status = 200
+[[redirects]]
+  from = "/account"
+  to = "/account.html"
+  status = 200
+[[redirects]]
+  from = "/precheck"
+  to = "/precheck.html"
+  status = 200
+
+# Apple-Universal-Links: muss als application/json ausgeliefert werden
+[[headers]]
+  for = "/.well-known/apple-app-site-association"
+  [headers.values]
+    Content-Type = "application/json"
+
 [[headers]]
   for = "/*"
   [headers.values]

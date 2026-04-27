@@ -3,14 +3,22 @@ const { createClient } = require('@supabase/supabase-js');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
-export const config = { api: { bodyParser: false } };
+// Vercel-Hinweis: bodyParser muss disabled sein. Wird via vercel.json gesetzt.
+// Netlify-Adapter setzt req.body als raw string/buffer (siehe netlify/functions/_vercel-adapter.js).
+module.exports.config = { api: { bodyParser: false } };
 
-const getRawBody = (req) => new Promise((resolve, reject) => {
-  let data = '';
-  req.on('data', chunk => { data += chunk; });
-  req.on('end', () => resolve(Buffer.from(data)));
-  req.on('error', reject);
-});
+const getRawBody = (req) => {
+  // Wenn req.body schon als string/buffer vorliegt (Netlify-Adapter): direkt nehmen
+  if (typeof req.body === 'string') return Promise.resolve(Buffer.from(req.body));
+  if (Buffer.isBuffer(req.body))     return Promise.resolve(req.body);
+  // Sonst Stream-Pattern (Vercel mit disabled bodyParser)
+  return new Promise((resolve, reject) => {
+    let data = '';
+    req.on('data', chunk => { data += chunk; });
+    req.on('end', () => resolve(Buffer.from(data)));
+    req.on('error', reject);
+  });
+};
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).end();
