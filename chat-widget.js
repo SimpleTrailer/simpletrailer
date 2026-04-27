@@ -74,14 +74,41 @@
     from { opacity: 0; transform: translateY(16px) scale(0.98); }
     to { opacity: 1; transform: translateY(0) scale(1); }
   }
-  @media (max-width: 480px) {
+  /* Mobile: Bottom-Sheet (kein Vollbild) — Webseite oben sichtbar */
+  @media (max-width: 600px) {
     .stc-window {
-      bottom: 0; right: 0; left: 0; top: 0;
-      width: 100%; height: 100%; max-width: none; max-height: none;
-      border-radius: 0; border: none;
+      bottom: 0; right: 0; left: 0; top: auto;
+      width: 100%; max-width: none;
+      height: 80dvh;
+      max-height: 80dvh;
+      border-radius: 22px 22px 0 0;
+      border: none;
+      border-top: 1px solid #2A2A2C;
+      box-shadow: 0 -12px 40px rgba(0,0,0,0.6);
     }
-    .stc-fab { bottom: 16px; right: 16px; }
+    .stc-fab { bottom: 16px; right: 16px; width: 58px; height: 58px; }
+    .stc-fab svg { width: 28px; height: 28px; }
+    /* Scroll-Indicator als Drag-Handle oben */
+    .stc-window::before {
+      content: ''; position: absolute; top: 8px; left: 50%;
+      transform: translateX(-50%);
+      width: 36px; height: 4px; border-radius: 2px;
+      background: rgba(255,255,255,0.25);
+      z-index: 10; pointer-events: none;
+    }
+    .stc-header { padding-top: 22px; }
   }
+
+  /* Backdrop hinter dem Window auf Mobile (klickbar zum Schliessen) */
+  .stc-backdrop {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(2px);
+    z-index: 99997;
+  }
+  .stc-backdrop.open { display: block; }
+  @media (min-width: 601px) { .stc-backdrop { display: none !important; } }
 
   .stc-header {
     display: flex; align-items: center; gap: 12px;
@@ -270,6 +297,7 @@
   // ===== DOM ========================================================
   const root = document.createElement('div');
   root.innerHTML = `
+    <div class="stc-backdrop" id="stcBackdrop"></div>
     <button class="stc-fab" id="stcFab" aria-label="Chat öffnen" title="Frag Simply – dein Anhänger-Assistent">
       <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 0 1-3.6-.66L3 21l1.39-4.45A7.93 7.93 0 0 1 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -302,6 +330,7 @@
 
   const fab        = document.getElementById('stcFab');
   const win        = document.getElementById('stcWin');
+  const backdrop   = document.getElementById('stcBackdrop');
   const closeBtn   = document.getElementById('stcClose');
   const messagesEl = document.getElementById('stcMessages');
   const quickEl    = document.getElementById('stcQuick');
@@ -496,21 +525,61 @@
   }
 
   // ===== Wiring =====================================================
-  fab.addEventListener('click', () => {
+  function openChat() {
     win.classList.add('open');
+    backdrop.classList.add('open');
     fab.classList.add('hidden');
-    inputEl.focus();
-  });
-  closeBtn.addEventListener('click', () => {
+    // Auf Mobile: NICHT direkt focussieren — sonst springt Tastatur sofort hoch.
+    // Stattdessen wartet User auf Tap aufs Eingabefeld.
+    if (window.innerWidth >= 601) inputEl.focus();
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+  function closeChat() {
     win.classList.remove('open');
+    backdrop.classList.remove('open');
     fab.classList.remove('hidden');
-  });
+    inputEl.blur();
+  }
+
+  fab.addEventListener('click', openChat);
+  closeBtn.addEventListener('click', closeChat);
+  backdrop.addEventListener('click', closeChat);
+
   sendBtn.addEventListener('click', () => sendMessage(inputEl.value));
   inputEl.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       sendMessage(inputEl.value);
     }
+  });
+
+  // ===== Mobile Keyboard Handling ===================================
+  // iOS/Android Tastatur deckt sonst das Input-Feld zu — mit Visual Viewport
+  // skaliert sich das Chat-Window dynamisch wenn die Tastatur kommt.
+  if (window.visualViewport) {
+    const onViewportChange = () => {
+      if (!win.classList.contains('open')) return;
+      if (window.innerWidth >= 601) return; // nur Mobile
+      // Setze die Window-Hoehe auf die sichtbare Viewport-Hoehe minus etwas Abstand oben
+      const vh = window.visualViewport.height;
+      const targetHeight = Math.min(vh - 20, window.innerHeight * 0.85);
+      win.style.height = targetHeight + 'px';
+      win.style.maxHeight = targetHeight + 'px';
+      // Scroll Messages zum Ende, damit die letzte Antwort sichtbar bleibt
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    };
+    window.visualViewport.addEventListener('resize', onViewportChange);
+    window.visualViewport.addEventListener('scroll', onViewportChange);
+  }
+
+  // Beim Fokussieren des Inputs: nach kurzer Verzoegerung Messages scrollen
+  // (gibt der Tastatur Zeit zum Aufgehen)
+  inputEl.addEventListener('focus', () => {
+    setTimeout(() => {
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+      // Auf manchen Browsern: Input in den sichtbaren Bereich scrollen
+      try { inputEl.scrollIntoView({ block: 'end', behavior: 'smooth' }); } catch (e) {}
+    }, 350);
   });
 
   // Initial-Render
