@@ -143,6 +143,21 @@
     .trust-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 6px; letter-spacing: -.01em; }
     .trust-card p { font-size: .82rem; color: var(--gray); line-height: 1.5; }
 
+    /* FAQ-CTA "Frag Simply" am Ende der FAQ */
+    .faq-cta {
+      margin-top: 40px;
+      padding: 32px 28px;
+      background: linear-gradient(135deg, rgba(232,93,0,0.08), rgba(255,140,66,0.04));
+      border: 1.5px solid rgba(232,93,0,0.3);
+      border-radius: 18px;
+      text-align: center;
+    }
+    .faq-cta-icon { font-size: 2.2rem; margin-bottom: 8px; }
+    .faq-cta-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 6px; letter-spacing: -.01em; }
+    .faq-cta-sub { color: var(--gray); font-size: .92rem; line-height: 1.55; margin-bottom: 18px; max-width: 480px; margin-left: auto; margin-right: auto; }
+    .faq-cta-sub strong { color: #FF8C42; }
+    .faq-cta-btn { display: inline-flex !important; width: auto !important; padding: 12px 28px !important; font-size: .92rem !important; }
+
     .faq-item.reveal:nth-child(2)  { transition-delay: 0.08s; }
     .faq-item.reveal:nth-child(3)  { transition-delay: 0.16s; }
     .faq-item.reveal:nth-child(4)  { transition-delay: 0.24s; }
@@ -1932,6 +1947,17 @@
       </div>
 
     </div>
+
+    <!-- Hinweis: weitere Fragen → Simply Chatbot -->
+    <div class="reveal faq-cta">
+      <div class="faq-cta-icon">💬</div>
+      <p class="faq-cta-title">Deine Frage ist nicht dabei?</p>
+      <p class="faq-cta-sub">Frag <strong>Simply</strong> – unseren KI-Assistenten. Er kennt alle Details zu Preisen, Buchung, Versicherung und kann dir sofort weiterhelfen.</p>
+      <button type="button" class="btn btn-orange faq-cta-btn" onclick="openSimplyChat()">
+        Simply jetzt fragen →
+      </button>
+    </div>
+
   </div>
 </section>
 
@@ -2308,6 +2334,14 @@
       openTrailerModal('flexible');
     }
   }
+
+  /* ── Simply Chatbot extern oeffnen (FAQ-CTA, Footer, etc.) ─── */
+  function openSimplyChat() {
+    const fab = document.getElementById('stcFab');
+    if (fab) fab.click();
+    else setTimeout(openSimplyChat, 300); // Widget noch nicht geladen
+  }
+  window.openSimplyChat = openSimplyChat;
 
   /* ── PWA SERVICE WORKER ─────────────────────── */
   if ('serviceWorker' in navigator) {
