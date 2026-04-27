@@ -74,41 +74,58 @@
     from { opacity: 0; transform: translateY(16px) scale(0.98); }
     to { opacity: 1; transform: translateY(0) scale(1); }
   }
-  /* Mobile: Bottom-Sheet (kein Vollbild) — Webseite oben sichtbar */
+  /* Scroll-Chaining verhindern — wenn man im Chat scrollt, scrollt NICHT die Webseite mit */
+  .stc-window, .stc-messages {
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Mobile: Bottom-Sheet (kein Vollbild) — Webseite oben weiterhin sichtbar */
   @media (max-width: 600px) {
     .stc-window {
       bottom: 0; right: 0; left: 0; top: auto;
       width: 100%; max-width: none;
-      height: 80dvh;
-      max-height: 80dvh;
-      border-radius: 22px 22px 0 0;
+      height: 88dvh;
+      max-height: 88dvh;
+      border-radius: 24px 24px 0 0;
       border: none;
-      border-top: 1px solid #2A2A2C;
-      box-shadow: 0 -12px 40px rgba(0,0,0,0.6);
+      border-top: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 -16px 50px rgba(0,0,0,0.7), 0 -1px 0 rgba(255,255,255,0.05);
+      animation: stc-slideUpMobile 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes stc-slideUpMobile {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
     }
     .stc-fab { bottom: 16px; right: 16px; width: 58px; height: 58px; }
     .stc-fab svg { width: 28px; height: 28px; }
-    /* Scroll-Indicator als Drag-Handle oben */
+    /* Drag-Handle oben — prominenter als Popup-Hinweis */
     .stc-window::before {
-      content: ''; position: absolute; top: 8px; left: 50%;
+      content: ''; position: absolute; top: 10px; left: 50%;
       transform: translateX(-50%);
-      width: 36px; height: 4px; border-radius: 2px;
-      background: rgba(255,255,255,0.25);
+      width: 44px; height: 5px; border-radius: 3px;
+      background: rgba(255,255,255,0.35);
       z-index: 10; pointer-events: none;
     }
-    .stc-header { padding-top: 22px; }
+    .stc-header { padding-top: 26px; }
   }
 
   /* Backdrop hinter dem Window auf Mobile (klickbar zum Schliessen) */
   .stc-backdrop {
     display: none;
     position: fixed; inset: 0;
-    background: rgba(0,0,0,0.4);
-    backdrop-filter: blur(2px);
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
     z-index: 99997;
+    opacity: 0;
+    transition: opacity 0.25s ease;
   }
-  .stc-backdrop.open { display: block; }
+  .stc-backdrop.open { display: block; opacity: 1; }
   @media (min-width: 601px) { .stc-backdrop { display: none !important; } }
+
+  /* Wenn Chat offen ist auf Mobile: Body nicht scrollbar */
+  body.stc-locked { overflow: hidden !important; position: fixed !important; width: 100% !important; }
 
   .stc-header {
     display: flex; align-items: center; gap: 12px;
@@ -524,21 +541,41 @@
     }
   }
 
+  // ===== Body-Scroll-Lock (iOS-safe) ================================
+  // iOS braucht position:fixed um wirklich zu locken, plus saved-scroll-restore
+  let savedScrollY = 0;
+  function lockBodyScroll() {
+    if (window.innerWidth >= 601) return; // nur Mobile
+    savedScrollY = window.scrollY || window.pageYOffset || 0;
+    document.body.style.top = `-${savedScrollY}px`;
+    document.body.classList.add('stc-locked');
+  }
+  function unlockBodyScroll() {
+    if (!document.body.classList.contains('stc-locked')) return;
+    document.body.classList.remove('stc-locked');
+    document.body.style.top = '';
+    window.scrollTo(0, savedScrollY);
+  }
+
   // ===== Wiring =====================================================
   function openChat() {
     win.classList.add('open');
     backdrop.classList.add('open');
     fab.classList.add('hidden');
+    lockBodyScroll();
     // Auf Mobile: NICHT direkt focussieren — sonst springt Tastatur sofort hoch.
-    // Stattdessen wartet User auf Tap aufs Eingabefeld.
     if (window.innerWidth >= 601) inputEl.focus();
-    messagesEl.scrollTop = messagesEl.scrollHeight;
+    setTimeout(() => { messagesEl.scrollTop = messagesEl.scrollHeight; }, 50);
   }
   function closeChat() {
     win.classList.remove('open');
     backdrop.classList.remove('open');
     fab.classList.remove('hidden');
     inputEl.blur();
+    unlockBodyScroll();
+    // Wenn zwischenzeitlich Tastatur die Window-Höhe gesetzt hat: zuruecksetzen
+    win.style.height = '';
+    win.style.maxHeight = '';
   }
 
   fab.addEventListener('click', openChat);
