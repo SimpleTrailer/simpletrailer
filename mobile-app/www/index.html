@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0D0D0D" />
+  <title>SimpleTrailer</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%;
+      background: #0D0D0D;
+      color: #fff;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overflow: hidden;
+    }
+    .splash {
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 24px;
+      background: #0D0D0D;
+    }
+    .logo {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+    .logo span:first-child { color: #fff; }
+    .logo span:last-child  { color: #E85D00; }
+    .spinner {
+      width: 28px; height: 28px;
+      border: 3px solid rgba(255,255,255,0.18);
+      border-top-color: #E85D00;
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .err {
+      max-width: 320px;
+      text-align: center;
+      font-size: 0.92rem;
+      color: #ff8888;
+      padding: 16px;
+      display: none;
+    }
+    .retry-btn {
+      display: none;
+      margin-top: 12px;
+      padding: 12px 24px;
+      background: #E85D00;
+      color: #fff;
+      border: 0;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="splash" id="splash">
+    <div class="logo"><span>Simple</span><span>Trailer</span></div>
+    <div class="spinner" id="spinner"></div>
+    <div class="err" id="err"></div>
+    <button class="retry-btn" id="retry" onclick="loadApp()">Erneut versuchen</button>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="native-bridge.js"></script>
+  <script>
+    function loadApp() {
+      const cfg = window.SIMPLETRAILER_APP_CONFIG || {};
+      const url = cfg.START_URL || 'https://simpletrailer.de/';
+
+      document.getElementById('err').style.display = 'none';
+      document.getElementById('retry').style.display = 'none';
+      document.getElementById('spinner').style.display = 'block';
+
+      // Native-Bridge initialisieren (registriert Plugins, Listener, etc.)
+      try {
+        if (window.SimpleTrailerBridge && typeof window.SimpleTrailerBridge.init === 'function') {
+          window.SimpleTrailerBridge.init();
+        }
+      } catch (e) {
+        console.warn('Bridge init failed:', e);
+      }
+
+      // Reachability-Check, dann redirect
+      const timeout = setTimeout(() => showError('Verbindung zu simpletrailer.de zu langsam.'), 10000);
+      fetch(url, { method: 'HEAD', mode: 'no-cors' })
+        .then(() => {
+          clearTimeout(timeout);
+          window.location.replace(url);
+        })
+        .catch(() => {
+          clearTimeout(timeout);
+          showError('Keine Verbindung. Prüfe deine Internetverbindung.');
+        });
+    }
+
+    function showError(msg) {
+      document.getElementById('spinner').style.display = 'none';
+      const errEl = document.getElementById('err');
+      errEl.textContent = msg;
+      errEl.style.display = 'block';
+      document.getElementById('retry').style.display = 'inline-block';
+    }
+
+    document.addEventListener('DOMContentLoaded', loadApp);
+  </script>
+</body>
+</html>

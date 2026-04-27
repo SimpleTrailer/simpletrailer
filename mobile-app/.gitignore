@@ -1,0 +1,44 @@
+# Capacitor / Node
+node_modules/
+.DS_Store
+
+# iOS
+ios/App/Pods/
+ios/App/Podfile.lock
+ios/App/App.xcworkspace/xcuserdata/
+ios/App/App.xcodeproj/xcuserdata/
+ios/App/App.xcodeproj/project.xcworkspace/xcuserdata/
+ios/App/output/
+
+# Android
+android/.gradle/
+android/.idea/
+android/local.properties
+android/app/build/
+android/build/
+android/captures/
+android/app/release/
+android/app/debug/
+android/keystore.jks
+android/release.keystore
+android/google-services.json
+*.iml
+
+# Build outputs
+*.apk
+*.aab
+*.ipa
+
+# IDE
+.vscode/
+.idea/
+
+# Generated assets backup
+resources/*.png
+
+# Sicherheit: Niemals committen
+*.keystore
+key.properties
+*.p12
+*.mobileprovision
+GoogleService-Info.plist

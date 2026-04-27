@@ -1,0 +1,30 @@
+{
+  "name": "simpletrailer-mobile",
+  "version": "1.0.0",
+  "description": "SimpleTrailer Mobile App – iOS + Android (Capacitor wrapper around simpletrailer.de)",
+  "private": true,
+  "scripts": {
+    "sync": "cap sync",
+    "android:open": "cap open android",
+    "android:run": "cap run android",
+    "android:build-debug": "cd android && gradlew assembleDebug",
+    "ios:open": "cap open ios",
+    "ios:run": "cap run ios",
+    "icons": "capacitor-assets generate"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.2.0",
+    "@capacitor/app": "^6.0.2",
+    "@capacitor/camera": "^6.1.2",
+    "@capacitor/core": "^6.2.0",
+    "@capacitor/geolocation": "^6.1.0",
+    "@capacitor/ios": "^6.2.0",
+    "@capacitor/push-notifications": "^6.0.4",
+    "@capacitor/splash-screen": "^6.0.3",
+    "@capacitor/status-bar": "^6.0.2"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^6.2.0"
+  }
+}
