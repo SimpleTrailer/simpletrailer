@@ -70,22 +70,35 @@ module.exports = async (req, res) => {
       const insType   = meta.insurance_type   || 'none';
       const insAmount = parseFloat(meta.insurance_amount || '0') || 0;
 
-      const { data: booking, error: bookingError } = await supabase
-        .from('bookings').insert({
-          trailer_id: meta.trailer_id, customer_name: meta.customer_name,
-          customer_email: meta.customer_email, customer_phone: meta.customer_phone || null,
-          start_time: meta.start_time, end_time: meta.end_time,
-          pricing_type: meta.pricing_type, total_amount: amount,
-          insurance_type: insType, insurance_amount: insAmount,
-          customer_address: meta.customer_address || null,
-          user_id: meta.user_id || null,
-          stripe_payment_intent_id: payment_intent_id,
-          stripe_customer_id: pi.customer, stripe_payment_method_id: pi.payment_method,
-          status: 'confirmed', access_code, return_token, precheck_token,
-          agb_version:     meta.agb_version || null,
-          agb_accepted_at: meta.agb_accepted_at || null,
-          agb_accepted_ip: meta.agb_accepted_ip || null
-        }).select('*, trailers(name)').single();
+      const baseInsert = {
+        trailer_id: meta.trailer_id, customer_name: meta.customer_name,
+        customer_email: meta.customer_email, customer_phone: meta.customer_phone || null,
+        start_time: meta.start_time, end_time: meta.end_time,
+        pricing_type: meta.pricing_type, total_amount: amount,
+        insurance_type: insType, insurance_amount: insAmount,
+        customer_address: meta.customer_address || null,
+        user_id: meta.user_id || null,
+        stripe_payment_intent_id: payment_intent_id,
+        stripe_customer_id: pi.customer, stripe_payment_method_id: pi.payment_method,
+        status: 'confirmed', access_code, return_token, precheck_token
+      };
+      // AGB-Felder optional anhaengen — wenn die DB-Spalten noch nicht existieren,
+      // fallen wir auf das Insert OHNE AGB-Felder zurueck (kein Buchungs-Abbruch).
+      const insertWithAgb = { ...baseInsert,
+        agb_version:     meta.agb_version || null,
+        agb_accepted_at: meta.agb_accepted_at || null,
+        agb_accepted_ip: meta.agb_accepted_ip || null
+      };
+
+      let { data: booking, error: bookingError } = await supabase
+        .from('bookings').insert(insertWithAgb).select('*, trailers(name)').single();
+
+      if (bookingError && /column .* does not exist/i.test(bookingError.message || '')) {
+        // Fallback: AGB-Spalten fehlen in der DB -> ohne sie speichern
+        console.warn('AGB-Spalten fehlen in DB, fallback auf Basis-Insert. Bitte ALTER TABLE in Supabase ausfuehren.');
+        ({ data: booking, error: bookingError } = await supabase
+          .from('bookings').insert(baseInsert).select('*, trailers(name)').single());
+      }
 
       if (bookingError) throw bookingError;
 
