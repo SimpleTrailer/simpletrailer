@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "SimpleTrailer – Anhängervermietung Bremen",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.1",
     "@supabase/supabase-js": "^2.39.0",
     "resend": "^2.1.0",
     "stripe": "^14.14.0"

@@ -143,27 +143,6 @@
     .trust-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 6px; letter-spacing: -.01em; }
     .trust-card p { font-size: .82rem; color: var(--gray); line-height: 1.5; }
 
-    /* FLOATING HELP BUTTON */
-    .help-fab {
-      position: fixed; bottom: 20px; right: 20px;
-      width: 56px; height: 56px;
-      background: var(--orange);
-      color: #fff;
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.5rem;
-      text-decoration: none;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.3), 0 0 0 0 rgba(232,93,0,0.4);
-      z-index: 999;
-      transition: transform .2s, box-shadow .2s;
-      animation: helpPulse 2.5s ease-in-out infinite;
-    }
-    .help-fab:hover { transform: scale(1.08); box-shadow: 0 6px 24px rgba(0,0,0,0.4); }
-    @keyframes helpPulse {
-      0%, 100% { box-shadow: 0 4px 16px rgba(0,0,0,0.3), 0 0 0 0 rgba(232,93,0,0); }
-      50%      { box-shadow: 0 4px 16px rgba(0,0,0,0.3), 0 0 0 10px rgba(232,93,0,0); }
-    }
-
     .faq-item.reveal:nth-child(2)  { transition-delay: 0.08s; }
     .faq-item.reveal:nth-child(3)  { transition-delay: 0.16s; }
     .faq-item.reveal:nth-child(4)  { transition-delay: 0.24s; }
@@ -2119,10 +2098,8 @@
   </div>
 </div>
 
-<!-- Floating Help Button -->
-<a href="mailto:info@simpletrailer.de?subject=Frage%20zu%20SimpleTrailer" class="help-fab" title="Frage? Schreib uns" aria-label="Hilfe per E-Mail">
-  ?
-</a>
+<!-- KI Chat-Widget -->
+<script src="/chat-widget.js" defer></script>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
