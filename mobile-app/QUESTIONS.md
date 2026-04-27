@@ -11,6 +11,25 @@ Stand: 2026-04-27 — sortiert nach was DU machen musst vs. was wir später zusa
 
 ---
 
+## ⚠️ EIN konkreter Befehl von dir — alles andere ist erledigt
+
+**SQL-UPDATE in Supabase Console** (1 Minute):
+
+1. Geh auf https://supabase.com/dashboard
+2. Wähle dein SimpleTrailer-Projekt
+3. Links auf "SQL Editor"
+4. Folgendes Statement reinkopieren:
+
+```sql
+UPDATE trailers SET late_fee_per_hour = 15.00;
+```
+
+5. "Run" klicken — fertig.
+
+**Warum nötig:** Das DB-Schema-Default ist auf 15 € umgestellt, aber das wirkt nur für NEUE Anhänger. Eure 1-3 vorhandenen Anhänger behalten sonst den alten 5 €-Wert. Mit dem UPDATE springen alle auf 15 €/h.
+
+---
+
 ## 🟡 Du musst das tun, ich kann es nicht (Identität / Bezahlung erforderlich)
 
 ### A1: Apple Developer Account anlegen

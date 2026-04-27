@@ -17,7 +17,7 @@ CREATE TABLE trailers (
   price_3h            NUMERIC(10,2) NOT NULL DEFAULT 8.00,
   price_day           NUMERIC(10,2) NOT NULL DEFAULT 25.00,
   price_weekend       NUMERIC(10,2) NOT NULL DEFAULT 45.00,
-  late_fee_per_hour   NUMERIC(10,2) NOT NULL DEFAULT 5.00,
+  late_fee_per_hour   NUMERIC(10,2) NOT NULL DEFAULT 15.00,
   is_available        BOOLEAN DEFAULT TRUE,
   image_url           TEXT,
   created_at          TIMESTAMPTZ DEFAULT NOW()
@@ -78,7 +78,7 @@ VALUES (
   8.00,
   25.00,
   45.00,
-  5.00,
+  15.00,
   true
 );
 

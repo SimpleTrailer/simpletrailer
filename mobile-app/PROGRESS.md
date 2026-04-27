@@ -76,6 +76,32 @@ Alle Zeiten sind lokale Zeit (Bremen).
 - scripts/build-android.sh: nutzt env.sh -> kein manuelles Setzen mehr noetig.
 - .gitignore: tools/jdk-17/, tools/android-sdk/, tools/*.zip ausgeschlossen (mehrere hundert MB).
 
+### Phase 3 (User-Freigabe fuer Webseiten-Aenderungen — Verspaetung 15€ + AGB)
+- AGB komplett rechtssicher ausgearbeitet (mobile-app/templates/agb.html):
+  - Vollstaendiger SimpleTrailer-spezifischer Text mit GbR-Vertretung
+  - § 5 Abs. 3: explizite Einzugsermaechtigung fuer off-session-Charges
+  - § 7 Abs. 4: Verspaetungsgebuehr 15€/h
+  - § 9: Versicherungs-SB (500€/50€) und Haftungsausschluss-Faelle
+  - § 6 Abs. 3: Hinweis dass §312g Abs. 2 Nr. 9 BGB Widerrufsrecht ausschliesst
+  - § 13: Erfuellungsort + Gerichtsstand Bremen
+- agb.html, datenschutz.html, impressum.html ins Webseite-Root kopiert (statische HTML-Seiten).
+- index.html Footer-Links aktiviert (vorher href="#" Platzhalter).
+- booking.html erweitert (sehr vorsichtig, Buchungs-Logik unangetastet):
+  - Step 5: AGB-Checkbox vor dem payBtn — Button initial disabled
+  - Klick auf "AGB" oder "Datenschutzerklaerung" oeffnet Modal mit Iframe der jeweiligen Seite
+  - submitPayment() prueft die Checkbox als zusaetzliche Sicherheit
+  - updatePayBtnState() + payBtn.dataset.stripeReady-Marker, damit Button erst freigeschaltet wird wenn BEIDES ready (Stripe + AGB)
+- supabase-schema.sql: Default 5.00 -> 15.00 (auch im Insert fuer ersten Anhaenger).
+- return.html:105: "5 €" -> "15 €" Hinweistext.
+- send-reminders.js sagt schon 15€ (war von Anfang an da, jetzt konsistent mit Rest).
+- App-Polish im Bootstrapper (www/index.html):
+  - Offline-Banner oben (orange) bei navigator.onLine=false, blendet automatisch ein/aus
+  - Version-Tag "v1.0.0" im ersten Onboarding-Screen unten
+- APK neu gebaut: 7s inkrementell, app-debug.apk weiterhin 7.2 MB.
+- USER-AKTION offen: SQL UPDATE in Supabase Console fuer existierende Anhaenger
+  (Schema-Default greift nur fuer NEUE Anhaenger, vorhandene muessen einzeln upgedatet werden).
+
+
 
 
 
