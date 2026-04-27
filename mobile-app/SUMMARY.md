@@ -108,4 +108,70 @@ Logs zum Diagnostizieren:
 
 ---
 
+---
+
+## Phase-2-Erweiterung (gleiche Nacht, vom User explizit angefordert)
+
+✅ **Native Onboarding-Flow** (3 Screens vor WebView-Redirect, Apple-Akzeptanz-Booster):
+- Welcome → Permissions-Anfrage → "Du bist startklar"
+- Wird nur beim ersten App-Start gezeigt (LocalStorage-Tracking)
+- Direkt im Bootstrapper (`www/index.html`) — kein extra Build noetig
+
+✅ **MainActivity.java erweitert:**
+- Erstellt Push-Notification-Channels "bookings" (High-Importance) und "general" beim App-Start
+- Channel-Color = Brand-Orange `#E85D00`
+
+✅ **iOS LaunchScreen verbessert:**
+- Vorher: leer / Light-Mode-Background
+- Jetzt: dunkler Hintergrund + zentriertes Splash-Logo via Auto-Layout
+
+✅ **Helper-Skripte (`scripts/`):**
+- `doctor.sh` — Komplett-Check: was fehlt (JDK? SDK? CocoaPods?), was ist OK
+- `build-android.sh` — Debug-APK bauen
+- `build-android-release.sh` — Signed AAB fuer Play Store
+- `dev.sh` — Lokaler HTTP-Server fuer www/ (Browser-Test ohne Native-Build)
+- `reset-onboarding.sh` — Onboarding zum Re-Test zuruecksetzen
+
+✅ **Store-Listings (`store-listings/`):**
+- `google-play.md` — Komplette deutsche Beschreibung, Data-Safety-Antworten, Kategorien
+- `apple-app-store.md` — Promo-Text, Beschreibung, Privacy-Label, App-Review-Notes (proaktiv gegen Guideline 4.2)
+
+✅ **DESIGNER-BRIEF.md:**
+- Komplette Brand-Specs (Farben, Font, Stil)
+- Asset-Spezifikationen pro Plattform (Icon, Splash, Screenshots)
+- Tools-Empfehlung (Canva, Icon Kitchen, Mockuphone) fuer DIY oder Designer
+
+✅ **API-Client (`www/api-client.js`):**
+- SDK das alle Webseiten-Endpoints 1:1 spiegelt:
+  - `getTrailers()`, `getAvailability(id)`, `getMyBookings()`, `getBooking(id, token)`
+  - `getIdentity()`, `startIdentityVerification()`
+  - `login(email, password)`, `getMe()`, `logout()`
+- Nutzt denselben localStorage-Key (`st_session`) wie Webseite — Login in WebView gilt automatisch fuer Bridge
+
+✅ **Server-Stubs (`server-stub/`):**
+- `push-notification-sender.js` — FCM-Versand inkl. Helper-Funktionen
+- `save-push-token.js` — Endpoint, der Tokens in Supabase speichert
+- `delete-account.js` — Apple-Pflicht, anonymisiert Buchungen statt zu loeschen (Steuerrecht)
+- Alle als VORLAGEN — nicht live, brauchen User-OK fuer Aktivierung
+- SQL fuer push_tokens-Tabelle inklusive
+
+✅ **Universal Links / App Links (`well-known-templates/`):**
+- `assetlinks.json` (Android) — Template, SHA256 noch einzutragen
+- `apple-app-site-association` (iOS) — Template, Apple-Team-ID noch einzutragen
+- README mit Hosting-Anleitung fuer Vercel/Netlify
+
+✅ **DSGVO/AGB-Templates (`templates/`):**
+- `datenschutz.html` — DSGVO-konform mit allen Auftragsverarbeitern, Speicherdauern, Rechten
+- `agb.html` — Mietvertrag-AGB mit Versicherungs-/Haftungs-Klauseln
+- `impressum.html` — §5 TMG
+- Alle mit Anwalts-Pruef-Hinweis, nicht zur Veroeffentlichung ohne Pruefung
+
+✅ **GitHub Actions CI (`.github/workflows/android-build.yml`):**
+- Baut bei jedem Push auf mobile-app-development eine Debug-APK in der Cloud
+- Funktioniert OHNE lokales JDK/SDK
+- APK 30 Tage als Artefakt downloadbar
+
+---
+
 Ende der Nacht. Schlaf gut. ✅
+

@@ -35,3 +35,19 @@ Alle Zeiten sind lokale Zeit (Bremen).
 - Komplette Doku geschrieben: README, PLAN, DECISIONS, NEXT-STEPS, SETUP-NEEDED, QUESTIONS, SUMMARY.
 - .gitignore mit Capacitor-/iOS-/Android-Standards angelegt.
 
+### Phase 2-Erweiterung (gleiche Nacht, nach User-Aufforderung "alles was geht")
+- **Native Onboarding-Screens** in www/index.html (3 Screens: Welcome, Permissions, Done) mit LocalStorage-Tracking ("nur beim ersten Start").
+- **MainActivity.java** erweitert: registriert beim App-Start zwei Notification-Channels ("bookings" mit High-Importance, "general" Default).
+- **iOS LaunchScreen.storyboard** komplett ueberarbeitet — vorher leer / Light-Mode, jetzt dunkler Hintergrund + zentriertes Logo via Auto-Layout.
+- **Helper-Skripte** in scripts/: doctor.sh (System-Check), build-android.sh, build-android-release.sh, dev.sh (lokaler HTTP-Server fuer www/), reset-onboarding.sh.
+- **Store-Listings** in store-listings/: komplette deutsche Texte fuer Google Play und Apple App Store inkl. Daten-Sicherheits-Antworten und Notes-for-Reviewer (adressiert Apple Guideline 4.2 proaktiv).
+- **DESIGNER-BRIEF.md** mit Brand-Specs, Asset-Spezifikationen pro Plattform, Tools/Empfehlungen.
+- **api-client.js** in www/: SDK das die Webseiten-API 1:1 spiegelt (getTrailers, getMyBookings, getAvailability, getIdentity, login, etc.) — auth via localStorage st_session, gleicher Key wie Webseite.
+- **Server-Stubs** in server-stub/: push-notification-sender.js, save-push-token.js, delete-account.js (Apple-Pflicht). NICHT live, warten auf Aktivierung.
+- **Universal Links Templates** in well-known-templates/: assetlinks.json (Android) + apple-app-site-association (iOS).
+- **HTML-Templates** in templates/: datenschutz.html, agb.html, impressum.html als DSGVO-/TMG-konforme Vorlagen mit Anwalts-Pruef-Hinweis.
+- **GitHub Actions CI** in .github/workflows/android-build.yml: baut auf jedem Push (Cloud, ohne lokales SDK) eine Debug-APK und stellt sie als Artefakt bereit.
+- **README.md** finalisiert mit komplettem Inhaltsverzeichnis, Quick-Start, Native-Feature-Mapping.
+- npx cap sync nach jeder www/-Aenderung.
+
+

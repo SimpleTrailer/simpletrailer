@@ -1,12 +1,12 @@
 # SimpleTrailer Mobile App
 
-Native iOS- und Android-App, die simpletrailer.de in einer Capacitor-WebView lädt und um native Features erweitert (Push, Kamera, Geolocation).
+Native iOS- und Android-App, die simpletrailer.de in einer Capacitor-WebView lädt und um native Features erweitert (Push, Kamera, Geolocation). Die App nutzt 1:1 dieselben APIs wie die Webseite (`../api/*`).
 
-> **Wichtig:** Die Webseite (`../*.html`, `../api/*`) wird von dieser App **nicht** verändert. Nur erweitert.
+> **Wichtig:** Die Webseite (`../*.html`, `../api/*`, `../netlify/functions/*`, `../supabase-schema.sql`) wird von dieser App **nicht verändert**, nur erweitert.
 
 ---
 
-## Schnellüberblick
+## Übersicht
 
 | Item | Wert |
 |---|---|
@@ -16,132 +16,180 @@ Native iOS- und Android-App, die simpletrailer.de in einer Capacitor-WebView lä
 | Mindest-iOS | 15.0 |
 | Mindest-Android | API 24 (Android 7.0) |
 | Lade-Strategie | `server.url` → simpletrailer.de live |
+| API-Layer | `www/api-client.js` (1:1 Mapping zu /api/*) |
 | Konfig zentral in | `www/config.js` |
 
 ---
 
-## Was du brauchst, BEVOR du die App testen kannst
+## Verzeichnis-Struktur
 
-Siehe [SETUP-NEEDED.md](./SETUP-NEEDED.md) für Detail-Anleitung.
-
-**Kurzfassung:**
-1. **Java Development Kit (JDK 17)** – für Android-Builds
-2. **Android Studio** – für SDK + Emulator
-3. (Optional) **Xcode auf einem Mac** – für iOS-Builds und -Veröffentlichung
-
----
-
-## Lokales Testen
-
-### Android (sobald Java + Android Studio installiert)
-
-```bash
-cd mobile-app
-npm install                # falls noch nicht geschehen
-npx cap sync android       # syncs www/ + Plugins
-npx cap open android       # öffnet Android Studio → dort "Run"
-# ODER direkt aus dem Terminal:
-cd android
-./gradlew assembleDebug    # erzeugt app/build/outputs/apk/debug/app-debug.apk
 ```
-
-APK auf das Handy ziehen oder `adb install app-debug.apk`.
-
-### iOS (nur auf Mac)
-
-```bash
-cd mobile-app
-npm install
-sudo gem install cocoapods   # einmalig
-cd ios/App && pod install
-cd ../..
-npx cap open ios            # öffnet Xcode → dort Build & Run
+mobile-app/
+├── www/                       # was Capacitor in die WebView lädt (Bootstrapper)
+│   ├── index.html             # Splash → Onboarding → Redirect zu simpletrailer.de
+│   ├── config.js              # ← Start-URL hier ändern (kein Rebuild nötig)
+│   ├── api-client.js          # SDK für /api/* der Webseite
+│   ├── native-bridge.js       # Capacitor-Plugin-Brücke
+│   └── manifest.json          # PWA-Manifest (autogen)
+│
+├── android/                   # Android-Studio-Projekt (74 Asset-Varianten)
+├── ios/                       # Xcode-Projekt (auf Windows nicht baubar)
+├── resources/                 # Master-Assets (SVG)
+│
+├── server-stub/               # API-Endpoint-VORLAGEN (NICHT live)
+│   ├── push-notification-sender.js
+│   ├── save-push-token.js
+│   ├── delete-account.js      # Apple-Pflicht
+│   └── README.md
+│
+├── store-listings/            # App-Store-Listing-Texte (DE)
+│   ├── google-play.md
+│   └── apple-app-store.md
+│
+├── templates/                 # HTML-Vorlagen für simpletrailer.de
+│   ├── datenschutz.html       # DSGVO-konform, Anwalt prüfen lassen
+│   ├── agb.html               # Mietvertrag-AGB
+│   └── impressum.html         # §5 TMG
+│
+├── well-known-templates/      # Universal/App Links für simpletrailer.de
+│   ├── apple-app-site-association
+│   └── assetlinks.json
+│
+├── scripts/                   # Helper-Skripte
+│   ├── doctor.sh              # System-Check (was fehlt?)
+│   ├── build-android.sh       # Debug-APK
+│   ├── build-android-release.sh  # Signed AAB für Play Store
+│   ├── dev.sh                 # Lokaler Dev-Server für www/
+│   └── reset-onboarding.sh    # Onboarding zum Re-Test zurücksetzen
+│
+├── .github/workflows/         # CI: Android-Build in der GitHub Cloud
+│   └── android-build.yml
+│
+├── capacitor.config.ts        # zentrale Capacitor-Konfig
+├── package.json               # eigene npm-Welt (separat von Webseite)
+└── *.md                       # Dokumentation (siehe unten)
 ```
-
----
-
-## Was die App macht
-
-1. Beim Start zeigt sie einen Splash-Screen.
-2. `www/index.html` (Bootstrapper) prüft die Verbindung zu simpletrailer.de.
-3. Bei Erfolg: WebView leitet auf simpletrailer.de weiter (eingestellt via `server.url`).
-4. Die WebView verhält sich wie ein Browser → die normale Webseite läuft 1:1.
-5. Capacitor injiziert `window.Capacitor` in JEDE WebView-Seite. Die Webseite kann dann optional native Plugins nutzen, wenn sie das möchte (siehe NEXT-STEPS).
-
----
-
-## Native Features (eingebaut, aber noch nicht von der Webseite genutzt)
-
-| Plugin | iOS-Permission-Eintrag | Android-Permission |
-|---|---|---|
-| Push Notifications | UIBackgroundModes:remote-notification | POST_NOTIFICATIONS, WAKE_LOCK |
-| Geolocation | NSLocationWhenInUseUsageDescription | ACCESS_FINE_LOCATION |
-| Camera | NSCameraUsageDescription | CAMERA |
-| Photo Library | NSPhotoLibraryUsageDescription | READ_MEDIA_IMAGES |
-| Status Bar | – | – |
-| Splash Screen | – | – |
-
-Wie diese Plugins in der Webseite ansprechbar sind: siehe [www/native-bridge.js](./www/native-bridge.js).
-
----
-
-## Veröffentlichung in den Stores
-
-### Google Play Store
-
-1. **Google Play Console-Konto** (einmalig 25 USD).
-2. Signed Release-APK / AAB bauen:
-   ```bash
-   cd android
-   ./gradlew bundleRelease
-   ```
-   Erfordert einen Keystore – Anleitung in [NEXT-STEPS.md](./NEXT-STEPS.md).
-3. App-Listing ausfüllen (Name, Beschreibung, Screenshots, Datenschutz-URL).
-4. **Data-Safety-Form** vollständig ausfüllen (Standort, Kamera, etc.).
-5. Submit → Review meist <24h.
-
-### Apple App Store
-
-1. **Apple Developer Program** (99 USD/Jahr).
-2. Mac mit Xcode 15+.
-3. Signing-Zertifikat + Provisioning-Profil in Xcode.
-4. Archive bauen → Upload zu App Store Connect.
-5. App-Listing in App Store Connect.
-6. **Privacy-Manifest** ist bereits in `ios/App/App/PrivacyInfo.xcprivacy` vorbereitet.
-7. Submit → Review meist 1–7 Tage.
-8. **WICHTIG:** Apple lehnt evtl. wegen Guideline 4.2 (WebView-only) ab. Wenn das passiert: nicht die Webseite umbauen, stattdessen native Features stärker einbinden (Push-Token an Backend, native Foto-Capture in Pre-Check). Details in [QUESTIONS.md](./QUESTIONS.md).
 
 ---
 
 ## Doku-Übersicht
 
-- [PLAN.md](./PLAN.md) – Komplette Strategie und Architektur-Entscheidungen
-- [DECISIONS.md](./DECISIONS.md) – Alle einzelnen Entscheidungen mit Begründung
-- [PROGRESS.md](./PROGRESS.md) – Was wann gemacht wurde
-- [SETUP-NEEDED.md](./SETUP-NEEDED.md) – Tools die du noch installieren musst
-- [NEXT-STEPS.md](./NEXT-STEPS.md) – Was als Nächstes ansteht
-- [QUESTIONS.md](./QUESTIONS.md) – Was du morgens entscheiden musst
-- [SUMMARY.md](./SUMMARY.md) – Zusammenfassung der Nachtarbeit
+| Datei | Inhalt |
+|---|---|
+| [PLAN.md](./PLAN.md) | Strategie, Architektur, Erfolgsquoten-Schätzung |
+| [DECISIONS.md](./DECISIONS.md) | 17 Entscheidungen mit Begründung (Capacitor warum, Server-URL warum, etc.) |
+| [PROGRESS.md](./PROGRESS.md) | Chronologie der gemachten Arbeit |
+| [SETUP-NEEDED.md](./SETUP-NEEDED.md) | Tools die du installieren musst (JDK, Android Studio, etc.) |
+| [NEXT-STEPS.md](./NEXT-STEPS.md) | Phasen 1-5 für die kommenden Wochen |
+| [QUESTIONS.md](./QUESTIONS.md) | Was du morgens entscheiden musst |
+| [DESIGNER-BRIEF.md](./DESIGNER-BRIEF.md) | Asset-Specs für Designer / DIY in Canva |
+| [SUMMARY.md](./SUMMARY.md) | Zusammenfassung der Nachtarbeit |
 
 ---
 
-## Wo Sachen liegen
+## Quick-Start
 
+### A) Doctor — was brauchst du noch?
+```bash
+cd mobile-app
+bash scripts/doctor.sh
 ```
-mobile-app/
-├── www/                       # was der Bootstrapper lädt
-│   ├── index.html             # zeigt Splash → leitet zu simpletrailer.de
-│   ├── config.js              # ← Start-URL hier ändern
-│   └── native-bridge.js       # JS-Brücke zu Capacitor-Plugins
-├── android/                   # Android-Studio-Projekt
-│   └── app/src/main/AndroidManifest.xml  # Permissions
-├── ios/                       # Xcode-Projekt (auf Windows nicht baubar)
-│   └── App/App/Info.plist     # Privacy-Strings
-├── resources/                 # Master-Assets (SVG)
-├── capacitor.config.ts        # zentrale Capacitor-Konfig
-└── package.json               # eigene npm-Welt (separat von Webseite)
+Sagt dir, was fehlt (JDK, Android Studio, Xcode etc.).
+
+### B) Lokaler Test im Browser (kein Build nötig)
+```bash
+cd mobile-app
+bash scripts/dev.sh
+# → http://localhost:5173 öffnen
+```
+Zeigt den Bootstrapper (Splash + Onboarding + Redirect).
+
+### C) Android-Build (sobald JDK + Android Studio installiert)
+```bash
+cd mobile-app
+bash scripts/build-android.sh
+# → erzeugt android/app/build/outputs/apk/debug/app-debug.apk
+adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+### D) Android-Build in der Cloud (ohne lokales SDK)
+1. Branch nach GitHub pushen.
+2. GitHub → Actions → "Android Build" → läuft automatisch.
+3. APK aus den "Artifacts" downloaden.
+
+### E) iOS-Build (nur auf Mac)
+```bash
+cd mobile-app
+sudo gem install cocoapods   # einmalig
+cd ios/App && pod install
+cd ../..
+npx cap open ios            # → Xcode → Build & Run
 ```
 
 ---
 
-Letzte Aktualisierung: 2026-04-27 (Nachtarbeit Phase 1 + 2 abgeschlossen).
+## Was die App macht (User-Sicht)
+
+1. **Splash-Screen** mit SimpleTrailer-Logo (~600ms).
+2. **Onboarding** beim ersten Start (3 Screens):
+   - Welcome
+   - "Was die App kann" + Permissions-Anfragen (Push, Standort, Kamera)
+   - "Du bist startklar"
+3. **WebView lädt simpletrailer.de** — die normale Webseite läuft 1:1.
+4. **Native Features** im Hintergrund verfügbar:
+   - Push-Notifications (Buchungs-Erinnerungen)
+   - Native Kamera (für Schadensfotos via `<input capture>`)
+   - Geolocation (für "Anhänger in der Nähe")
+   - Deep-Links (`simpletrailer://...` öffnet App statt Browser)
+5. **Onboarding wird beim 2. Start übersprungen** (LocalStorage merkt sich das).
+
+---
+
+## Was die App _nicht_ ist
+
+- ❌ Kein Re-Build der Webseite. Buchung, Login, Bezahlung kommen alle aus simpletrailer.de.
+- ❌ Keine eigene Stripe-Integration. Stripe.js läuft in der WebView.
+- ❌ Kein Offline-Modus. App braucht Internet (zeigt sonst Retry-Button).
+
+---
+
+## Native Features → Webseiten-API-Mapping
+
+| Native Capacitor-Plugin | Wird genutzt für | Webseiten-API |
+|---|---|---|
+| Geolocation | Anhänger in der Nähe | Direkt OSM Nominatim/OSRM (kein eigener Endpoint) |
+| Camera | Pre-Check + Return Fotos | Supabase Storage `precheck-photos` / `return-photos` |
+| Push Notifications | Buchungs-Erinnerungen | TODO: `/api/save-push-token` (Stub in `server-stub/`) |
+| App Deep-Linking | Bestätigungs-Mails | (Webseite muss URL-Schema unterstützen — siehe NEXT-STEPS) |
+| Status Bar | Dunkles UI-Theme | n/a |
+| Splash Screen | App-Start | n/a |
+
+---
+
+## Veröffentlichung in den Stores
+
+### Vorher zu erledigen
+1. ✅ App-Skeleton fertig (siehe SUMMARY.md)
+2. ⏳ JDK + Android Studio installieren (siehe SETUP-NEEDED.md)
+3. ⏳ Apple Developer + Google Play Console Konten anlegen
+4. ⏳ Templates aus `templates/` mit echten Daten füllen + auf simpletrailer.de hochladen
+5. ⏳ Anwalt liest AGB + Datenschutz
+6. ⏳ Designer macht finales Icon + Screenshots (oder du in Canva)
+7. ⏳ App lokal testen
+8. ⏳ Mac für iOS-Build organisieren (Hardware oder MacInCloud)
+
+### Submission
+- **Google Play:** [scripts/build-android-release.sh](./scripts/build-android-release.sh) → AAB → Play Console (siehe `store-listings/google-play.md`)
+- **Apple App Store:** Xcode → Archive → Upload (siehe `store-listings/apple-app-store.md`)
+
+---
+
+## Aktivierung von Push, Account-Delete usw.
+
+Diese Server-Endpoints sind als VORLAGEN in `server-stub/` vorbereitet aber NICHT live. Aktivierung benötigt User-Zustimmung (würde die Webseite ändern).
+
+Schritte siehe [server-stub/README.md](./server-stub/README.md).
+
+---
+
+Letzte Aktualisierung: 2026-04-27 (Phase 1 + 2 + Phase-3-Vorbereitung abgeschlossen).

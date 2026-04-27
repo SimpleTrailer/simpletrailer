@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Datenschutzerklärung – SimpleTrailer</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; max-width: 800px; margin: 32px auto; padding: 0 24px; color: #222; line-height: 1.6; }
+    h1 { font-size: 1.8rem; margin-bottom: 16px; }
+    h2 { font-size: 1.2rem; margin-top: 32px; margin-bottom: 8px; }
+    p, ul { margin-bottom: 12px; }
+    code { background: #f4f4f4; padding: 2px 6px; border-radius: 4px; font-size: 0.92rem; }
+    .meta { color: #888; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+
+<!--
+  TEMPLATE — VORLAGE für simpletrailer.de/datenschutz
+  Bitte vom User vor Veröffentlichung von einem Anwalt prüfen lassen.
+  Stand: 2026-04-27. Adressen, Verantwortlicher und Kontakt bitte ergänzen.
+-->
+
+<h1>Datenschutzerklärung</h1>
+<p class="meta">Stand: TT.MM.JJJJ</p>
+
+<h2>1. Verantwortlicher</h2>
+<p>
+  SimpleTrailer<br>
+  [Vor- und Nachname / Firmenname]<br>
+  [Straße, Hausnummer]<br>
+  [PLZ Bremen]<br>
+  E-Mail: info@simpletrailer.de
+</p>
+
+<h2>2. Erhobene Daten</h2>
+<p>Bei Nutzung unserer Webseite und mobilen App erheben wir folgende personenbezogene Daten:</p>
+<ul>
+  <li><strong>Konto-Daten:</strong> E-Mail, Vor-/Nachname, Telefonnummer, Adresse</li>
+  <li><strong>Buchungs-Daten:</strong> Anhänger, Mietzeitraum, Versicherungs-Wahl, Preis</li>
+  <li><strong>Zahlungs-Daten:</strong> Verarbeitet durch Stripe Inc. — wir speichern nur die Stripe-Customer-ID, keine Kartendaten</li>
+  <li><strong>Führerschein-Daten:</strong> Für die einmalige Verifikation via Stripe Identity (Name, Geburtsdatum, Klasse, Ablaufdatum, Führerschein-Nummer). Bilder werden nur 30 Tage bei Stripe gespeichert.</li>
+  <li><strong>Schadens-Fotos:</strong> Vor-/Nach-Mietfotos, gespeichert in Supabase Storage (EU-Region). Werden 6 Monate nach Mietende automatisch gelöscht.</li>
+  <li><strong>Standort:</strong> Nur in der App, nur für "Anhänger in der Nähe". Keine Speicherung serverseitig.</li>
+  <li><strong>Push-Token:</strong> Nur in der App, für Buchungs-Erinnerungen. Wird beim Konto-Logout gelöscht.</li>
+</ul>
+
+<h2>3. Rechtsgrundlagen</h2>
+<ul>
+  <li><strong>Art. 6 (1) b DSGVO</strong> (Vertragserfüllung): Konto, Buchungen, Zahlungen, Führerschein-Verifikation</li>
+  <li><strong>Art. 6 (1) c DSGVO</strong> (gesetzliche Pflicht): Steuerrechtliche Aufbewahrung Buchungen 10 Jahre</li>
+  <li><strong>Art. 6 (1) f DSGVO</strong> (berechtigtes Interesse): Schadens-Dokumentation, Push-Erinnerungen</li>
+  <li><strong>Art. 6 (1) a DSGVO</strong> (Einwilligung): Standortzugriff in der App</li>
+</ul>
+
+<h2>4. Auftragsverarbeiter / Drittanbieter</h2>
+<ul>
+  <li><strong>Supabase Inc.</strong> (Datenbank + Auth) — Server-Standort EU (Frankfurt)</li>
+  <li><strong>Stripe Inc.</strong> (Zahlung + Identity-Verifikation) — Server-Standort EU/USA, EU-Standardvertragsklauseln</li>
+  <li><strong>Resend</strong> (Transaktions-Mails) — Server-Standort EU</li>
+  <li><strong>Vercel Inc.</strong> (Hosting) — Server-Standort EU</li>
+  <li><strong>Firebase / Google LLC</strong> (Push-Notifications, nur App) — EU-Standardvertragsklauseln</li>
+  <li><strong>Apple Inc. / Google LLC</strong> (App Store / Play Store) — eigene Datenschutzregeln der Stores gelten zusätzlich</li>
+</ul>
+
+<h2>5. Speicherdauer</h2>
+<ul>
+  <li>Konto: bis zur Löschung (von dir initiiert in der App / per E-Mail)</li>
+  <li>Buchungen: 10 Jahre nach Buchungsende (Steuerrecht §147 AO)</li>
+  <li>Schadens-Fotos: 6 Monate nach Mietende</li>
+  <li>Führerschein-Bilder: 30 Tage bei Stripe (gesetzliche Aufbewahrung Stripe)</li>
+  <li>Push-Tokens: bis zur Deinstallation der App oder Konto-Löschung</li>
+</ul>
+
+<h2>6. Deine Rechte</h2>
+<p>Du hast das Recht auf:</p>
+<ul>
+  <li><strong>Auskunft</strong> über deine gespeicherten Daten (Art. 15 DSGVO)</li>
+  <li><strong>Berichtigung</strong> falscher Daten (Art. 16 DSGVO)</li>
+  <li><strong>Löschung</strong> ("Vergessenwerden", Art. 17 DSGVO) — direkt in der App unter Konto → Konto löschen</li>
+  <li><strong>Einschränkung</strong> der Verarbeitung (Art. 18 DSGVO)</li>
+  <li><strong>Datenübertragbarkeit</strong> (Art. 20 DSGVO)</li>
+  <li><strong>Widerspruch</strong> gegen Verarbeitung (Art. 21 DSGVO)</li>
+  <li><strong>Beschwerde</strong> bei einer Aufsichtsbehörde (Art. 77 DSGVO)</li>
+</ul>
+<p>Zuständige Aufsichtsbehörde: Die Landesbeauftragte für Datenschutz und Informationsfreiheit der Freien Hansestadt Bremen, Arndtstr. 1, 27570 Bremerhaven.</p>
+
+<h2>7. Cookies / Tracking</h2>
+<p>Wir setzen ausschließlich technisch notwendige Cookies / LocalStorage-Einträge:</p>
+<ul>
+  <li><code>st_session</code> — dein Login-Token, gelöscht beim Logout</li>
+  <li><code>st_app_onboarded_v1</code> (nur App) — Onboarding-Screen schon gesehen</li>
+  <li><code>st_pi_id</code>, <code>st_client_secret</code> — Stripe-Zahlungs-Session, gelöscht nach Bezahlung</li>
+</ul>
+<p>Wir nutzen <strong>kein Tracking, kein Werbe-Cookie, kein Google Analytics</strong>.</p>
+
+<h2>8. Kontakt</h2>
+<p>Bei Fragen zum Datenschutz: <a href="mailto:info@simpletrailer.de">info@simpletrailer.de</a></p>
+
+</body>
+</html>
