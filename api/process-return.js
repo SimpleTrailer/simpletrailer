@@ -72,6 +72,18 @@ module.exports = async (req, res) => {
            <p style="color:#4ade80;font-weight:700;margin:0;">✓ Pünktlich zurückgegeben – danke!</p>
          </div>`;
 
+    // Review-CTA: nur wenn pünktlich zurückgegeben (positive Erfahrung)
+    const reviewBlock = lateFeeAmount > 0 ? '' : `
+      <div style="background:#1A1A1A;border:1px solid #383838;border-radius:12px;padding:24px 20px;margin-top:24px;text-align:center;">
+        <div style="font-size:1.4rem;margin-bottom:6px;">⭐⭐⭐⭐⭐</div>
+        <p style="font-weight:700;font-size:.95rem;margin:0 0 6px;">Wie war deine Erfahrung?</p>
+        <p style="color:#888;font-size:.82rem;margin:0 0 16px;line-height:1.5;">Eine kurze Google-Bewertung hilft uns, weiter zu wachsen — und anderen, uns zu finden.</p>
+        <a href="https://search.google.com/local/writereview?placeid=ChIJ" target="_blank"
+           style="display:inline-block;background:#E85D00;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:700;font-size:.88rem;">
+          Auf Google bewerten →
+        </a>
+      </div>`;
+
     await resend.emails.send({
       from: 'SimpleTrailer <buchung@simpletrailer.de>',
       to: booking.customer_email,
@@ -91,6 +103,7 @@ module.exports = async (req, res) => {
               ${lateFeeAmount > 0 ? `<tr><td style="color:#888;padding:9px 0;border-bottom:1px solid #2a2a2a;font-size:.88rem;">Verspätung</td><td style="text-align:right;padding:9px 0;border-bottom:1px solid #2a2a2a;color:#E85D00;font-size:.88rem;">+ ${lateFeeAmount.toFixed(2)} €</td></tr>` : ''}
               <tr><td style="color:#888;padding:9px 0;font-size:.88rem;font-weight:700;">Gesamt</td><td style="text-align:right;padding:9px 0;font-weight:800;font-size:1.05rem;">${total.toFixed(2)} €</td></tr>
             </table>
+            ${reviewBlock}
           </div>
           <p style="color:#444;font-size:.72rem;text-align:center;margin-top:24px;">SimpleTrailer · Bremen · info@simpletrailer.de</p>
         </div>

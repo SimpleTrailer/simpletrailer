@@ -147,6 +147,66 @@ module.exports = async (req, res) => {
               </div>
               <p style="color:#555;font-size:.75rem;text-align:center;margin:0;">Beide Links bitte aufbewahren.</p>
             </div>
+
+            <!-- ===== MIETVERTRAG (rechtssichere Beweisdokumentation) ===== -->
+            <div style="background:#fff;color:#222;border-radius:16px;padding:32px;margin-top:24px;font-family:Georgia,serif;">
+              <div style="text-align:center;border-bottom:2px solid #E85D00;padding-bottom:16px;margin-bottom:20px;">
+                <p style="font-family:Arial,sans-serif;font-size:.65rem;letter-spacing:.15em;color:#888;text-transform:uppercase;margin:0 0 4px;">Mietvertrag</p>
+                <h2 style="margin:0;color:#0D0D0D;font-size:1.4rem;">SimpleTrailer GbR</h2>
+                <p style="margin:4px 0 0;color:#666;font-size:.8rem;font-family:Arial,sans-serif;">Vertrag-Nr.: <strong>#${booking.id.slice(0, 8).toUpperCase()}</strong> · ausgestellt ${fmt(new Date())} Uhr</p>
+              </div>
+
+              <h3 style="font-size:.95rem;color:#0D0D0D;margin:20px 0 8px;font-family:Arial,sans-serif;">Vertragsparteien</h3>
+              <p style="font-size:.85rem;line-height:1.6;margin:0 0 16px;font-family:Arial,sans-serif;">
+                <strong>Vermieter:</strong> SimpleTrailer GbR, vertreten durch Lion Grone und Samuel Obodoefuna, Waltjenstr. 96, 28237 Bremen, info@simpletrailer.de<br><br>
+                <strong>Mieter:</strong> ${meta.customer_name}<br>
+                ${meta.customer_address ? `Anschrift: ${meta.customer_address}<br>` : ''}
+                E-Mail: ${meta.customer_email}<br>
+                ${meta.customer_phone ? `Telefon: ${meta.customer_phone}` : ''}
+              </p>
+
+              <h3 style="font-size:.95rem;color:#0D0D0D;margin:20px 0 8px;font-family:Arial,sans-serif;">Mietgegenstand</h3>
+              <table style="width:100%;font-size:.85rem;font-family:Arial,sans-serif;border-collapse:collapse;">
+                <tr><td style="padding:6px 0;color:#666;width:40%;">Anhänger</td><td style="padding:6px 0;font-weight:600;">${booking.trailers?.name || 'PKW-Anhänger'}</td></tr>
+                <tr><td style="padding:6px 0;color:#666;">Tarif</td><td style="padding:6px 0;font-weight:600;">${meta.pricing_type || '–'}</td></tr>
+                <tr><td style="padding:6px 0;color:#666;">Mietbeginn</td><td style="padding:6px 0;font-weight:600;">${fmt(meta.start_time)} Uhr</td></tr>
+                <tr><td style="padding:6px 0;color:#666;">Mietende</td><td style="padding:6px 0;font-weight:600;">${fmt(meta.end_time)} Uhr</td></tr>
+                <tr><td style="padding:6px 0;color:#666;">Schutzpaket</td><td style="padding:6px 0;font-weight:600;">${insType === 'none' ? 'Keine Versicherung – volle Mieterhaftung' : insType === 'basis' ? 'Basis-Schutz · 500 € Selbstbeteiligung' : 'Premium-Schutz · 50 € Selbstbeteiligung'}</td></tr>
+              </table>
+
+              <h3 style="font-size:.95rem;color:#0D0D0D;margin:20px 0 8px;font-family:Arial,sans-serif;">Vergütung</h3>
+              <table style="width:100%;font-size:.85rem;font-family:Arial,sans-serif;border-collapse:collapse;">
+                <tr><td style="padding:6px 0;color:#666;width:60%;">Mietpreis (inkl. ggf. Schutzpaket)</td><td style="padding:6px 0;text-align:right;font-weight:600;">${amount.toFixed(2).replace('.',',')} €</td></tr>
+                <tr><td style="padding:6px 0;color:#666;">Verspätungsgebühr (bei verspäteter Rückgabe)</td><td style="padding:6px 0;text-align:right;">15,00 € / angefangene Stunde</td></tr>
+                <tr><td style="padding:6px 0;color:#666;">Reinigungspauschale bei nicht ordnungsgemäßer Rückgabe</td><td style="padding:6px 0;text-align:right;">30,00 €</td></tr>
+              </table>
+
+              <h3 style="font-size:.95rem;color:#0D0D0D;margin:20px 0 8px;font-family:Arial,sans-serif;">Wesentliche Pflichten des Mieters</h3>
+              <ul style="font-size:.82rem;line-height:1.6;font-family:Arial,sans-serif;padding-left:20px;margin:0;color:#333;">
+                <li>Pre-Check-Foto vor Abholung anfertigen</li>
+                <li>Anhänger nur im zulässigen Gesamtgewicht und der zugelassenen Fahrerlaubnisklasse nutzen</li>
+                <li>Keine Auslandsfahrten ohne vorherige schriftliche Zustimmung</li>
+                <li>Schäden unverzüglich (innerhalb 2h) per E-Mail melden</li>
+                <li>Pünktliche und gereinigte Rückgabe</li>
+              </ul>
+
+              <h3 style="font-size:.95rem;color:#0D0D0D;margin:20px 0 8px;font-family:Arial,sans-serif;">Einzugsermächtigung</h3>
+              <p style="font-size:.82rem;line-height:1.6;font-family:Arial,sans-serif;margin:0;color:#333;">
+                Der Mieter ermächtigt den Vermieter, etwaige Verspätungs-, Reinigungs- und Schadensgebühren automatisch über die bei der Buchung hinterlegte Zahlungsmethode (über Stripe Payments Europe Ltd.) einzuziehen.
+              </p>
+
+              <div style="background:#f9f9f9;border-left:3px solid #E85D00;padding:14px 18px;margin:24px 0 16px;font-family:Arial,sans-serif;">
+                <p style="font-size:.78rem;color:#666;margin:0 0 4px;line-height:1.5;">
+                  Es gelten die <a href="${siteUrl}/agb.html" style="color:#E85D00;text-decoration:none;font-weight:600;">vollständigen AGB</a> in der zum Buchungszeitpunkt gültigen Fassung. Diese hat der Mieter elektronisch akzeptiert.
+                </p>
+              </div>
+
+              <p style="font-size:.7rem;color:#999;font-family:Arial,sans-serif;margin:20px 0 0;text-align:center;line-height:1.5;">
+                Diese E-Mail ersetzt einen unterzeichneten Vertrag.<br>
+                Erstellt am ${fmt(new Date())} Uhr · SimpleTrailer GbR · Bremen
+              </p>
+            </div>
+
             <p style="color:#444;font-size:.72rem;text-align:center;margin-top:24px;">SimpleTrailer · Bremen · info@simpletrailer.de</p>
           </div>
         </body></html>`
