@@ -774,7 +774,7 @@
     .card-badge.amber  { background: #2d1a00; color: #f59e0b; border: 1px solid #d97706; }
     .card-badge.deal   { background: #7f1d1d; color: #fca5a5; border: 1px solid #dc2626; }
 
-    .price-amount { display: flex; align-items: baseline; gap: 4px; margin-bottom: 4px; flex-wrap: wrap; }
+    .price-amount { display: flex; align-items: baseline; gap: 4px; margin-bottom: 4px; flex-wrap: nowrap; }
     .price-amount .big { font-size: 3rem; font-weight: 800; letter-spacing: -0.05em; line-height: 1; }
     .price-amount .currency { font-size: 1.2rem; font-weight: 700; color: var(--gray); }
     .price-amount .period { font-size: 0.82rem; color: var(--gray); margin-left: 2px; white-space: nowrap; }
@@ -782,7 +782,11 @@
     .price-sub .save { color: #22c55e; font-weight: 700; white-space: nowrap; }
     .price-old { text-decoration: line-through; color: #555; font-size: .78rem; margin-left: 6px; white-space: nowrap; }
     @media (max-width: 480px) {
-      /* Auf sehr schmalen Mobile-Bildschirmen: durchgestrichener "alter" Preis ausblenden — sonst zu viel Text */
+      /* Mobile: kompaktere Preise damit "/24 Std." und "/7 Tage" neben dem Preis bleiben */
+      .price-amount { gap: 2px; }
+      .price-amount .big { font-size: 2.3rem; }
+      .price-amount .currency { font-size: 1rem; }
+      .price-amount .period { font-size: 0.7rem; line-height: 1.1; margin-left: 2px; }
       .price-old { display: none; }
       .price-sub { font-size: 0.7rem; }
     }
