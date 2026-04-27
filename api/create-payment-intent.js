@@ -11,7 +11,10 @@ module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
   try {
-    const { trailer_id, pricing_type, start_time, end_time, customer_name, customer_email, customer_phone, customer_address, insurance_type, insurance_amount, user_id, booking_mode } = req.body;
+    const { trailer_id, pricing_type, start_time, end_time, customer_name, customer_email, customer_phone, customer_address, insurance_type, insurance_amount, user_id, booking_mode, agb_version } = req.body;
+    // AGB-Akzeptanz fuer Beweissicherung
+    const agbAcceptedAt = new Date().toISOString();
+    const agbAcceptedIp = (req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || req.connection?.remoteAddress || '').split(',')[0].trim();
 
     if (!trailer_id || !pricing_type || !start_time || !end_time || !customer_name || !customer_email) {
       return res.status(400).json({ error: 'Fehlende Pflichtfelder' });
@@ -114,7 +117,7 @@ module.exports = async (req, res) => {
       automatic_payment_methods: { enabled: true },
       receipt_email: customer_email,
       description: `SimpleTrailer – ${trailer.name} – ${pricing_type}`,
-      metadata: { trailer_id, pricing_type, start_time, end_time, customer_name, customer_email, customer_phone: customer_phone || '', customer_address: customer_address || '', insurance_type: insType, insurance_amount: String(insAmount), user_id: user_id || '' }
+      metadata: { trailer_id, pricing_type, start_time, end_time, customer_name, customer_email, customer_phone: customer_phone || '', customer_address: customer_address || '', insurance_type: insType, insurance_amount: String(insAmount), user_id: user_id || '', agb_version: agb_version || '2026-04-27', agb_accepted_at: agbAcceptedAt, agb_accepted_ip: agbAcceptedIp }
     });
 
     return res.status(200).json({

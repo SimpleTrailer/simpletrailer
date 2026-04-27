@@ -81,7 +81,10 @@ module.exports = async (req, res) => {
           user_id: meta.user_id || null,
           stripe_payment_intent_id: payment_intent_id,
           stripe_customer_id: pi.customer, stripe_payment_method_id: pi.payment_method,
-          status: 'confirmed', access_code, return_token, precheck_token
+          status: 'confirmed', access_code, return_token, precheck_token,
+          agb_version:     meta.agb_version || null,
+          agb_accepted_at: meta.agb_accepted_at || null,
+          agb_accepted_ip: meta.agb_accepted_ip || null
         }).select('*, trailers(name)').single();
 
       if (bookingError) throw bookingError;

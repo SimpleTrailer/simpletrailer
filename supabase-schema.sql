@@ -47,6 +47,9 @@ CREATE TABLE bookings (
   actual_return_time          TIMESTAMPTZ,
   late_fee_amount             NUMERIC(10,2) DEFAULT 0,
   late_fee_payment_intent_id  TEXT,
+  agb_version                 TEXT,
+  agb_accepted_at             TIMESTAMPTZ,
+  agb_accepted_ip             TEXT,
   created_at                  TIMESTAMPTZ DEFAULT NOW()
 );
 
