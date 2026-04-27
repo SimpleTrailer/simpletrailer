@@ -1558,14 +1558,24 @@
       goToStep(2);
       showBookingLoggedIn();
     } else {
-      const urlParams   = new URLSearchParams(window.location.search);
-      const urlMode     = urlParams.get('mode');
-      const prefillStart = urlParams.get('prefill_start');
-      const prefillEnd   = urlParams.get('prefill_end');
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlMode   = urlParams.get('mode');
+      // Akzeptiere sowohl alte (prefill_start/prefill_end) als auch neue Parameter (start_date/end_date/start_time/end_time/insurance)
+      const startDate = urlParams.get('start_date') || urlParams.get('prefill_start');
+      const endDate   = urlParams.get('end_date')   || urlParams.get('prefill_end');
+      const startTime = urlParams.get('start_time'); // "HH:MM"
+      const endTime   = urlParams.get('end_time');
+      const insurance = urlParams.get('insurance');  // 'basis' | 'premium' | 'none'
+
       setMode(['weekend', 'week', 'day'].includes(urlMode) ? urlMode : 'flexible');
-      if (prefillStart) document.getElementById('startDateInput').value = prefillStart;
-      if (prefillEnd)   document.getElementById('endDateInput').value   = prefillEnd;
-      if (prefillStart || prefillEnd) calcDates();
+      if (startDate) document.getElementById('startDateInput').value = startDate;
+      if (endDate)   document.getElementById('endDateInput').value   = endDate;
+      if (startTime) document.getElementById('startHourInput').value = startTime;
+      if (endTime)   document.getElementById('endHourInput').value   = endTime;
+      if (insurance && ['none','basis','premium'].includes(insurance)) {
+        try { selectInsurance(insurance); } catch(e) {}
+      }
+      if (startDate || endDate || startTime || endTime) calcDates();
     }
   });
 
