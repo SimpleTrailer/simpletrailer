@@ -1,5 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
 const { Resend } = require('resend');
+const { sendPushToUser } = require('./_push-sender.js');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 const resend   = new Resend(process.env.RESEND_API_KEY);
@@ -75,6 +76,17 @@ module.exports = async (req, res) => {
             </div>
           </body></html>`
         });
+
+        // Parallel: Push-Notification (defensiv — wenn FCM/Tokens fehlen: skipped)
+        if (b.user_id) {
+          await sendPushToUser(b.user_id, {
+            title: '⏰ Anhaenger-Rueckgabe in 1 Stunde',
+            body:  `Bitte gib deinen Anhaenger bis ${fmt(b.end_time)} Uhr zurueck — sonst 15 €/Std Verspaetungsgebuehr.`,
+            channel: 'bookings',
+            data: { type: 'return_reminder', booking_id: b.id },
+            deep_link: `simpletrailer://return?id=${b.id}&token=${b.return_token}`
+          }).catch(e => console.warn('Push fehlgeschlagen:', e.message));
+        }
 
         await supabase.from('bookings').update({ reminder_sent: true }).eq('id', b.id);
         sent++;

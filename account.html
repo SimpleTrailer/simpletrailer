@@ -215,6 +215,25 @@
       </div>
       <a href="booking.html" class="btn btn-orange" style="margin-bottom:12px;">+ Neuen Anhänger buchen</a>
       <button class="logout-btn" onclick="logout()">Abmelden</button>
+      <button class="logout-btn" onclick="openDeleteAccountModal()" style="margin-top:6px;color:#666;border-color:#2a2a2a;font-size:.78rem;">Konto löschen</button>
+    </div>
+
+    <!-- Konto-Loeschen-Modal (Apple-Pflicht fuer App-Submission) -->
+    <div id="deleteOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:9999;align-items:center;justify-content:center;padding:20px;">
+      <div style="background:#1A1A1A;border:1px solid #383838;border-radius:14px;max-width:480px;width:100%;padding:28px;">
+        <h3 style="margin:0 0 14px;font-size:1.1rem;">Konto wirklich löschen?</h3>
+        <p style="color:var(--gray);font-size:.9rem;line-height:1.55;margin:0 0 12px;">
+          Dein Konto wird unwiderruflich gelöscht. Bezahlte Buchungs-Daten werden aus steuerrechtlichen Gründen <strong>10 Jahre anonymisiert aufbewahrt</strong> (§ 147 AO), aber nicht mehr mit deinem Namen verknüpft.
+        </p>
+        <p style="color:#f87171;font-size:.85rem;margin:0 0 18px;">
+          ⚠ Aktive oder zukünftige Buchungen müssen erst beendet sein.
+        </p>
+        <div id="deleteAccountErr" style="display:none;color:#f87171;background:#2a0a0a;border:1px solid #5c1a1a;border-radius:8px;padding:10px 12px;font-size:.85rem;margin-bottom:14px;"></div>
+        <div style="display:flex;gap:10px;">
+          <button onclick="closeDeleteAccountModal()" style="flex:1;background:transparent;border:1.5px solid var(--border);color:var(--gray);padding:11px;border-radius:8px;cursor:pointer;font-family:var(--font);font-size:.88rem;">Abbrechen</button>
+          <button id="deleteConfirmBtn" onclick="confirmDeleteAccount()" style="flex:1;background:#7f1d1d;color:#fff;border:none;padding:11px;border-radius:8px;cursor:pointer;font-family:var(--font);font-weight:700;font-size:.88rem;">Endgültig löschen</button>
+        </div>
+      </div>
     </div>
 
     <!-- Führerschein -->
@@ -623,6 +642,60 @@
     authToken = null; currentUser = null;
     showAuth();
   }
+
+  // ===== Konto loeschen (Apple-Pflicht fuer App-Submission) =====
+  function openDeleteAccountModal() {
+    document.getElementById('deleteAccountErr').style.display = 'none';
+    document.getElementById('deleteOverlay').style.display = 'flex';
+  }
+  function closeDeleteAccountModal() {
+    document.getElementById('deleteOverlay').style.display = 'none';
+  }
+  async function confirmDeleteAccount() {
+    const btn = document.getElementById('deleteConfirmBtn');
+    const errEl = document.getElementById('deleteAccountErr');
+    btn.disabled = true; btn.textContent = 'Loesche…';
+    errEl.style.display = 'none';
+    try {
+      const res = await fetch('/api/delete-account', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
+        body: JSON.stringify({ confirm: true })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Loeschung fehlgeschlagen');
+      // Erfolg: Lokal abmelden + Hinweis
+      localStorage.removeItem('st_session');
+      alert('Konto erfolgreich geloescht.');
+      window.location.href = '/';
+    } catch (e) {
+      errEl.textContent = e.message;
+      errEl.style.display = 'block';
+      btn.disabled = false; btn.textContent = 'Endgueltig loeschen';
+    }
+  }
+
+  // ===== Push-Token speichern (nur in Native-App) =====
+  // Capacitor injiziert window.Capacitor in jeder WebView-Seite. Wenn vorhanden:
+  // versuche Push-Token aus localStorage (von der Native-Bridge gesetzt) ans Backend zu schicken.
+  async function savePushTokenIfNative() {
+    try {
+      if (!window.Capacitor?.isNativePlatform?.()) return;
+      const token = localStorage.getItem('st_push_token');
+      if (!token || !authToken) return;
+      const platform = window.Capacitor.getPlatform?.() || 'android';
+      const lastSaved = localStorage.getItem('st_push_token_saved');
+      if (lastSaved === token) return; // bereits gespeichert
+      const res = await fetch('/api/save-push-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
+        body: JSON.stringify({ token, platform })
+      });
+      if (res.ok) localStorage.setItem('st_push_token_saved', token);
+    } catch (e) { /* still failure */ }
+  }
+  // Bei jedem Account-Page-Aufruf nach Login pruefen
+  setTimeout(savePushTokenIfNative, 1500);
 
   init();
 </script>
