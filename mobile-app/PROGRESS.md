@@ -50,4 +50,32 @@ Alle Zeiten sind lokale Zeit (Bremen).
 - **README.md** finalisiert mit komplettem Inhaltsverzeichnis, Quick-Start, Native-Feature-Mapping.
 - npx cap sync nach jeder www/-Aenderung.
 
+### Phase 2-Erweiterung Teil 2 (User-Info eingearbeitet)
+- Inhaberdaten erhalten: SimpleTrailer GbR, Lion Grone und Samuel Obodoefuna, Waltjenstr. 96, 28237 Bremen.
+- Templates komplett ausgefuellt:
+  - impressum.html: GbR, beide Gesellschafter, Adresse, Kleinunternehmer §19 UStG default, §18 MStV-Verantwortlicher.
+  - datenschutz.html: GbR-Verantwortlicher, alle Auftragsverarbeiter-Adressen.
+  - agb.html: Verspaetungsgebuehr 5,00 €/h (aus supabase-schema.sql gelesen), Selbstbeteiligungen Basis 500 € / Premium 50 € (aus account.html gelesen).
+- templates/README.md updated: keine "TEMPLATE — VORLAGE"-Banner mehr, ehrliche Hinweise zu optionaler Anwalts-Pruefung.
+- JDK 17 via winget Installation gestartet (autonom).
+- QUESTIONS.md komplett ueberarbeitet: was beantwortet, was nur User selbst tun kann (Apple/Google/Firebase-Konten), was ich autonom mache.
+
+### Phase 2-Erweiterung Teil 3 (autonomer Android-Build)
+- Versuch winget-Install gestartet -> haengt an UAC-Prompt (kein Admin-Recht) -> abgebrochen.
+- Plan B: Portable JDK 17 direkt von Adoptium GitHub heruntergeladen (~190 MB ZIP).
+- JDK in mobile-app/tools/jdk-17/ entpackt — `+` im Ordnernamen umbenannt zu jdk-17 (Gradle-Probleme).
+- Android Command-line-Tools heruntergeladen (~65 MB) -> mobile-app/tools/android-sdk/cmdline-tools/latest/.
+- Via sdkmanager installiert: SDK Platform 34, Build-Tools 34.0.0, Platform-Tools.
+- mobile-app/android/local.properties geschrieben mit forward-slash-Pfaden (Java-Properties-Files interpretieren `\` als Escape — Backslash-Pfade funktionieren NICHT).
+- Erste Build-Versuche schlugen fehl mit kryptischer "Die Syntax fuer den Dateinamen... ist falsch" — Ursache war flatDir auf nicht-existierende Verzeichnisse + escaped backslashes.
+- Beide Probleme geloest -> Build SUCCESSFUL in 52s, 246 Tasks ausgefuehrt.
+- **APK ERZEUGT:** android/app/build/outputs/apk/debug/app-debug.apk (7.2 MB).
+- scripts/setup-android-tools.sh geschrieben — User kann das ganze Toolchain-Setup einmalig mit einem Befehl reproduzieren.
+- scripts/env.sh: source-bare Helper, der portable Tools in PATH/JAVA_HOME/ANDROID_HOME setzt.
+- scripts/doctor.sh: erkennt jetzt automatisch portable Tools und meldet OK.
+- scripts/build-android.sh: nutzt env.sh -> kein manuelles Setzen mehr noetig.
+- .gitignore: tools/jdk-17/, tools/android-sdk/, tools/*.zip ausgeschlossen (mehrere hundert MB).
+
+
+
 

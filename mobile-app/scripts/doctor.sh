@@ -19,6 +19,12 @@ echo
 info "SimpleTrailer Mobile-App Doctor"
 echo
 
+# Auto-load portable tools wenn vorhanden
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+[ -d "$PROJECT_DIR/tools/jdk-17" ] && export JAVA_HOME="$PROJECT_DIR/tools/jdk-17" && export PATH="$JAVA_HOME/bin:$PATH"
+[ -d "$PROJECT_DIR/tools/android-sdk" ] && export ANDROID_HOME="$PROJECT_DIR/tools/android-sdk" && export PATH="$ANDROID_HOME/platform-tools:$PATH"
+
 # Node
 info "Node-Umgebung"
 if command -v node >/dev/null 2>&1; then

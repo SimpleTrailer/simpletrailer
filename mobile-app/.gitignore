@@ -42,3 +42,8 @@ key.properties
 *.p12
 *.mobileprovision
 GoogleService-Info.plist
+
+# Portable Build-Tools (mehrere hundert MB, lokal generiert)
+tools/jdk-17/
+tools/android-sdk/
+tools/*.zip

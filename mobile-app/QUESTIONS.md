@@ -1,80 +1,81 @@
-# Fragen für dich (morgens zu beantworten)
+# Fragen für dich
 
-Sortiert nach Wichtigkeit. Beantwortung kann formlos passieren — ich integriere die Antworten dann ins Projekt.
-
----
-
-## ⭐ HOCH-PRIORITÄT (blockieren weitere Arbeit)
-
-### Q1: Hauptfarbe — Webseiten-Orange `#E85D00` oder dein gewünschtes Blau `#1e40af`?
-**Status:** Ich habe Orange gesetzt (Webseiten-Konsistenz). Falls du wirklich Blau willst, sag Bescheid → 5 Sekunden umgestellt in `capacitor.config.ts`, `www/index.html`, `resources/icon-foreground.svg`.
-
-### Q2: Wann investierst du in einen Mac (oder MacInCloud)?
-Ohne Mac kein iOS-Build, keine App Store Submission. Empfehlung: Erstmal Android im Play Store launchen, dann iOS angehen.
-
-### Q3: Apple Developer + Google Play Konten — wann beantragen?
-Apple-Identitätsprüfung dauert 24-48h. Wenn das Geld kein Problem ist, jetzt beantragen.
-
-### Q4: Soll die Webseite App-Detect haben?
-Wenn ich an der Webseite arbeiten dürfte (was aktuell verboten ist), könnte ich:
-- "Mein Konto"-Link verstecken oder beibehalten je nach App
-- Banner "Lade unsere App!" nur im Browser zeigen
-- Push-Aktivierungs-Hinweis im native Build
-
-Ist das für dich okay? (Reine Reads von `window.Capacitor?.isNativePlatform()` ändern keine Buchungs-Logik.)
+Stand: 2026-04-27 — sortiert nach was DU machen musst vs. was wir später zusammen klären.
 
 ---
 
-## MITTEL-PRIORITÄT
+## ✅ Beantwortet (in der Nacht)
 
-### Q5: Push-Notifications-Strategie — was soll gepusht werden?
-Vorschläge:
-- **24h vor Pickup:** "Morgen holst du deinen Anhänger ab. Hier nochmal die Daten:"
-- **Nach Pickup:** "Viel Spaß! Bei Problemen: 0421-…"
-- **2h vor Rückgabe:** "Erinnerung: Rückgabe heute um …"
-- **Nach Rückgabe:** "Danke! Deine Rückerstattung ist veranlasst." (oder die Schadens-Bestätigung)
-- **Bei Verspätung:** "Du bist > 30 Min über der Buchung. Bitte zurückbringen."
-
-Welche davon willst du? Andere?
-
-### Q6: Account-Löschung in der App
-Apple verlangt seit 2022, dass Apps mit Account-Erstellung auch In-App-Löschung anbieten.
-- Hat `account.html` schon einen "Account löschen"-Button?
-- Falls nein: muss vor App-Submission ergänzt werden.
-
-### Q7: Wo soll die Datenschutzerklärung leben?
-Apple und Google erwarten eine öffentliche URL. Aktuell: gibt es `simpletrailer.de/datenschutz` schon? Wenn nicht, brauchen wir die Seite (mind. Stub).
-
-### Q8: Impressum + AGB
-Im Footer von index.html:1839-1841 sind die Links Platzhalter (`href="#"`). Für deutsche Apps + Webseiten Pflicht. Vor Submission: echte Seiten verlinken.
-
-### Q9: App-Beschreibungstext + Screenshots
-Brauchst du Hilfe beim Schreiben der Store-Beschreibung? (Kann ich als Template vorbereiten, du finalisierst.)
-
-### Q10: Bremen-only oder bundesweit?
-Der Texte-Tonus + Marketing-Fokus hängt davon ab. Aktueller Stand: Bremen-fokussiert.
+- ~~Hauptfarbe?~~ → **Orange `#E85D00`** wie Webseite. ✓
+- ~~Inhaber-Adresse für Templates?~~ → SimpleTrailer GbR, Lion Grone & Samuel Obodoefuna, Waltjenstr. 96, 28237 Bremen. ✓ (alle Templates ausgefüllt)
 
 ---
 
-## NIEDRIG-PRIORITÄT
+## 🟡 Du musst das tun, ich kann es nicht (Identität / Bezahlung erforderlich)
 
-### Q11: App-Icon final
-Mein generiertes Platzhalter-Icon ist okay aber nicht professionell. Möchtest du:
-- (a) Damit erstmal in den Store?
-- (b) Designer beauftragen (~50-200 €)?
-- (c) Selbst in Canva/Figma machen?
+### A1: Apple Developer Account anlegen
+- **Wo:** https://developer.apple.com/programs/enroll/
+- **Kosten:** 99 USD/Jahr (~95 €)
+- **Was du brauchst:** Apple-ID, Personalausweis/Pass, Kreditkarte
+- **Dauer:** 24-48h Wartezeit auf Identitätsprüfung
+- **Wann:** Nur wenn iOS-App in den Store soll (Empfehlung: erst Android machen)
 
-### Q12: Splash-Screen-Animation
-Aktuell statisch. Capacitor v6 unterstützt Animation. Möchtest du z.B. ein animiertes Logo?
+### A2: Google Play Console Account anlegen
+- **Wo:** https://play.google.com/console/signup
+- **Kosten:** 25 USD einmalig (~24 €)
+- **Was du brauchst:** Google-Konto, Kreditkarte
+- **Dauer:** wenige Stunden
+- **Wann:** Sobald du eine APK testen willst → MACHEN
 
-### Q13: App-Sprache
-Aktuell: nur Deutsch. Sollte später auch Englisch (Touristen / Studierende ausländischer Herkunft)?
+### A3: Firebase-Projekt anlegen (für Push-Notifications)
+- **Wo:** https://console.firebase.google.com
+- **Kosten:** kostenlos
+- **Was du brauchst:** Google-Konto
+- **Dauer:** 15 Minuten
+- **Wann:** Sobald A2 läuft und Push-Notifications gewünscht
+- **Anleitung:** in [SETUP-NEEDED.md](./SETUP-NEEDED.md) Schritt 6
 
-### Q14: Apple Sign In
-Nicht zwingend (du nutzt Email/Pass), aber Apple bevorzugt Apps mit Apple Sign In. Lohnt der zusätzliche Implementierungs-Aufwand?
+### A4: Mac für iOS-Build organisieren
+- **Optionen:**
+  - Eigener Mac (Mac Mini ab ~700 €)
+  - MacInCloud (~25 €/Monat, kein Hardware-Kauf)
+  - Codemagic / Bitrise CI (~30 €/Monat, automatisierter Build, kein eigener Mac nötig)
+- **Wann:** Erst wenn iOS-Submission ansteht
 
-### Q15: Tablet-Support / iPad-Layout
-Aktuell für Phone optimiert. iPad zeigt das Phone-Layout größer. Eigenes Layout?
+---
 
-### Q16: Web App Manifest für PWA?
-Capacitor-Assets hat PWA-Icons generiert. Ich könnte zusätzlich ein PWA-Manifest in der Webseite ergänzen, sodass simpletrailer.de auch "zum Homescreen hinzufügen" gut aussieht. Interessiert?
+## 🟢 Schon erledigt
+
+- ✅ Templates (Datenschutz, AGB, Impressum) fertig mit euren GbR-Daten
+- ✅ Verspätungsgebühr (5 €/h) und SB-Werte (500 €/50 €) aus eurem Schema gezogen
+- ✅ JDK 17 + Android SDK portable installiert (in `mobile-app/tools/`, kein Admin-Recht)
+- ✅ **DEBUG-APK gebaut**: `mobile-app/android/app/build/outputs/apk/debug/app-debug.apk` (7.2 MB)
+  - Du kannst sie auf ein Android-Handy ziehen und installieren (Einstellungen → Sicherheit → "Installation aus unbekannten Quellen erlauben")
+  - Oder via `adb install` falls dein Handy im Entwickler-Modus angeschlossen ist
+
+---
+
+## 🔵 Kommt später (kein Stress jetzt)
+
+### B1: Datenschutz/AGB/Impressum auf simpletrailer.de hochladen
+3 HTML-Dateien sind in `templates/` fertig. Du oder ich können das in einem **getrennten kleinen Commit** machen (nur Footer-Links + 3 statische Dateien — null Risiko für Buchungen). Sag Bescheid.
+
+### B2: Footer-Links der Webseite aktivieren
+In `index.html:1839-1841` sind aktuell `href="#"`-Platzhalter. Sobald B1 erledigt: 5-Sekunden-Edit.
+
+### B3: "Konto löschen"-Button in account.html
+Apple-Pflicht für Apps mit Registrierung. Stub-Endpoint liegt in `server-stub/delete-account.js`.
+
+### B4: Push-Token in der App-WebView aktivieren
+1 Block JavaScript in account.html, der den Token an `/api/save-push-token` sendet (Stub liegt in `server-stub/`).
+
+→ B3 und B4 sind WEBSEITEN-ÄNDERUNGEN. Mache ich nur mit deinem ausdrücklichen "ja, mach das".
+
+---
+
+## 🔴 Optional / nice-to-have (irgendwann)
+
+- Apple Sign In als zusätzliche Login-Option (verbessert App-Store-Chancen leicht)
+- Tablet/iPad-Support mit eigenem Layout
+- Mehrsprachigkeit (Englisch zusätzlich zu Deutsch)
+- PWA-Manifest auf simpletrailer.de für "zum Homescreen hinzufügen"

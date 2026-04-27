@@ -173,5 +173,34 @@ Logs zum Diagnostizieren:
 
 ---
 
+---
+
+## Phase-2-Erweiterung Teil 3 (Android-Build erzwungen)
+
+✅ **Portable Toolchain installiert** (kein Admin-Recht noetig):
+- JDK 17 (Adoptium Temurin) -> `tools/jdk-17/` (~306 MB)
+- Android SDK (Platform 34, Build-Tools 34.0.0, Platform-Tools) -> `tools/android-sdk/` (~422 MB)
+- Beide gitignored, lokal generiert via `bash scripts/setup-android-tools.sh`
+
+✅ **APK ERFOLGREICH GEBAUT:**
+- Datei: `mobile-app/android/app/build/outputs/apk/debug/app-debug.apk`
+- Groesse: 7.2 MB
+- Build-Zeit: 52 Sekunden, 246 Tasks
+- Direkt installierbar: `adb install -r mobile-app/android/app/build/outputs/apk/debug/app-debug.apk`
+
+✅ **Probleme unterwegs geloest:**
+- winget-Hang auf UAC-Prompt -> portabler Direkt-Download stattdessen
+- "Die Syntax fuer den Dateinamen ist falsch" -> escaped Backslashes in local.properties durch forward-slashes ersetzt
+- flatDir auf nicht-existierende libs-Verzeichnisse -> Ordner erstellt
+- `+` im JDK-Verzeichnisnamen -> umbenannt
+
+✅ **Reproduzierbar fuer dich:**
+- `bash scripts/setup-android-tools.sh` — installiert alles in einem Schwung
+- `bash scripts/doctor.sh` — sagt sofort ob alles OK ist
+- `bash scripts/build-android.sh` — baut die APK
+
+---
+
 Ende der Nacht. Schlaf gut. ✅
+
 
