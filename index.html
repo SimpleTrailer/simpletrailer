@@ -787,7 +787,9 @@
       .price-sub { font-size: 0.7rem; }
     }
 
-    .price-features { list-style: none; display: flex; flex-direction: column; gap: 9px; flex: 1; margin-bottom: 20px; }
+    /* Liste hat natuerliche Hoehe — kein flex:1 mehr.
+       Whitespace landet stattdessen ZWISCHEN Liste und Button (durch margin-top:auto am Button). */
+    .price-features { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
     .price-features li {
       font-size: 0.84rem; color: var(--gray);
       display: flex; align-items: center; gap: 9px;
@@ -804,6 +806,16 @@
     .price-features li > strong { flex-shrink: 0; white-space: nowrap; margin-left: auto; }
     .price-card.featured .price-features li::before { background-color: #2a1200; }
     .price-card.week-card .price-features li::before { background-color: #1a1200; }
+
+    /* Buchen-Button rutscht ans Karten-Ende (egal wie kurz oder lang die Liste ist) */
+    .price-card > .btn { margin-top: auto; }
+
+    /* Header (Titel) auf gleicher Hoehe in allen Karten — feste Mindesthoehe */
+    .price-card .card-header { min-height: 28px; }
+
+    /* Preis-Block auf gleicher Hoehe in allen Karten */
+    .price-card .price-amount { min-height: 56px; align-items: center; }
+    .price-card .price-sub { min-height: 18px; }
 
     /* REVIEWS – auto-scroll marquee */
     #bewertungen {
