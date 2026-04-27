@@ -17,7 +17,7 @@ CREATE TABLE trailers (
   price_3h            NUMERIC(10,2) NOT NULL DEFAULT 8.00,
   price_day           NUMERIC(10,2) NOT NULL DEFAULT 25.00,
   price_weekend       NUMERIC(10,2) NOT NULL DEFAULT 45.00,
-  late_fee_per_hour   NUMERIC(10,2) NOT NULL DEFAULT 5.00,
+  late_fee_per_hour   NUMERIC(10,2) NOT NULL DEFAULT 15.00,
   is_available        BOOLEAN DEFAULT TRUE,
   image_url           TEXT,
   created_at          TIMESTAMPTZ DEFAULT NOW()
@@ -47,6 +47,9 @@ CREATE TABLE bookings (
   actual_return_time          TIMESTAMPTZ,
   late_fee_amount             NUMERIC(10,2) DEFAULT 0,
   late_fee_payment_intent_id  TEXT,
+  agb_version                 TEXT,
+  agb_accepted_at             TIMESTAMPTZ,
+  agb_accepted_ip             TEXT,
   created_at                  TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -78,7 +81,7 @@ VALUES (
   8.00,
   25.00,
   45.00,
-  5.00,
+  15.00,
   true
 );
 

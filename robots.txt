@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin.html
+Disallow: /api/
+Disallow: /precheck.html
+Disallow: /return.html
+Disallow: /booking-confirm.html
+
+Sitemap: https://simpletrailer.de/sitemap.xml

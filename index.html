@@ -4,7 +4,79 @@
   <meta charset="UTF-8" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SimpleTrailer – Anhängervermietung Bremen</title>
+
+  <!-- SEO -->
+  <title>Anhänger mieten Bremen – SimpleTrailer | Online buchen ab 8 €</title>
+  <meta name="description" content="PKW-Anhänger in Bremen mieten. Online buchen, mit dem Handy entsperren, sofort losfahren. Stundenweise ab 8 €, Tagestarif 25 €, Wochenende 45 €. Kontaktlos & 24/7." />
+  <meta name="keywords" content="Anhänger mieten Bremen, PKW-Anhänger Bremen, Trailer Verleih Bremen, Anhängervermietung, Transport Bremen, Umzug, kontaktlos mieten" />
+  <meta name="author" content="SimpleTrailer GbR" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta name="theme-color" content="#0D0D0D" />
+  <link rel="canonical" href="https://simpletrailer.de/" />
+
+  <!-- Open Graph (Facebook, WhatsApp, LinkedIn) -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="SimpleTrailer" />
+  <meta property="og:title" content="Anhänger mieten in Bremen – online in 60 Sekunden gebucht" />
+  <meta property="og:description" content="PKW-Anhänger ab 8 €. Online buchen, mit dem Handy entsperren, losfahren. Verfügbar 24/7 in Bremen." />
+  <meta property="og:url" content="https://simpletrailer.de/" />
+  <meta property="og:image" content="https://simpletrailer.de/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:locale" content="de_DE" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Anhänger mieten Bremen – SimpleTrailer" />
+  <meta name="twitter:description" content="Online buchen, sofort losfahren. PKW-Anhänger ab 8 € in Bremen." />
+  <meta name="twitter:image" content="https://simpletrailer.de/og-image.png" />
+
+  <!-- PWA Manifest + Apple-Touch-Icon -->
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+  <!-- Strukturierte Daten: Lokales Geschäft (für Google Maps + Knowledge Panel) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "AutoRental",
+    "name": "SimpleTrailer",
+    "description": "PKW-Anhänger-Vermietung in Bremen. Online buchen, kontaktlos abholen.",
+    "url": "https://simpletrailer.de",
+    "telephone": "",
+    "email": "info@simpletrailer.de",
+    "image": "https://simpletrailer.de/og-image.png",
+    "priceRange": "€€",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Waltjenstr. 96",
+      "postalCode": "28237",
+      "addressLocality": "Bremen",
+      "addressCountry": "DE"
+    },
+    "areaServed": { "@type": "City", "name": "Bremen" },
+    "openingHoursSpecification": {
+      "@type": "OpeningHoursSpecification",
+      "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
+      "opens": "00:00",
+      "closes": "23:59"
+    },
+    "paymentAccepted": "Visa, Mastercard, Apple Pay, Google Pay, PayPal",
+    "currenciesAccepted": "EUR",
+    "founder": [
+      { "@type": "Person", "name": "Lion Grone" },
+      { "@type": "Person", "name": "Samuel Obodoefuna" }
+    ],
+    "makesOffer": {
+      "@type": "Offer",
+      "name": "PKW-Anhänger Stundenmiete",
+      "price": "8.00",
+      "priceCurrency": "EUR",
+      "availability": "https://schema.org/InStock"
+    }
+  }
+  </script>
+
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1462,6 +1534,7 @@
       <div class="trailer-card reveal">
         <div class="trailer-card-img">
           <img src="anhaenger.png" alt="PKW-Anhänger mit Plane"
+               loading="lazy" decoding="async" width="600" height="400"
                onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
           <div class="trailer-card-img-placeholder" style="display:none;">🚛</div>
         </div>
@@ -1836,14 +1909,14 @@
         </div>
         <div class="footer-col">
           <h4>Rechtliches</h4>
-          <a href="#">Impressum</a>
-          <a href="#">Datenschutz</a>
-          <a href="#">AGB</a>
+          <a href="/impressum.html">Impressum</a>
+          <a href="/datenschutz.html">Datenschutz</a>
+          <a href="/agb.html">AGB</a>
         </div>
         <div class="footer-col">
           <h4>Kontakt</h4>
           <a href="mailto:info@simpletrailer.de">info@simpletrailer.de</a>
-          <a href="#">Bremen, Deutschland</a>
+          <span style="color:var(--gray);">Bremen, Deutschland</span>
         </div>
       </div>
     </div>
@@ -2143,6 +2216,13 @@
       // Modal noch zu → klassischer Flow: öffnen
       openTrailerModal('flexible');
     }
+  }
+
+  /* ── PWA SERVICE WORKER ─────────────────────── */
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch((err) => console.warn('SW reg failed:', err));
+    });
   }
 
   /* ── AUTOCOMPLETE ────────────────────────────── */

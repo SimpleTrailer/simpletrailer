@@ -1,0 +1,27 @@
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1024'>
+  <defs>
+    <linearGradient id='bg' x1='0' y1='0' x2='0' y2='1'>
+      <stop offset='0' stop-color='#0D0D0D'/>
+      <stop offset='1' stop-color='#1A1A1A'/>
+    </linearGradient>
+  </defs>
+  <rect width='1024' height='1024' rx='180' fill='url(#bg)'/>
+  <g transform='translate(180,300)'>
+    <!-- Trailer Box -->
+    <rect x='80' y='40' width='420' height='220' rx='14' fill='#E85D00'/>
+    <rect x='100' y='60' width='60' height='40' rx='4' fill='#0D0D0D'/>
+    <rect x='180' y='60' width='60' height='40' rx='4' fill='#0D0D0D'/>
+    <rect x='260' y='60' width='60' height='40' rx='4' fill='#0D0D0D'/>
+    <rect x='340' y='60' width='60' height='40' rx='4' fill='#0D0D0D'/>
+    <rect x='420' y='60' width='60' height='40' rx='4' fill='#0D0D0D'/>
+    <!-- Wheels -->
+    <circle cx='160' cy='280' r='42' fill='#fff'/>
+    <circle cx='160' cy='280' r='22' fill='#0D0D0D'/>
+    <circle cx='420' cy='280' r='42' fill='#fff'/>
+    <circle cx='420' cy='280' r='22' fill='#0D0D0D'/>
+    <!-- Hitch -->
+    <rect x='0' y='130' width='80' height='14' rx='4' fill='#E85D00'/>
+    <circle cx='8' cy='137' r='14' fill='#E85D00'/>
+  </g>
+  <text x='512' y='720' text-anchor='middle' fill='#fff' font-family='Arial,sans-serif' font-weight='800' font-size='96' letter-spacing='-3'>Simple<tspan fill='#E85D00'>Trailer</tspan></text>
+</svg>

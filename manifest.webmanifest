@@ -1,0 +1,44 @@
+{
+  "name": "SimpleTrailer – Anhänger mieten Bremen",
+  "short_name": "SimpleTrailer",
+  "description": "PKW-Anhänger online mieten in Bremen. 24/7 verfügbar.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0D0D0D",
+  "theme_color": "#0D0D0D",
+  "lang": "de",
+  "dir": "ltr",
+  "categories": ["travel", "transportation", "business"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Jetzt buchen",
+      "short_name": "Buchen",
+      "description": "Anhänger sofort buchen",
+      "url": "/booking.html",
+      "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Mein Konto",
+      "short_name": "Konto",
+      "description": "Meine Buchungen ansehen",
+      "url": "/account.html",
+      "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
+    }
+  ]
+}

@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0D0D0D" />
+  <title>SimpleTrailer</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%;
+      background: #0D0D0D;
+      color: #fff;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overflow: hidden;
+      overscroll-behavior: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+
+    /* Splash & Bootstrapper */
+    .screen {
+      position: fixed; inset: 0;
+      display: none;
+      flex-direction: column;
+      background: #0D0D0D;
+    }
+    .screen.active { display: flex; }
+
+    /* SPLASH */
+    #splash {
+      align-items: center; justify-content: center;
+      gap: 24px;
+    }
+    .logo {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+    .logo span:first-child { color: #fff; }
+    .logo span:last-child  { color: #E85D00; }
+    .spinner {
+      width: 28px; height: 28px;
+      border: 3px solid rgba(255,255,255,0.18);
+      border-top-color: #E85D00;
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #err {
+      max-width: 320px; text-align: center;
+      font-size: 0.92rem; color: #ff8888; padding: 16px; display: none;
+    }
+    #retry {
+      display: none;
+      margin-top: 12px; padding: 14px 28px;
+      background: #E85D00; color: #fff; border: 0; border-radius: 12px;
+      font-weight: 600; font-size: 1rem; cursor: pointer;
+    }
+
+    /* ONBOARDING */
+    .onboard {
+      align-items: stretch; justify-content: space-between;
+      padding: 48px 28px 32px;
+    }
+    .onboard-hero {
+      flex: 1;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 32px;
+      animation: fadeInUp 0.5s ease;
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .onboard-icon {
+      width: 96px; height: 96px;
+      background: linear-gradient(135deg, #E85D00, #FF6A00);
+      border-radius: 28px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 3rem;
+      box-shadow: 0 12px 40px rgba(232,93,0,0.4);
+    }
+    .onboard h1 {
+      font-size: 1.85rem;
+      font-weight: 800;
+      text-align: center;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      max-width: 320px;
+    }
+    .onboard h1 span { color: #E85D00; }
+    .onboard p {
+      font-size: 1.05rem;
+      color: #aaa;
+      text-align: center;
+      line-height: 1.5;
+      max-width: 320px;
+    }
+
+    /* Feature-list für Permissions-Screen */
+    .feature-list {
+      list-style: none;
+      width: 100%; max-width: 360px;
+      display: flex; flex-direction: column;
+      gap: 16px;
+    }
+    .feature-row {
+      display: flex; align-items: center; gap: 14px;
+      background: #161616;
+      border: 1px solid #2A2A2A;
+      border-radius: 14px;
+      padding: 16px;
+    }
+    .feature-icon {
+      width: 44px; height: 44px;
+      background: rgba(232,93,0,0.15);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem;
+      flex-shrink: 0;
+    }
+    .feature-text { flex: 1; }
+    .feature-text strong { display: block; font-size: 0.95rem; margin-bottom: 2px; }
+    .feature-text small { display: block; font-size: 0.78rem; color: #888; line-height: 1.35; }
+
+    /* Bottom bar mit Buttons + Dots */
+    .onboard-bottom {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 24px;
+      padding-bottom: 8px;
+    }
+    .dots {
+      display: flex; gap: 8px;
+    }
+    .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #2A2A2A;
+      transition: all 0.25s;
+    }
+    .dot.active { background: #E85D00; width: 24px; }
+    .btn-group {
+      display: flex; gap: 12px; width: 100%;
+    }
+    .btn {
+      flex: 1;
+      padding: 16px 24px;
+      border-radius: 14px;
+      font-weight: 600;
+      font-size: 1rem;
+      border: 0;
+      cursor: pointer;
+      transition: transform 0.1s, opacity 0.2s;
+      font-family: inherit;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary { background: #E85D00; color: #fff; }
+    .btn-primary:hover { background: #FF6A00; }
+    .btn-ghost {
+      background: transparent;
+      color: #888;
+      border: 1px solid #2A2A2A;
+    }
+    .btn-ghost:hover { color: #fff; border-color: #444; }
+
+    .skip-link {
+      position: absolute; top: 24px; right: 24px;
+      color: #888; font-size: 0.88rem;
+      background: transparent; border: 0; cursor: pointer;
+      font-family: inherit;
+      padding: 8px 12px;
+    }
+    .skip-link:active { color: #E85D00; }
+
+    /* Version Footer im Onboarding */
+    .version {
+      position: absolute; bottom: 12px; left: 0; right: 0;
+      text-align: center;
+      font-size: .68rem; color: #555;
+      letter-spacing: .05em;
+    }
+
+    /* Offline Banner */
+    .offline-banner {
+      position: fixed; top: 0; left: 0; right: 0;
+      background: #d97706; color: #fff;
+      text-align: center;
+      padding: 8px 16px;
+      font-size: .85rem; font-weight: 600;
+      z-index: 9999;
+      transform: translateY(-100%);
+      transition: transform 0.25s;
+    }
+    .offline-banner.visible { transform: translateY(0); }
+  </style>
+</head>
+<body>
+
+  <!-- ===== Offline-Banner ===== -->
+  <div class="offline-banner" id="offlineBanner">⚠ Keine Internetverbindung</div>
+
+  <!-- ===== SPLASH ===== -->
+  <div class="screen active" id="splash">
+    <div class="logo"><span>Simple</span><span>Trailer</span></div>
+    <div class="spinner" id="spinner"></div>
+    <div id="err"></div>
+    <button id="retry" onclick="loadWebsite()">Erneut versuchen</button>
+  </div>
+
+  <!-- ===== ONBOARDING SCREEN 1: Welcome ===== -->
+  <div class="screen onboard" id="onb1">
+    <button class="skip-link" onclick="finishOnboarding()">Überspringen</button>
+    <div class="onboard-hero">
+      <div class="onboard-icon">🚛</div>
+      <h1>Anhänger mieten in <span>Bremen</span></h1>
+      <p>SimpleTrailer ist die einfachste Art, einen PKW-Anhänger zu mieten – jederzeit, mit dem Smartphone.</p>
+    </div>
+    <div class="onboard-bottom">
+      <div class="dots">
+        <span class="dot active"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="showOnb(2)">Weiter →</button>
+      </div>
+    </div>
+    <div class="version" id="versionTag">v1.0.0</div>
+  </div>
+
+  <!-- ===== ONBOARDING SCREEN 2: Permissions ===== -->
+  <div class="screen onboard" id="onb2">
+    <button class="skip-link" onclick="finishOnboarding()">Überspringen</button>
+    <div class="onboard-hero">
+      <h1>Was die App kann</h1>
+      <ul class="feature-list">
+        <li class="feature-row">
+          <div class="feature-icon">📍</div>
+          <div class="feature-text">
+            <strong>Anhänger in deiner Nähe</strong>
+            <small>Standortzugriff für die nächstgelegene Station</small>
+          </div>
+        </li>
+        <li class="feature-row">
+          <div class="feature-icon">📷</div>
+          <div class="feature-text">
+            <strong>Schnelle Schadens-Fotos</strong>
+            <small>Kamera für Vor-/Nach-Mietfotos</small>
+          </div>
+        </li>
+        <li class="feature-row">
+          <div class="feature-icon">🔔</div>
+          <div class="feature-text">
+            <strong>Erinnerungen & Updates</strong>
+            <small>Push-Nachrichten zu Buchung & Rückgabe</small>
+          </div>
+        </li>
+      </ul>
+      <p style="font-size:0.85rem;color:#666;">Du entscheidest gleich, was du erlauben möchtest.</p>
+    </div>
+    <div class="onboard-bottom">
+      <div class="dots">
+        <span class="dot"></span>
+        <span class="dot active"></span>
+        <span class="dot"></span>
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-ghost" onclick="showOnb(1)">Zurück</button>
+        <button class="btn btn-primary" onclick="requestPermissionsThenNext()">Berechtigungen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== ONBOARDING SCREEN 3: Done ===== -->
+  <div class="screen onboard" id="onb3">
+    <div class="onboard-hero">
+      <div class="onboard-icon" style="background:linear-gradient(135deg,#10b981,#059669);box-shadow:0 12px 40px rgba(16,185,129,0.35);">✓</div>
+      <h1>Du bist <span>startklar</span></h1>
+      <p>Tippe los und buche deinen ersten Anhänger.</p>
+    </div>
+    <div class="onboard-bottom">
+      <div class="dots">
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot active"></span>
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="finishOnboarding()">Zur App →</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="native-bridge.js"></script>
+  <script>
+    const ONBOARD_KEY = 'st_app_onboarded_v1';
+
+    function $(id) { return document.getElementById(id); }
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+      $(id).classList.add('active');
+    }
+    function showOnb(n) { showScreen('onb' + n); }
+
+    async function requestPermissionsThenNext() {
+      const btn = event.target;
+      const origText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Lade …';
+      try {
+        if (window.SimpleTrailerBridge && window.SimpleTrailerBridge.isNative) {
+          // 1. Push-Permission (kann auf iOS nicht stillschweigend angefragt werden)
+          await window.SimpleTrailerBridge.requestPushPermission().catch(() => {});
+          // 2. Geolocation-Permission anfragen (durch ersten Call ausgelöst)
+          await window.SimpleTrailerBridge.getCurrentLocation().catch(() => {});
+          // Camera-Permission wird beim ersten Foto-Versuch angefragt — kein Pre-Prompt
+        }
+      } catch (e) {
+        console.warn('Permission flow error:', e);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = origText;
+        showOnb(3);
+      }
+    }
+
+    function finishOnboarding() {
+      try { localStorage.setItem(ONBOARD_KEY, '1'); } catch (e) {}
+      loadWebsite();
+    }
+
+    function loadWebsite() {
+      const cfg = window.SIMPLETRAILER_APP_CONFIG || {};
+      const url = cfg.START_URL || 'https://simpletrailer.de/';
+      showScreen('splash');
+      $('err').style.display = 'none';
+      $('retry').style.display = 'none';
+      $('spinner').style.display = 'block';
+
+      try { window.SimpleTrailerBridge?.init?.(); } catch (e) {}
+
+      const timeout = setTimeout(() => showError('Verbindung zu simpletrailer.de zu langsam.'), 10000);
+      fetch(url, { method: 'HEAD', mode: 'no-cors' })
+        .then(() => {
+          clearTimeout(timeout);
+          window.location.replace(url);
+        })
+        .catch(() => {
+          clearTimeout(timeout);
+          showError('Keine Verbindung. Prüfe dein Internet.');
+        });
+    }
+
+    function showError(msg) {
+      $('spinner').style.display = 'none';
+      $('err').textContent = msg;
+      $('err').style.display = 'block';
+      $('retry').style.display = 'inline-block';
+    }
+
+    // Offline-Banner Live-Update
+    function updateOfflineBanner() {
+      const banner = document.getElementById('offlineBanner');
+      if (!banner) return;
+      banner.classList.toggle('visible', !navigator.onLine);
+    }
+    window.addEventListener('online',  updateOfflineBanner);
+    window.addEventListener('offline', updateOfflineBanner);
+
+    // Version-Tag aktualisieren falls Config eine Version hat
+    function setVersionTag() {
+      const v = window.SIMPLETRAILER_APP_CONFIG?.APP_VERSION;
+      const el = document.getElementById('versionTag');
+      if (v && el) el.textContent = 'v' + v;
+    }
+
+    function bootstrap() {
+      updateOfflineBanner();
+      setVersionTag();
+
+      const isNative = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+      let onboarded = false;
+      try { onboarded = !!localStorage.getItem(ONBOARD_KEY); } catch (e) {}
+
+      // Onboarding nur in Native UND nur wenn noch nicht gezeigt
+      if (isNative && !onboarded) {
+        showScreen('onb1');
+      } else {
+        loadWebsite();
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', bootstrap);
+  </script>
+</body>
+</html>

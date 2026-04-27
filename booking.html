@@ -106,6 +106,19 @@
     #payment-element { margin-bottom: 20px; }
     #payment-message { color: #f87171; font-size: .88rem; text-align: center; margin-bottom: 12px; display: none; }
 
+    /* AGB CHECKBOX */
+    .agb-row { display: flex; align-items: flex-start; gap: 10px; padding: 14px; background: var(--s2); border: 1.5px solid var(--border); border-radius: 10px; margin-bottom: 14px; cursor: pointer; transition: border-color .2s; }
+    .agb-row:hover { border-color: #555; }
+    .agb-row input[type=checkbox] { margin-top: 3px; flex-shrink: 0; width: 18px; height: 18px; accent-color: var(--orange); cursor: pointer; }
+    .agb-text { font-size: .82rem; color: #ccc; line-height: 1.5; }
+    .agb-text a { color: var(--orange); text-decoration: underline; }
+
+    /* LEGAL MODAL */
+    .legal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.78); z-index: 9999; align-items: center; justify-content: center; padding: 20px; }
+    .legal-overlay.open { display: flex; }
+    .legal-modal { background: #1A1A1A; border-radius: 14px; max-width: 880px; width: 100%; height: 88vh; display: flex; flex-direction: column; overflow: hidden; }
+    .legal-header { padding: 16px 22px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+
     /* STEPS */
     .step-content { display: none; }
     .step-content.active { display: block; }
@@ -706,7 +719,20 @@
       </div>
       <div id="payment-element"></div>
       <div id="payment-message"></div>
-      <button class="btn btn-orange" id="payBtn" onclick="submitPayment()">Jetzt buchen &amp; bezahlen</button>
+
+      <!-- AGB Akzeptanz-Checkbox -->
+      <label class="agb-row" for="agbCheck">
+        <input type="checkbox" id="agbCheck" onchange="updatePayBtnState()" />
+        <span class="agb-text">
+          Ich akzeptiere die
+          <a href="#" onclick="openLegalModal('agb');return false;">AGB</a>
+          und die
+          <a href="#" onclick="openLegalModal('datenschutz');return false;">Datenschutzerklärung</a>
+          und stimme der automatischen Abbuchung etwaiger Verspätungs- und Schadensersatzgebühren von der hinterlegten Zahlungsmethode zu.
+        </span>
+      </label>
+
+      <button class="btn btn-orange" id="payBtn" onclick="submitPayment()" disabled>Jetzt buchen &amp; bezahlen</button>
     </div>
 
     <div style="text-align:center;margin-top:12px;">
@@ -714,6 +740,17 @@
     </div>
   </div>
 
+</div>
+
+<!-- LEGAL MODAL (AGB / Datenschutz / Impressum) -->
+<div id="legalOverlay" class="legal-overlay" onclick="if(event.target===this)closeLegalModal()">
+  <div class="legal-modal">
+    <div class="legal-header">
+      <strong id="legalTitle" style="font-size:1rem;letter-spacing:-.02em;">AGB</strong>
+      <button onclick="closeLegalModal()" aria-label="Schließen" style="background:none;border:none;color:#666;font-size:1.6rem;cursor:pointer;line-height:1;padding:0 4px;">×</button>
+    </div>
+    <iframe id="legalIframe" src="about:blank" style="border:0;width:100%;flex:1;background:#fff;"></iframe>
+  </div>
 </div>
 
 <!-- INFO MODAL -->
@@ -1745,7 +1782,8 @@
           insurance_type:   selectedInsurance,
           insurance_amount: getInsuranceAmount(),
           user_id:          bookingUser.id,
-          booking_mode:     bookingMode
+          booking_mode:     bookingMode,
+          agb_version:      '2026-04-27'
         })
       });
 
@@ -1767,8 +1805,9 @@
       const pe = stripeElements.create('payment');
       pe.mount('#payment-element');
 
-      payBtn.disabled = false;
       payBtn.textContent = 'Jetzt buchen & bezahlen';
+      payBtn.dataset.stripeReady = '1';
+      updatePayBtnState();   // enabled nur wenn AGB-Checkbox an
 
       // Client Secret für Confirm-Seite speichern
       sessionStorage.setItem('st_client_secret', data.client_secret);
@@ -1784,7 +1823,34 @@
     }
   }
 
+  // AGB-Checkbox-Logik
+  function updatePayBtnState() {
+    const checked = document.getElementById('agbCheck')?.checked;
+    const payBtn  = document.getElementById('payBtn');
+    if (!payBtn) return;
+    if (payBtn.dataset.stripeReady === '1') {
+      payBtn.disabled = !checked;
+    }
+  }
+
+  function openLegalModal(type) {
+    const titles = { agb: 'Allgemeine Geschäftsbedingungen', datenschutz: 'Datenschutzerklärung', impressum: 'Impressum' };
+    document.getElementById('legalTitle').textContent = titles[type] || 'Rechtliches';
+    document.getElementById('legalIframe').src = '/' + type + '.html';
+    document.getElementById('legalOverlay').classList.add('open');
+  }
+  function closeLegalModal() {
+    document.getElementById('legalOverlay').classList.remove('open');
+    document.getElementById('legalIframe').src = 'about:blank';
+  }
+
   async function submitPayment() {
+    const agbChecked = document.getElementById('agbCheck')?.checked;
+    if (!agbChecked) {
+      showPaymentError('Bitte akzeptiere zunächst die AGB und Datenschutzerklärung.');
+      return;
+    }
+
     const payBtn = document.getElementById('payBtn');
     payBtn.disabled = true;
     payBtn.textContent = 'Zahlung wird verarbeitet...';

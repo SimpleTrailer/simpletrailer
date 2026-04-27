@@ -1,0 +1,20 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "TODO_TEAM_ID.de.simpletrailer.app",
+        "paths": [
+          "/booking*",
+          "/account*",
+          "/precheck*",
+          "/return*",
+          "/booking-confirm*"
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": ["TODO_TEAM_ID.de.simpletrailer.app"]
+  }
+}
