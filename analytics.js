@@ -20,8 +20,8 @@
   // ────────────────────────────────────────────────────────────
   // 1) MICROSOFT CLARITY
   // ────────────────────────────────────────────────────────────
-  // ⚠️ HIER deine Clarity-Project-ID einsetzen (10-stelliger String):
-  const CLARITY_ID = 'PUT_YOUR_CLARITY_ID_HERE';
+  // SimpleTrailer Clarity-Projekt: clarity.microsoft.com/projects/view/wiy9ow3sje
+  const CLARITY_ID = 'wiy9ow3sje';
 
   if (CLARITY_ID && CLARITY_ID !== 'PUT_YOUR_CLARITY_ID_HERE') {
     (function (c, l, a, r, i, t, y) {
