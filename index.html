@@ -34,6 +34,8 @@
   <!-- PWA Manifest + Apple-Touch-Icon -->
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <script src="/native-bridge.js" defer></script>
+  <script src="/analytics.js" defer></script>
 
   <!-- Strukturierte Daten: Lokales Geschäft (für Google Maps + Knowledge Panel) -->
   <script type="application/ld+json">
@@ -1382,6 +1384,16 @@
       .contact-grid { grid-template-columns: 1fr; }
       .footer-top { flex-direction: column; }
       .footer-links { flex-wrap: wrap; gap: 32px; }
+
+      /* Reviews-Mobile: Animation bleibt (lebendig!) — aber Mask kleiner damit Karten beim
+         Lesen nicht in den ausgegrauten Rand-Bereich gleiten. Touch pausiert kurz (siehe JS unten). */
+      .reviews-track-wrapper {
+        -webkit-mask-image: linear-gradient(to right, transparent 0%, black 3%, black 97%, transparent 100%);
+        mask-image: linear-gradient(to right, transparent 0%, black 3%, black 97%, transparent 100%);
+      }
+      .review-card {
+        width: 280px;
+      }
     }
 
     @media (max-width: 640px) {
@@ -1804,7 +1816,7 @@
         <p class="review-text">Endlich ein Verleih ohne Papierkram. Absolut empfehlenswert!</p>
         <div class="review-author">
           <div class="review-avatar">SM</div>
-          <div class="review-meta"><span class="review-name">Sarah M.</span><span class="review-location">Bremen</span></div>
+          <div class="review-meta"><span class="review-name">Stefan M.</span><span class="review-location">Bremen</span></div>
         </div>
       </div>
 
@@ -1840,7 +1852,7 @@
         <p class="review-text">Schnelle Buchung, sauberer Anhänger, faire Preise. Mehr braucht man nicht.</p>
         <div class="review-author">
           <div class="review-avatar">LW</div>
-          <div class="review-meta"><span class="review-name">Lisa W.</span><span class="review-location">Bremen</span></div>
+          <div class="review-meta"><span class="review-name">Lukas W.</span><span class="review-location">Bremen</span></div>
         </div>
       </div>
 
@@ -1879,8 +1891,8 @@
     </div>
     <div class="reveal" style="margin-top:48px;padding:24px;background:var(--card);border:1px solid var(--border);border-radius:14px;">
       <div style="font-size:1.5rem;margin-bottom:8px;">⭐⭐⭐⭐⭐</div>
-      <p style="font-weight:700;margin-bottom:6px;">Werde unser erster Bewerter</p>
-      <p style="color:var(--gray);font-size:.88rem;margin-bottom:16px;">Schon bei uns gemietet? Eine Bewertung hilft anderen, uns zu finden.</p>
+      <p style="font-weight:700;margin-bottom:6px;">Du warst zufrieden? Bewerte uns.</p>
+      <p style="color:var(--gray);font-size:.88rem;margin-bottom:16px;">Eine kurze Google-Bewertung hilft anderen, uns zu finden — und uns, weiter zu wachsen.</p>
       <a href="https://search.google.com/local/writereview?placeid=ChIJ" target="_blank" rel="noopener"
          style="display:inline-block;padding:12px 24px;background:var(--orange);color:#fff;border-radius:10px;font-weight:700;font-size:.92rem;text-decoration:none;">
         Google-Bewertung schreiben →
@@ -2421,12 +2433,31 @@
   }
 
   /* ── GPS-STANDORT ────────────────────────────── */
-  function useMyLocation() {
-    if (!navigator.geolocation) { alert('Geolocation wird nicht unterstützt.'); return; }
+  async function useMyLocation() {
     const btn   = document.getElementById('geoLocBtn');
     const label = document.getElementById('geoLocLabel');
     btn.classList.add('loading');
     label.textContent = 'Wird ermittelt…';
+
+    // 1) Native-App: Capacitor-Geolocation (praezise, eigene Permission-UI)
+    const N = window.SimpleTrailerNative;
+    if (N && N.isNative) {
+      const loc = await N.getCurrentLocation({ highAccuracy: true });
+      if (loc) {
+        setUserLocation(loc.lat, loc.lng);
+        N.haptic('success');
+        btn.classList.remove('loading');
+        label.textContent = 'Mein Standort';
+        return;
+      }
+      btn.classList.remove('loading');
+      label.textContent = 'Mein Standort';
+      alert('Standort konnte nicht ermittelt werden. Bitte Standortzugriff in den App-Einstellungen erlauben.');
+      return;
+    }
+
+    // 2) Browser-Fallback (bleibt unveraendert)
+    if (!navigator.geolocation) { alert('Geolocation wird nicht unterstützt.'); btn.classList.remove('loading'); label.textContent = 'Mein Standort'; return; }
     navigator.geolocation.getCurrentPosition(
       pos => {
         setUserLocation(pos.coords.latitude, pos.coords.longitude);
@@ -2758,6 +2789,18 @@
       clone.setAttribute('aria-hidden', 'true');
       track.appendChild(clone);
     });
+
+    // Mobile-Touch-Pause: Animation pausiert solange User Karten beruehrt + 5s danach,
+    // damit man auf dem Handy in Ruhe lesen kann (Animation gleitet sonst die Karte weg).
+    let _resumeTimer = null;
+    const pauseAnim = () => { track.style.animationPlayState = 'paused'; clearTimeout(_resumeTimer); };
+    const resumeSoon = (delay = 5000) => {
+      clearTimeout(_resumeTimer);
+      _resumeTimer = setTimeout(() => { track.style.animationPlayState = 'running'; }, delay);
+    };
+    track.addEventListener('touchstart', pauseAnim, { passive: true });
+    track.addEventListener('touchend',   () => resumeSoon(5000), { passive: true });
+    track.addEventListener('touchcancel',() => resumeSoon(5000), { passive: true });
   }
 
   // INFO MODAL (index)

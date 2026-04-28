@@ -5,6 +5,8 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Vorab-Check – SimpleTrailer</title>
+  <script src="/native-bridge.js" defer></script>
+  <script src="/analytics.js" defer></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -100,10 +102,10 @@
     <!-- Foto-Upload -->
     <div class="card">
       <p style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gray);margin-bottom:12px;">📷 Foto des Anhängers</p>
-      <div class="upload-area" id="uploadArea">
+      <div class="upload-area" id="uploadArea" onclick="onPrecheckUploadClick(event)">
         <input type="file" accept="image/*" capture="environment" id="photoInput" onchange="handlePhoto(this)" />
         <div class="upload-icon">📸</div>
-        <div class="upload-label">Foto aufnehmen oder hochladen</div>
+        <div class="upload-label" id="precheckUploadLabel">Foto aufnehmen oder hochladen</div>
         <div class="upload-sub">Zeige den gesamten Anhänger von vorne/hinten</div>
       </div>
       <img id="photoPreview" class="photo-preview" alt="Vorschau" />
@@ -220,8 +222,12 @@
 
   function handlePhoto(input) {
     if (!input.files || !input.files[0]) return;
-    photoFile = input.files[0];
-    document.getElementById('photoName').textContent = '✓ ' + photoFile.name;
+    setPrecheckPhoto(input.files[0]);
+  }
+
+  function setPrecheckPhoto(file) {
+    photoFile = file;
+    document.getElementById('photoName').textContent = '✓ ' + (photoFile.name || 'Foto aufgenommen');
     document.getElementById('photoName').style.display = 'block';
     const reader = new FileReader();
     reader.onload = e => {
@@ -231,7 +237,31 @@
     };
     reader.readAsDataURL(photoFile);
     checkReady();
+    if (window.SimpleTrailerNative) window.SimpleTrailerNative.haptic('light');
   }
+
+  // Native-App: nutze Kamera/Galerie-Picker statt WebView-File-Input.
+  async function onPrecheckUploadClick(ev) {
+    const N = window.SimpleTrailerNative;
+    if (N && N.isNative) {
+      ev && ev.preventDefault && ev.preventDefault();
+      const file = await N.takePhoto({ source: 'PROMPT' });
+      if (file) setPrecheckPhoto(file);
+      return false;
+    }
+    // Browser: existing behavior (input click via label-trigger oder direkt)
+    const inp = document.getElementById('photoInput');
+    if (ev && ev.target && ev.target.tagName !== 'INPUT' && inp) inp.click();
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+      if (window.SimpleTrailerNative && window.SimpleTrailerNative.isNative) {
+        const lbl = document.getElementById('precheckUploadLabel');
+        if (lbl) lbl.textContent = 'Foto aufnehmen';
+      }
+    }, 50);
+  });
 
   async function uploadPhoto() {
     if (!photoFile) return null;

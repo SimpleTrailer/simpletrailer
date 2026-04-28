@@ -5,6 +5,8 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Rückgabe – SimpleTrailer</title>
+  <script src="/native-bridge.js" defer></script>
+  <script src="/analytics.js" defer></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root { --bg:#0D0D0D; --s1:#161616; --s2:#1E1E1E; --orange:#E85D00; --white:#fff; --gray:#888; --border:#383838; --green:#22c55e; --font:'Inter',system-ui,sans-serif; }
@@ -109,9 +111,9 @@
     <div class="card">
       <p class="section-tag">Foto zur Bestätigung</p>
       <p style="color:var(--gray);font-size:.85rem;margin-bottom:14px;">Mach ein Foto des Anhängers an seinem Stellplatz – damit bestätigen wir die ordnungsgemäße Rückgabe.</p>
-      <div class="upload-area" id="uploadArea" onclick="document.getElementById('photoInput').click()">
+      <div class="upload-area" id="uploadArea" onclick="onUploadAreaClick()">
         <div class="upload-icon">📷</div>
-        <div class="upload-text"><strong>Foto auswählen</strong> oder hierher ziehen</div>
+        <div class="upload-text"><strong id="uploadCta">Foto auswählen</strong> oder hierher ziehen</div>
         <input type="file" id="photoInput" accept="image/*" capture="environment" onchange="handlePhoto(event)" />
         <img id="photoPreview" class="upload-preview" alt="Vorschau" />
       </div>
@@ -227,8 +229,11 @@
   function handlePhoto(e) {
     const file = e.target.files[0];
     if (!file) return;
-    photoFile = file;
+    setPhotoFile(file);
+  }
 
+  function setPhotoFile(file) {
+    photoFile = file;
     const reader = new FileReader();
     reader.onload = (ev) => {
       const preview = document.getElementById('photoPreview');
@@ -236,9 +241,31 @@
       preview.style.display = 'block';
     };
     reader.readAsDataURL(file);
-
     document.getElementById('returnBtn').disabled = false;
+    if (window.SimpleTrailerNative) window.SimpleTrailerNative.haptic('light');
   }
+
+  // In der Capacitor-App: native Kamera/Galerie-Picker (Apple-Pflicht fuer Native-Feel).
+  // Im Browser: Fallback auf File-Input wie bisher.
+  async function onUploadAreaClick() {
+    const N = window.SimpleTrailerNative;
+    if (N && N.isNative) {
+      const file = await N.takePhoto({ source: 'PROMPT' });
+      if (file) setPhotoFile(file);
+      return;
+    }
+    document.getElementById('photoInput').click();
+  }
+
+  // CTA-Text in der App leicht anpassen (nach native-bridge.js geladen ist)
+  document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+      if (window.SimpleTrailerNative && window.SimpleTrailerNative.isNative) {
+        const cta = document.getElementById('uploadCta');
+        if (cta) cta.textContent = 'Foto aufnehmen';
+      }
+    }, 50);
+  });
 
   // Drag & Drop
   const uploadArea = document.getElementById('uploadArea');

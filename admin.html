@@ -296,6 +296,61 @@
         </div>
       </div>
 
+      <!-- ── Funnel & Live (kommt aus Vercel Analytics + Clarity) ── -->
+      <div style="background:var(--s1); border:1.5px solid var(--border); border-radius:14px; padding:24px; margin-bottom:20px">
+        <p class="section-tag" style="margin-top:0">Live & Funnel — externe Tools</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px">
+          <a href="https://vercel.com/dashboard" target="_blank" rel="noopener" style="text-decoration:none;background:var(--s2);border-radius:10px;padding:18px;display:block;border:1px solid var(--border);transition:border-color .2s" onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='var(--border)'">
+            <div style="font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gray);margin-bottom:6px">Vercel Analytics</div>
+            <div style="font-size:1rem;font-weight:700;color:var(--white)">Live-Visitors & Top-Pages →</div>
+            <div style="font-size:.78rem;color:var(--gray);margin-top:4px">Wer ist gerade auf der Seite? Welche Seite ist beliebt?</div>
+          </a>
+          <a href="https://clarity.microsoft.com/" target="_blank" rel="noopener" style="text-decoration:none;background:var(--s2);border-radius:10px;padding:18px;display:block;border:1px solid var(--border);transition:border-color .2s" onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='var(--border)'">
+            <div style="font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gray);margin-bottom:6px">Microsoft Clarity</div>
+            <div style="font-size:1rem;font-weight:700;color:var(--white)">Heatmaps & Recordings →</div>
+            <div style="font-size:.78rem;color:var(--gray);margin-top:4px">Wo klicken Leute weg? Wo bleiben sie hängen?</div>
+          </a>
+        </div>
+        <p style="font-size:.78rem;color:var(--gray);margin-top:14px;line-height:1.5">
+          📊 <strong>Funnel:</strong> Wir tracken automatisch <code style="background:var(--s2);padding:2px 6px;border-radius:4px">booking_funnel_start</code> → <code style="background:var(--s2);padding:2px 6px;border-radius:4px">booking_funnel_completed</code>. In Vercel Analytics → "Custom Events" siehst du wie viele begonnen vs. abgeschlossen haben.
+        </p>
+      </div>
+
+      <!-- ── Wochentag-Verteilung ── -->
+      <div style="background:var(--s1); border:1.5px solid var(--border); border-radius:14px; padding:24px; margin-bottom:20px">
+        <p class="section-tag" style="margin-top:0">Buchungen nach Wochentag</p>
+        <div id="weekdayChart" style="display:grid;grid-template-columns:repeat(7,1fr);gap:10px;align-items:end;height:180px;margin:16px 0 4px">–</div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:10px;text-align:center;color:var(--gray);font-size:.72rem;font-weight:600;letter-spacing:.05em">
+          <div>MO</div><div>DI</div><div>MI</div><div>DO</div><div>FR</div><div>SA</div><div>SO</div>
+        </div>
+      </div>
+
+      <!-- ── Tageszeit-Verteilung ── -->
+      <div style="background:var(--s1); border:1.5px solid var(--border); border-radius:14px; padding:24px; margin-bottom:20px">
+        <p class="section-tag" style="margin-top:0">Buchungen nach Tageszeit (Stunde)</p>
+        <div id="hourChart" style="display:grid;grid-template-columns:repeat(24,1fr);gap:3px;align-items:end;height:140px;margin:16px 0 4px">–</div>
+        <div style="display:flex;justify-content:space-between;color:var(--gray);font-size:.7rem;font-weight:600;margin-top:6px">
+          <span>00</span><span>06</span><span>12</span><span>18</span><span>23</span>
+        </div>
+      </div>
+
+      <!-- ── Umsatz-Trend letzte 30 Tage ── -->
+      <div style="background:var(--s1); border:1.5px solid var(--border); border-radius:14px; padding:24px; margin-bottom:20px">
+        <p class="section-tag" style="margin-top:0">Umsatz letzte 30 Tage</p>
+        <div id="revenueChart" style="display:grid;grid-template-columns:repeat(30,1fr);gap:2px;align-items:end;height:140px;margin:16px 0 4px">–</div>
+        <div style="display:flex;justify-content:space-between;color:var(--gray);font-size:.7rem;font-weight:600;margin-top:6px">
+          <span id="revRange30">vor 30 Tagen</span>
+          <span>heute</span>
+        </div>
+        <p id="revenueChartSub" style="font-size:.78rem;color:var(--gray);margin-top:10px">–</p>
+      </div>
+
+      <!-- ── Anhänger-Auslastung ── -->
+      <div style="background:var(--s1); border:1.5px solid var(--border); border-radius:14px; padding:24px; margin-bottom:20px">
+        <p class="section-tag" style="margin-top:0">Anhänger-Auslastung</p>
+        <div id="trailerStats">–</div>
+      </div>
+
       <div style="background:var(--s1); border:1.5px solid var(--border); border-radius:14px; padding:24px; margin-bottom:20px">
         <p class="section-tag" style="margin-top:0">Schutzpakete</p>
         <div id="insuranceStats">–</div>
@@ -497,6 +552,121 @@
         <span style="font-weight:700;color:var(--orange)">${fmtEur(b.total_amount)}</span>
         <span class="badge badge-${b.status}">${statusLabel[b.status] || b.status}</span>
       </div>`).join('');
+
+    renderWeekdayChart(paidBookings);
+    renderHourChart(paidBookings);
+    renderRevenueChart(paidBookings);
+    renderTrailerStats(paidBookings);
+  }
+
+  /* ── CHARTS (pure HTML/CSS, keine Library) ────────────── */
+
+  // Wochentags-Verteilung: 7 Bars (Mo–So)
+  function renderWeekdayChart(bookings) {
+    const counts = [0,0,0,0,0,0,0]; // Mo=0 ... So=6
+    bookings.forEach(b => {
+      const d = new Date(b.start_time || b.created_at);
+      // JS getDay(): 0=So, 1=Mo, ... → konvertiere zu 0=Mo
+      const dayMo0 = (d.getDay() + 6) % 7;
+      counts[dayMo0]++;
+    });
+    const max = Math.max(1, ...counts);
+    const html = counts.map((n, i) => {
+      const h = Math.round((n / max) * 100);
+      const isWeekend = i >= 5;
+      const color = isWeekend ? 'var(--orange)' : 'var(--blue)';
+      return `
+        <div style="display:flex;flex-direction:column;justify-content:flex-end;height:100%;gap:6px">
+          <div style="font-size:.78rem;color:var(--white);font-weight:700;text-align:center">${n}</div>
+          <div style="background:${color};border-radius:6px 6px 0 0;height:${Math.max(4, h)}%;transition:height .4s ease" title="${n} Buchungen"></div>
+        </div>`;
+    }).join('');
+    document.getElementById('weekdayChart').innerHTML = html;
+  }
+
+  // Tageszeit-Verteilung: 24 Bars (00–23)
+  function renderHourChart(bookings) {
+    const counts = new Array(24).fill(0);
+    bookings.forEach(b => {
+      const d = new Date(b.created_at);
+      counts[d.getHours()]++;
+    });
+    const max = Math.max(1, ...counts);
+    const html = counts.map((n, h) => {
+      const height = Math.round((n / max) * 100);
+      return `
+        <div style="display:flex;flex-direction:column;justify-content:flex-end;height:100%">
+          <div style="background:var(--orange);border-radius:3px 3px 0 0;height:${Math.max(2, height)}%;transition:height .4s ease" title="${h}:00 Uhr — ${n} Buchungen"></div>
+        </div>`;
+    }).join('');
+    document.getElementById('hourChart').innerHTML = html;
+  }
+
+  // Umsatz-Trend letzte 30 Tage
+  function renderRevenueChart(bookings) {
+    const days = 30;
+    const today = new Date(); today.setHours(0,0,0,0);
+    const buckets = new Array(days).fill(0);
+    bookings.forEach(b => {
+      const d = new Date(b.created_at); d.setHours(0,0,0,0);
+      const diffDays = Math.floor((today - d) / 86400000);
+      if (diffDays >= 0 && diffDays < days) {
+        buckets[days - 1 - diffDays] += (b.total_amount || 0) + (b.late_fee_amount || 0);
+      }
+    });
+    const max = Math.max(1, ...buckets);
+    const total30 = buckets.reduce((s, v) => s + v, 0);
+    const html = buckets.map((v, i) => {
+      const h = Math.round((v / max) * 100);
+      const date = new Date(today.getTime() - (days - 1 - i) * 86400000);
+      const dateStr = date.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit' });
+      return `
+        <div style="display:flex;flex-direction:column;justify-content:flex-end;height:100%">
+          <div style="background:${v > 0 ? 'var(--green)' : 'var(--s3)'};border-radius:2px 2px 0 0;height:${Math.max(2, h)}%;transition:height .4s ease" title="${dateStr}: ${fmtEur(v)}"></div>
+        </div>`;
+    }).join('');
+    document.getElementById('revenueChart').innerHTML = html;
+
+    const startDate = new Date(today.getTime() - (days - 1) * 86400000);
+    document.getElementById('revRange30').textContent =
+      startDate.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit' });
+    document.getElementById('revenueChartSub').textContent =
+      `Σ letzte 30 Tage: ${fmtEur(total30)} · Ø ${fmtEur(total30/days)}/Tag`;
+  }
+
+  // Anhänger-Auslastung
+  function renderTrailerStats(bookings) {
+    const grouped = {};
+    bookings.forEach(b => {
+      const id    = b.trailer_id || 'unbekannt';
+      const name  = b.trailers?.name || (b.trailer_name) || `Anhänger #${String(id).slice(0,6)}`;
+      if (!grouped[id]) grouped[id] = { name, count: 0, revenue: 0, hours: 0 };
+      grouped[id].count++;
+      grouped[id].revenue += (b.total_amount || 0) + (b.late_fee_amount || 0);
+      if (b.start_time && b.end_time) {
+        grouped[id].hours += Math.max(0, (new Date(b.end_time) - new Date(b.start_time)) / 3600000);
+      }
+    });
+    const list = Object.values(grouped).sort((a, b) => b.count - a.count);
+    if (!list.length) {
+      document.getElementById('trailerStats').innerHTML =
+        '<p style="color:var(--gray);font-size:.85rem">Noch keine Buchungen vorhanden.</p>';
+      return;
+    }
+    const max = Math.max(...list.map(t => t.count));
+    document.getElementById('trailerStats').innerHTML = list.map(t => {
+      const pct = Math.round((t.count / max) * 100);
+      return `
+        <div style="margin-bottom:14px">
+          <div style="display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:6px;gap:12px">
+            <span style="font-weight:600">${t.name}</span>
+            <span style="color:var(--gray)">${t.count} Buchung${t.count !== 1 ? 'en' : ''} · ${fmtEur(t.revenue)} · ${Math.round(t.hours)}h</span>
+          </div>
+          <div style="background:var(--s2);border-radius:6px;height:10px;overflow:hidden">
+            <div style="background:var(--orange);height:100%;width:${pct}%;border-radius:6px;transition:width .4s ease"></div>
+          </div>
+        </div>`;
+    }).join('');
   }
 
   /* ── FILTER / SEARCH (Buchungen) ──────────────────────── */

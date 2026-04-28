@@ -5,6 +5,12 @@
       "maxDuration": 10
     }
   },
+  "crons": [
+    {
+      "path": "/api/send-reminders",
+      "schedule": "*/15 * * * *"
+    }
+  ],
   "rewrites": [
     { "source": "/admin", "destination": "/admin.html" },
     { "source": "/booking", "destination": "/booking.html" },

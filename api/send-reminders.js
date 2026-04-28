@@ -13,8 +13,14 @@ const fmt = (d) => new Date(d).toLocaleString('de-DE', {
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
 
-  // Sicherheits-Token damit der Endpunkt nicht offen zugänglich ist
-  const token = req.headers['x-cron-token'] || req.query.token;
+  // Sicherheits-Token damit der Endpunkt nicht offen zugänglich ist.
+  // Vercel-Cron sendet automatisch "Authorization: Bearer <CRON_SECRET>";
+  // zusätzlich akzeptieren wir x-cron-token / ?token= für manuelles Triggern.
+  const auth        = req.headers.authorization || '';
+  const bearerMatch = auth.match(/^Bearer\s+(.+)$/i);
+  const token = (bearerMatch && bearerMatch[1])
+              || req.headers['x-cron-token']
+              || req.query.token;
   if (!process.env.CRON_SECRET || token !== process.env.CRON_SECRET) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
