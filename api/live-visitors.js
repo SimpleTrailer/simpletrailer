@@ -8,7 +8,7 @@ const { createClient } = require('@supabase/supabase-js');
 const supabase     = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 const supabaseAuth = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
 
-const ACTIVE_WINDOW_SECONDS = 60; // Session gilt als aktiv wenn Heartbeat in den letzten 60s
+const ACTIVE_WINDOW_SECONDS = 30; // Session gilt als aktiv wenn Heartbeat in den letzten 30s (Frontend pingt alle 10s)
 const ADMIN_EMAIL = 'admin@simpletrailer.de';
 
 module.exports = async (req, res) => {

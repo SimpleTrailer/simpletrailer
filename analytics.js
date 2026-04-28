@@ -98,10 +98,16 @@
         } catch (e) { /* ignore */ }
       };
 
-      // Erster Ping nach 2s damit Page-Load nicht ausgebremst wird
-      setTimeout(heartbeat, 2000);
-      // Dann alle 30s
-      setInterval(heartbeat, 30000);
+      // Erster Ping SOFORT (damit Admin sofort siehst)
+      heartbeat();
+      // Dann alle 10s (Active-Window im Backend ist 60s, also genug Margin)
+      setInterval(heartbeat, 10000);
+
+      // Sofort-Heartbeat wenn User Tab oeffnet/aktiviert (z.B. von Hintergrund kommt)
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) heartbeat();
+      });
+      window.addEventListener('pageshow', heartbeat);
 
       // Bei Tab-Schliessen Last-Ping (best-effort via Beacon)
       window.addEventListener('pagehide', () => {
