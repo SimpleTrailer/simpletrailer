@@ -12,5 +12,14 @@
       "path": "/api/send-reminders",
       "schedule": "*/15 * * * *"
     }
+  ],
+  "headers": [
+    {
+      "source": "/(analytics|native-bridge|chat-widget|sw).js",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store, no-cache, must-revalidate, max-age=0" },
+        { "key": "Pragma", "value": "no-cache" }
+      ]
+    }
   ]
 }
