@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "458314579838",
+    "project_id": "simpletrailer-18975",
+    "storage_bucket": "simpletrailer-18975.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:458314579838:android:fb8532b6edf18d88e2fd2f",
+        "android_client_info": {
+          "package_name": "de.simpletrailer.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAKZ3VbxuGAKXHSYAZlxF6DGPX2igrIWJ4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
