@@ -102,6 +102,30 @@
 
 ---
 
+## 🛠 Skill- und Agent-Nutzung (für Claude)
+
+Nutze die passenden Skills/Agents je nach Aufgaben-Typ — nicht alles selbst machen wenn ein spezialisiertes Tool besser ist:
+
+| Aufgabe | Tool/Skill |
+|---|---|
+| **UI/Design-Entscheidungen** (Layout, Farben, Komponenten, UX) | **Frontend Design Skill** — IMMER bei sichtbaren Änderungen |
+| **Codebase erkunden** (wo ist X definiert? wer benutzt Y?) | **Explore-Agent** (mit subagent_type: Explore) |
+| **Implementierungs-Planung** für komplexere Features (Architektur, Trade-offs) | **Plan-Agent** vor dem Coding |
+| **Mehrere unabhängige Aufgaben parallel** | Mehrere Agents in einer Message starten |
+| **Code-Review oder Architektur-Audit** | **General-Purpose-Agent** mit klarem Scope |
+| **Web-Recherche** (aktuelle Preise, Produkt-Vergleiche, neue APIs) | **WebSearch** + **WebFetch** |
+| **Status-Übersicht / Backlog-Update** | **Plan-Mode** mit Plan-File-Update |
+
+**Regeln:**
+- Bei UI-Änderungen (Buttons, Layout, neue Sektionen, Mobile-Anpassungen): **immer erst Frontend Design Skill aktivieren**, nicht aus dem Bauch entscheiden
+- Bei "wo ist X im Code?" oder "welche Dateien betreffen Y?": **Explore-Agent** statt selbst durchsuchen
+- Bei strategischen Entscheidungen (welche Library? welche Architektur? wie skaliert das?): **kurz nachdenken oder Plan-Agent**, nicht direkt coden
+- Bei mehreren Tool-Calls die unabhängig sind (z.B. mehrere File-Reads, mehrere WebSearches): **parallel** in einer Message
+
+→ Ziel: Höchste Qualität pro Aufgabe, weniger Iterations-Schleifen.
+
+---
+
 ## Regeln (HART)
 - **Sprache:** Antworten immer auf Deutsch
 - **Buchungssystem TABU:** Webseite läuft LIVE mit echten Stripe-Zahlungen. Änderungen an [booking.html](booking.html), [api/booking.js](api/booking.js), [api/process-return.js](api/process-return.js), [supabase-schema.sql](supabase-schema.sql) NUR mit explizitem User-OK

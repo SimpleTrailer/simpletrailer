@@ -5,6 +5,7 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin – SimpleTrailer</title>
+  <script src="/analytics.js" defer></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -282,16 +283,33 @@
 
     <!-- ═══════════════════════════════════════════════ STATISTIKEN TAB -->
     <div id="tabContentStatistiken" style="display:none">
-      <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); margin-bottom:20px">
+      <!-- AKTUELL (was du heute brauchst) -->
+      <p style="font-size:.65rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gray);margin-bottom:8px">Aktuell</p>
+      <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); margin-bottom:18px">
+        <div class="stat-card green">
+          <div class="stat-label">Umsatz Monat</div>
+          <div class="stat-val" id="sRevMonth">–</div>
+          <div class="stat-sub" id="sRevMonthLabel">–</div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-label">Aktiv unterwegs</div>
+          <div class="stat-val" id="sActive">–</div>
+          <div class="stat-sub">Anhänger gerade verliehen</div>
+        </div>
+        <div class="stat-card yellow">
+          <div class="stat-label">Ausstehend</div>
+          <div class="stat-val" id="sPending">–</div>
+          <div class="stat-sub">warten auf Zahlung</div>
+        </div>
+      </div>
+
+      <!-- ALL-TIME (Lifetime-Stats) -->
+      <p style="font-size:.65rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gray);margin-bottom:8px">All-Time</p>
+      <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); margin-bottom:24px">
         <div class="stat-card orange">
           <div class="stat-label">Umsatz gesamt</div>
           <div class="stat-val" id="sRevTotal">–</div>
           <div class="stat-sub">inkl. Verspätungsgebühren</div>
-        </div>
-        <div class="stat-card green">
-          <div class="stat-label">Umsatz diesen Monat</div>
-          <div class="stat-val" id="sRevMonth">–</div>
-          <div class="stat-sub" id="sRevMonthLabel">–</div>
         </div>
         <div class="stat-card blue">
           <div class="stat-label">Ø Buchungswert</div>
@@ -303,60 +321,78 @@
           <div class="stat-val" id="sTotal">–</div>
           <div class="stat-sub" id="sPaidCount">–</div>
         </div>
-        <div class="stat-card yellow">
-          <div class="stat-label">Ausstehend</div>
-          <div class="stat-val" id="sPending">–</div>
-          <div class="stat-sub">warten auf Zahlung</div>
-        </div>
-        <div class="stat-card red">
-          <div class="stat-label">Aktiv / unterwegs</div>
-          <div class="stat-val" id="sActive">–</div>
-          <div class="stat-sub">Anhänger gerade verliehen</div>
-        </div>
       </div>
 
-      <!-- ── Funnel & Live (kommt aus Vercel Analytics + Clarity) ── -->
-      <div style="background:var(--s1); border:1.5px solid var(--border); border-radius:14px; padding:24px; margin-bottom:20px">
-        <p class="section-tag" style="margin-top:0">Live & Funnel — externe Tools</p>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px">
-          <a href="https://vercel.com/dashboard" target="_blank" rel="noopener" style="text-decoration:none;background:var(--s2);border-radius:10px;padding:18px;display:block;border:1px solid var(--border);transition:border-color .2s" onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='var(--border)'">
-            <div style="font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gray);margin-bottom:6px">Vercel Analytics</div>
-            <div style="font-size:1rem;font-weight:700;color:var(--white)">Live-Visitors & Top-Pages →</div>
-            <div style="font-size:.78rem;color:var(--gray);margin-top:4px">Wer ist gerade auf der Seite? Welche Seite ist beliebt?</div>
+      <!-- ── Externe Tools: Direkt-Links zu Vercel + Clarity ── -->
+      <div style="background:var(--s1); border:1.5px solid var(--border); border-radius:14px; padding:20px 24px; margin-bottom:20px">
+        <p class="section-tag" style="margin-top:0">Externe Tools — direkt zur richtigen Seite</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px">
+          <a href="https://vercel.com/simpletrailers-projects/simpletrailer/analytics" target="_blank" rel="noopener" style="text-decoration:none;background:var(--s2);border-radius:10px;padding:14px;display:block;border:1px solid var(--border);transition:border-color .2s" onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='var(--border)'">
+            <div style="font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gray);margin-bottom:4px">📊 Vercel</div>
+            <div style="font-size:.92rem;font-weight:700;color:var(--white)">Analytics →</div>
+            <div style="font-size:.74rem;color:var(--gray);margin-top:2px">Visitors, Pages, Geräte</div>
           </a>
-          <a href="https://clarity.microsoft.com/" target="_blank" rel="noopener" style="text-decoration:none;background:var(--s2);border-radius:10px;padding:18px;display:block;border:1px solid var(--border);transition:border-color .2s" onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='var(--border)'">
-            <div style="font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gray);margin-bottom:6px">Microsoft Clarity</div>
-            <div style="font-size:1rem;font-weight:700;color:var(--white)">Heatmaps & Recordings →</div>
-            <div style="font-size:.78rem;color:var(--gray);margin-top:4px">Wo klicken Leute weg? Wo bleiben sie hängen?</div>
+          <a href="https://vercel.com/simpletrailers-projects/simpletrailer/speed-insights" target="_blank" rel="noopener" style="text-decoration:none;background:var(--s2);border-radius:10px;padding:14px;display:block;border:1px solid var(--border);transition:border-color .2s" onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='var(--border)'">
+            <div style="font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gray);margin-bottom:4px">⚡ Vercel</div>
+            <div style="font-size:.92rem;font-weight:700;color:var(--white)">Speed Insights →</div>
+            <div style="font-size:.74rem;color:var(--gray);margin-top:2px">Performance, Ladezeit</div>
+          </a>
+          <a href="https://clarity.microsoft.com/projects/view/wiy9ow3sje/dashboard" target="_blank" rel="noopener" style="text-decoration:none;background:var(--s2);border-radius:10px;padding:14px;display:block;border:1px solid var(--border);transition:border-color .2s" onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='var(--border)'">
+            <div style="font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gray);margin-bottom:4px">🔥 Clarity</div>
+            <div style="font-size:.92rem;font-weight:700;color:var(--white)">Dashboard →</div>
+            <div style="font-size:.74rem;color:var(--gray);margin-top:2px">Übersicht & Trends</div>
+          </a>
+          <a href="https://clarity.microsoft.com/projects/view/wiy9ow3sje/recordings" target="_blank" rel="noopener" style="text-decoration:none;background:var(--s2);border-radius:10px;padding:14px;display:block;border:1px solid var(--border);transition:border-color .2s" onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='var(--border)'">
+            <div style="font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gray);margin-bottom:4px">🎥 Clarity</div>
+            <div style="font-size:.92rem;font-weight:700;color:var(--white)">Recordings →</div>
+            <div style="font-size:.74rem;color:var(--gray);margin-top:2px">Echte User-Sessions als Video</div>
+          </a>
+          <a href="https://clarity.microsoft.com/projects/view/wiy9ow3sje/heatmaps" target="_blank" rel="noopener" style="text-decoration:none;background:var(--s2);border-radius:10px;padding:14px;display:block;border:1px solid var(--border);transition:border-color .2s" onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='var(--border)'">
+            <div style="font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gray);margin-bottom:4px">🗺️ Clarity</div>
+            <div style="font-size:.92rem;font-weight:700;color:var(--white)">Heatmaps →</div>
+            <div style="font-size:.74rem;color:var(--gray);margin-top:2px">Wo wird geklickt/gescrollt</div>
+          </a>
+          <a href="https://supabase.com/dashboard/project/zcjlfatuelhkghtdyrqh" target="_blank" rel="noopener" style="text-decoration:none;background:var(--s2);border-radius:10px;padding:14px;display:block;border:1px solid var(--border);transition:border-color .2s" onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='var(--border)'">
+            <div style="font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gray);margin-bottom:4px">🗄️ Supabase</div>
+            <div style="font-size:.92rem;font-weight:700;color:var(--white)">Datenbank →</div>
+            <div style="font-size:.74rem;color:var(--gray);margin-top:2px">SQL, Tabellen, Auth</div>
+          </a>
+          <a href="https://dashboard.stripe.com/payments" target="_blank" rel="noopener" style="text-decoration:none;background:var(--s2);border-radius:10px;padding:14px;display:block;border:1px solid var(--border);transition:border-color .2s" onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='var(--border)'">
+            <div style="font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gray);margin-bottom:4px">💳 Stripe</div>
+            <div style="font-size:.92rem;font-weight:700;color:var(--white)">Zahlungen →</div>
+            <div style="font-size:.74rem;color:var(--gray);margin-top:2px">Payments, Refunds</div>
+          </a>
+          <a href="https://resend.com/emails" target="_blank" rel="noopener" style="text-decoration:none;background:var(--s2);border-radius:10px;padding:14px;display:block;border:1px solid var(--border);transition:border-color .2s" onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='var(--border)'">
+            <div style="font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gray);margin-bottom:4px">📧 Resend</div>
+            <div style="font-size:.92rem;font-weight:700;color:var(--white)">Mail-Logs →</div>
+            <div style="font-size:.74rem;color:var(--gray);margin-top:2px">Versendete & Bounces</div>
           </a>
         </div>
-        <p style="font-size:.78rem;color:var(--gray);margin-top:14px;line-height:1.5">
-          📊 <strong>Funnel:</strong> Wir tracken automatisch <code style="background:var(--s2);padding:2px 6px;border-radius:4px">booking_funnel_start</code> → <code style="background:var(--s2);padding:2px 6px;border-radius:4px">booking_funnel_completed</code>. In Vercel Analytics → "Custom Events" siehst du wie viele begonnen vs. abgeschlossen haben.
-        </p>
       </div>
 
-      <!-- ── Wochentag-Verteilung ── -->
-      <div style="background:var(--s1); border:1.5px solid var(--border); border-radius:14px; padding:24px; margin-bottom:20px">
-        <p class="section-tag" style="margin-top:0">Buchungen nach Wochentag</p>
-        <div id="weekdayChart" style="display:grid;grid-template-columns:repeat(7,1fr);gap:10px;align-items:end;height:180px;margin:16px 0 4px">–</div>
-        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:10px;text-align:center;color:var(--gray);font-size:.72rem;font-weight:600;letter-spacing:.05em">
-          <div>MO</div><div>DI</div><div>MI</div><div>DO</div><div>FR</div><div>SA</div><div>SO</div>
+      <!-- ── Charts: Wochentag + Tageszeit nebeneinander auf Desktop ── -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:16px;margin-bottom:20px">
+        <div style="background:var(--s1); border:1.5px solid var(--border); border-radius:14px; padding:20px">
+          <p class="section-tag" style="margin-top:0">Buchungen nach Wochentag</p>
+          <div id="weekdayChart" style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px;align-items:end;height:160px;margin:14px 0 4px">–</div>
+          <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px;text-align:center;color:var(--gray);font-size:.7rem;font-weight:600;letter-spacing:.05em">
+            <div>MO</div><div>DI</div><div>MI</div><div>DO</div><div>FR</div><div>SA</div><div>SO</div>
+          </div>
+        </div>
+
+        <div style="background:var(--s1); border:1.5px solid var(--border); border-radius:14px; padding:20px">
+          <p class="section-tag" style="margin-top:0">Buchungen nach Tageszeit</p>
+          <div id="hourChart" style="display:grid;grid-template-columns:repeat(24,1fr);gap:3px;align-items:end;height:160px;margin:14px 0 4px">–</div>
+          <div style="display:flex;justify-content:space-between;color:var(--gray);font-size:.7rem;font-weight:600;margin-top:6px">
+            <span>00</span><span>06</span><span>12</span><span>18</span><span>23</span>
+          </div>
         </div>
       </div>
 
-      <!-- ── Tageszeit-Verteilung ── -->
-      <div style="background:var(--s1); border:1.5px solid var(--border); border-radius:14px; padding:24px; margin-bottom:20px">
-        <p class="section-tag" style="margin-top:0">Buchungen nach Tageszeit (Stunde)</p>
-        <div id="hourChart" style="display:grid;grid-template-columns:repeat(24,1fr);gap:3px;align-items:end;height:140px;margin:16px 0 4px">–</div>
-        <div style="display:flex;justify-content:space-between;color:var(--gray);font-size:.7rem;font-weight:600;margin-top:6px">
-          <span>00</span><span>06</span><span>12</span><span>18</span><span>23</span>
-        </div>
-      </div>
-
-      <!-- ── Umsatz-Trend letzte 30 Tage ── -->
-      <div style="background:var(--s1); border:1.5px solid var(--border); border-radius:14px; padding:24px; margin-bottom:20px">
+      <!-- ── Umsatz-Trend volle Breite (Hauptchart) ── -->
+      <div style="background:var(--s1); border:1.5px solid var(--border); border-radius:14px; padding:20px; margin-bottom:20px">
         <p class="section-tag" style="margin-top:0">Umsatz letzte 30 Tage</p>
-        <div id="revenueChart" style="display:grid;grid-template-columns:repeat(30,1fr);gap:2px;align-items:end;height:140px;margin:16px 0 4px">–</div>
+        <div id="revenueChart" style="display:grid;grid-template-columns:repeat(30,1fr);gap:2px;align-items:end;height:140px;margin:14px 0 4px">–</div>
         <div style="display:flex;justify-content:space-between;color:var(--gray);font-size:.7rem;font-weight:600;margin-top:6px">
           <span id="revRange30">vor 30 Tagen</span>
           <span>heute</span>
@@ -364,18 +400,21 @@
         <p id="revenueChartSub" style="font-size:.78rem;color:var(--gray);margin-top:10px">–</p>
       </div>
 
-      <!-- ── Anhänger-Auslastung ── -->
-      <div style="background:var(--s1); border:1.5px solid var(--border); border-radius:14px; padding:24px; margin-bottom:20px">
-        <p class="section-tag" style="margin-top:0">Anhänger-Auslastung</p>
-        <div id="trailerStats">–</div>
+      <!-- ── Anhänger-Auslastung + Schutzpakete nebeneinander ── -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:16px;margin-bottom:20px">
+        <div style="background:var(--s1); border:1.5px solid var(--border); border-radius:14px; padding:20px">
+          <p class="section-tag" style="margin-top:0">Anhänger-Auslastung</p>
+          <div id="trailerStats">–</div>
+        </div>
+
+        <div style="background:var(--s1); border:1.5px solid var(--border); border-radius:14px; padding:20px">
+          <p class="section-tag" style="margin-top:0">Schutzpakete</p>
+          <div id="insuranceStats">–</div>
+        </div>
       </div>
 
-      <div style="background:var(--s1); border:1.5px solid var(--border); border-radius:14px; padding:24px; margin-bottom:20px">
-        <p class="section-tag" style="margin-top:0">Schutzpakete</p>
-        <div id="insuranceStats">–</div>
-      </div>
-
-      <div style="background:var(--s1); border:1.5px solid var(--border); border-radius:14px; padding:24px; margin-bottom:20px">
+      <!-- ── Letzte Buchungen ── -->
+      <div style="background:var(--s1); border:1.5px solid var(--border); border-radius:14px; padding:20px; margin-bottom:20px">
         <p class="section-tag" style="margin-top:0">Letzten 5 Buchungen</p>
         <div id="recentBookingsList">–</div>
       </div>
@@ -474,12 +513,27 @@
     try {
       const res  = await fetch('/api/live-visitors', { headers: { Authorization: `Bearer ${authToken}` } });
       const data = await res.json();
-      if (!res.ok) return;
+      if (!res.ok) {
+        document.getElementById('liveCount').textContent  = '!';
+        document.getElementById('liveLabel').textContent  = data?.error || 'Fehler beim Laden';
+        document.getElementById('livePaths').innerHTML    = '';
+        return;
+      }
+      // Setup-Hinweis wenn live_sessions-Tabelle fehlt
+      if (data.skipped) {
+        document.getElementById('liveCount').textContent = '⚙';
+        document.getElementById('liveLabel').textContent = 'Setup nötig';
+        document.getElementById('livePaths').innerHTML =
+          'SQL für <code style="background:var(--s2);padding:2px 6px;border-radius:4px">live_sessions</code>-Tabelle in Supabase ausführen — dann zählt das Widget';
+        document.getElementById('liveDot').style.background = '#f59e0b';
+        document.getElementById('liveDot').style.boxShadow  = '0 0 8px #f59e0b';
+        document.getElementById('liveUpdated').textContent  = '';
+        return;
+      }
       const count = data.count || 0;
       document.getElementById('liveCount').textContent = count;
-      document.getElementById('liveLabel').textContent = count === 1
-        ? 'Besucher gerade auf der Seite'
-        : 'Besucher gerade auf der Seite';
+      document.getElementById('liveLabel').textContent =
+        count === 1 ? 'Besucher gerade online' : 'Besucher gerade online';
       // Pfad-Verteilung
       const byPath = data.by_path || {};
       const lines = Object.keys(byPath)
