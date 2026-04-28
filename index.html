@@ -1385,11 +1385,20 @@
       .footer-top { flex-direction: column; }
       .footer-links { flex-wrap: wrap; gap: 32px; }
 
-      /* Reviews-Mobile: Animation bleibt (lebendig!) — aber Mask kleiner damit Karten beim
-         Lesen nicht in den ausgegrauten Rand-Bereich gleiten. Touch pausiert kurz (siehe JS unten). */
+      /* Reviews-Mobile: CSS-Animation aus, stattdessen JS-Auto-Scroll der Wischen erlaubt.
+         Wrapper wird scrollbar (overflow-x: auto), JS schiebt scrollLeft langsam weiter.
+         Touch pausiert + nach Loslassen lauft es weiter wo der User aufgehoert hat. */
       .reviews-track-wrapper {
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
         -webkit-mask-image: linear-gradient(to right, transparent 0%, black 3%, black 97%, transparent 100%);
         mask-image: linear-gradient(to right, transparent 0%, black 3%, black 97%, transparent 100%);
+        scrollbar-width: none;
+      }
+      .reviews-track-wrapper::-webkit-scrollbar { display: none; }
+      .reviews-track {
+        animation: none;
       }
       .review-card {
         width: 280px;
@@ -2790,17 +2799,57 @@
       track.appendChild(clone);
     });
 
-    // Mobile-Touch-Pause: Animation pausiert solange User Karten beruehrt + 5s danach,
-    // damit man auf dem Handy in Ruhe lesen kann (Animation gleitet sonst die Karte weg).
-    let _resumeTimer = null;
-    const pauseAnim = () => { track.style.animationPlayState = 'paused'; clearTimeout(_resumeTimer); };
-    const resumeSoon = (delay = 5000) => {
-      clearTimeout(_resumeTimer);
-      _resumeTimer = setTimeout(() => { track.style.animationPlayState = 'running'; }, delay);
-    };
-    track.addEventListener('touchstart', pauseAnim, { passive: true });
-    track.addEventListener('touchend',   () => resumeSoon(5000), { passive: true });
-    track.addEventListener('touchcancel',() => resumeSoon(5000), { passive: true });
+    // Mobile: JS-basierter Auto-Scroll der Wischen erlaubt.
+    // Auf Desktop laeuft die CSS-Animation wie gewohnt. Auf Mobile ersetzen wir sie
+    // durch ein RAF-Loop das scrollLeft langsam erhoeht. User kann jederzeit wischen
+    // (overflow-x: auto), Auto-Scroll pausiert, 1.5s nach Loslassen weiter ab aktueller Position.
+    const wrapper = track.closest('.reviews-track-wrapper');
+    const isMobile = () => window.matchMedia('(max-width: 768px)').matches;
+
+    if (wrapper && isMobile()) {
+      let userActive = false;
+      let resumeTimer = null;
+      let raf = null;
+      const SPEED = 0.4; // px pro Frame (~24 px/s bei 60fps)
+
+      function loop() {
+        if (userActive) return;
+        wrapper.scrollLeft += SPEED;
+        // Karten sind in der Init-Phase verdoppelt → bei der Haelfte lautlos zurueckspringen
+        const half = wrapper.scrollWidth / 2;
+        if (wrapper.scrollLeft >= half) wrapper.scrollLeft -= half;
+        raf = requestAnimationFrame(loop);
+      }
+      function start() {
+        cancelAnimationFrame(raf);
+        userActive = false;
+        raf = requestAnimationFrame(loop);
+      }
+      function pause() {
+        userActive = true;
+        cancelAnimationFrame(raf);
+        clearTimeout(resumeTimer);
+      }
+      function scheduleResume() {
+        clearTimeout(resumeTimer);
+        resumeTimer = setTimeout(start, 1500);
+      }
+
+      wrapper.addEventListener('touchstart', pause,          { passive: true });
+      wrapper.addEventListener('touchend',   scheduleResume, { passive: true });
+      wrapper.addEventListener('touchcancel',scheduleResume, { passive: true });
+
+      // Falls User nicht-touch (z.B. Trackpad-Scroll) — auch beruecksichtigen
+      let scrollDebounce = null;
+      wrapper.addEventListener('scroll', () => {
+        if (!userActive) return; // ignoriere unsere eigenen Scroll-Aenderungen
+        clearTimeout(scrollDebounce);
+        scrollDebounce = setTimeout(scheduleResume, 200);
+      }, { passive: true });
+
+      // Start nach kurzem Delay damit Layout & Klone fertig sind
+      setTimeout(start, 100);
+    }
   }
 
   // INFO MODAL (index)
