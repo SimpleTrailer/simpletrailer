@@ -34,7 +34,9 @@ CREATE TABLE bookings (
   customer_phone              TEXT,
   start_time                  TIMESTAMPTZ NOT NULL,
   end_time                    TIMESTAMPTZ NOT NULL,
-  pricing_type                TEXT NOT NULL CHECK (pricing_type IN ('3h', 'day', 'weekend')),
+  -- Tarife aus booking.html: flexible (Stundenstaffel), day (Festpreis 24h),
+  -- weekend (Fr-So), week (7 Tage). 3h/6h sind Legacy aus alter Version.
+  pricing_type                TEXT NOT NULL CHECK (pricing_type IN ('flexible', 'day', 'weekend', 'week', '3h', '6h')),
   total_amount                NUMERIC(10,2) NOT NULL,
   stripe_payment_intent_id    TEXT UNIQUE,
   stripe_customer_id          TEXT,
