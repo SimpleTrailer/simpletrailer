@@ -70,7 +70,56 @@
   };
 
   // ────────────────────────────────────────────────────────────
-  // 4) Auto-Tracking wichtiger Funnel-Schritte
+  // 4) Live-Visitor-Heartbeat (fuer Admin-Dashboard)
+  // ────────────────────────────────────────────────────────────
+  // Anonyme Session-ID pro Tab. Pingt /api/heartbeat alle 30s mit aktuellem Pfad.
+  // Admin-Dashboard zeigt damit "X Besucher gerade auf der Seite" in Echtzeit.
+  // DSGVO: keine IP, keine Cookies, keine personenbezogenen Daten.
+  try {
+    const onProd = location.hostname === 'simpletrailer.de'
+                || location.hostname.endsWith('.vercel.app');
+    if (onProd) {
+      let sid = sessionStorage.getItem('st_sid');
+      if (!sid) {
+        sid = 'sid_' + (window.crypto && crypto.randomUUID
+          ? crypto.randomUUID()
+          : (Math.random().toString(36).slice(2) + Date.now().toString(36)));
+        sessionStorage.setItem('st_sid', sid);
+      }
+
+      const heartbeat = () => {
+        try {
+          fetch('/api/heartbeat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ session_id: sid, path: location.pathname }),
+            keepalive: true
+          }).catch(() => {});
+        } catch (e) { /* ignore */ }
+      };
+
+      // Erster Ping nach 2s damit Page-Load nicht ausgebremst wird
+      setTimeout(heartbeat, 2000);
+      // Dann alle 30s
+      setInterval(heartbeat, 30000);
+
+      // Bei Tab-Schliessen Last-Ping (best-effort via Beacon)
+      window.addEventListener('pagehide', () => {
+        try {
+          if (navigator.sendBeacon) {
+            const blob = new Blob(
+              [JSON.stringify({ session_id: sid, path: location.pathname })],
+              { type: 'application/json' }
+            );
+            navigator.sendBeacon('/api/heartbeat', blob);
+          }
+        } catch (e) { /* ignore */ }
+      });
+    }
+  } catch (e) { /* ignore */ }
+
+  // ────────────────────────────────────────────────────────────
+  // 5) Auto-Tracking wichtiger Funnel-Schritte
   // ────────────────────────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', function () {
     const path = location.pathname;

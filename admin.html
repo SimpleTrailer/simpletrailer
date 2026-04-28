@@ -170,6 +170,25 @@
 
   <div class="container">
 
+    <!-- LIVE-VISITORS WIDGET (in allen Tabs sichtbar) -->
+    <div id="liveWidget" style="background:linear-gradient(135deg,#1A1A1A 0%,#0f1f0f 100%); border:1.5px solid #22c55e; border-radius:14px; padding:14px 18px; margin-bottom:16px; display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span id="liveDot" style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#22c55e; box-shadow:0 0 8px #22c55e; animation: livePulse 2s ease-in-out infinite;"></span>
+        <span style="font-size:.72rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:#4ade80;">Live</span>
+      </div>
+      <div style="flex:1; min-width:0;">
+        <div style="display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;">
+          <span id="liveCount" style="font-size:1.4rem; font-weight:800; color:#fff;">–</span>
+          <span style="font-size:.85rem; color:var(--gray);" id="liveLabel">Besucher gerade auf der Seite</span>
+        </div>
+        <div id="livePaths" style="font-size:.78rem; color:var(--gray); margin-top:4px; line-height:1.5;"></div>
+      </div>
+      <div style="font-size:.7rem; color:var(--gray); white-space:nowrap;" id="liveUpdated">–</div>
+    </div>
+    <style>
+      @keyframes livePulse { 0%,100% { transform:scale(1); opacity:1 } 50% { transform:scale(1.4); opacity:.6 } }
+    </style>
+
     <!-- TABS -->
     <div class="tabs">
       <button class="tab-btn active" id="tabBuchungen" onclick="switchTab('buchungen')">📋 Buchungen</button>
@@ -420,6 +439,7 @@
       document.getElementById('loginView').style.display = 'none';
       document.getElementById('mainView').style.display  = 'block';
       loadData();
+      startLivePolling();
 
     } catch (e) {
       err.textContent = e.message;
@@ -431,9 +451,60 @@
 
   function doLogout() {
     authToken = null; allBookings = []; allUsers = []; usersLoaded = false;
+    if (_liveTimer) { clearInterval(_liveTimer); _liveTimer = null; }
     document.getElementById('mainView').style.display  = 'none';
     document.getElementById('loginView').style.display = 'flex';
     document.getElementById('loginPassword').value = '';
+  }
+
+  /* ── LIVE-VISITORS WIDGET ─────────────────────────────── */
+  let _liveTimer = null;
+  const PATH_LABEL = {
+    '/': 'Startseite', '/index.html': 'Startseite',
+    '/booking.html': 'Buchung', '/booking': 'Buchung',
+    '/booking-confirm.html': 'Buchung bestätigt', '/booking-confirm': 'Buchung bestätigt',
+    '/account.html': 'Konto', '/account': 'Konto',
+    '/precheck.html': 'Vorab-Check', '/precheck': 'Vorab-Check',
+    '/return.html': 'Rückgabe', '/return': 'Rückgabe',
+    '/admin.html': 'Admin', '/admin': 'Admin',
+    '/agb.html': 'AGB', '/datenschutz.html': 'Datenschutz', '/impressum.html': 'Impressum'
+  };
+  async function refreshLiveVisitors() {
+    if (!authToken) return;
+    try {
+      const res  = await fetch('/api/live-visitors', { headers: { Authorization: `Bearer ${authToken}` } });
+      const data = await res.json();
+      if (!res.ok) return;
+      const count = data.count || 0;
+      document.getElementById('liveCount').textContent = count;
+      document.getElementById('liveLabel').textContent = count === 1
+        ? 'Besucher gerade auf der Seite'
+        : 'Besucher gerade auf der Seite';
+      // Pfad-Verteilung
+      const byPath = data.by_path || {};
+      const lines = Object.keys(byPath)
+        .sort((a, b) => byPath[b] - byPath[a])
+        .slice(0, 6)
+        .map(p => `${byPath[p]}× <strong style="color:#fff">${PATH_LABEL[p] || p}</strong>`);
+      document.getElementById('livePaths').innerHTML = lines.length
+        ? lines.join(' &nbsp;·&nbsp; ')
+        : (count === 0 ? 'Niemand online — der erste Besucher erscheint hier sofort' : '');
+      const now = new Date();
+      document.getElementById('liveUpdated').textContent =
+        'aktualisiert ' + now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      // Dot-Farbe je nach Aktivitaet
+      const dot = document.getElementById('liveDot');
+      if (count === 0) {
+        dot.style.background = '#666'; dot.style.boxShadow = 'none';
+      } else {
+        dot.style.background = '#22c55e'; dot.style.boxShadow = '0 0 8px #22c55e';
+      }
+    } catch (e) { /* ignore */ }
+  }
+  function startLivePolling() {
+    refreshLiveVisitors();
+    if (_liveTimer) clearInterval(_liveTimer);
+    _liveTimer = setInterval(refreshLiveVisitors, 5000); // alle 5s
   }
 
   document.addEventListener('keydown', e => {
