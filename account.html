@@ -108,8 +108,8 @@
 <body>
 
 <nav>
-  <a href="index.html" class="logo"><span>Simple</span><span>Trailer</span></a>
-  <a href="index.html" class="back-link">← Startseite</a>
+  <a href="/" class="logo"><span>Simple</span><span>Trailer</span></a>
+  <a href="/" class="back-link">← Startseite</a>
 </nav>
 
 <div class="page">
@@ -215,7 +215,7 @@
           <div class="account-email" id="accountEmail">–</div>
         </div>
       </div>
-      <a href="booking.html" class="btn btn-orange" style="margin-bottom:12px;">+ Neuen Anhänger buchen</a>
+      <a href="/booking" class="btn btn-orange" style="margin-bottom:12px;">+ Neuen Anhänger buchen</a>
       <button class="logout-btn" onclick="logout()">Abmelden</button>
       <button class="logout-btn" onclick="openDeleteAccountModal()" style="margin-top:6px;color:#666;border-color:#2a2a2a;font-size:.78rem;">Konto löschen</button>
     </div>
@@ -477,7 +477,7 @@
       }
 
       if (!bookings.length) {
-        list.innerHTML = `<div class="empty-state"><div class="icon">📋</div><p>Noch keine Buchungen.</p><a href="booking.html" class="btn btn-orange" style="width:auto;padding:11px 24px;">Jetzt buchen</a></div>`;
+        list.innerHTML = `<div class="empty-state"><div class="icon">📋</div><p>Noch keine Buchungen.</p><a href="/booking" class="btn btn-orange" style="width:auto;padding:11px 24px;">Jetzt buchen</a></div>`;
         return;
       }
 
@@ -505,7 +505,7 @@
   function renderActiveBooking(b) {
     const precheckDone = !!b.precheck_completed_at;
     const precheckUrl  = b.precheck_token ? `/precheck?id=${b.id}&token=${b.precheck_token}` : null;
-    const returnUrl    = b.return_token   ? `/return.html?id=${b.id}&token=${b.return_token}` : null;
+    const returnUrl    = b.return_token   ? `/return?id=${b.id}&token=${b.return_token}` : null;
 
     let actionHtml = '';
     if (b.status === 'confirmed' && !precheckDone && precheckUrl) {

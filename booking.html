@@ -315,8 +315,8 @@
 <body>
 
 <nav>
-  <a href="index.html" class="logo"><span>Simple</span><span>Trailer</span></a>
-  <a href="index.html" class="back-link">← Zurück</a>
+  <a href="/" class="logo"><span>Simple</span><span>Trailer</span></a>
+  <a href="/" class="back-link">← Zurück</a>
 </nav>
 
 <div class="page">
@@ -849,7 +849,7 @@
             <div style="font-size:2rem;margin-bottom:16px;">😔</div>
             <h2 style="margin-bottom:12px;">Aktuell nicht verfügbar</h2>
             <p style="color:var(--gray);margin-bottom:24px;">Der Anhänger ist gerade gebucht. Schau später wieder vorbei.</p>
-            <a href="index.html" class="btn btn-orange" style="display:inline-flex;width:auto;">Zurück zur Startseite</a>
+            <a href="/" class="btn btn-orange" style="display:inline-flex;width:auto;">Zurück zur Startseite</a>
           </div>`;
         return;
       }
@@ -1848,7 +1848,7 @@
   function openLegalModal(type) {
     const titles = { agb: 'Allgemeine Geschäftsbedingungen', datenschutz: 'Datenschutzerklärung', impressum: 'Impressum' };
     document.getElementById('legalTitle').textContent = titles[type] || 'Rechtliches';
-    document.getElementById('legalIframe').src = '/' + type + '.html';
+    document.getElementById('legalIframe').src = '/' + type;
     document.getElementById('legalOverlay').classList.add('open');
   }
   function closeLegalModal() {
@@ -1871,7 +1871,7 @@
     const { error } = await stripeClient.confirmPayment({
       elements: stripeElements,
       confirmParams: {
-        return_url: `${window.location.origin}/booking-confirm.html`
+        return_url: `${window.location.origin}/booking-confirm`
       },
       redirect: 'if_required'
     });
@@ -1882,7 +1882,7 @@
       payBtn.textContent = 'Jetzt buchen & bezahlen';
     } else {
       // Kein Redirect nötig (Kartenzahlung) – direkt zur Bestätigungsseite
-      window.location.href = `/booking-confirm.html?payment_intent=${sessionStorage.getItem('st_pi_id')}&redirect_status=succeeded`;
+      window.location.href = `/booking-confirm?payment_intent=${sessionStorage.getItem('st_pi_id')}&redirect_status=succeeded`;
     }
   }
 

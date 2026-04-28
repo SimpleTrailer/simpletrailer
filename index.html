@@ -1513,10 +1513,10 @@
       <li><a href="#anhaenger">Anhänger</a></li>
       <li><a href="#preise">Preise</a></li>
       <li><a href="#faq">FAQ</a></li>
-      <li><a href="account.html" id="navAccount">Mein Konto</a></li>
+      <li><a href="/account" id="navAccount">Mein Konto</a></li>
     </ul>
     <a href="#" onclick="openTrailerModal('flexible');return false;" class="btn btn-orange nav-cta">Jetzt buchen</a>
-    <a href="account.html" class="nav-account-icon" title="Mein Konto" aria-label="Mein Konto">
+    <a href="/account" class="nav-account-icon" title="Mein Konto" aria-label="Mein Konto">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
       </svg>
@@ -2047,9 +2047,9 @@
         </div>
         <div class="footer-col">
           <h4>Rechtliches</h4>
-          <a href="/impressum.html">Impressum</a>
-          <a href="/datenschutz.html">Datenschutz</a>
-          <a href="/agb.html">AGB</a>
+          <a href="/impressum">Impressum</a>
+          <a href="/datenschutz">Datenschutz</a>
+          <a href="/agb">AGB</a>
         </div>
         <div class="footer-col">
           <h4>Kontakt</h4>
@@ -2497,7 +2497,7 @@
   function goBook(trailerId) {
     const mode = sessionStorage.getItem('st_pending_mode') || 'flexible';
     sessionStorage.removeItem('st_pending_mode');
-    window.location.href = `booking.html?trailer=${trailerId}&mode=${mode}`;
+    window.location.href = `/booking?trailer=${trailerId}&mode=${mode}`;
   }
 
   function filterMarkers(type) {
@@ -3064,7 +3064,7 @@
       const qs = new URLSearchParams({ trailer: t.id, mode: modalMode });
       if (pendingStart) qs.set('prefill_start', pendingStart);
       if (pendingEnd)   qs.set('prefill_end',   pendingEnd);
-      bookBtn.href = `booking.html?${qs.toString()}`;
+      bookBtn.href = `/booking?${qs.toString()}`;
       bookBtn.textContent = 'Jetzt buchen →';
       bookBtn.classList.remove('disabled');
     } else {
