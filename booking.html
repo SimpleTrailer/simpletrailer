@@ -468,24 +468,6 @@
       </div>
 
       <div class="error-msg" id="dateError" style="margin-top:10px;"></div>
-
-      <!-- Price Breakdown -->
-      <div id="priceBreakdown" style="display:none;margin-top:16px;">
-        <div class="price-breakdown-box">
-          <div class="pb-dates">
-            <div><span class="pb-label">Abholung</span><span class="pb-val" id="pbStart">–</span></div>
-            <div style="color:var(--gray);padding:0 8px;">→</div>
-            <div><span class="pb-label">Rückgabe</span><span class="pb-val" id="pbEnd">–</span></div>
-          </div>
-          <div class="pb-duration" id="pbDuration"></div>
-          <div class="pb-divider"></div>
-          <div class="pb-line" id="pbDay1Line"></div>
-          <div class="pb-line" id="pbExtraLine" style="display:none;"></div>
-          <div class="pb-line" id="pbRemainLine" style="display:none;"></div>
-          <div class="pb-divider"></div>
-          <div class="pb-total"><span>Mietpreis</span><span id="pbTotal">–</span></div>
-        </div>
-      </div>
     </div>
 
     <!-- Availability Calendar (read-only) -->
@@ -510,6 +492,24 @@
       <div id="calHint" class="cal-hint" style="display:none;">📅 Jetzt Enddatum im Kalender anklicken</div>
     </div>
     </div><!-- /datetime-cal-grid -->
+
+    <!-- Price Breakdown (volle Breite, eigene Card) -->
+    <div id="priceBreakdown" style="display:none;margin-bottom:20px;">
+      <div class="price-breakdown-box">
+        <div class="pb-dates">
+          <div><span class="pb-label">Abholung</span><span class="pb-val" id="pbStart">–</span></div>
+          <div style="color:var(--gray);padding:0 8px;">→</div>
+          <div><span class="pb-label">Rückgabe</span><span class="pb-val" id="pbEnd">–</span></div>
+        </div>
+        <div class="pb-duration" id="pbDuration"></div>
+        <div class="pb-divider"></div>
+        <div class="pb-line" id="pbDay1Line"></div>
+        <div class="pb-line" id="pbExtraLine" style="display:none;"></div>
+        <div class="pb-line" id="pbRemainLine" style="display:none;"></div>
+        <div class="pb-divider"></div>
+        <div class="pb-total"><span>Mietpreis</span><span id="pbTotal">–</span></div>
+      </div>
+    </div>
 
     <input type="hidden" id="startTime" />
     <input type="hidden" id="endTime" />
