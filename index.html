@@ -1399,6 +1399,7 @@
       .reviews-track-wrapper::-webkit-scrollbar { display: none; }
       .reviews-track {
         animation: none;
+        transform: none !important; /* falls CSS-Animation einen translateX-Rest hinterlassen hat */
       }
       .review-card {
         width: 280px;
@@ -2810,21 +2811,23 @@
       let userActive = false;
       let resumeTimer = null;
       let raf = null;
-      const SPEED = 0.4; // px pro Frame (~24 px/s bei 60fps)
+      let pos = 0;
+      const SPEED = 1; // px pro Frame (~60 px/s) — Mobile-Browser runden scrollLeft oft auf int, daher >= 1
 
       function loop() {
         if (userActive) { raf = null; return; }
-        // Schutz: Layout vielleicht noch nicht fertig — dann nichts tun, naechsten Frame versuchen
         if (wrapper.scrollWidth > wrapper.clientWidth + 10) {
-          wrapper.scrollLeft += SPEED;
+          pos += SPEED;
           const half = wrapper.scrollWidth / 2;
-          if (wrapper.scrollLeft >= half) wrapper.scrollLeft -= half;
+          if (pos >= half) pos -= half;
+          wrapper.scrollLeft = pos;
         }
         raf = requestAnimationFrame(loop);
       }
       function startLoop() {
         if (raf) cancelAnimationFrame(raf);
         userActive = false;
+        pos = wrapper.scrollLeft; // sync mit User-Position nach Wischen
         raf = requestAnimationFrame(loop);
       }
       function pauseLoop() {

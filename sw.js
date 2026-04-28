@@ -3,7 +3,7 @@
  * Cache-first für Assets (CSS, JS, Bilder, Fonts).
  * KEIN Caching für /api/* — Buchungs-/Zahlungs-Daten sollen immer frisch sein.
  */
-const CACHE_VERSION = 'st-v3';
+const CACHE_VERSION = 'st-v5';
 const CACHE_STATIC = `${CACHE_VERSION}-static`;
 const STATIC_ASSETS = [
   '/',
