@@ -184,7 +184,10 @@
         </div>
         <div id="livePaths" style="font-size:.78rem; color:var(--gray); margin-top:4px; line-height:1.5;"></div>
       </div>
-      <div style="font-size:.7rem; color:var(--gray); white-space:nowrap;" id="liveUpdated">–</div>
+      <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
+        <div style="font-size:.7rem; color:var(--gray); white-space:nowrap;" id="liveUpdated">–</div>
+        <button onclick="testHeartbeat()" style="background:transparent; border:1px solid var(--border); color:var(--gray); padding:4px 10px; border-radius:6px; font-size:.7rem; cursor:pointer; font-family:var(--font);" title="Sendet einen Heartbeat und zeigt die Antwort">⚡ Test</button>
+      </div>
     </div>
     <style>
       @keyframes livePulse { 0%,100% { transform:scale(1); opacity:1 } 50% { transform:scale(1.4); opacity:.6 } }
@@ -559,6 +562,28 @@
     refreshLiveVisitors();
     if (_liveTimer) clearInterval(_liveTimer);
     _liveTimer = setInterval(refreshLiveVisitors, 5000); // alle 5s
+  }
+
+  // Diagnose-Knopf: schickt manuellen Heartbeat + zeigt was zurueckkommt
+  async function testHeartbeat() {
+    try {
+      const sid = sessionStorage.getItem('st_sid') || ('test_' + Date.now());
+      const res = await fetch('/api/heartbeat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sid, path: location.pathname })
+      });
+      const data = await res.json().catch(() => ({}));
+      const msg = res.ok
+        ? (data.skipped
+            ? '⚠ Tabelle live_sessions fehlt — bitte SQL in Supabase ausführen!'
+            : '✅ Heartbeat OK — Session-ID: ' + sid.slice(0, 16) + '... Pfad: ' + location.pathname)
+        : '❌ Fehler ' + res.status + ': ' + (data.error || 'unbekannt');
+      alert(msg + '\n\n(Refresh in 5s sollte den Counter aktualisieren)');
+      setTimeout(refreshLiveVisitors, 1000);
+    } catch (e) {
+      alert('❌ Network-Error: ' + e.message);
+    }
   }
 
   document.addEventListener('keydown', e => {
