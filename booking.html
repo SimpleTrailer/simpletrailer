@@ -599,6 +599,10 @@
             <input type="tel" class="field-input" id="authRegPhone" placeholder="+49 151 12345678" autocomplete="tel" />
           </div>
           <div class="field-group">
+            <label class="field-label">Geburtsdatum * <span style="color:var(--gray);font-weight:400;">(Mindestalter 18 Jahre)</span></label>
+            <input type="date" class="field-input" id="authRegBirthdate" autocomplete="bday" />
+          </div>
+          <div class="field-group">
             <label class="field-label">Adresse *</label>
             <input type="text" class="field-input" id="authRegAddress" placeholder="Musterstraße 1, 28195 Bremen" autocomplete="street-address" />
           </div>
@@ -1485,28 +1489,42 @@
   }
 
   async function doBookingRegister() {
-    const first   = document.getElementById('authRegFirst').value.trim();
-    const last    = document.getElementById('authRegLast').value.trim();
-    const email   = document.getElementById('authRegEmail').value.trim();
-    const phone   = document.getElementById('authRegPhone').value.trim();
-    const address = document.getElementById('authRegAddress').value.trim();
-    const pass    = document.getElementById('authRegPass').value;
-    const errEl   = document.getElementById('authRegErr');
-    const okEl    = document.getElementById('authRegOk');
+    const first     = document.getElementById('authRegFirst').value.trim();
+    const last      = document.getElementById('authRegLast').value.trim();
+    const email     = document.getElementById('authRegEmail').value.trim();
+    const phone     = document.getElementById('authRegPhone').value.trim();
+    const birthdate = document.getElementById('authRegBirthdate').value;
+    const address   = document.getElementById('authRegAddress').value.trim();
+    const pass      = document.getElementById('authRegPass').value;
+    const errEl     = document.getElementById('authRegErr');
+    const okEl      = document.getElementById('authRegOk');
     errEl.style.display = 'none'; okEl.style.display = 'none';
-    if (!first || !last || !email || !phone || !address || !pass) {
+    if (!first || !last || !email || !phone || !birthdate || !address || !pass) {
       errEl.textContent = 'Bitte alle Felder ausfüllen.'; errEl.style.display = 'block'; return;
     }
     const phoneDigits = phone.replace(/[\s\-\(\)\+]/g, '');
     if (!/^\d{7,15}$/.test(phoneDigits)) {
       errEl.textContent = 'Bitte gültige Telefonnummer eingeben (z.B. +49 151 12345678).'; errEl.style.display = 'block'; return;
     }
+    // Alters-Check: min 18 Jahre (laut AGB)
+    const birth = new Date(birthdate);
+    if (isNaN(birth.getTime())) { errEl.textContent = 'Bitte gültiges Geburtsdatum eingeben.'; errEl.style.display = 'block'; return; }
+    const ageMs = Date.now() - birth.getTime();
+    const ageYears = ageMs / (365.25 * 24 * 60 * 60 * 1000);
+    if (ageYears < 18) {
+      errEl.textContent = 'Du musst mindestens 18 Jahre alt sein, um einen Anhänger zu mieten.';
+      errEl.style.display = 'block'; return;
+    }
+    if (ageYears > 110) {
+      errEl.textContent = 'Geburtsdatum scheint nicht zu stimmen. Bitte prüfen.';
+      errEl.style.display = 'block'; return;
+    }
     if (pass.length < 6) { errEl.textContent = 'Passwort mind. 6 Zeichen.'; errEl.style.display = 'block'; return; }
     try {
       const res  = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
         method: 'POST',
         headers: { apikey: SUPABASE_ANON, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password: pass, data: { first_name: first, last_name: last, full_name: `${first} ${last}`, phone, address }, redirect_to: window.location.href.split('#')[0] })
+        body: JSON.stringify({ email, password: pass, data: { first_name: first, last_name: last, full_name: `${first} ${last}`, phone, birthdate, address }, redirect_to: window.location.href.split('#')[0] })
       });
       const data = await res.json();
       if (!res.ok) {
@@ -1537,6 +1555,16 @@
     initCalendar();
     await loadTrailer();
     loadAvailability();
+
+    // Geburtsdatum-Input: max = heute - 18 Jahre, min = heute - 110 Jahre
+    const bd = document.getElementById('authRegBirthdate');
+    if (bd) {
+      const now = new Date();
+      const max = new Date(now.getFullYear() - 18, now.getMonth(), now.getDate());
+      const min = new Date(now.getFullYear() - 110, now.getMonth(), now.getDate());
+      bd.max = max.toISOString().slice(0, 10);
+      bd.min = min.toISOString().slice(0, 10);
+    }
 
     // Auth-Callback aus Supabase-Bestätigungsmail erkennen (#access_token=...)
     const hash = window.location.hash;

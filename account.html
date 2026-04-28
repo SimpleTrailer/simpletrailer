@@ -220,6 +220,45 @@
       <button class="logout-btn" onclick="openDeleteAccountModal()" style="margin-top:6px;color:#666;border-color:#2a2a2a;font-size:.78rem;">Konto löschen</button>
     </div>
 
+    <!-- PROFIL -->
+    <div class="card" id="profileCard">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div style="font-weight:700;letter-spacing:-.02em;">Profil</div>
+        <button id="profileEditBtn" onclick="toggleProfileEdit()" style="background:transparent;border:1px solid var(--border);color:var(--gray);padding:5px 12px;border-radius:6px;font-size:.78rem;cursor:pointer;font-family:var(--font);">Bearbeiten</button>
+      </div>
+
+      <!-- Anzeige-Modus -->
+      <div id="profileView">
+        <div style="display:grid;grid-template-columns:auto 1fr;gap:10px 16px;font-size:.88rem;align-items:center;">
+          <span style="color:var(--gray);">Telefon</span><span id="profPhone">–</span>
+          <span style="color:var(--gray);">Geburtsdatum</span><span id="profBirthdate">–</span>
+          <span style="color:var(--gray);">Adresse</span><span id="profAddress">–</span>
+        </div>
+        <div id="profileMissingHint" style="display:none;background:#1a0d00;border:1.5px solid var(--orange);border-radius:10px;padding:12px 14px;margin-top:14px;font-size:.84rem;line-height:1.5;">
+          ⚠ <strong>Geburtsdatum fehlt.</strong> Pflicht-Angabe für die Vermietung — bitte ergänzen über "Bearbeiten".
+        </div>
+      </div>
+
+      <!-- Edit-Modus -->
+      <div id="profileEdit" style="display:none;">
+        <div class="field-group">
+          <label class="field-label">Telefon</label>
+          <input type="tel" class="field-input" id="profEditPhone" autocomplete="tel" />
+        </div>
+        <div class="field-group">
+          <label class="field-label">Geburtsdatum <span style="color:var(--gray);font-weight:400;">(Mindestalter 18)</span></label>
+          <input type="date" class="field-input" id="profEditBirthdate" autocomplete="bday" />
+        </div>
+        <div class="field-group">
+          <label class="field-label">Adresse</label>
+          <input type="text" class="field-input" id="profEditAddress" autocomplete="street-address" />
+        </div>
+        <div id="profileEditErr" class="error-msg" style="margin-bottom:10px;"></div>
+        <button class="btn btn-orange" onclick="saveProfile()" id="profileSaveBtn">Speichern</button>
+        <button class="logout-btn" onclick="cancelProfileEdit()" style="margin-top:8px;">Abbrechen</button>
+      </div>
+    </div>
+
     <!-- Konto-Loeschen-Modal (Apple-Pflicht fuer App-Submission) -->
     <div id="deleteOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:9999;align-items:center;justify-content:center;padding:20px;">
       <div style="background:#1A1A1A;border:1px solid #383838;border-radius:14px;max-width:480px;width:100%;padding:28px;">
@@ -324,8 +363,86 @@
     document.getElementById('accountEmail').textContent = currentUser.email;
     document.getElementById('avatarInitial').textContent = name.charAt(0).toUpperCase();
 
+    renderProfile();
     loadBookings();
     loadLicenseStatus();
+  }
+
+  /* ── Profil ─────────────────────────────────────────────── */
+  function renderProfile() {
+    const m = currentUser.user_metadata || {};
+    const fmtDate = iso => {
+      if (!iso) return null;
+      try { return new Date(iso).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' }); }
+      catch (e) { return iso; }
+    };
+    document.getElementById('profPhone').textContent     = m.phone     || '–';
+    document.getElementById('profBirthdate').textContent = fmtDate(m.birthdate) || '–';
+    document.getElementById('profAddress').textContent   = m.address   || '–';
+    document.getElementById('profileMissingHint').style.display = m.birthdate ? 'none' : 'block';
+  }
+
+  function toggleProfileEdit() {
+    document.getElementById('profileView').style.display = 'none';
+    document.getElementById('profileEdit').style.display = 'block';
+    document.getElementById('profileEditBtn').style.display = 'none';
+    const m = currentUser.user_metadata || {};
+    document.getElementById('profEditPhone').value     = m.phone     || '';
+    document.getElementById('profEditBirthdate').value = m.birthdate || '';
+    document.getElementById('profEditAddress').value   = m.address   || '';
+    // Min/Max fuer Geburtsdatum: 18–110 Jahre
+    const now = new Date();
+    document.getElementById('profEditBirthdate').max =
+      new Date(now.getFullYear() - 18, now.getMonth(), now.getDate()).toISOString().slice(0, 10);
+    document.getElementById('profEditBirthdate').min =
+      new Date(now.getFullYear() - 110, now.getMonth(), now.getDate()).toISOString().slice(0, 10);
+  }
+
+  function cancelProfileEdit() {
+    document.getElementById('profileView').style.display = 'block';
+    document.getElementById('profileEdit').style.display = 'none';
+    document.getElementById('profileEditBtn').style.display = '';
+    document.getElementById('profileEditErr').style.display = 'none';
+  }
+
+  async function saveProfile() {
+    const phone     = document.getElementById('profEditPhone').value.trim();
+    const birthdate = document.getElementById('profEditBirthdate').value;
+    const address   = document.getElementById('profEditAddress').value.trim();
+    const errEl     = document.getElementById('profileEditErr');
+    const btn       = document.getElementById('profileSaveBtn');
+    errEl.style.display = 'none';
+
+    if (birthdate) {
+      const ageYears = (Date.now() - new Date(birthdate).getTime()) / (365.25 * 24 * 60 * 60 * 1000);
+      if (ageYears < 18) {
+        errEl.textContent = 'Mindestalter 18 Jahre.'; errEl.style.display = 'block'; return;
+      }
+      if (ageYears > 110) {
+        errEl.textContent = 'Geburtsdatum scheint nicht zu stimmen.'; errEl.style.display = 'block'; return;
+      }
+    }
+
+    btn.disabled = true; btn.textContent = 'Speichert…';
+    try {
+      // Existierende Metadata erhalten + neue Werte mergen
+      const existing = currentUser.user_metadata || {};
+      const newMeta = { ...existing, phone, birthdate, address };
+      const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+        method: 'PUT',
+        headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${authToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: newMeta })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error_description || data.msg || 'Speichern fehlgeschlagen');
+      currentUser.user_metadata = data.user_metadata || newMeta;
+      renderProfile();
+      cancelProfileEdit();
+    } catch (e) {
+      errEl.textContent = e.message; errEl.style.display = 'block';
+    } finally {
+      btn.disabled = false; btn.textContent = 'Speichern';
+    }
   }
 
   /* ── Führerschein-Verifikation ──────────────────────────────────── */

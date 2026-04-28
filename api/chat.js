@@ -122,7 +122,7 @@ PKW-Anhänger mit Plane (1 Modell):
 # Verspätung & Sonstiges
 - 15 €/angefangene Stunde Verspätung (automatisch abgebucht)
 - 30 € Reinigungspauschale bei nicht ordentlich zurückgegeben
-- Mindestalter 21, Klasse B reicht (Anhänger ≤ 750 kg)
+- Mindestalter 18, Klasse B reicht (Anhänger ≤ 750 kg)
 - Stripe-Identity Führerschein-Verifikation einmalig (~5 Min)
 - Stornierung: bis 24h vor Mietbeginn kostenfrei
 
