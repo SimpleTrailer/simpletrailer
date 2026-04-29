@@ -37,45 +37,179 @@
   <script src="/native-bridge.js?v=9" defer></script>
   <script src="/analytics.js?v=9" defer></script>
 
-  <!-- Strukturierte Daten: Lokales Geschäft (für Google Maps + Knowledge Panel) -->
+  <!-- Strukturierte Daten: Lokales Geschäft (für Google Maps + Knowledge Panel + Rich Snippets) -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "AutoRental",
+    "@id": "https://simpletrailer.de/#business",
     "name": "SimpleTrailer",
-    "description": "PKW-Anhänger-Vermietung in Bremen. Online buchen, kontaktlos abholen.",
+    "alternateName": "SimpleTrailer GbR",
+    "description": "PKW-Anhänger-Vermietung in Bremen. 24/7 online buchen, kontaktlos abholen mit Code per Push, sofort losfahren.",
     "url": "https://simpletrailer.de",
-    "telephone": "",
-    "email": "info@simpletrailer.de",
+    "logo": "https://simpletrailer.de/og-image.png",
     "image": "https://simpletrailer.de/og-image.png",
-    "priceRange": "€€",
+    "email": "info@simpletrailer.de",
+    "priceRange": "€",
     "address": {
       "@type": "PostalAddress",
       "streetAddress": "Waltjenstr. 96",
       "postalCode": "28237",
       "addressLocality": "Bremen",
+      "addressRegion": "HB",
       "addressCountry": "DE"
     },
-    "areaServed": { "@type": "City", "name": "Bremen" },
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": 53.0833,
+      "longitude": 8.7833
+    },
+    "areaServed": [
+      { "@type": "City", "name": "Bremen" },
+      { "@type": "City", "name": "Delmenhorst" },
+      { "@type": "City", "name": "Stuhr" },
+      { "@type": "City", "name": "Weyhe" },
+      { "@type": "City", "name": "Achim" },
+      { "@type": "City", "name": "Lilienthal" }
+    ],
     "openingHoursSpecification": {
       "@type": "OpeningHoursSpecification",
       "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
       "opens": "00:00",
       "closes": "23:59"
     },
-    "paymentAccepted": "Visa, Mastercard, Apple Pay, Google Pay, PayPal",
+    "paymentAccepted": "Visa, Mastercard, Apple Pay, Google Pay, PayPal, SEPA",
     "currenciesAccepted": "EUR",
     "founder": [
       { "@type": "Person", "name": "Lion Grone" },
       { "@type": "Person", "name": "Samuel Obodoefuna" }
     ],
+    "foundingDate": "2026",
+    "hasOfferCatalog": {
+      "@type": "OfferCatalog",
+      "name": "Anhänger-Mieten Tarife",
+      "itemListElement": [
+        {
+          "@type": "Offer",
+          "name": "PKW-Anhänger – 3 Stunden",
+          "description": "Kurzmiete bis 3 Stunden",
+          "price": "9.00",
+          "priceCurrency": "EUR",
+          "availability": "https://schema.org/InStock",
+          "url": "https://simpletrailer.de/booking"
+        },
+        {
+          "@type": "Offer",
+          "name": "PKW-Anhänger – Ganzer Tag (24 Std.)",
+          "description": "24-Stunden-Festpreis",
+          "price": "29.00",
+          "priceCurrency": "EUR",
+          "availability": "https://schema.org/InStock",
+          "url": "https://simpletrailer.de/booking"
+        },
+        {
+          "@type": "Offer",
+          "name": "PKW-Anhänger – Wochenende (Fr–So)",
+          "description": "Festpreis für das ganze Wochenende",
+          "price": "59.00",
+          "priceCurrency": "EUR",
+          "availability": "https://schema.org/InStock",
+          "url": "https://simpletrailer.de/booking"
+        },
+        {
+          "@type": "Offer",
+          "name": "PKW-Anhänger – 1 Woche",
+          "description": "Festpreis für 7 Tage",
+          "price": "119.00",
+          "priceCurrency": "EUR",
+          "availability": "https://schema.org/InStock",
+          "url": "https://simpletrailer.de/booking"
+        }
+      ]
+    },
     "makesOffer": {
       "@type": "Offer",
-      "name": "PKW-Anhänger Stundenmiete",
-      "price": "8.00",
-      "priceCurrency": "EUR",
+      "name": "PKW-Anhänger mit Plane",
+      "priceSpecification": {
+        "@type": "PriceSpecification",
+        "minPrice": "9.00",
+        "maxPrice": "119.00",
+        "priceCurrency": "EUR"
+      },
       "availability": "https://schema.org/InStock"
     }
+  }
+  </script>
+
+  <!-- WebSite Schema mit SearchAction (Sitelinks-Searchbox in Google) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "@id": "https://simpletrailer.de/#website",
+    "url": "https://simpletrailer.de",
+    "name": "SimpleTrailer",
+    "description": "Anhänger online mieten in Bremen — 24/7 verfügbar, kontaktlos.",
+    "inLanguage": "de-DE",
+    "publisher": { "@id": "https://simpletrailer.de/#business" }
+  }
+  </script>
+
+  <!-- FAQPage Schema (FAQ erscheint als Akkordion direkt in Google-Suchergebnissen) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Brauche ich einen besonderen Führerschein für einen PKW-Anhänger?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Nein – ein normaler Führerschein Klasse B reicht. Unsere Anhänger liegen unter 750 kg Gesamtgewicht, daher ist kein BE-Führerschein nötig. Einfach ankuppeln und losfahren."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Wie komme ich an den Anhänger ran?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Nach der Online-Buchung erhältst du per E-Mail und Push-Nachricht einen Code. Diesen gibst du am Code-Schloss am Stellplatz ein, koppelst den Anhänger an dein Auto an – fertig. Kein Büro, kein Termin, keine Wartezeit."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Was passiert, wenn ich den Anhänger zu spät zurückbringe?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "15 € pro angefangene Stunde Verspätungsgebühr. Damit stellen wir sicher, dass der nächste Mieter nicht warten muss. Du kannst die Buchung jederzeit verlängern, solange der Anhänger noch frei ist."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Gibt es eine Kaution bei SimpleTrailer?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Nein, keine Kaution. Du zahlst ausschließlich deinen gebuchten Tarif. Im Schadensfall greift unsere Haftpflicht-Versicherung. Optional kannst du Basis- oder Premium-Schutz für reduzierte Selbstbeteiligung buchen."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Was kostet ein Anhänger bei SimpleTrailer in Bremen?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Ab 9 € für 3 Stunden, 29 € für einen ganzen Tag (24 Std), 59 € für das Wochenende (Fr–So) oder 119 € für eine ganze Woche. Alle Preise inklusive Plane, ohne versteckte Kosten."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Ist SimpleTrailer rund um die Uhr verfügbar?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Ja, 24 Stunden an 7 Tagen die Woche. Buchung läuft online, der Zugang über das Code-Schloss am Anhänger funktioniert auch nachts und am Wochenende ohne Personal."
+        }
+      }
+    ]
   }
   </script>
 
