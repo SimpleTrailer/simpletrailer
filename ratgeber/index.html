@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Ratgeber – SimpleTrailer | Anhänger-Wissen für Bremen</title>
+  <meta name="description" content="Ratgeber rund um PKW-Anhänger: Führerschein-Klassen, Ankuppeln, Beladen. Klare Antworten auf die wichtigsten Fragen vor der Anhänger-Miete." />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta name="theme-color" content="#0D0D0D" />
+  <link rel="canonical" href="https://simpletrailer.de/ratgeber" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="SimpleTrailer" />
+  <meta property="og:title" content="Ratgeber – Anhänger-Wissen | SimpleTrailer" />
+  <meta property="og:description" content="Klare Antworten auf die wichtigsten Fragen rund um PKW-Anhänger." />
+  <meta property="og:url" content="https://simpletrailer.de/ratgeber" />
+  <meta property="og:image" content="https://simpletrailer.de/og-image.png" />
+  <meta property="og:locale" content="de_DE" />
+
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <script src="/native-bridge.js?v=9" defer></script>
+  <script src="/analytics.js?v=9" defer></script>
+
+  <!-- CollectionPage Schema mit Verknüpfung zum Business -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": "SimpleTrailer Ratgeber",
+    "description": "Ratgeber-Artikel rund um PKW-Anhänger: Führerschein, Ankuppeln, Beladen.",
+    "url": "https://simpletrailer.de/ratgeber",
+    "inLanguage": "de-DE",
+    "isPartOf": { "@id": "https://simpletrailer.de/#website" },
+    "publisher": { "@id": "https://simpletrailer.de/#business" },
+    "hasPart": [
+      {
+        "@type": "Article",
+        "headline": "Welcher Anhänger mit B-Führerschein?",
+        "url": "https://simpletrailer.de/ratgeber/welcher-anhaenger-mit-b-fuehrerschein"
+      },
+      {
+        "@type": "Article",
+        "headline": "Anhänger ankuppeln – Schritt-für-Schritt-Anleitung",
+        "url": "https://simpletrailer.de/ratgeber/anhaenger-ankuppeln-anleitung"
+      },
+      {
+        "@type": "Article",
+        "headline": "Anhänger richtig beladen – Stützlast, Sicherung, Sicherheit",
+        "url": "https://simpletrailer.de/ratgeber/anhaenger-richtig-beladen"
+      }
+    ]
+  }
+  </script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0D0D0D; --s1: #161616; --s2: #1E1E1E; --card: #1A1A1A;
+      --orange: #E85D00; --orange-h: #FF6A00;
+      --white: #FFFFFF; --gray: #888888; --border: #383838;
+      --font: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--white); font-family: var(--font); font-size: 16px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+    a { color: inherit; text-decoration: none; }
+
+    /* NAV */
+    nav {
+      background: rgba(13,13,13,.95); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border); padding: 0 5%; height: 64px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .logo { font-size: 1.2rem; font-weight: 800; letter-spacing: -.03em; }
+    .logo span:first-child { color: var(--white); }
+    .logo span:last-child { color: var(--orange); }
+    .nav-actions { display: flex; align-items: center; gap: 14px; }
+    .nav-back { color: var(--gray); font-size: .88rem; transition: color .2s; }
+    .nav-back:hover { color: var(--white); }
+    .nav-cta {
+      background: var(--orange); color: #fff !important; padding: 8px 18px;
+      border-radius: 8px; font-size: .85rem; font-weight: 700; transition: background .2s;
+    }
+    .nav-cta:hover { background: var(--orange-h); }
+
+    /* HERO */
+    .page { max-width: 980px; margin: 0 auto; padding: 56px 24px 80px; }
+    .breadcrumb { color: var(--gray); font-size: .82rem; margin-bottom: 14px; }
+    .breadcrumb a { color: var(--gray); transition: color .2s; }
+    .breadcrumb a:hover { color: var(--white); }
+    .section-tag {
+      display: inline-block; font-size: .68rem; font-weight: 700;
+      letter-spacing: .12em; text-transform: uppercase; color: var(--orange);
+      margin-bottom: 12px;
+    }
+    h1 {
+      font-size: clamp(2rem, 4vw, 2.8rem); font-weight: 800;
+      letter-spacing: -.03em; margin-bottom: 16px; line-height: 1.15;
+    }
+    .lead {
+      font-size: 1.05rem; color: var(--gray); max-width: 640px;
+      line-height: 1.65; margin-bottom: 48px;
+    }
+
+    /* ARTIKEL-GRID */
+    .articles {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 18px;
+    }
+    .article-card {
+      background: var(--card); border: 1.5px solid var(--border);
+      border-radius: 18px; padding: 26px 24px; display: flex;
+      flex-direction: column; gap: 14px; transition: border-color .2s, transform .2s;
+      cursor: pointer;
+    }
+    .article-card:hover { border-color: var(--orange); transform: translateY(-2px); }
+    .article-icon {
+      font-size: 1.8rem; width: 52px; height: 52px; border-radius: 12px;
+      background: var(--s2); display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .article-title { font-size: 1.15rem; font-weight: 700; letter-spacing: -.02em; line-height: 1.35; }
+    .article-desc { color: var(--gray); font-size: .92rem; line-height: 1.6; flex: 1; }
+    .article-meta {
+      display: flex; align-items: center; gap: 12px;
+      font-size: .76rem; color: var(--gray); padding-top: 10px;
+      border-top: 1px solid var(--border);
+    }
+    .article-meta .read-more { color: var(--orange); font-weight: 700; margin-left: auto; }
+
+    /* CTA-BLOCK */
+    .cta-block {
+      margin-top: 56px; background: linear-gradient(135deg, #1a0d00 0%, #2a1700 100%);
+      border: 1.5px solid var(--orange); border-radius: 20px;
+      padding: 36px 28px; text-align: center;
+    }
+    .cta-block h2 { font-size: 1.5rem; font-weight: 800; margin-bottom: 8px; letter-spacing: -.02em; }
+    .cta-block p { color: var(--gray); font-size: .95rem; margin-bottom: 22px; line-height: 1.6; }
+    .cta-block .btn {
+      display: inline-flex; align-items: center; gap: 8px; padding: 13px 28px;
+      background: var(--orange); color: #fff; border-radius: 10px;
+      font-weight: 700; font-size: .95rem; transition: background .2s;
+    }
+    .cta-block .btn:hover { background: var(--orange-h); }
+
+    /* FAQ-Hinweis */
+    .faq-hint {
+      margin-top: 28px; text-align: center; padding: 22px;
+      background: var(--s1); border: 1px solid var(--border); border-radius: 14px;
+    }
+    .faq-hint p { color: var(--gray); font-size: .92rem; margin-bottom: 12px; }
+    .faq-hint a { color: var(--orange); font-weight: 700; }
+
+    /* FOOTER */
+    footer {
+      border-top: 1px solid var(--border); padding: 32px 5% 28px;
+      margin-top: 80px; color: var(--gray); font-size: .82rem;
+    }
+    .footer-inner { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+    .footer-links { display: flex; gap: 22px; flex-wrap: wrap; }
+    .footer-links a { transition: color .2s; }
+    .footer-links a:hover { color: var(--white); }
+
+    @media (max-width: 640px) {
+      .page { padding: 40px 18px 60px; }
+      .article-card { padding: 22px 20px; }
+      nav { padding: 0 18px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo"><span>Simple</span><span>Trailer</span></a>
+  <div class="nav-actions">
+    <a href="/" class="nav-back">← Startseite</a>
+    <a href="/booking" class="nav-cta">Anhänger buchen</a>
+  </div>
+</nav>
+
+<div class="page">
+
+  <p class="breadcrumb"><a href="/">Start</a> <span style="opacity:.5">›</span> Ratgeber</p>
+  <p class="section-tag">📚 Ratgeber</p>
+  <h1>Anhänger-Wissen für Bremen.<br>Klar erklärt.</h1>
+  <p class="lead">
+    Bevor du einen Anhänger mietest, solltest du ein paar Dinge wissen — vom richtigen Führerschein
+    bis zum sicheren Beladen. Hier sind die Antworten, die du wirklich brauchst.
+  </p>
+
+  <div class="articles">
+
+    <a href="/ratgeber/welcher-anhaenger-mit-b-fuehrerschein" class="article-card">
+      <div class="article-icon">🪪</div>
+      <div class="article-title">Welcher Anhänger mit B-Führerschein?</div>
+      <div class="article-desc">
+        Klasse B reicht oft — aber nicht immer. Wir zeigen dir die genauen Grenzen,
+        was B96 und BE bringen, und welcher Anhänger zu deinem Auto passt.
+      </div>
+      <div class="article-meta">
+        <span>📅 29.04.2026</span>
+        <span>⏱ 5 Min</span>
+        <span class="read-more">Lesen →</span>
+      </div>
+    </a>
+
+    <a href="/ratgeber/anhaenger-ankuppeln-anleitung" class="article-card">
+      <div class="article-icon">🔗</div>
+      <div class="article-title">Anhänger ankuppeln – die Schritt-für-Schritt-Anleitung</div>
+      <div class="article-desc">
+        Vom Auto-Anfahren bis zum Sicherheits-Check: 7 Schritte, mit denen das
+        Ankuppeln in 3 Minuten sitzt — auch beim ersten Mal.
+      </div>
+      <div class="article-meta">
+        <span>📅 29.04.2026</span>
+        <span>⏱ 4 Min</span>
+        <span class="read-more">Lesen →</span>
+      </div>
+    </a>
+
+    <a href="/ratgeber/anhaenger-richtig-beladen" class="article-card">
+      <div class="article-icon">📦</div>
+      <div class="article-title">Anhänger richtig beladen – Stützlast, Sicherung, Sicherheit</div>
+      <div class="article-desc">
+        Stützlast, zulässiges Gesamtgewicht, Ladungssicherung — die wichtigsten
+        Regeln gegen Unfälle, Bußgelder und kaputte Achsen.
+      </div>
+      <div class="article-meta">
+        <span>📅 29.04.2026</span>
+        <span>⏱ 4 Min</span>
+        <span class="read-more">Lesen →</span>
+      </div>
+    </a>
+
+  </div>
+
+  <div class="cta-block">
+    <h2>Bereit für die Buchung?</h2>
+    <p>Anhänger online buchen, Code per Push, ankuppeln, losfahren. Ab 9 € in Bremen.</p>
+    <a href="/booking" class="btn">Jetzt Anhänger buchen →</a>
+  </div>
+
+  <div class="faq-hint">
+    <p>Deine Frage ist nicht dabei?</p>
+    <a href="/#faq">Schau in die FAQ →</a> &nbsp;·&nbsp; <a href="mailto:info@simpletrailer.de">Schreib uns →</a>
+  </div>
+
+</div>
+
+<footer>
+  <div class="footer-inner">
+    <span>© 2026 SimpleTrailer GbR · Bremen</span>
+    <div class="footer-links">
+      <a href="/">Start</a>
+      <a href="/booking">Buchen</a>
+      <a href="/ratgeber">Ratgeber</a>
+      <a href="/agb">AGB</a>
+      <a href="/datenschutz">Datenschutz</a>
+      <a href="/impressum">Impressum</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
