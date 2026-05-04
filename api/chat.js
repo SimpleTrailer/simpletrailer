@@ -103,7 +103,7 @@ const SYSTEM_PROMPT = `Du bist **Simply** — der freundliche, kompetente Online
 PKW-Anhänger mit Plane (1 Modell):
 - Ladefläche 251×137×130 cm, Leergewicht 295 kg
 - zGG 750 kg, Max. Zuladung 455 kg
-- Auflauf-Bremse, Plane inkl. Gestell, Zurrbügel, Codeschloss
+- Ungebremst (750 kg zGG), Plane inkl. Gestell, Zurrbügel, Codeschloss
 
 # Tarife
 - Kurztrip (bis 3h): 9 €
