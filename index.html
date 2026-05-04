@@ -734,7 +734,7 @@
       overflow: hidden;
       position: relative;
     }
-    .trailer-card-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .trailer-card-img img { width: 100%; height: 100%; object-fit: contain; display: block; padding: 12px; box-sizing: border-box; }
     .trailer-card-img-placeholder {
       width: 100%; height: 100%; min-height: 200px;
       display: flex; align-items: center; justify-content: center;
@@ -1803,7 +1803,10 @@
       <!-- Autotransporter -->
       <div class="trailer-card unavailable reveal">
         <div class="trailer-card-img">
-          <div class="trailer-card-img-placeholder">🚗</div>
+          <img src="autotransporter.png?v=1" alt="Autotransporter Anhänger bei SimpleTrailer Bremen"
+               loading="lazy" decoding="async" width="600" height="400"
+               onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+          <div class="trailer-card-img-placeholder" style="display:none;">🚗</div>
           <div class="unavail-overlay">
             <span style="color:#fff;font-size:.8rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;background:rgba(0,0,0,.6);padding:8px 16px;border-radius:20px;">Demnächst</span>
           </div>
@@ -2433,9 +2436,9 @@
   /* ── TRAILER BILDER ─────────────────────────── */
   const TYPE_IMAGES = {
     'Planenanhänger': 'anhaenger.png?v=2',
+    'Autotransporter': 'autotransporter.png?v=1',
     // Zukünftige Typen hier ergänzen:
     // 'Kofferanhänger': 'koffer.png',
-    // 'Autotransporter': 'autotransporter.png',
   };
 
   function trailerImg(t, cssClass) {
