@@ -13,16 +13,16 @@
   "categories": ["travel", "transportation", "business"],
   "icons": [
     {
-      "src": "/favicon.svg",
+      "src": "/logo-icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
     },
     {
-      "src": "/apple-touch-icon.png",
-      "sizes": "180x180",
+      "src": "/logo-icon.png",
+      "sizes": "1920x1920",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     }
   ],
   "shortcuts": [
@@ -30,15 +30,15 @@
       "name": "Jetzt buchen",
       "short_name": "Buchen",
       "description": "Anhänger sofort buchen",
-      "url": "/booking.html",
-      "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
+      "url": "/booking",
+      "icons": [{ "src": "/logo-icon.png", "sizes": "1920x1920" }]
     },
     {
       "name": "Mein Konto",
       "short_name": "Konto",
       "description": "Meine Buchungen ansehen",
-      "url": "/account.html",
-      "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
+      "url": "/account",
+      "icons": [{ "src": "/logo-icon.png", "sizes": "1920x1920" }]
     }
   ]
 }
