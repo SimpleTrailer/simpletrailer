@@ -56,8 +56,8 @@
 
   .stc-window {
     position: fixed; bottom: 96px; right: 20px;
-    width: 400px; max-width: calc(100vw - 32px);
-    height: 600px; max-height: calc(100vh - 130px);
+    width: 460px; max-width: calc(100vw - 32px);
+    height: 760px; max-height: calc(100vh - 60px);
     background: #0F0F10;
     border: 1px solid #2A2A2C;
     border-radius: 22px;
@@ -85,8 +85,8 @@
     .stc-window {
       bottom: 0; right: 0; left: 0; top: auto;
       width: 100%; max-width: none;
-      height: 88dvh;
-      max-height: 88dvh;
+      height: 95dvh;
+      max-height: 95dvh;
       border-radius: 24px 24px 0 0;
       border: none;
       border-top: 1px solid rgba(255,255,255,0.08);

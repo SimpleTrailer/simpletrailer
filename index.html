@@ -1642,6 +1642,25 @@
       .hero-sub-extra { display: none; }
       h1 { font-size: 2.4rem; }
     }
+
+    /* === App-Modus (Capacitor) — versteckt Marketing-Sektionen ===
+       Web-Browser bleibt unberuehrt; .app-mode wird nur in der nativen App auf <body> gesetzt. */
+    body.app-mode #how,
+    body.app-mode #bewertungen,
+    body.app-mode #trust,
+    body.app-mode #faq,
+    body.app-mode #kontakt,
+    body.app-mode footer {
+      display: none !important;
+    }
+    /* Hero kuerzen: nur Buchungsbox bleibt prominent */
+    body.app-mode .section-tag,
+    body.app-mode .hero-sub,
+    body.app-mode .hero-trust {
+      display: none !important;
+    }
+    body.app-mode #hero h1 { font-size: 2rem; margin-bottom: 12px; }
+    body.app-mode #hero { padding-top: 16px; }
   </style>
 </head>
 <body>
@@ -2318,7 +2337,7 @@
 </div>
 
 <!-- KI Chat-Widget -->
-<script src="/chat-widget.js?v=4" defer></script>
+<script src="/chat-widget.js?v=5" defer></script>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>

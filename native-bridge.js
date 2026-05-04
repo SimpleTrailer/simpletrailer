@@ -36,6 +36,14 @@
     return;
   }
 
+  // App-Modus: Marker setzen, damit CSS Marketing-Sektionen ausblenden kann
+  // (Webseite im Browser bleibt unangetastet, da dieser Code nur bei isNative laeuft)
+  if (document.body) {
+    document.body.classList.add('app-mode');
+  } else {
+    document.addEventListener('DOMContentLoaded', () => document.body.classList.add('app-mode'));
+  }
+
   // ===== Native Mode aktiv =====
   const platform = (Cap.getPlatform && Cap.getPlatform()) || 'unknown';
   const P = Cap.Plugins || {};
