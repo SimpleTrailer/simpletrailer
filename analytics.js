@@ -133,7 +133,7 @@
   //  3) DSN kopieren (Format: https://abc123@oXYZ.ingest.sentry.io/123)
   //  4) DSN unten in SENTRY_DSN einsetzen, Datei pushen
   //  5) Ab da: bei jedem JS-Crash kommt Mail mit Stack-Trace + User-Aktionen davor
-  const SENTRY_DSN = ''; // <- TODO: DSN aus Sentry-Dashboard hier einsetzen
+  const SENTRY_DSN = 'https://a2c801ed6f3b51a36ae3fdb8afdc1a5f@o4511339376082944.ingest.de.sentry.io/4511339384275024';
 
   if (SENTRY_DSN) {
     try {
