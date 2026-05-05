@@ -199,9 +199,127 @@
 
     <!-- TABS -->
     <div class="tabs">
-      <button class="tab-btn active" id="tabBuchungen" onclick="switchTab('buchungen')">📋 Buchungen</button>
+      <button class="tab-btn active" id="tabCockpit" onclick="switchTab('cockpit')">🎯 Cockpit</button>
+      <button class="tab-btn" id="tabBuchungen" onclick="switchTab('buchungen')">📋 Buchungen</button>
       <button class="tab-btn" id="tabNutzer" onclick="switchTab('nutzer')">👤 Nutzer</button>
       <button class="tab-btn" id="tabStatistiken" onclick="switchTab('statistiken')">📊 Statistiken</button>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ COCKPIT TAB -->
+    <div id="tabContentCockpit">
+      <div id="cockpitLoading" style="text-align:center;padding:40px;color:var(--gray);">
+        <div class="spin" style="margin:0 auto 12px;"></div>
+        Lade Cockpit-Daten…
+      </div>
+      <div id="cockpitContent" style="display:none;">
+
+        <!-- LIVE-STATUS -->
+        <div style="background:linear-gradient(135deg,#1a1a1a,#0f0f0f);border:1px solid var(--border);border-radius:14px;padding:18px 22px;margin-bottom:18px;display:flex;flex-wrap:wrap;gap:24px;align-items:center;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="position:relative;display:inline-block;width:10px;height:10px;background:#4ade80;border-radius:50%;"><span style="position:absolute;inset:-4px;border:2px solid #4ade80;border-radius:50%;animation:livePulse 2s infinite;"></span></span>
+            <strong style="color:#4ade80;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;">Live</strong>
+            <span style="color:var(--gray);font-size:.85rem;" id="cpTimestamp">–</span>
+          </div>
+          <div style="font-size:.95rem;"><strong id="cpLiveVisitors">–</strong> <span style="color:var(--gray);">Besucher gerade auf der Seite</span></div>
+          <div style="font-size:.95rem;"><strong id="cpActiveBookings">–</strong> <span style="color:var(--gray);">Anhänger draußen</span></div>
+          <div style="font-size:.95rem;"><strong id="cpAvailable">–</strong> <span style="color:var(--gray);">verfügbar</span></div>
+        </div>
+
+        <!-- KPI-CARDS -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:18px;">
+          <div class="stat-card" style="background:#0f1f0f;border-color:#1a3a1a;">
+            <div class="stat-label" style="color:#4ade80;">Heute</div>
+            <div class="stat-val" id="cpTodayCount">–</div>
+            <div style="font-size:.78rem;color:var(--gray);margin-top:4px;"><span id="cpTodayRev">–</span> Brutto · <span id="cpTodayNet">–</span> Netto</div>
+          </div>
+          <div class="stat-card" style="background:#0d1929;border-color:#1e3a5f;">
+            <div class="stat-label" style="color:#60a5fa;">Diese Woche</div>
+            <div class="stat-val" id="cpWeekCount">–</div>
+            <div style="font-size:.78rem;color:var(--gray);margin-top:4px;"><span id="cpWeekRev">–</span> Brutto · <span id="cpWeekTrend">–</span></div>
+          </div>
+          <div class="stat-card" style="background:#1f1106;border-color:#3a2410;">
+            <div class="stat-label" style="color:var(--orange);">Diesen Monat</div>
+            <div class="stat-val" id="cpMonthCount">–</div>
+            <div style="font-size:.78rem;color:var(--gray);margin-top:4px;"><span id="cpMonthRev">–</span> Brutto · <span id="cpMonthTrend">–</span></div>
+          </div>
+          <div class="stat-card" style="background:#1a0d29;border-color:#3a1a5f;">
+            <div class="stat-label" style="color:#a78bfa;">Ø Buchungswert</div>
+            <div class="stat-val" id="cpAvgValue">–</div>
+            <div style="font-size:.78rem;color:var(--gray);margin-top:4px;Brutto pro Buchung</div>
+          </div>
+        </div>
+
+        <!-- ANOMALIEN -->
+        <div style="background:#0f0f0f;border:1px solid var(--border);border-radius:14px;padding:18px 22px;margin-bottom:18px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+            <span style="font-size:1.1rem;">⚠️</span>
+            <strong style="font-size:.85rem;letter-spacing:.05em;text-transform:uppercase;color:var(--gray);">Anomalien & Alerts</strong>
+          </div>
+          <div id="cpAnomalies"></div>
+        </div>
+
+        <!-- AUSLASTUNG + TARIFE 2 SPALTIG -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;" id="cpUtilGrid">
+          <div style="background:#0f0f0f;border:1px solid var(--border);border-radius:14px;padding:18px 22px;">
+            <strong style="font-size:.85rem;letter-spacing:.05em;text-transform:uppercase;color:var(--gray);display:block;margin-bottom:14px;">📊 Anhänger-Auslastung</strong>
+            <div id="cpUtilization"></div>
+          </div>
+          <div style="background:#0f0f0f;border:1px solid var(--border);border-radius:14px;padding:18px 22px;">
+            <strong style="font-size:.85rem;letter-spacing:.05em;text-transform:uppercase;color:var(--gray);display:block;margin-bottom:14px;">🎟️ Tarif-Verteilung</strong>
+            <div id="cpTarife"></div>
+          </div>
+        </div>
+
+        <!-- AI INSIGHT -->
+        <div style="background:linear-gradient(135deg,#1a0f29,#0d0d0d);border:1px solid #3a1a5f;border-radius:14px;padding:18px 22px;margin-bottom:18px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+            <span style="font-size:1.1rem;">💡</span>
+            <strong style="font-size:.85rem;letter-spacing:.05em;text-transform:uppercase;color:#a78bfa;">Empfehlung der Woche (consultant-Agent)</strong>
+          </div>
+          <div id="cpAiInsight" style="font-size:.92rem;line-height:1.6;color:#ddd;">Noch keine Empfehlung — der consultant analysiert Sonntag-Abend zum ersten Mal.</div>
+        </div>
+
+        <!-- AI-STAB -->
+        <div style="background:#0f0f0f;border:1px solid var(--border);border-radius:14px;padding:18px 22px;margin-bottom:18px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+            <span style="font-size:1.1rem;">🤖</span>
+            <strong style="font-size:.85rem;letter-spacing:.05em;text-transform:uppercase;color:var(--gray);">SimpleTrailer AI-Stab</strong>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;">
+            <div style="background:#0a0a0a;border:1px solid #2a2a2a;border-radius:10px;padding:14px;">
+              <strong style="display:block;font-size:.85rem;margin-bottom:4px;">📝 content-writer</strong>
+              <p style="font-size:.78rem;color:var(--gray);margin:0;">Marketing, SEO, Newsletter, Ratgeber — fertige Texte im Brand-Stil</p>
+            </div>
+            <div style="background:#0a0a0a;border:1px solid #2a2a2a;border-radius:10px;padding:14px;">
+              <strong style="display:block;font-size:.85rem;margin-bottom:4px;">🔍 code-reviewer</strong>
+              <p style="font-size:.78rem;color:var(--gray);margin:0;">Audit vor Push — Stripe, Supabase, Security, Webhooks</p>
+            </div>
+            <div style="background:#0a0a0a;border:1px solid #2a2a2a;border-radius:10px;padding:14px;">
+              <strong style="display:block;font-size:.85rem;margin-bottom:4px;">💡 consultant</strong>
+              <p style="font-size:.78rem;color:var(--gray);margin:0;">Strategie & Wachstum — priorisierte Empfehlungen aus Daten</p>
+            </div>
+            <div style="background:#0a0a0a;border:1px solid #2a2a2a;border-radius:10px;padding:14px;">
+              <strong style="display:block;font-size:.85rem;margin-bottom:4px;">📱 mobile-app-architect</strong>
+              <p style="font-size:.78rem;color:var(--gray);margin:0;">Apple/Google Submission, native Features, Capacitor</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- AUTONOMOUS ROUTINES STATUS -->
+        <div style="background:#0f0f0f;border:1px solid var(--border);border-radius:14px;padding:18px 22px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+            <span style="font-size:1.1rem;">⚙️</span>
+            <strong style="font-size:.85rem;letter-spacing:.05em;text-transform:uppercase;color:var(--gray);">Autonome Routinen</strong>
+          </div>
+          <table style="width:100%;font-size:.85rem;border-collapse:collapse;">
+            <tr><td style="padding:8px 0;border-bottom:1px solid #1a1a1a;">📊 Wöchentlicher KPI-Report</td><td style="text-align:right;color:var(--gray);">Montags 7:00 UTC</td></tr>
+            <tr><td style="padding:8px 0;border-bottom:1px solid #1a1a1a;">🔍 Anomalie-Check</td><td style="text-align:right;color:var(--gray);">alle 6 Std.</td></tr>
+            <tr><td style="padding:8px 0;border-bottom:1px solid #1a1a1a;">💡 Wöchentlicher AI-Berater</td><td style="text-align:right;color:var(--gray);">Sonntags 18:00 UTC</td></tr>
+            <tr><td style="padding:8px 0;">⏰ Rückgabe-Erinnerungen</td><td style="text-align:right;color:var(--gray);">alle 15 Min.</td></tr>
+          </table>
+        </div>
+
+      </div>
     </div>
 
     <!-- ═══════════════════════════════════════════════ BUCHUNGEN TAB -->
@@ -448,7 +566,7 @@
   let allUsers     = [];
   let activeFilter = 'all';
   let activeUserFilter = 'all';
-  let currentTab   = 'buchungen';
+  let currentTab   = 'cockpit';
   let usersLoaded  = false;
 
   const fmtDate = iso => iso
@@ -484,6 +602,8 @@
       document.getElementById('adminEmail').textContent = email;
       document.getElementById('loginView').style.display = 'none';
       document.getElementById('mainView').style.display  = 'block';
+      // Cockpit als Default
+      switchTab('cockpit');
       loadData();
       startLivePolling();
 
@@ -621,12 +741,124 @@
   /* ── TABS ─────────────────────────────────────────────── */
   function switchTab(tab) {
     currentTab = tab;
-    ['buchungen','nutzer','statistiken'].forEach(t => {
+    ['cockpit','buchungen','nutzer','statistiken'].forEach(t => {
       document.getElementById('tabContent' + t.charAt(0).toUpperCase() + t.slice(1)).style.display = t === tab ? 'block' : 'none';
       document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1)).classList.toggle('active', t === tab);
     });
     if (tab === 'nutzer' && !usersLoaded) loadUsers();
     if (tab === 'statistiken') renderStatistiken();
+    if (tab === 'cockpit') loadCockpit();
+  }
+
+  /* ── COCKPIT ──────────────────────────────────────────── */
+  let cockpitTimer = null;
+  async function loadCockpit() {
+    try {
+      const res = await fetch('/api/admin?section=cockpit', { headers: { Authorization: `Bearer ${authToken}` } });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || 'Fehler');
+      renderCockpit(d);
+      document.getElementById('cockpitLoading').style.display = 'none';
+      document.getElementById('cockpitContent').style.display = 'block';
+    } catch (e) {
+      document.getElementById('cockpitLoading').innerHTML = `<p style="color:var(--red)">Fehler: ${e.message}</p>`;
+    }
+    // Auto-Refresh alle 30s wenn auf Cockpit-Tab
+    if (cockpitTimer) clearTimeout(cockpitTimer);
+    cockpitTimer = setTimeout(() => { if (currentTab === 'cockpit') loadCockpit(); }, 30000);
+  }
+
+  function renderCockpit(d) {
+    const eur = (n) => (n || 0).toFixed(2).replace('.', ',') + ' €';
+    const eurNet = (n) => ((n || 0) / 1.19).toFixed(2).replace('.', ',') + ' €';
+    const trend = (now, prev) => {
+      if (prev === 0 && now === 0) return '';
+      if (prev === 0) return '<span style="color:#4ade80;">↑ neu</span>';
+      const pct = Math.round(((now - prev) / prev) * 100);
+      const color = pct >= 0 ? '#4ade80' : '#ef4444';
+      const arrow = pct >= 0 ? '↑' : '↓';
+      return `<span style="color:${color};">${arrow} ${Math.abs(pct)}% vs. Vorperiode</span>`;
+    };
+
+    // Live-Status
+    document.getElementById('cpTimestamp').textContent = '· ' + new Date(d.timestamp).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) + ' Uhr';
+    document.getElementById('cpActiveBookings').textContent = d.live.activeBookings;
+    document.getElementById('cpAvailable').textContent = `${d.live.availableTrailers} / ${d.live.totalTrailers}`;
+    // Live-Visitors aus dem heartbeat-Endpoint
+    fetch('/api/admin?section=heartbeats', { headers: { Authorization: `Bearer ${authToken}` } })
+      .then(r => r.json()).then(h => {
+        document.getElementById('cpLiveVisitors').textContent = (h && typeof h.active_visitors === 'number') ? h.active_visitors : '–';
+      }).catch(() => { document.getElementById('cpLiveVisitors').textContent = '–'; });
+
+    // KPI-Cards
+    document.getElementById('cpTodayCount').textContent = d.today.count;
+    document.getElementById('cpTodayRev').textContent = eur(d.today.revenue);
+    document.getElementById('cpTodayNet').textContent = eurNet(d.today.revenue);
+
+    document.getElementById('cpWeekCount').textContent = d.thisWeek.count;
+    document.getElementById('cpWeekRev').textContent = eur(d.thisWeek.revenue);
+    document.getElementById('cpWeekTrend').innerHTML = trend(d.thisWeek.count, d.lastWeek.count);
+
+    document.getElementById('cpMonthCount').textContent = d.thisMonth.count;
+    document.getElementById('cpMonthRev').textContent = eur(d.thisMonth.revenue);
+    document.getElementById('cpMonthTrend').innerHTML = trend(d.thisMonth.count, d.lastMonth.count);
+
+    const totalPaid = d.today.count + d.thisWeek.count;
+    const avgVal = (totalPaid > 0) ? (d.thisWeek.revenue / Math.max(d.thisWeek.count, 1)) : 0;
+    document.getElementById('cpAvgValue').textContent = eur(avgVal);
+
+    // Anomalien
+    document.getElementById('cpAnomalies').innerHTML = d.anomalies.map(a => {
+      const colors = { red: '#ef4444', yellow: '#f59e0b', green: '#4ade80' };
+      const bg = { red: '#1f0a0a', yellow: '#1f1606', green: '#0a1f0a' };
+      const icon = { red: '🔴', yellow: '🟡', green: '🟢' };
+      return `<div style="background:${bg[a.severity]};border-left:3px solid ${colors[a.severity]};padding:10px 14px;border-radius:6px;margin-bottom:8px;">
+        <div style="font-size:.88rem;font-weight:600;margin-bottom:2px;">${icon[a.severity]} ${a.title}</div>
+        <div style="font-size:.78rem;color:var(--gray);">${a.detail}</div>
+      </div>`;
+    }).join('');
+
+    // Auslastung
+    const utilHtml = (d.trailers || []).map(t => {
+      const count = d.utilByTrailer[t.id] || 0;
+      const max = Math.max(...Object.values(d.utilByTrailer), 1);
+      const pct = Math.round((count / max) * 100);
+      const status = t.is_available ? '✅' : '⏸';
+      return `<div style="margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:4px;">
+          <span>${status} ${t.name}</span>
+          <span style="color:var(--gray);">${count} Buchungen</span>
+        </div>
+        <div style="background:#1a1a1a;border-radius:4px;height:6px;overflow:hidden;">
+          <div style="background:linear-gradient(90deg,#E85D00,#f59e0b);height:100%;width:${pct}%;"></div>
+        </div>
+      </div>`;
+    }).join('') || '<p style="color:var(--gray);font-size:.82rem;">Keine Anhänger-Daten</p>';
+    document.getElementById('cpUtilization').innerHTML = utilHtml;
+
+    // Tarif-Verteilung
+    const tarifTotal = Object.values(d.tarifCount).reduce((a,b) => a+b, 0);
+    const tarifLabels = { flexible: 'Individuell', day: 'Ganzer Tag', weekend: 'Wochenende', week: '1 Woche' };
+    const tarifHtml = Object.entries(d.tarifCount).sort((a,b) => b[1] - a[1]).map(([key, count]) => {
+      const pct = tarifTotal ? Math.round((count / tarifTotal) * 100) : 0;
+      return `<div style="margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:4px;">
+          <span>${tarifLabels[key] || key}</span>
+          <span style="color:var(--gray);">${count} (${pct}%)</span>
+        </div>
+        <div style="background:#1a1a1a;border-radius:4px;height:6px;overflow:hidden;">
+          <div style="background:linear-gradient(90deg,#a78bfa,#60a5fa);height:100%;width:${pct}%;"></div>
+        </div>
+      </div>`;
+    }).join('') || '<p style="color:var(--gray);font-size:.82rem;">Noch keine Buchungen</p>';
+    document.getElementById('cpTarife').innerHTML = tarifHtml;
+
+    // AI Insight
+    if (d.aiInsight) {
+      const ago = Math.floor((Date.now() - new Date(d.aiInsight.created_at).getTime()) / 86400000);
+      const agoLabel = ago === 0 ? 'heute' : ago === 1 ? 'gestern' : `vor ${ago} Tagen`;
+      document.getElementById('cpAiInsight').innerHTML = `<div style="margin-bottom:8px;font-size:.72rem;color:var(--gray);text-transform:uppercase;letter-spacing:.05em;">${agoLabel}</div>${d.aiInsight.recommendation}`;
+    }
   }
 
   /* ── DATA ─────────────────────────────────────────────── */

@@ -33,6 +33,7 @@
 - **Microsoft Clarity** (gratis, DSGVO-konform) — Session-Recordings, Heatmaps, Rage/Dead Clicks
 - **Eigenes Admin-Dashboard** ([admin.html](admin.html)) — Buchungs-Daten aus Supabase: Wochentag-/Tageszeit-Charts, Umsatz-Trend, Anhänger-Auslastung
 - **Konfig:** [analytics.js](analytics.js) — eine zentrale Datei mit allen Tracking-IDs
+- **AI-Cockpit + Automationen:** [AUTOMATIONS.md](AUTOMATIONS.md) — vollständige Doku
 
 ---
 
@@ -112,9 +113,23 @@ Nutze die passenden Skills/Agents je nach Aufgaben-Typ — nicht alles selbst ma
 | **Codebase erkunden** (wo ist X definiert? wer benutzt Y?) | **Explore-Agent** (mit subagent_type: Explore) |
 | **Implementierungs-Planung** für komplexere Features (Architektur, Trade-offs) | **Plan-Agent** vor dem Coding |
 | **Mehrere unabhängige Aufgaben parallel** | Mehrere Agents in einer Message starten |
-| **Code-Review oder Architektur-Audit** | **General-Purpose-Agent** mit klarem Scope |
 | **Web-Recherche** (aktuelle Preise, Produkt-Vergleiche, neue APIs) | **WebSearch** + **WebFetch** |
 | **Status-Übersicht / Backlog-Update** | **Plan-Mode** mit Plan-File-Update |
+
+### 🤖 SimpleTrailer-eigener AI-Stab (in `.claude/agents/`)
+
+Diese 4 spezialisierten Agents sind exakt auf SimpleTrailer trainiert. Nutze sie statt Allgemein-Claude für die jeweiligen Domänen:
+
+| Agent | Wann nutzen | Was er liefert |
+|---|---|---|
+| **content-writer** | Marketing-Texte, SEO-Ratgeber, Newsletter, Social-Posts, AGB-Anpassungen, alle deutschen kundenorientierten Texte | Fertige Texte im SimpleTrailer-Brand-Stil (Du-Form, pragmatisch, anti-Bürokratie) — mit konkreten Anhänger-Specs, Preisen, USPs |
+| **code-reviewer** | Vor jedem größeren Push, bei Änderungen am Buchungs-/Bezahl-/Auth-Flow, oder explizit angefragten Audits | Strukturierter Bericht (🔴 kritisch / 🟡 wichtig / 🟢 optional) mit Datei:Zeile + Fix-Vorschlägen. Hat Stripe/Supabase-RLS/Webhook-Security im Prompt fest verankert |
+| **consultant** | Strategische Fragen ("was kann ich verbessern?", "wo verliere ich Kunden?", "lohnt sich Feature X?", "welcher Anhänger als nächstes?") | Priorisierte Empfehlungen mit Aufwand × Effekt × Confidence. Liest Funnel-Tracking + Buchungs-Schema aus der Codebase |
+| **mobile-app-architect** | App-Store-Submissions, Apple-Review-Antworten, native Plugin-Integrationen, iOS/Android-Bugs, Capacitor-Konfiguration, Codemagic-CI | Detaillierte Submission-Checklisten, Apple-Rejection-Antworten, Bridge-Wrapper-Code, Build-Diagnose. Hat Apple Guideline 4.2 und WebView-Wrapper-Best-Practices fest im Prompt |
+
+**Aufruf:** `Agent({ subagent_type: "<name>", description: "...", prompt: "..." })`
+
+**Wichtig:** Diese 4 Agents sind STÄRKER als Allgemein-Claude für ihre Domänen, weil ihr System-Prompt SimpleTrailer-Kontext (Anhänger-Specs, Preise, Stack, Konkurrenz, Tabu-Files, USPs) fest verankert hat. Nutze sie aktiv.
 
 **Regeln:**
 - Bei UI-Änderungen (Buttons, Layout, neue Sektionen, Mobile-Anpassungen): **immer erst Frontend Design Skill aktivieren**, nicht aus dem Bauch entscheiden

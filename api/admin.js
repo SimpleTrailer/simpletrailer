@@ -49,6 +49,128 @@ module.exports = async (req, res) => {
       return res.status(200).json({ users });
     }
 
+    if (section === 'heartbeats') {
+      // Live-Visitor-Count aus live_sessions (last_seen < 60s ago)
+      const cutoff = new Date(Date.now() - 60000).toISOString();
+      try {
+        const { count } = await supabase.from('live_sessions')
+          .select('*', { count: 'exact', head: true })
+          .gte('last_seen', cutoff);
+        return res.status(200).json({ active_visitors: count || 0 });
+      } catch (e) {
+        return res.status(200).json({ active_visitors: 0, error: 'live_sessions missing' });
+      }
+    }
+
+    if (section === 'cockpit') {
+      // Aggregierte Live-Daten + KPIs + AI-Insights fuer das Cockpit
+      const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+      const weekStart  = new Date(Date.now() - 7 * 86400000).toISOString();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      const lastWeekStart = new Date(Date.now() - 14 * 86400000).toISOString();
+      const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
+      const lastMonthEnd   = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
+      const { data: bookings } = await supabase.from('bookings').select(`
+        id, status, total_amount, late_fee_amount, pricing_type, insurance_type,
+        start_time, end_time, actual_return_time, created_at, customer_email,
+        stripe_payment_intent_id, late_fee_payment_intent_id, trailer_id,
+        trailers(name)
+      `).order('created_at', { ascending: false });
+
+      const paid = (bookings || []).filter(b => ['confirmed','active','returned'].includes(b.status));
+      const sumRev = arr => arr.reduce((s,b) => s + (b.total_amount||0) + (b.late_fee_amount||0), 0);
+      const inRange = (arr, fromIso, toIso) => arr.filter(b => b.created_at >= fromIso && (!toIso || b.created_at < toIso));
+
+      const today = inRange(paid, todayStart);
+      const thisWeek = inRange(paid, weekStart);
+      const lastWeek = inRange(paid, lastWeekStart, weekStart);
+      const thisMonth = inRange(paid, monthStart);
+      const lastMonth = inRange(paid, lastMonthStart, lastMonthEnd);
+
+      // Anhaenger
+      const { data: trailers } = await supabase.from('trailers').select('id, name, type, is_available');
+      // Aktive Buchungen (Anhaenger ist gerade draussen)
+      const activeBookings = (bookings || []).filter(b => b.status === 'active');
+      // Tarif-Verteilung
+      const tarifCount = {};
+      paid.forEach(b => {
+        const t = b.pricing_type || 'unbekannt';
+        tarifCount[t] = (tarifCount[t] || 0) + 1;
+      });
+      // Auslastung pro Anhaenger (vereinfacht: Anzahl Buchungen / Tage seit Verfuegbarkeit)
+      const utilByTrailer = {};
+      paid.forEach(b => {
+        const tid = b.trailer_id || 'unknown';
+        utilByTrailer[tid] = (utilByTrailer[tid] || 0) + 1;
+      });
+
+      // Anomalien erkennen
+      const anomalies = [];
+      // 1) Buchung mit Stripe-Fehler (pending > 1h)
+      const stalePending = (bookings || []).filter(b =>
+        b.status === 'pending' && (Date.now() - new Date(b.created_at).getTime()) > 3600000
+      );
+      if (stalePending.length > 0) {
+        anomalies.push({
+          severity: 'red',
+          title: `${stalePending.length} Buchung(en) seit >1h "pending"`,
+          detail: 'Vermutlich Stripe-Zahlungsfehler. Bitte Mieter manuell kontaktieren.'
+        });
+      }
+      // 2) Anhaenger nicht zurueckgebracht (active + end_time < now - 1h)
+      const overdue = activeBookings.filter(b => {
+        const end = new Date(b.end_time).getTime();
+        return Date.now() > end + 3600000 && !b.actual_return_time;
+      });
+      if (overdue.length > 0) {
+        anomalies.push({
+          severity: 'red',
+          title: `${overdue.length} Anhaenger ueberfaellig`,
+          detail: 'Mietende ist mehr als 1 Stunde vorbei, aber keine Rueckgabe registriert.'
+        });
+      }
+      // 3) Buchungs-Drop diese Woche vs. letzte
+      if (lastWeek.length >= 3 && thisWeek.length < lastWeek.length * 0.5) {
+        anomalies.push({
+          severity: 'yellow',
+          title: 'Buchungen diese Woche um >50% gefallen',
+          detail: `Letzte Woche: ${lastWeek.length} | Diese Woche: ${thisWeek.length}. Marketing-Kanal pruefen?`
+        });
+      }
+      if (anomalies.length === 0) {
+        anomalies.push({ severity: 'green', title: 'Keine Anomalien', detail: 'Alles laeuft im Normalbereich.' });
+      }
+
+      // AI-Insights aus DB lesen (Fallback: leer)
+      let latestInsight = null;
+      try {
+        const { data: insights } = await supabase.from('ai_insights')
+          .select('*').order('created_at', { ascending: false }).limit(1);
+        if (insights && insights[0]) latestInsight = insights[0];
+      } catch (e) { /* Tabelle existiert evtl. noch nicht */ }
+
+      return res.status(200).json({
+        live: {
+          activeBookings: activeBookings.length,
+          availableTrailers: (trailers || []).filter(t => t.is_available).length,
+          totalTrailers: (trailers || []).length,
+        },
+        today: { count: today.length, revenue: sumRev(today) },
+        thisWeek: { count: thisWeek.length, revenue: sumRev(thisWeek) },
+        lastWeek: { count: lastWeek.length, revenue: sumRev(lastWeek) },
+        thisMonth: { count: thisMonth.length, revenue: sumRev(thisMonth) },
+        lastMonth: { count: lastMonth.length, revenue: sumRev(lastMonth) },
+        tarifCount,
+        utilByTrailer,
+        trailers,
+        anomalies,
+        aiInsight: latestInsight,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
     // section === 'data' (default)
     const { data: bookings, error } = await supabase.from('bookings').select(`
       id, customer_name, customer_email, customer_phone,
