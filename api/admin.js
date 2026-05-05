@@ -7,7 +7,7 @@ module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'GET') return res.status(405).json({ error: 'Method Not Allowed' });
+  if (req.method !== 'GET' && req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
   const auth = req.headers.authorization || '';
   if (!auth.startsWith('Bearer ')) return res.status(401).json({ error: 'Nicht autorisiert' });
@@ -47,6 +47,29 @@ module.exports = async (req, res) => {
         dl_session_id:  u.user_metadata?.dl_session_id  || null,
       })).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
       return res.status(200).json({ users });
+    }
+
+    if (section === 'social-posts') {
+      try {
+        const { data } = await supabase.from('social_posts_queue')
+          .select('*')
+          .order('scheduled_for', { ascending: false })
+          .limit(30);
+        return res.status(200).json({ posts: data || [] });
+      } catch (e) {
+        return res.status(200).json({ posts: [], error: 'social_posts_queue missing' });
+      }
+    }
+
+    if (section === 'mark-posted' && req.method === 'POST') {
+      const id = req.query.id || req.body?.id;
+      if (!id) return res.status(400).json({ error: 'id required' });
+      const { error: updErr } = await supabase
+        .from('social_posts_queue')
+        .update({ status: 'posted', posted_at: new Date().toISOString(), posted_by: 'manual' })
+        .eq('id', id);
+      if (updErr) return res.status(500).json({ error: updErr.message });
+      return res.status(200).json({ ok: true });
     }
 
     if (section === 'heartbeats') {

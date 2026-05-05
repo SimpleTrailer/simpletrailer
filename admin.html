@@ -47,7 +47,7 @@
     .container { max-width:1300px; margin:0 auto; padding:28px 24px 80px; }
 
     /* TABS */
-    .tabs { display:flex; gap:4px; margin-bottom:28px; background:var(--s1); border:1.5px solid var(--border); border-radius:12px; padding:5px; width:fit-content; }
+    .tabs { display:flex; gap:4px; margin-bottom:28px; background:var(--s1); border:1.5px solid var(--border); border-radius:12px; padding:5px; width:fit-content; max-width:100%; overflow-x:auto; flex-wrap:nowrap; }
     .tab-btn { background:none; border:none; color:var(--gray); padding:8px 20px; border-radius:8px; font-size:.85rem; font-weight:600; cursor:pointer; font-family:var(--font); transition:all .2s; white-space:nowrap; }
     .tab-btn.active { background:var(--orange); color:#fff; }
     .tab-btn:hover:not(.active) { color:var(--white); background:var(--s2); }
@@ -206,7 +206,7 @@
     </div>
 
     <!-- ═══════════════════════════════════════════════ COCKPIT TAB -->
-    <div id="tabContentCockpit">
+    <div id="tabContentCockpit" style="display:block">
       <div id="cockpitLoading" style="text-align:center;padding:40px;color:var(--gray);">
         <div class="spin" style="margin:0 auto 12px;"></div>
         Lade Cockpit-Daten…
@@ -323,7 +323,7 @@
     </div>
 
     <!-- ═══════════════════════════════════════════════ BUCHUNGEN TAB -->
-    <div id="tabContentBuchungen">
+    <div id="tabContentBuchungen" style="display:none">
 
       <!-- Stats Row -->
       <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">
