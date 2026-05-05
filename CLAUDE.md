@@ -151,7 +151,7 @@ Nutze die passenden Skills/Agents je nach Aufgaben-Typ — nicht alles selbst ma
 5. **Buchungs-PDF zum Download** für Kunden (zusätzlich zur Email)
 6. **Apple Developer + Google Play Konten** als Organization (nach D-U-N-S)
 7. **Codemagic CI** für iOS-Build (~30 EUR/Monat, kein Mac nötig)
-8. **UptimeRobot Monitoring** für simpletrailer.de + /api/health
+8. ✅ ~~**UptimeRobot Monitoring** für simpletrailer.de + /api/health~~ (erledigt 2026-05-04)
 
 ---
 

@@ -35,7 +35,7 @@
   <!-- PWA Manifest + Apple-Touch-Icon -->
   <link rel="manifest" href="/manifest.webmanifest" />
   <script src="/native-bridge.js?v=9" defer></script>
-  <script src="/analytics.js?v=9" defer></script>
+  <script src="/analytics.js?v=10" defer></script>
 
   <!-- Strukturierte Daten: Lokales Geschäft (für Google Maps + Knowledge Panel + Rich Snippets) -->
   <script type="application/ld+json">
@@ -1777,9 +1777,12 @@
       <!-- PKW-Anhänger mit Plane -->
       <div class="trailer-card reveal">
         <div class="trailer-card-img">
-          <img src="anhaenger.png?v=3" alt="PKW-Anhänger mit Plane"
-               loading="lazy" decoding="async" width="600" height="400"
-               onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+          <picture>
+            <source srcset="anhaenger.webp" type="image/webp" />
+            <img src="anhaenger.png?v=3" alt="PKW-Anhänger mit Plane"
+                 loading="lazy" decoding="async" width="600" height="400"
+                 onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+          </picture>
           <div class="trailer-card-img-placeholder" style="display:none;">🚛</div>
         </div>
         <div class="trailer-card-body">
@@ -1803,9 +1806,12 @@
       <!-- Autotransporter -->
       <div class="trailer-card unavailable reveal">
         <div class="trailer-card-img">
-          <img src="autotransporter.png?v=2" alt="Autotransporter Anhänger bei SimpleTrailer Bremen"
-               loading="lazy" decoding="async" width="600" height="400"
-               onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+          <picture>
+            <source srcset="autotransporter.webp" type="image/webp" />
+            <img src="autotransporter.png?v=2" alt="Autotransporter Anhänger bei SimpleTrailer Bremen"
+                 loading="lazy" decoding="async" width="600" height="400"
+                 onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+          </picture>
           <div class="trailer-card-img-placeholder" style="display:none;">🚗</div>
           <div class="unavail-overlay">
             <span style="color:#fff;font-size:.8rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;background:rgba(0,0,0,.6);padding:8px 16px;border-radius:20px;">Demnächst</span>
@@ -2435,8 +2441,8 @@
 
   /* ── TRAILER BILDER ─────────────────────────── */
   const TYPE_IMAGES = {
-    'Planenanhänger': 'anhaenger.png?v=3',
-    'Autotransporter': 'autotransporter.png?v=2',
+    'Planenanhänger': 'anhaenger.webp',
+    'Autotransporter': 'autotransporter.webp',
     // Zukünftige Typen hier ergänzen:
     // 'Kofferanhänger': 'koffer.png',
   };

@@ -125,6 +125,44 @@
   } catch (e) { /* ignore */ }
 
   // ────────────────────────────────────────────────────────────
+  // 6) SENTRY ERROR MONITORING
+  // ────────────────────────────────────────────────────────────
+  // SETUP (einmalig, ~5 Min):
+  //  1) Account auf sentry.io anlegen (gratis: 5k Errors/Monat reicht locker)
+  //  2) "Create Project" -> Plattform "JavaScript / Browser" -> Name "simpletrailer-web"
+  //  3) DSN kopieren (Format: https://abc123@oXYZ.ingest.sentry.io/123)
+  //  4) DSN unten in SENTRY_DSN einsetzen, Datei pushen
+  //  5) Ab da: bei jedem JS-Crash kommt Mail mit Stack-Trace + User-Aktionen davor
+  const SENTRY_DSN = ''; // <- TODO: DSN aus Sentry-Dashboard hier einsetzen
+
+  if (SENTRY_DSN) {
+    try {
+      const onProd = location.hostname === 'simpletrailer.de'
+                  || location.hostname.endsWith('.vercel.app');
+      if (onProd) {
+        const s = document.createElement('script');
+        s.src = 'https://browser.sentry-cdn.com/8.13.0/bundle.min.js';
+        s.crossOrigin = 'anonymous';
+        s.onload = function () {
+          if (window.Sentry) {
+            window.Sentry.init({
+              dsn: SENTRY_DSN,
+              environment: location.hostname.includes('vercel.app') ? 'staging' : 'prod',
+              tracesSampleRate: 0.1, // 10% Performance-Tracing
+              ignoreErrors: [
+                /chrome-extension/i, /moz-extension/i, /safari-extension/i,
+                'ResizeObserver loop limit exceeded',
+                'Non-Error promise rejection captured'
+              ]
+            });
+          }
+        };
+        document.head.appendChild(s);
+      }
+    } catch (e) { /* ignore */ }
+  }
+
+  // ────────────────────────────────────────────────────────────
   // 5) Auto-Tracking wichtiger Funnel-Schritte
   // ────────────────────────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', function () {
