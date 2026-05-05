@@ -163,6 +163,37 @@ Bei mehreren passenden Agents → **parallel** in einer Message aufrufen. Bei tr
 
 **Hinweis:** Subagents sind erst nach **VS Code "Reload Window"** verfügbar nachdem sie neu hinzugefügt wurden. In laufender Session ggf. nicht da → manuell entsprechende Logik anwenden.
 
+### 🔗 Multi-Agent-Kollaboration (parallel aufrufen)
+
+Wenn eine Aufgabe **mehrere Domänen** berührt, rufe alle relevanten Agents **PARALLEL in einer Message** auf — die Ergebnisse aggregierst Du dann zu einer Antwort. Beispiele:
+
+| User-Anfrage | Parallel aufzurufen |
+|---|---|
+| "Wie pushen wir das Geschäft diese Woche?" | **consultant** + **ads-specialist** + **content-writer** |
+| "Wir haben 2 Stripe-Bugs heute" | **bug-triager** + **code-reviewer** + **support-writer** (für Mieter-Kommunikation) |
+| "AGB ändern für neue Schaden-Regelung" | **content-writer** (Text) + **legal-checker** (Recht) |
+| "Konkurrent senkt Preise — was tun?" | **competitor-watcher** (Analyse) + **consultant** (Strategie) + **ads-specialist** (Anzeigen-Reaktion) |
+| "Apple lehnt App ab" | **mobile-app-architect** (Antwort) + **legal-checker** (falls Datenschutz-Grund) |
+| "Neuer Anhänger soll auf die Webseite" | **content-writer** (Beschreibungen) + **ads-specialist** (Anzeigen-Erweiterung) + **code-reviewer** (HTML-Änderung) |
+
+**Pattern:** Eine `Agent`-Tool-Use-Message mit mehreren parallelen `Agent`-Calls. Anschließend aggregierst Du die Reports in einer User-facing Antwort.
+
+### 📅 Autonome Cron-Routinen (laufen ohne User)
+
+| Cron | Schedule | Was er macht |
+|---|---|---|
+| `send-reminders` | alle 15 Min | Push+Mail 1h vor Anhänger-Rückgabe |
+| `anomaly-check` | alle 6h | Mail bei Stripe-Fehler / überfälligen Anhängern |
+| `daily-briefing` | täglich 8:00 Berlin | Aggregiert Anomalien/Bugs/Drafts → 1 Tagesplan-Mail |
+| `social-media-generator` | täglich 9:00 Berlin | Insta-Post-Vorschlag in Mail |
+| `bug-triager` | täglich 10:00 Berlin | Sentry-Top-5 Bugs in Mail |
+| `weekly-ratgeber-generator` | Mi 10:00 Berlin | SEO-Ratgeber-Draft in `content_drafts` + Mail |
+| `midweek-check` | Mi 14:00 Berlin | consultant Mid-Week-Status + Mail |
+| `weekly-report` | Mo 9:00 Berlin | Wochen-KPI-Mail |
+| `weekly-advisor` | So 20:00 Berlin | consultant Wochen-Empfehlung in `ai_insights` |
+| `competitor-watcher` | 1.dM 11:00 Berlin | Konkurrenz-Report-Mail |
+| `legal-quarterly-audit` | 1.Jan/Apr/Jul/Okt 11:00 | AGB/DSGVO-Audit-Mail |
+
 **Regeln:**
 - Bei UI-Änderungen (Buttons, Layout, neue Sektionen, Mobile-Anpassungen): **immer erst Frontend Design Skill aktivieren**, nicht aus dem Bauch entscheiden
 - Bei "wo ist X im Code?" oder "welche Dateien betreffen Y?": **Explore-Agent** statt selbst durchsuchen
@@ -194,11 +225,15 @@ Bei mehreren passenden Agents → **parallel** in einer Message aufrufen. Bei tr
 1. **Test-Buchung selbst durchspielen** sobald Anhänger live (Stripe-Testkarte `4242 4242 4242 4242`)
 2. **Echte Anhänger-Fotos** in Webseite + Google Business Profile
 3. **Empfehlungs-System** ("10 € für jede Empfehlung") — Wachstums-Hebel
-4. **Newsletter-Anmeldung** (DSGVO-konform Double-Opt-In) — Re-Marketing
+4. ✅ ~~**Newsletter-Anmeldung** (DSGVO-konform Double-Opt-In)~~ (erledigt 2026-05-06)
 5. **Buchungs-PDF zum Download** für Kunden (zusätzlich zur Email)
 6. **Apple Developer + Google Play Konten** als Organization (nach D-U-N-S)
 7. **Codemagic CI** für iOS-Build (~30 EUR/Monat, kein Mac nötig)
 8. ✅ ~~**UptimeRobot Monitoring** für simpletrailer.de + /api/health~~ (erledigt 2026-05-04)
+9. ✅ ~~**Sentry Error-Monitoring**~~ (erledigt 2026-05-04)
+10. ✅ ~~**AI-Cockpit + 9 spezialisierte Agents**~~ (erledigt 2026-05-06)
+11. ✅ ~~**Daily-Briefing + autonome Routinen** (11 Crons total)~~ (erledigt 2026-05-06)
+12. ✅ ~~**"Benachrichtigen wenn da" für Auto/Koffer**~~ (erledigt 2026-05-06)
 
 ---
 

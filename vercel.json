@@ -35,6 +35,22 @@
     {
       "path": "/api/cron/competitor-watcher",
       "schedule": "0 9 1 * *"
+    },
+    {
+      "path": "/api/cron/daily-briefing",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/weekly-ratgeber-generator",
+      "schedule": "0 8 * * 3"
+    },
+    {
+      "path": "/api/cron/midweek-check",
+      "schedule": "0 12 * * 3"
+    },
+    {
+      "path": "/api/cron/legal-quarterly-audit",
+      "schedule": "0 9 1 1,4,7,10 *"
     }
   ],
   "headers": [

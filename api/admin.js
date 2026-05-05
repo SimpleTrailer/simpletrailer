@@ -49,6 +49,67 @@ module.exports = async (req, res) => {
       return res.status(200).json({ users });
     }
 
+    if (section === 'daily-briefing') {
+      // Aggregierte Tagesplan-Daten — gleicher Code wie /api/cron/daily-briefing aber als JSON
+      const items = [];
+      const oneHourAgo = new Date(Date.now() - 3600000).toISOString();
+
+      try {
+        const { data: stalePending } = await supabase.from('bookings')
+          .select('id, customer_name, total_amount').eq('status', 'pending').lt('created_at', oneHourAgo);
+        if ((stalePending || []).length > 0) {
+          items.push({ severity: 'red', icon: '🔴', title: `${stalePending.length} Buchung(en) seit >1h pending`, detail: 'Vermutlich Stripe-Fehler — manuell nachfassen.' });
+        }
+      } catch (e) {}
+
+      try {
+        const { data: actives } = await supabase.from('bookings')
+          .select('id, customer_name, end_time, actual_return_time').eq('status', 'active');
+        const overdue = (actives || []).filter(b => {
+          const end = new Date(b.end_time).getTime();
+          return Date.now() > end + 3600000 && !b.actual_return_time;
+        });
+        if (overdue.length > 0) {
+          items.push({ severity: 'red', icon: '🔴', title: `${overdue.length} Anhänger überfällig`, detail: 'Mietende > 1h vorbei, keine Rückgabe.' });
+        }
+      } catch (e) {}
+
+      try {
+        const today = new Date().toISOString().slice(0, 10);
+        const { data: posts } = await supabase.from('social_posts_queue')
+          .select('id, topic_type').eq('scheduled_for', today).eq('status', 'draft').limit(1);
+        if (posts && posts[0]) {
+          items.push({ severity: 'yellow', icon: '📱', title: `Insta-Post für heute genehmigen + posten`, detail: `Topic: ${posts[0].topic_type} · Caption + Bild-Idee bereit.` });
+        }
+      } catch (e) {}
+
+      try {
+        const { data: drafts } = await supabase.from('content_drafts')
+          .select('id, type, title').eq('status', 'draft').limit(3);
+        if ((drafts || []).length > 0) {
+          items.push({ severity: 'yellow', icon: '📝', title: `${drafts.length} Content-Draft${drafts.length>1?'s':''} wartet`, detail: drafts.map(d => `${d.type}: "${d.title}"`).join(' · ') });
+        }
+      } catch (e) {}
+
+      if (items.length === 0) {
+        items.push({ severity: 'green', icon: '🟢', title: 'Alles ruhig', detail: 'Keine Anomalien, keine offenen Tasks.' });
+      }
+
+      const order = { red: 0, yellow: 1, info: 2, green: 3 };
+      items.sort((a,b) => order[a.severity] - order[b.severity]);
+
+      return res.status(200).json({ items, generated_at: new Date().toISOString() });
+    }
+
+    if (section === 'content-drafts') {
+      try {
+        const { data } = await supabase.from('content_drafts').select('*').order('created_at', { ascending: false }).limit(20);
+        return res.status(200).json({ drafts: data || [] });
+      } catch (e) {
+        return res.status(200).json({ drafts: [], error: 'content_drafts table missing' });
+      }
+    }
+
     if (section === 'social-posts') {
       try {
         const { data } = await supabase.from('social_posts_queue')

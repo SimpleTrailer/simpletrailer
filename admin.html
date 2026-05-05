@@ -226,6 +226,16 @@
           <div style="font-size:.95rem;"><strong id="cpAvailable">–</strong> <span style="color:var(--gray);">verfügbar</span></div>
         </div>
 
+        <!-- HEUTE ZU TUN -->
+        <div style="background:linear-gradient(135deg,#1a1410,#0d0d0d);border:1px solid var(--orange);border-radius:14px;padding:18px 22px;margin-bottom:18px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+            <span style="font-size:1.1rem;">☀️</span>
+            <strong style="font-size:.85rem;letter-spacing:.05em;text-transform:uppercase;color:var(--orange);">Heute zu tun</strong>
+            <span id="cpBriefingCount" style="margin-left:auto;font-size:.72rem;color:var(--gray);">–</span>
+          </div>
+          <div id="cpBriefingItems" style="font-size:.88rem;color:#bbb;">Lade…</div>
+        </div>
+
         <!-- KPI-CARDS -->
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:18px;">
           <div class="stat-card" style="background:#0f1f0f;border-color:#1a3a1a;">
@@ -890,6 +900,22 @@
       .then(r => r.json()).then(h => {
         document.getElementById('cpLiveVisitors').textContent = (h && typeof h.active_visitors === 'number') ? h.active_visitors : '–';
       }).catch(() => { document.getElementById('cpLiveVisitors').textContent = '–'; });
+
+    // Daily-Briefing "Heute zu tun"
+    fetch('/api/admin?section=daily-briefing', { headers: { Authorization: `Bearer ${authToken}` } })
+      .then(r => r.json()).then(b => {
+        const items = (b && b.items) || [];
+        const colors = { red:'#ef4444', yellow:'#f59e0b', info:'#60a5fa', green:'#4ade80' };
+        const bg = { red:'#1f0a0a', yellow:'#1f1606', info:'#0f1929', green:'#0a1f0a' };
+        const html = items.map(i => `<div style="background:${bg[i.severity]||'#1a1a1a'};border-left:3px solid ${colors[i.severity]||'#888'};border-radius:6px;padding:10px 14px;margin-bottom:8px;">
+          <div style="font-size:.88rem;font-weight:600;margin-bottom:3px;">${i.icon} ${i.title}</div>
+          <div style="font-size:.78rem;color:#aaa;">${i.detail}</div>
+        </div>`).join('');
+        document.getElementById('cpBriefingItems').innerHTML = html || '<p style="color:var(--gray);font-size:.82rem;">Nichts offen.</p>';
+        const reds = items.filter(i => i.severity === 'red').length;
+        const yellows = items.filter(i => i.severity === 'yellow').length;
+        document.getElementById('cpBriefingCount').textContent = reds + yellows > 0 ? `${reds}🔴 ${yellows}🟡` : '✓ alles ok';
+      }).catch(() => { document.getElementById('cpBriefingItems').innerHTML = '<p style="color:var(--gray);font-size:.82rem;">Konnte Briefing nicht laden.</p>'; });
 
     // KPI-Cards
     document.getElementById('cpTodayCount').textContent = d.today.count;

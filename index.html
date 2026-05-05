@@ -1826,7 +1826,7 @@
             <div class="trailer-card-spec">🔧 <span><strong>Auffahrrampen</strong> inklusive</span></div>
             <div class="trailer-card-spec">🔑 <span><strong>Kontaktlose</strong> Abholung</span></div>
           </div>
-          <button class="btn btn-disabled" style="margin-top:auto;width:100%;" disabled>Bald verfügbar</button>
+          <button class="btn btn-outline" style="margin-top:auto;width:100%;border-color:var(--orange);color:var(--orange);" onclick="openNotifyModal('Autotransporter')">Benachrichtigen wenn verfügbar</button>
         </div>
       </div>
 
@@ -1847,7 +1847,7 @@
             <div class="trailer-card-spec">🌧 <span><strong>Vollständig</strong> wetterfest</span></div>
             <div class="trailer-card-spec">🔑 <span><strong>Kontaktlose</strong> Abholung</span></div>
           </div>
-          <button class="btn btn-disabled" style="margin-top:auto;width:100%;" disabled>Bald verfügbar</button>
+          <button class="btn btn-outline" style="margin-top:auto;width:100%;border-color:var(--orange);color:var(--orange);" onclick="openNotifyModal('Kofferanhaenger')">Benachrichtigen wenn verfügbar</button>
         </div>
       </div>
 
@@ -2199,6 +2199,97 @@
 </section>
 
 <!-- FOOTER -->
+<!-- Newsletter-Sektion vor Footer -->
+<section style="padding:60px 5% 40px;background:linear-gradient(135deg,#1a0f10,#0d0d0d);">
+  <div style="max-width:680px;margin:0 auto;text-align:center;">
+    <p style="font-size:.65rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--orange);margin-bottom:8px;">Newsletter</p>
+    <h2 style="font-size:1.6rem;margin:0 0 8px;letter-spacing:-.02em;">Die besten Anhänger-Tipps direkt ins Postfach</h2>
+    <p style="color:var(--text-muted);margin-bottom:24px;line-height:1.6;font-size:.92rem;">Praktische Anleitungen, Saison-Aktionen, neue Anhänger-Typen — kein Spam, jederzeit kündbar.</p>
+    <form id="newsletterForm" onsubmit="submitNewsletter(event)" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:480px;margin:0 auto;">
+      <input type="email" required name="email" id="newsletterEmail" placeholder="deine@email.de" style="flex:1;min-width:200px;padding:12px 16px;border-radius:10px;border:1px solid var(--border);background:#0a0a0a;color:#fff;font-size:.95rem;font-family:inherit;" />
+      <button type="submit" id="newsletterSubmit" class="btn btn-orange" style="padding:12px 24px;">Anmelden</button>
+    </form>
+    <p id="newsletterMsg" style="margin-top:12px;font-size:.78rem;color:var(--text-muted);min-height:1.4em;"></p>
+    <p style="margin-top:8px;font-size:.7rem;color:#555;">Mit Anmeldung bestätigst du unsere <a href="/datenschutz" style="color:#888;">Datenschutzerklärung</a>. Double-Opt-In: du bekommst eine Bestätigungs-Mail.</p>
+  </div>
+</section>
+
+<!-- Notify-when-available Modal -->
+<div id="notifyModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;align-items:center;justify-content:center;padding:20px;" onclick="if(event.target===this)closeNotifyModal()">
+  <div style="background:#1a1a1a;border:1px solid var(--border);border-radius:16px;padding:28px 24px;max-width:420px;width:100%;">
+    <h3 style="margin:0 0 8px;font-size:1.2rem;">📬 Wir geben dir Bescheid</h3>
+    <p style="color:var(--text-muted);font-size:.88rem;line-height:1.6;margin:0 0 16px;">Sobald der <strong id="notifyTrailerLabel">Anhänger</strong> in Bremen verfügbar ist, schicken wir dir eine Mail mit dem Buchungs-Link.</p>
+    <form onsubmit="submitNotify(event)" style="display:flex;flex-direction:column;gap:10px;">
+      <input type="email" required name="email" id="notifyEmail" placeholder="deine@email.de" style="padding:12px 16px;border-radius:10px;border:1px solid var(--border);background:#0a0a0a;color:#fff;font-size:.95rem;font-family:inherit;" />
+      <button type="submit" id="notifySubmit" class="btn btn-orange" style="width:100%;">Auf die Liste setzen</button>
+      <button type="button" onclick="closeNotifyModal()" class="btn btn-outline" style="width:100%;border-color:#333;color:#888;">Abbrechen</button>
+    </form>
+    <p id="notifyMsg" style="margin-top:12px;font-size:.78rem;color:var(--text-muted);min-height:1.4em;"></p>
+  </div>
+</div>
+
+<script>
+  let notifyTrailerType = null;
+  function openNotifyModal(type) {
+    notifyTrailerType = type;
+    const labels = { Autotransporter: 'Autotransporter', Kofferanhaenger: 'Kofferanhänger' };
+    document.getElementById('notifyTrailerLabel').textContent = labels[type] || type;
+    document.getElementById('notifyEmail').value = '';
+    document.getElementById('notifyMsg').textContent = '';
+    document.getElementById('notifyModal').style.display = 'flex';
+    setTimeout(() => document.getElementById('notifyEmail').focus(), 100);
+  }
+  function closeNotifyModal() {
+    document.getElementById('notifyModal').style.display = 'none';
+  }
+  async function submitNotify(e) {
+    e.preventDefault();
+    const btn = document.getElementById('notifySubmit');
+    const msg = document.getElementById('notifyMsg');
+    btn.disabled = true; btn.textContent = 'Sende…'; msg.style.color = 'var(--text-muted)'; msg.textContent = '';
+    try {
+      const r = await fetch('/api/notify-when-available', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ email: document.getElementById('notifyEmail').value, trailer_type: notifyTrailerType })
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'Fehler');
+      msg.style.color = '#4ade80'; msg.textContent = '✓ Du bist auf der Liste!';
+      if (window.stcTrack) window.stcTrack('notify_signup', { trailer: notifyTrailerType });
+      setTimeout(closeNotifyModal, 1800);
+    } catch (err) {
+      msg.style.color = '#ef4444'; msg.textContent = '⚠ ' + err.message;
+    } finally {
+      btn.disabled = false; btn.textContent = 'Auf die Liste setzen';
+    }
+  }
+  async function submitNewsletter(e) {
+    e.preventDefault();
+    const btn = document.getElementById('newsletterSubmit');
+    const msg = document.getElementById('newsletterMsg');
+    btn.disabled = true; btn.textContent = 'Sende…'; msg.style.color = 'var(--text-muted)'; msg.textContent = '';
+    try {
+      const r = await fetch('/api/newsletter-subscribe', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ email: document.getElementById('newsletterEmail').value, source: 'footer' })
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'Fehler');
+      if (data.already_subscribed) {
+        msg.style.color = '#60a5fa'; msg.textContent = 'ℹ Du bist schon angemeldet — danke!';
+      } else {
+        msg.style.color = '#4ade80'; msg.textContent = '✓ Bestätigungs-Mail unterwegs — bitte Postfach prüfen!';
+      }
+      document.getElementById('newsletterEmail').value = '';
+      if (window.stcTrack) window.stcTrack('newsletter_signup');
+    } catch (err) {
+      msg.style.color = '#ef4444'; msg.textContent = '⚠ ' + err.message;
+    } finally {
+      btn.disabled = false; btn.textContent = 'Anmelden';
+    }
+  }
+</script>
+
 <footer>
   <div class="footer-inner">
     <div class="footer-top">
