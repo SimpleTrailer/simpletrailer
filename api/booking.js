@@ -175,9 +175,12 @@ module.exports = async (req, res) => {
                 <tr><td style="padding:6px 0;color:#666;">Schutzpaket</td><td style="padding:6px 0;font-weight:600;">${insType === 'none' ? 'Keine Versicherung – volle Mieterhaftung' : insType === 'basis' ? 'Basis-Schutz · 500 € Selbstbeteiligung' : 'Premium-Schutz · 50 € Selbstbeteiligung'}</td></tr>
               </table>
 
-              <h3 style="font-size:.95rem;color:#0D0D0D;margin:20px 0 8px;font-family:Arial,sans-serif;">Vergütung</h3>
+              <h3 style="font-size:.95rem;color:#0D0D0D;margin:20px 0 8px;font-family:Arial,sans-serif;">Vergütung & Umsatzsteuer</h3>
               <table style="width:100%;font-size:.85rem;font-family:Arial,sans-serif;border-collapse:collapse;">
-                <tr><td style="padding:6px 0;color:#666;width:60%;">Mietpreis (inkl. ggf. Schutzpaket)</td><td style="padding:6px 0;text-align:right;font-weight:600;">${amount.toFixed(2).replace('.',',')} €</td></tr>
+                <tr><td style="padding:6px 0;color:#666;width:60%;">Mietpreis netto (inkl. ggf. Schutzpaket)</td><td style="padding:6px 0;text-align:right;font-weight:600;">${(amount / 1.19).toFixed(2).replace('.',',')} €</td></tr>
+                <tr><td style="padding:6px 0;color:#666;">zzgl. 19 % Umsatzsteuer</td><td style="padding:6px 0;text-align:right;font-weight:600;">${(amount - amount / 1.19).toFixed(2).replace('.',',')} €</td></tr>
+                <tr style="border-top:2px solid #ddd;"><td style="padding:8px 0 6px;color:#0D0D0D;font-weight:700;">Gesamtbetrag (brutto, gezahlt)</td><td style="padding:8px 0 6px;text-align:right;font-weight:700;color:#0D0D0D;">${amount.toFixed(2).replace('.',',')} €</td></tr>
+                <tr><td style="padding:14px 0 6px;color:#666;font-size:.78rem;" colspan="2"><em>Diese Buchungsbestätigung dient zugleich als Rechnung gemäß § 14 UStG.</em></td></tr>
                 <tr><td style="padding:6px 0;color:#666;">Verspätungsgebühr (bei verspäteter Rückgabe)</td><td style="padding:6px 0;text-align:right;">15,00 € / angefangene Stunde</td></tr>
                 <tr><td style="padding:6px 0;color:#666;">Reinigungspauschale bei nicht ordnungsgemäßer Rückgabe</td><td style="padding:6px 0;text-align:right;">30,00 €</td></tr>
               </table>
