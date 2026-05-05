@@ -202,6 +202,7 @@
       <button class="tab-btn active" id="tabCockpit" onclick="switchTab('cockpit')">🎯 Cockpit</button>
       <button class="tab-btn" id="tabBuchungen" onclick="switchTab('buchungen')">📋 Buchungen</button>
       <button class="tab-btn" id="tabNutzer" onclick="switchTab('nutzer')">👤 Nutzer</button>
+      <button class="tab-btn" id="tabAistab" onclick="switchTab('aistab')">🤖 AI-Stab</button>
       <button class="tab-btn" id="tabStatistiken" onclick="switchTab('statistiken')">📊 Statistiken</button>
     </div>
 
@@ -258,65 +259,28 @@
           <div id="cpAnomalies"></div>
         </div>
 
-        <!-- AUSLASTUNG + TARIFE 2 SPALTIG -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;" id="cpUtilGrid">
-          <div style="background:#0f0f0f;border:1px solid var(--border);border-radius:14px;padding:18px 22px;">
-            <strong style="font-size:.85rem;letter-spacing:.05em;text-transform:uppercase;color:var(--gray);display:block;margin-bottom:14px;">📊 Anhänger-Auslastung</strong>
-            <div id="cpUtilization"></div>
-          </div>
-          <div style="background:#0f0f0f;border:1px solid var(--border);border-radius:14px;padding:18px 22px;">
-            <strong style="font-size:.85rem;letter-spacing:.05em;text-transform:uppercase;color:var(--gray);display:block;margin-bottom:14px;">🎟️ Tarif-Verteilung</strong>
-            <div id="cpTarife"></div>
-          </div>
-        </div>
-
-        <!-- AI INSIGHT -->
-        <div style="background:linear-gradient(135deg,#1a0f29,#0d0d0d);border:1px solid #3a1a5f;border-radius:14px;padding:18px 22px;margin-bottom:18px;">
+        <!-- AI INSIGHT (Empfehlung der Woche) -->
+        <div style="background:linear-gradient(135deg,#1a0f29,#0d0d0d);border:1px solid #3a1a5f;border-radius:14px;padding:20px 24px;margin-bottom:18px;">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
             <span style="font-size:1.1rem;">💡</span>
-            <strong style="font-size:.85rem;letter-spacing:.05em;text-transform:uppercase;color:#a78bfa;">Empfehlung der Woche (consultant-Agent)</strong>
+            <strong style="font-size:.85rem;letter-spacing:.05em;text-transform:uppercase;color:#a78bfa;">Empfehlung der Woche</strong>
+            <span style="font-size:.7rem;color:#666;margin-left:auto;">consultant-Agent</span>
           </div>
           <div id="cpAiInsight" style="font-size:.92rem;line-height:1.6;color:#ddd;">Noch keine Empfehlung — der consultant analysiert Sonntag-Abend zum ersten Mal.</div>
         </div>
 
-        <!-- AI-STAB -->
-        <div style="background:#0f0f0f;border:1px solid var(--border);border-radius:14px;padding:18px 22px;margin-bottom:18px;">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
-            <span style="font-size:1.1rem;">🤖</span>
-            <strong style="font-size:.85rem;letter-spacing:.05em;text-transform:uppercase;color:var(--gray);">SimpleTrailer AI-Stab</strong>
-          </div>
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;">
-            <div style="background:#0a0a0a;border:1px solid #2a2a2a;border-radius:10px;padding:14px;">
-              <strong style="display:block;font-size:.85rem;margin-bottom:4px;">📝 content-writer</strong>
-              <p style="font-size:.78rem;color:var(--gray);margin:0;">Marketing, SEO, Newsletter, Ratgeber — fertige Texte im Brand-Stil</p>
-            </div>
-            <div style="background:#0a0a0a;border:1px solid #2a2a2a;border-radius:10px;padding:14px;">
-              <strong style="display:block;font-size:.85rem;margin-bottom:4px;">🔍 code-reviewer</strong>
-              <p style="font-size:.78rem;color:var(--gray);margin:0;">Audit vor Push — Stripe, Supabase, Security, Webhooks</p>
-            </div>
-            <div style="background:#0a0a0a;border:1px solid #2a2a2a;border-radius:10px;padding:14px;">
-              <strong style="display:block;font-size:.85rem;margin-bottom:4px;">💡 consultant</strong>
-              <p style="font-size:.78rem;color:var(--gray);margin:0;">Strategie & Wachstum — priorisierte Empfehlungen aus Daten</p>
-            </div>
-            <div style="background:#0a0a0a;border:1px solid #2a2a2a;border-radius:10px;padding:14px;">
-              <strong style="display:block;font-size:.85rem;margin-bottom:4px;">📱 mobile-app-architect</strong>
-              <p style="font-size:.78rem;color:var(--gray);margin:0;">Apple/Google Submission, native Features, Capacitor</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- AUTONOMOUS ROUTINES STATUS -->
-        <div style="background:#0f0f0f;border:1px solid var(--border);border-radius:14px;padding:18px 22px;">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
-            <span style="font-size:1.1rem;">⚙️</span>
-            <strong style="font-size:.85rem;letter-spacing:.05em;text-transform:uppercase;color:var(--gray);">Autonome Routinen</strong>
-          </div>
-          <table style="width:100%;font-size:.85rem;border-collapse:collapse;">
-            <tr><td style="padding:8px 0;border-bottom:1px solid #1a1a1a;">📊 Wöchentlicher KPI-Report</td><td style="text-align:right;color:var(--gray);">Montags 7:00 UTC</td></tr>
-            <tr><td style="padding:8px 0;border-bottom:1px solid #1a1a1a;">🔍 Anomalie-Check</td><td style="text-align:right;color:var(--gray);">alle 6 Std.</td></tr>
-            <tr><td style="padding:8px 0;border-bottom:1px solid #1a1a1a;">💡 Wöchentlicher AI-Berater</td><td style="text-align:right;color:var(--gray);">Sonntags 18:00 UTC</td></tr>
-            <tr><td style="padding:8px 0;">⏰ Rückgabe-Erinnerungen</td><td style="text-align:right;color:var(--gray);">alle 15 Min.</td></tr>
-          </table>
+        <!-- LINK ZU AI-STAB + STATISTIKEN -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+          <button onclick="switchTab('aistab')" style="background:#0f0f0f;border:1px solid var(--border);border-radius:12px;padding:14px 18px;text-align:left;cursor:pointer;color:var(--white);font-family:var(--font);transition:all .2s;" onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='var(--border)'">
+            <div style="font-size:.7rem;color:var(--gray);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;">🤖 AI-Stab</div>
+            <div style="font-size:.95rem;font-weight:600;">9 Mitarbeiter · 5 Routinen autonom</div>
+            <div style="font-size:.75rem;color:var(--gray);margin-top:3px;">Mehr ansehen →</div>
+          </button>
+          <button onclick="switchTab('statistiken')" style="background:#0f0f0f;border:1px solid var(--border);border-radius:12px;padding:14px 18px;text-align:left;cursor:pointer;color:var(--white);font-family:var(--font);transition:all .2s;" onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='var(--border)'">
+            <div style="font-size:.7rem;color:var(--gray);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;">📊 Detail-Statistiken</div>
+            <div style="font-size:.95rem;font-weight:600;">Auslastung · Tarife · Trends</div>
+            <div style="font-size:.75rem;color:var(--gray);margin-top:3px;">Mehr ansehen →</div>
+          </button>
         </div>
 
       </div>
@@ -404,6 +368,140 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ AI-STAB TAB -->
+    <div id="tabContentAistab" style="display:none">
+
+      <!-- INTRO -->
+      <div style="background:linear-gradient(135deg,#1a0f29,#0d0d0d);border:1px solid #3a1a5f;border-radius:14px;padding:24px;margin-bottom:18px;">
+        <h2 style="margin:0 0 8px;font-size:1.3rem;">🤖 SimpleTrailer AI-Stab</h2>
+        <p style="margin:0;color:#bbb;font-size:.9rem;line-height:1.6;">Dein Team aus spezialisierten KI-Mitarbeitern. Jeder hat eine klare Aufgabe, eigene Werkzeuge und ist auf SimpleTrailer trainiert. Manche arbeiten <strong style="color:#4ade80;">autonom</strong> (laufen automatisch), andere <strong style="color:#60a5fa;">on-demand</strong> (rufst Du auf), und einige <strong style="color:#f59e0b;">halb-autonom</strong> (entwerfen für Dich, Du genehmigst).</p>
+      </div>
+
+      <!-- AGENT-GRID -->
+      <h3 style="font-size:.78rem;color:var(--gray);text-transform:uppercase;letter-spacing:.1em;margin:0 0 12px;">📝 Marketing & Kommunikation</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;margin-bottom:24px;">
+
+        <div style="background:#0f0f0f;border:1px solid var(--border);border-radius:12px;padding:18px;">
+          <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10px;">
+            <strong style="font-size:1rem;">📝 content-writer</strong>
+            <span style="background:#0a1f0a;color:#4ade80;font-size:.65rem;padding:3px 8px;border-radius:6px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;">halb-autonom</span>
+          </div>
+          <p style="font-size:.85rem;color:#bbb;line-height:1.5;margin:0 0 10px;">Schreibt Marketing-Texte, SEO-Ratgeber, Newsletter, Social-Posts, AGB-Anpassungen — alles im SimpleTrailer-Brand-Stil.</p>
+          <div style="font-size:.72rem;color:var(--gray);">Wird täglich für Insta-Posts vom Cron aufgerufen + on-demand bei Texten.</div>
+        </div>
+
+        <div style="background:#0f0f0f;border:1px solid var(--border);border-radius:12px;padding:18px;">
+          <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10px;">
+            <strong style="font-size:1rem;">💬 support-writer</strong>
+            <span style="background:#1f1606;color:#f59e0b;font-size:.65rem;padding:3px 8px;border-radius:6px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;">halb-autonom</span>
+          </div>
+          <p style="font-size:.85rem;color:#bbb;line-height:1.5;margin:0 0 10px;">Entwirft Antworten auf Kunden-Mails (Reklamationen, Schäden, Verspätungen, Fragen). Empathisch + lösungsorientiert.</p>
+          <div style="font-size:.72rem;color:var(--gray);">Du forwardest Mail an Lion → Agent entwirft → Du klickst Send.</div>
+        </div>
+
+        <div style="background:#0f0f0f;border:1px solid var(--border);border-radius:12px;padding:18px;">
+          <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10px;">
+            <strong style="font-size:1rem;">📈 ads-specialist</strong>
+            <span style="background:#0d1929;color:#60a5fa;font-size:.65rem;padding:3px 8px;border-radius:6px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;">on-demand</span>
+          </div>
+          <p style="font-size:.85rem;color:#bbb;line-height:1.5;margin:0 0 10px;">Google-Ads + Meta-Ads-Kampagnen für lokale Service-Anbieter. Anzeigentexte, Keywords, Bid-Strategie, Conversion-Tracking.</p>
+          <div style="font-size:.72rem;color:var(--gray);">Frag z.B. "ads-specialist: Google-Ads-Setup für Bremen".</div>
+        </div>
+      </div>
+
+      <h3 style="font-size:.78rem;color:var(--gray);text-transform:uppercase;letter-spacing:.1em;margin:0 0 12px;">🛡️ Code & Recht</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;margin-bottom:24px;">
+
+        <div style="background:#0f0f0f;border:1px solid var(--border);border-radius:12px;padding:18px;">
+          <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10px;">
+            <strong style="font-size:1rem;">🔍 code-reviewer</strong>
+            <span style="background:#0a1f0a;color:#4ade80;font-size:.65rem;padding:3px 8px;border-radius:6px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;">autonom</span>
+          </div>
+          <p style="font-size:.85rem;color:#bbb;line-height:1.5;margin:0 0 10px;">Prüft Code vor jedem Push (Stripe-Sicherheit, Supabase-RLS, XSS, Webhooks). Findings in 3 Severity-Stufen.</p>
+          <div style="font-size:.72rem;color:var(--gray);">Wird automatisch vor jedem Push kritischer Files aufgerufen.</div>
+        </div>
+
+        <div style="background:#0f0f0f;border:1px solid var(--border);border-radius:12px;padding:18px;">
+          <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10px;">
+            <strong style="font-size:1rem;">⚖️ legal-checker</strong>
+            <span style="background:#0a1f0a;color:#4ade80;font-size:.65rem;padding:3px 8px;border-radius:6px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;">autonom</span>
+          </div>
+          <p style="font-size:.85rem;color:#bbb;line-height:1.5;margin:0 0 10px;">Prüft AGB/Datenschutz/Impressum/Mietvertrag auf deutsches Recht. Kennt PAngV, BGB, DSGVO, UStG, MStV.</p>
+          <div style="font-size:.72rem;color:var(--gray);">Läuft automatisch vor Push wenn agb/datenschutz/impressum geändert.</div>
+        </div>
+
+        <div style="background:#0f0f0f;border:1px solid var(--border);border-radius:12px;padding:18px;">
+          <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10px;">
+            <strong style="font-size:1rem;">🐛 bug-triager</strong>
+            <span style="background:#0a1f0a;color:#4ade80;font-size:.65rem;padding:3px 8px;border-radius:6px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;">autonom</span>
+          </div>
+          <p style="font-size:.85rem;color:#bbb;line-height:1.5;margin:0 0 10px;">Holt Sentry-Errors täglich, gruppiert sie, priorisiert nach User-Impact, schlägt Fixes vor.</p>
+          <div style="font-size:.72rem;color:var(--gray);">Cron läuft täglich 8:00 UTC, Mail mit Top-Bugs an info@.</div>
+        </div>
+      </div>
+
+      <h3 style="font-size:.78rem;color:var(--gray);text-transform:uppercase;letter-spacing:.1em;margin:0 0 12px;">🎯 Strategie & Mobile</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;margin-bottom:24px;">
+
+        <div style="background:#0f0f0f;border:1px solid var(--border);border-radius:12px;padding:18px;">
+          <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10px;">
+            <strong style="font-size:1rem;">💡 consultant</strong>
+            <span style="background:#0a1f0a;color:#4ade80;font-size:.65rem;padding:3px 8px;border-radius:6px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;">autonom</span>
+          </div>
+          <p style="font-size:.85rem;color:#bbb;line-height:1.5;margin:0 0 10px;">Strategie-Berater. Was kann ich verbessern? Wo verliere ich Kunden? Welcher Anhänger als nächstes? Daten-getrieben.</p>
+          <div style="font-size:.72rem;color:var(--gray);">Cron generiert Sonntag-Abend Empfehlung der Woche → erscheint im Cockpit.</div>
+        </div>
+
+        <div style="background:#0f0f0f;border:1px solid var(--border);border-radius:12px;padding:18px;">
+          <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10px;">
+            <strong style="font-size:1rem;">🔭 competitor-watcher</strong>
+            <span style="background:#0a1f0a;color:#4ade80;font-size:.65rem;padding:3px 8px;border-radius:6px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;">autonom</span>
+          </div>
+          <p style="font-size:.85rem;color:#bbb;line-height:1.5;margin:0 0 10px;">Beobachtet Bremen-Konkurrenz (HKL, Boels, Baumärkte) monatlich: Preise, neue Anbieter, Marketing-Hooks.</p>
+          <div style="font-size:.72rem;color:var(--gray);">Cron läuft 1. jeden Monats 9:00 UTC, Mail mit Konkurrenz-Report.</div>
+        </div>
+
+        <div style="background:#0f0f0f;border:1px solid var(--border);border-radius:12px;padding:18px;">
+          <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10px;">
+            <strong style="font-size:1rem;">📱 mobile-app-architect</strong>
+            <span style="background:#0d1929;color:#60a5fa;font-size:.65rem;padding:3px 8px;border-radius:6px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;">on-demand</span>
+          </div>
+          <p style="font-size:.85rem;color:#bbb;line-height:1.5;margin:0 0 10px;">Apple/Google Submission, Apple-Rejection-Antworten, native Plugins, Capacitor, Codemagic CI.</p>
+          <div style="font-size:.72rem;color:var(--gray);">Frag z.B. "mobile-app-architect: bereite Apple-Submission vor".</div>
+        </div>
+      </div>
+
+      <!-- AUTONOME ROUTINEN STATUS -->
+      <h3 style="font-size:.78rem;color:var(--gray);text-transform:uppercase;letter-spacing:.1em;margin:0 0 12px;">⚙️ Autonome Cron-Routinen</h3>
+      <div style="background:#0f0f0f;border:1px solid var(--border);border-radius:14px;padding:18px 22px;margin-bottom:18px;">
+        <table style="width:100%;font-size:.85rem;border-collapse:collapse;">
+          <thead>
+            <tr style="border-bottom:2px solid #2a2a2a;">
+              <th style="text-align:left;padding:8px 0;font-size:.7rem;color:var(--gray);text-transform:uppercase;letter-spacing:.05em;">Routine</th>
+              <th style="text-align:left;padding:8px 0;font-size:.7rem;color:var(--gray);text-transform:uppercase;letter-spacing:.05em;">Schedule</th>
+              <th style="text-align:left;padding:8px 0;font-size:.7rem;color:var(--gray);text-transform:uppercase;letter-spacing:.05em;">Output</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td style="padding:10px 0;border-bottom:1px solid #1a1a1a;">⏰ Rückgabe-Erinnerungen</td><td style="padding:10px 0;border-bottom:1px solid #1a1a1a;color:var(--gray);">alle 15 Min.</td><td style="padding:10px 0;border-bottom:1px solid #1a1a1a;color:var(--gray);">Mail+Push an Mieter</td></tr>
+            <tr><td style="padding:10px 0;border-bottom:1px solid #1a1a1a;">🔍 Anomalie-Check</td><td style="padding:10px 0;border-bottom:1px solid #1a1a1a;color:var(--gray);">alle 6 Std.</td><td style="padding:10px 0;border-bottom:1px solid #1a1a1a;color:var(--gray);">Mail bei Anomalie</td></tr>
+            <tr><td style="padding:10px 0;border-bottom:1px solid #1a1a1a;">📱 Insta-Post-Generator</td><td style="padding:10px 0;border-bottom:1px solid #1a1a1a;color:var(--gray);">tägl. 7:00 UTC</td><td style="padding:10px 0;border-bottom:1px solid #1a1a1a;color:var(--gray);">Mail mit Post-Vorschlag</td></tr>
+            <tr><td style="padding:10px 0;border-bottom:1px solid #1a1a1a;">🐛 Bug-Triager</td><td style="padding:10px 0;border-bottom:1px solid #1a1a1a;color:var(--gray);">tägl. 8:00 UTC</td><td style="padding:10px 0;border-bottom:1px solid #1a1a1a;color:var(--gray);">Mail mit Top-Bugs</td></tr>
+            <tr><td style="padding:10px 0;border-bottom:1px solid #1a1a1a;">📊 Wochen-KPI-Report</td><td style="padding:10px 0;border-bottom:1px solid #1a1a1a;color:var(--gray);">Mo 7:00 UTC</td><td style="padding:10px 0;border-bottom:1px solid #1a1a1a;color:var(--gray);">Mail mit Wochenübersicht</td></tr>
+            <tr><td style="padding:10px 0;border-bottom:1px solid #1a1a1a;">💡 Wöchentlicher AI-Berater</td><td style="padding:10px 0;border-bottom:1px solid #1a1a1a;color:var(--gray);">So 18:00 UTC</td><td style="padding:10px 0;border-bottom:1px solid #1a1a1a;color:var(--gray);">Empfehlung im Cockpit</td></tr>
+            <tr><td style="padding:10px 0;">🔭 Konkurrenz-Watcher</td><td style="padding:10px 0;color:var(--gray);">1. jed. Monats</td><td style="padding:10px 0;color:var(--gray);">Mail mit Konkurrenz-Report</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- INFO-BOX -->
+      <div style="background:#0f1929;border-left:3px solid #60a5fa;border-radius:8px;padding:14px 18px;font-size:.85rem;color:#bbb;line-height:1.6;">
+        <strong style="color:#60a5fa;">ℹ️ Wo gehen die Mails hin?</strong><br>
+        Alle automatischen Reports + Alerts gehen an <strong>info@simpletrailer.de</strong>. Falls Du einen anderen Empfänger willst (z.B. zusätzlich Samuel), sag Bescheid — kann pro Routine konfiguriert werden.
+      </div>
+
     </div>
 
     <!-- ═══════════════════════════════════════════════ STATISTIKEN TAB -->
@@ -741,9 +839,12 @@
   /* ── TABS ─────────────────────────────────────────────── */
   function switchTab(tab) {
     currentTab = tab;
-    ['cockpit','buchungen','nutzer','statistiken'].forEach(t => {
-      document.getElementById('tabContent' + t.charAt(0).toUpperCase() + t.slice(1)).style.display = t === tab ? 'block' : 'none';
-      document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1)).classList.toggle('active', t === tab);
+    ['cockpit','buchungen','nutzer','aistab','statistiken'].forEach(t => {
+      const cap = t.charAt(0).toUpperCase() + t.slice(1);
+      const contentEl = document.getElementById('tabContent' + cap);
+      const buttonEl  = document.getElementById('tab' + cap);
+      if (contentEl) contentEl.style.display = t === tab ? 'block' : 'none';
+      if (buttonEl)  buttonEl.classList.toggle('active', t === tab);
     });
     if (tab === 'nutzer' && !usersLoaded) loadUsers();
     if (tab === 'statistiken') renderStatistiken();
@@ -818,40 +919,7 @@
       </div>`;
     }).join('');
 
-    // Auslastung
-    const utilHtml = (d.trailers || []).map(t => {
-      const count = d.utilByTrailer[t.id] || 0;
-      const max = Math.max(...Object.values(d.utilByTrailer), 1);
-      const pct = Math.round((count / max) * 100);
-      const status = t.is_available ? '✅' : '⏸';
-      return `<div style="margin-bottom:10px;">
-        <div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:4px;">
-          <span>${status} ${t.name}</span>
-          <span style="color:var(--gray);">${count} Buchungen</span>
-        </div>
-        <div style="background:#1a1a1a;border-radius:4px;height:6px;overflow:hidden;">
-          <div style="background:linear-gradient(90deg,#E85D00,#f59e0b);height:100%;width:${pct}%;"></div>
-        </div>
-      </div>`;
-    }).join('') || '<p style="color:var(--gray);font-size:.82rem;">Keine Anhänger-Daten</p>';
-    document.getElementById('cpUtilization').innerHTML = utilHtml;
-
-    // Tarif-Verteilung
-    const tarifTotal = Object.values(d.tarifCount).reduce((a,b) => a+b, 0);
-    const tarifLabels = { flexible: 'Individuell', day: 'Ganzer Tag', weekend: 'Wochenende', week: '1 Woche' };
-    const tarifHtml = Object.entries(d.tarifCount).sort((a,b) => b[1] - a[1]).map(([key, count]) => {
-      const pct = tarifTotal ? Math.round((count / tarifTotal) * 100) : 0;
-      return `<div style="margin-bottom:10px;">
-        <div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:4px;">
-          <span>${tarifLabels[key] || key}</span>
-          <span style="color:var(--gray);">${count} (${pct}%)</span>
-        </div>
-        <div style="background:#1a1a1a;border-radius:4px;height:6px;overflow:hidden;">
-          <div style="background:linear-gradient(90deg,#a78bfa,#60a5fa);height:100%;width:${pct}%;"></div>
-        </div>
-      </div>`;
-    }).join('') || '<p style="color:var(--gray);font-size:.82rem;">Noch keine Buchungen</p>';
-    document.getElementById('cpTarife').innerHTML = tarifHtml;
+    // (Auslastung + Tarif-Verteilung sind in den Statistiken-Tab gewandert)
 
     // AI Insight
     if (d.aiInsight) {

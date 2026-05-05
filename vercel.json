@@ -27,6 +27,14 @@
     {
       "path": "/api/cron/social-media-generator",
       "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/cron/bug-triager",
+      "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/competitor-watcher",
+      "schedule": "0 9 1 * *"
     }
   ],
   "headers": [

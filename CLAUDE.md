@@ -116,16 +116,30 @@ Nutze die passenden Skills/Agents je nach Aufgaben-Typ — nicht alles selbst ma
 | **Web-Recherche** (aktuelle Preise, Produkt-Vergleiche, neue APIs) | **WebSearch** + **WebFetch** |
 | **Status-Übersicht / Backlog-Update** | **Plan-Mode** mit Plan-File-Update |
 
-### 🤖 SimpleTrailer-eigener AI-Stab (in `.claude/agents/`)
+### 🤖 SimpleTrailer-eigener AI-Stab (in `.claude/agents/`) — 9 Agents
 
-Diese 4 spezialisierten Agents sind exakt auf SimpleTrailer trainiert. Nutze sie statt Allgemein-Claude für die jeweiligen Domänen:
+Diese 9 spezialisierten Agents sind exakt auf SimpleTrailer trainiert. Nutze sie statt Allgemein-Claude für die jeweiligen Domänen:
 
+**Marketing & Kommunikation:**
 | Agent | Wann nutzen | Was er liefert |
 |---|---|---|
-| **content-writer** | Marketing-Texte, SEO-Ratgeber, Newsletter, Social-Posts, AGB-Anpassungen, alle deutschen kundenorientierten Texte | Fertige Texte im SimpleTrailer-Brand-Stil (Du-Form, pragmatisch, anti-Bürokratie) — mit konkreten Anhänger-Specs, Preisen, USPs |
-| **code-reviewer** | Vor jedem größeren Push, bei Änderungen am Buchungs-/Bezahl-/Auth-Flow, oder explizit angefragten Audits | Strukturierter Bericht (🔴 kritisch / 🟡 wichtig / 🟢 optional) mit Datei:Zeile + Fix-Vorschlägen. Hat Stripe/Supabase-RLS/Webhook-Security im Prompt fest verankert |
-| **consultant** | Strategische Fragen ("was kann ich verbessern?", "wo verliere ich Kunden?", "lohnt sich Feature X?", "welcher Anhänger als nächstes?") | Priorisierte Empfehlungen mit Aufwand × Effekt × Confidence. Liest Funnel-Tracking + Buchungs-Schema aus der Codebase |
-| **mobile-app-architect** | App-Store-Submissions, Apple-Review-Antworten, native Plugin-Integrationen, iOS/Android-Bugs, Capacitor-Konfiguration, Codemagic-CI | Detaillierte Submission-Checklisten, Apple-Rejection-Antworten, Bridge-Wrapper-Code, Build-Diagnose. Hat Apple Guideline 4.2 und WebView-Wrapper-Best-Practices fest im Prompt |
+| **content-writer** | Marketing-Texte, SEO-Ratgeber, Newsletter, Social-Posts, AGB-Anpassungen — alle deutschen kundenorientierten Texte | Fertige Texte im Brand-Stil. Auch tägliches Insta-Post-Cron läuft mit dessen Logik |
+| **support-writer** | Antworten auf Kundenmails (Reklamationen, Schäden, Verspätungen, Fragen) | Empathische, lösungsorientierte Antworten — anderer Ton als Marketing |
+| **ads-specialist** | Google Ads / Meta Ads (Setup, Anzeigentexte, Keywords, Bid-Strategie, Performance-Review) | Komplette Kampagnen-Pläne mit Conversion-Tracking-Setup, Budget-Empfehlungen, lokalem Bremen-Fokus |
+
+**Code & Recht:**
+| Agent | Wann nutzen | Was er liefert |
+|---|---|---|
+| **code-reviewer** | Vor jedem größeren Push (PFLICHT bei admin/booking/api/cron-Änderungen) | Strukturierter Bericht mit 🔴/🟡/🟢 Findings + Fix-Vorschlägen |
+| **legal-checker** | Bei AGB/Datenschutz/Impressum/Mietvertrag-Änderungen | Prüfung auf PAngV, BGB, DSGVO, UStG, MStV — Risiko-Level + Fix-Empfehlungen |
+| **bug-triager** | Sentry-Errors analysieren, gruppieren, priorisieren | Top-5-Bugs mit Fix-Vorschlägen + Severity. Cron läuft täglich |
+
+**Strategie & Mobile:**
+| Agent | Wann nutzen | Was er liefert |
+|---|---|---|
+| **consultant** | Strategische Fragen, Wachstum, Conversion-Analyse | Priorisierte Empfehlungen (Aufwand × Effekt). Cron generiert wöchentlich |
+| **competitor-watcher** | Konkurrenz-Beobachtung Bremen | Preis-Vergleich, Marketing-Hooks, neue Anbieter-Alerts. Cron monatlich |
+| **mobile-app-architect** | Apple/Google Submission, App-Store-Themen, Native Plugins, Capacitor | Submission-Checklisten, Rejection-Antworten, Native-Code |
 
 **Aufruf:** `Agent({ subagent_type: "<name>", description: "...", prompt: "..." })`
 
@@ -135,12 +149,19 @@ Diese 4 spezialisierten Agents sind exakt auf SimpleTrailer trainiert. Nutze sie
 
 | Aufgaben-Typ | Auto-Trigger Agent |
 |---|---|
-| Marketing-Texte, Newsletter, Ratgeber, Social-Posts, AGB-Text-Anpassungen | **content-writer** |
-| `git push` mit Änderungen an admin/booking/api/cron/native-bridge | **code-reviewer** (VORHER aufrufen) |
-| Strategie-/Wachstums-/Markt-Fragen ("was verbessern?", "wer kauft?", "Feature X?") | **consultant** |
-| Apple/Google Submission, Apple-Rejection, Capacitor, iOS/Android-Bugs | **mobile-app-architect** |
+| Marketing-Texte, Newsletter, Ratgeber, Social-Posts, Webseiten-Texte | **content-writer** |
+| Antworten auf Kundenmails (Reklamation, Schaden, Frage) | **support-writer** |
+| Google-/Facebook-Ads-Setup, Anzeigentexte, Performance-Review | **ads-specialist** |
+| `git push` mit Änderungen an admin/booking/api/cron/native-bridge | **code-reviewer** (VORHER) |
+| AGB/Datenschutz/Impressum/Mietvertrag-Änderungen | **legal-checker** (VORHER) |
+| Sentry-Errors / Bug-Analyse | **bug-triager** |
+| Strategie-/Wachstums-/Markt-Fragen | **consultant** |
+| Konkurrenz-Vergleich Bremen | **competitor-watcher** |
+| Apple/Google Submission, Capacitor, iOS/Android-Bugs | **mobile-app-architect** |
 
 Bei mehreren passenden Agents → **parallel** in einer Message aufrufen. Bei trivialen Mikro-Änderungen (Tippfehler, Cache-Buster) → skippen.
+
+**Hinweis:** Subagents sind erst nach **VS Code "Reload Window"** verfügbar nachdem sie neu hinzugefügt wurden. In laufender Session ggf. nicht da → manuell entsprechende Logik anwenden.
 
 **Regeln:**
 - Bei UI-Änderungen (Buttons, Layout, neue Sektionen, Mobile-Anpassungen): **immer erst Frontend Design Skill aktivieren**, nicht aus dem Bauch entscheiden
