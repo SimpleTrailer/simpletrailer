@@ -129,7 +129,18 @@ Diese 4 spezialisierten Agents sind exakt auf SimpleTrailer trainiert. Nutze sie
 
 **Aufruf:** `Agent({ subagent_type: "<name>", description: "...", prompt: "..." })`
 
-**Wichtig:** Diese 4 Agents sind STÄRKER als Allgemein-Claude für ihre Domänen, weil ihr System-Prompt SimpleTrailer-Kontext (Anhänger-Specs, Preise, Stack, Konkurrenz, Tabu-Files, USPs) fest verankert hat. Nutze sie aktiv.
+**Wichtig:** Diese 4 Agents sind STÄRKER als Allgemein-Claude für ihre Domänen, weil ihr System-Prompt SimpleTrailer-Kontext (Anhänger-Specs, Preise, Stack, Konkurrenz, Tabu-Files, USPs) fest verankert hat.
+
+🔴 **PFLICHT: Subagents AKTIV nutzen, auch ohne explizite User-Anweisung.** Wenn eine Aufgabe in eine Domäne fällt, IMMER den entsprechenden Agent aufrufen — sonst sind sie wertlos. Konkrete Trigger:
+
+| Aufgaben-Typ | Auto-Trigger Agent |
+|---|---|
+| Marketing-Texte, Newsletter, Ratgeber, Social-Posts, AGB-Text-Anpassungen | **content-writer** |
+| `git push` mit Änderungen an admin/booking/api/cron/native-bridge | **code-reviewer** (VORHER aufrufen) |
+| Strategie-/Wachstums-/Markt-Fragen ("was verbessern?", "wer kauft?", "Feature X?") | **consultant** |
+| Apple/Google Submission, Apple-Rejection, Capacitor, iOS/Android-Bugs | **mobile-app-architect** |
+
+Bei mehreren passenden Agents → **parallel** in einer Message aufrufen. Bei trivialen Mikro-Änderungen (Tippfehler, Cache-Buster) → skippen.
 
 **Regeln:**
 - Bei UI-Änderungen (Buttons, Layout, neue Sektionen, Mobile-Anpassungen): **immer erst Frontend Design Skill aktivieren**, nicht aus dem Bauch entscheiden
