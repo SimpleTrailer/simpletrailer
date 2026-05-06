@@ -12,8 +12,8 @@
 const { Resend } = require('resend');
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const SENTRY_ORG = 'simpletrailer-gbr';        // anpassen falls anders
-const SENTRY_PROJECT = 'simpletrailer-web';    // anpassen falls anders
+const SENTRY_ORG = 'simpletrailer-gbr';
+const SENTRY_PROJECT = 'javascript';
 
 module.exports = async (req, res) => {
   const auth = req.headers.authorization || '';
