@@ -118,7 +118,7 @@ Nutze die passenden Skills/Agents je nach Aufgaben-Typ — nicht alles selbst ma
 
 ### 🤖 SimpleTrailer-eigener AI-Stab (in `.claude/agents/`) — 10 Agents
 
-Diese 9 spezialisierten Agents sind exakt auf SimpleTrailer trainiert. Nutze sie statt Allgemein-Claude für die jeweiligen Domänen:
+Diese 10 spezialisierten Agents sind exakt auf SimpleTrailer trainiert. Nutze sie statt Allgemein-Claude für die jeweiligen Domänen:
 
 **Marketing & Kommunikation:**
 | Agent | Wann nutzen | Was er liefert |
@@ -232,7 +232,7 @@ Wenn eine Aufgabe **mehrere Domänen** berührt, rufe alle relevanten Agents **P
 7. **Codemagic CI** für iOS-Build (~30 EUR/Monat, kein Mac nötig)
 8. ✅ ~~**UptimeRobot Monitoring** für simpletrailer.de + /api/health~~ (erledigt 2026-05-04)
 9. ✅ ~~**Sentry Error-Monitoring**~~ (erledigt 2026-05-04)
-10. ✅ ~~**AI-Cockpit + 9 spezialisierte Agents**~~ (erledigt 2026-05-06)
+10. ✅ ~~**AI-Cockpit + 10 spezialisierte Agents**~~ (erledigt 2026-05-06)
 11. ✅ ~~**Daily-Briefing + autonome Routinen** (11 Crons total)~~ (erledigt 2026-05-06)
 12. ✅ ~~**"Benachrichtigen wenn da" für Auto/Koffer**~~ (erledigt 2026-05-06)
 

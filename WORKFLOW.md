@@ -182,7 +182,7 @@ Reihenfolge nach **Hebel-Wirkung**:
 
 ### Diese Woche (vor 11.05. Anhänger-Zulassung)
 
-- ✅ AI-Stab steht (9 Agents)
+- ✅ AI-Stab steht (10 Agents)
 - ✅ Cockpit + autonome Routinen aktiv
 - 📋 SQL-Migrations in Supabase laufen lassen (`supabase-migration-ai-insights.sql` + `supabase-migration-social-posts.sql`)
 - 📋 Sentry-Auth-Token erzeugen + als ENV-Var setzen (für bug-triager)
