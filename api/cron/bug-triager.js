@@ -10,6 +10,7 @@
  *   Scopes: project:read, event:read
  */
 const { Resend } = require('resend');
+const { getLionEmail } = require('../_lion-push.js');
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 const SENTRY_ORG = 'simpletrailer-gbr';
@@ -110,8 +111,8 @@ module.exports = async (req, res) => {
     await resend.emails.send({
       from: 'SimpleTrailer Bug-Triage <buchung@simpletrailer.de>',
       reply_to: 'info@simpletrailer.de',
-      to: 'info@simpletrailer.de',
-      subject: `🐛 ${filtered.length} aktive Bugs — Top: ${top[0]?.title?.slice(0, 60) || 'unbekannt'}`,
+      to: getLionEmail('briefing'),
+      subject: `[ST-Briefing] 🐛 ${filtered.length} aktive Bugs — Top: ${top[0]?.title?.slice(0, 60) || 'unbekannt'}`,
       html
     });
 

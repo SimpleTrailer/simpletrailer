@@ -14,6 +14,7 @@
  */
 const { createClient } = require('@supabase/supabase-js');
 const { Resend } = require('resend');
+const { getLionEmail } = require('../_lion-push.js');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -128,6 +129,56 @@ module.exports = async (req, res) => {
         action_link: 'https://simpletrailer.de/admin'
       });
     }
+
+    // 4b) TÜV / Wartung fällig in ≤ 7 Tagen (oder überfällig) → red
+    try {
+      const { data: trailers } = await supabase.from('trailers')
+        .select('name, next_tuev_date, next_maintenance_date');
+      const today = new Date(); today.setHours(0,0,0,0);
+      const inDays = (d) => Math.ceil((new Date(d + 'T12:00:00') - today) / 86400000);
+      const findings = [];
+      for (const t of (trailers || [])) {
+        if (t.next_tuev_date) {
+          const d = inDays(t.next_tuev_date);
+          if (d <= 7) findings.push({ name: t.name, kind: 'TÜV', days: d });
+        }
+        if (t.next_maintenance_date) {
+          const d = inDays(t.next_maintenance_date);
+          if (d <= 7) findings.push({ name: t.name, kind: 'Wartung', days: d });
+        }
+      }
+      if (findings.length > 0) {
+        items.push({
+          severity: 'red',
+          icon: '🔧',
+          title: `${findings.length} TÜV/Wartung in ≤ 7 Tagen fällig`,
+          detail: findings.map(o => `• ${o.kind} "${o.name}": ${o.days < 0 ? `vor ${Math.abs(o.days)}T überfällig` : (o.days === 0 ? '<strong>HEUTE</strong>' : `in ${o.days} Tag${o.days===1?'':'en'}`)}`).join('<br>'),
+          action_link: 'https://simpletrailer.de/admin'
+        });
+      }
+    } catch (e) { /* trailers Tabelle Spalte fehlt */ }
+
+    // 4c) Bremen-Zulassungstermin früher als gebucht?
+    try {
+      const { data: watcher } = await supabase.from('termin_watcher_state')
+        .select('bremen_termin_deadline, last_earliest_date')
+        .eq('id', 1)
+        .maybeSingle();
+      if (watcher?.bremen_termin_deadline && watcher?.last_earliest_date) {
+        const deadline = new Date(watcher.bremen_termin_deadline + 'T12:00:00');
+        const earliest = new Date(watcher.last_earliest_date + 'T12:00:00');
+        if (earliest < deadline) {
+          const fmt = (d) => d.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' });
+          items.push({
+            severity: 'red',
+            icon: '🚨',
+            title: `Früherer Bremen-Zulassungstermin: ${fmt(earliest)}`,
+            detail: `Dein gebuchter Termin ist ${fmt(deadline)} — bei service.bremen.de schnell buchen.`,
+            action_link: 'https://www.service.bremen.de/dienstleistungen/kraftfahrzeug-anmelden-8389?template=20_sp_dienstleistungen_termine_d&typ=kurz',
+          });
+        }
+      }
+    } catch (e) {}
 
     // 5) Gestern Performance
     const { data: yesterdayBookings } = await supabase
@@ -244,8 +295,8 @@ module.exports = async (req, res) => {
     await resend.emails.send({
       from: 'SimpleTrailer Briefing <buchung@simpletrailer.de>',
       reply_to: 'info@simpletrailer.de',
-      to: 'info@simpletrailer.de',
-      subject: `☀️ Dein Tagesplan — ${items.filter(i=>i.severity==='red').length}🔴 ${items.filter(i=>i.severity==='yellow').length}🟡`,
+      to: getLionEmail('briefing'),
+      subject: `[ST-Briefing] ☀️ Dein Tagesplan — ${items.filter(i=>i.severity==='red').length}🔴 ${items.filter(i=>i.severity==='yellow').length}🟡`,
       html
     });
 

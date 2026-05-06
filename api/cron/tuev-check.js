@@ -54,7 +54,7 @@ module.exports = async (req, res) => {
           const severity = tuevDays <= 7 ? 'red' : 'yellow';
           await pushLion({
             severity,
-            category: 'routine',
+            category: tuevDays <= 7 ? 'urgent' : 'routine',
             title: `TÜV ${t.name}: in ${tuevDays} Tag${tuevDays === 1 ? '' : 'en'}`,
             htmlBody: `
               <p>Anhänger <strong>${t.name}</strong> hat TÜV-Termin am <strong>${formatDate(t.next_tuev_date)}</strong>.</p>
@@ -74,8 +74,8 @@ module.exports = async (req, res) => {
       if (maintDays !== null && ALERT_DAYS.includes(maintDays)) {
         if (t.last_maint_alert_sent_for_date !== t.next_maintenance_date) {
           await pushLion({
-            severity: 'yellow',
-            category: 'routine',
+            severity: maintDays <= 7 ? 'red' : 'yellow',
+            category: maintDays <= 7 ? 'urgent' : 'routine',
             title: `Wartung ${t.name}: in ${maintDays} Tag${maintDays === 1 ? '' : 'en'}`,
             htmlBody: `
               <p>Anhänger <strong>${t.name}</strong> hat Wartungs-Termin am <strong>${formatDate(t.next_maintenance_date)}</strong>.</p>

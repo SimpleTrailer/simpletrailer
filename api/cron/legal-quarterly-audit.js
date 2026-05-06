@@ -8,6 +8,7 @@
 const { Resend } = require('resend');
 const { readFileSync } = require('fs');
 const { join } = require('path');
+const { getLionEmail } = require('../_lion-push.js');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -127,8 +128,8 @@ Fuehre den Audit durch.`;
     await resend.emails.send({
       from: 'SimpleTrailer Legal <buchung@simpletrailer.de>',
       reply_to: 'info@simpletrailer.de',
-      to: 'info@simpletrailer.de',
-      subject: `⚖️ Legal-Audit Quartal — Pruefung von AGB/Datenschutz/Impressum`,
+      to: getLionEmail('routine'),
+      subject: `[ST-Routine] ⚖️ Legal-Audit Quartal — Pruefung von AGB/Datenschutz/Impressum`,
       html
     });
 

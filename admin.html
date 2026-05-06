@@ -483,12 +483,12 @@
         </div>
       </div>
 
-      <!-- 💬 DIREKT-FRAGE AN AGENT -->
+      <!-- 💬 DIREKT-FRAGE AN AGENT (Konversations-fähig) -->
       <h3 style="font-size:.78rem;color:var(--gray);text-transform:uppercase;letter-spacing:.1em;margin:24px 0 12px;">💬 Direkt-Frage an einen Agent</h3>
       <div style="background:#0f0f0f;border:1px solid var(--border);border-radius:14px;padding:18px 22px;margin-bottom:24px;">
-        <p style="font-size:.85rem;color:#bbb;margin:0 0 14px;">Stell einem Agent eine Live-Frage. Antwort kommt in 5-15 Sekunden + landet in der Inbox.</p>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
-          <select id="askAgent" style="background:#1a1a1a;color:#fff;padding:10px 12px;border-radius:8px;border:1px solid var(--border);font-family:inherit;font-size:.88rem;flex:1;min-width:200px;">
+        <p style="font-size:.85rem;color:#bbb;margin:0 0 14px;">Mehrstufiger Chat. Du kannst nachhaken — der Agent merkt sich die letzten Austausche dieser Konversation.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;align-items:center;">
+          <select id="askAgent" onchange="loadAgentConversation()" style="background:#1a1a1a;color:#fff;padding:10px 12px;border-radius:8px;border:1px solid var(--border);font-family:inherit;font-size:.88rem;flex:1;min-width:200px;">
             <option value="consultant">💡 consultant — Strategie & Wachstum</option>
             <option value="ads-specialist">📈 ads-specialist — Google/Meta Ads</option>
             <option value="content-writer">📝 content-writer — Texte / SEO</option>
@@ -500,14 +500,30 @@
             <option value="budget-optimizer">💰 budget-optimizer — Werbe-Budget</option>
             <option value="code-reviewer">🔍 code-reviewer — Code-Audit</option>
           </select>
+          <button onclick="resetAgentConversation()" id="resetChatBtn" title="Konversation neu starten" style="background:transparent;color:var(--gray);border:1px solid var(--border);padding:8px 14px;border-radius:8px;font-family:inherit;font-size:.8rem;cursor:pointer;">↻ Neue Konversation</button>
         </div>
-        <textarea id="askQuestion" rows="3" placeholder="Was möchtest Du wissen?" style="width:100%;background:#1a1a1a;color:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:inherit;font-size:.9rem;resize:vertical;box-sizing:border-box;margin-bottom:10px;"></textarea>
+        <div id="chatHistory" style="display:none;max-height:420px;overflow-y:auto;background:#0a0a0a;border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px;"></div>
+        <textarea id="askQuestion" rows="3" placeholder="Was möchtest Du wissen? (Strg+Enter zum Senden)" style="width:100%;background:#1a1a1a;color:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:inherit;font-size:.9rem;resize:vertical;box-sizing:border-box;margin-bottom:10px;" onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter')askAgentSubmit()"></textarea>
         <button onclick="askAgentSubmit()" id="askBtn" style="background:var(--orange);color:#fff;border:none;padding:11px 24px;border-radius:8px;font-weight:600;cursor:pointer;font-family:inherit;font-size:.9rem;">Fragen →</button>
+        <span id="chatTurnCount" style="margin-left:12px;font-size:.78rem;color:var(--gray);"></span>
         <div id="askResult" style="margin-top:14px;font-size:.88rem;line-height:1.6;"></div>
       </div>
 
       <!-- 📥 AI-INBOX (alle pending Items) -->
       <h3 style="font-size:.78rem;color:var(--gray);text-transform:uppercase;letter-spacing:.1em;margin:0 0 12px;">📥 AI-Inbox <span id="aiInboxBadge" style="display:none;margin-left:8px;background:var(--orange);color:#fff;font-size:.65rem;padding:2px 8px;border-radius:8px;font-weight:600;">0</span></h3>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
+        <div class="filter-row" style="margin-left:0;gap:6px;">
+          <button class="filter-btn active" data-inbox-filter="all" onclick="setInboxFilter('all', this)">Alle <span id="ifCntAll" style="opacity:.6;font-size:.72rem;"></span></button>
+          <button class="filter-btn" data-inbox-filter="content-draft" onclick="setInboxFilter('content-draft', this)">📝 Drafts <span id="ifCntDrafts" style="opacity:.6;font-size:.72rem;"></span></button>
+          <button class="filter-btn" data-inbox-filter="social-post" onclick="setInboxFilter('social-post', this)">📱 Posts <span id="ifCntPosts" style="opacity:.6;font-size:.72rem;"></span></button>
+          <button class="filter-btn" data-inbox-filter="ai-insight" onclick="setInboxFilter('ai-insight', this)">💡 Insights <span id="ifCntInsights" style="opacity:.6;font-size:.72rem;"></span></button>
+          <button class="filter-btn" data-inbox-filter="week" onclick="setInboxFilter('week', this)">7 Tage</button>
+        </div>
+        <div class="search-wrap" style="flex:1;min-width:180px;max-width:280px;">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="inboxSearch" placeholder="Inbox durchsuchen…" oninput="renderAiInboxFiltered()" />
+        </div>
+      </div>
       <div id="aiInboxList" style="display:flex;flex-direction:column;gap:10px;margin-bottom:24px;">
         <div style="color:var(--gray);font-size:.85rem;text-align:center;padding:20px;">Lade…</div>
       </div>
@@ -688,8 +704,33 @@
       <!-- ── TÜV & Wartung pro Anhänger ── -->
       <div style="background:var(--s1); border:1.5px solid var(--border); border-radius:14px; padding:20px; margin-bottom:20px">
         <p class="section-tag" style="margin-top:0">🔧 TÜV & Wartungs-Termine</p>
-        <p style="font-size:.8rem;color:var(--gray);margin:0 0 14px;">Cron prüft täglich 9:00 Berlin. Mail bei 30/14/7/1 Tagen vor Fälligkeit.</p>
+        <p style="font-size:.8rem;color:var(--gray);margin:0 0 14px;">Cron prüft täglich 9:00 Berlin. Mail bei 30/14/7/1 Tagen vor Fälligkeit. Bei ≤ 7 Tagen → 🚨 Urgent-Mail.</p>
         <div id="tuevTable" style="overflow-x:auto;">–</div>
+      </div>
+
+      <!-- ── BREMEN-ZULASSUNGSTERMIN-WATCHER ── -->
+      <div style="background:linear-gradient(135deg,#1f0a0a,#1a1a1a); border:1.5px solid #ef4444; border-radius:14px; padding:20px; margin-bottom:20px">
+        <p class="section-tag" style="margin-top:0;color:#ef4444;">🚨 Bremen-Zulassungstermin-Watcher</p>
+        <p style="font-size:.85rem;color:#ddd;margin:0 0 14px;line-height:1.5;">
+          Cron pingt <strong>jede Minute</strong> service.bremen.de. Sobald ein <strong>früherer</strong> Termin als der unten eingetragene auftaucht → <strong>🚨 Urgent-Mail</strong> (mit High-Priority-Header) an dich.
+        </p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:14px">
+          <div>
+            <label style="display:block;font-size:.7rem;color:var(--gray);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Aktuell gebuchter Termin</label>
+            <input type="date" id="bremenDeadlineInput" style="width:100%;background:#1a1a1a;color:#fff;padding:10px 12px;border-radius:8px;border:1px solid var(--border);font-family:inherit;font-size:.92rem;" />
+            <p style="font-size:.72rem;color:var(--gray);margin:4px 0 0;">Wenn Du den Termin verschiebst → einfach hier ändern + Speichern.</p>
+          </div>
+          <div>
+            <label style="display:block;font-size:.7rem;color:var(--gray);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Letzter Cron-Check</label>
+            <div id="bremenLastCheck" style="background:#1a1a1a;padding:10px 12px;border-radius:8px;border:1px solid var(--border);font-size:.85rem;color:var(--gray);">–</div>
+          </div>
+          <div>
+            <label style="display:block;font-size:.7rem;color:var(--gray);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Aktuell frühester Online-Termin</label>
+            <div id="bremenEarliest" style="background:#1a1a1a;padding:10px 12px;border-radius:8px;border:1px solid var(--border);font-size:.85rem;color:#fff;">–</div>
+          </div>
+        </div>
+        <button onclick="saveBremenDeadline()" id="bremenSaveBtn" style="background:var(--orange);color:#fff;border:none;padding:10px 22px;border-radius:8px;font-weight:600;cursor:pointer;font-family:inherit;font-size:.88rem;">Speichern</button>
+        <span id="bremenStatus" style="margin-left:12px;font-size:.85rem;"></span>
       </div>
     </div>
 
@@ -902,20 +943,58 @@
     if (tab === 'nutzer' && !usersLoaded) loadUsers();
     if (tab === 'statistiken') renderStatistiken();
     if (tab === 'cockpit') loadCockpit();
-    if (tab === 'aistab') loadAiInbox();
+    if (tab === 'aistab') { loadAiInbox(); loadAgentConversation(); }
   }
 
   /* ── AI-INBOX ─────────────────────────────────────────── */
+  let _inboxData = null;
+  let _inboxFilter = 'all'; // 'all' | 'content-draft' | 'social-post' | 'ai-insight' | 'week'
+
   async function loadAiInbox() {
     try {
       const r = await fetch('/api/admin?section=ai-inbox', { headers: { Authorization: `Bearer ${authToken}` } });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || 'Fehler');
-      renderAiInbox(d);
-      updateInboxBadge(d.counts?.total || 0);
+      _inboxData = d;
+      // Counts pro Kategorie an Buttons
+      const c = d.counts || {};
+      const setCnt = (id, n) => { const el = document.getElementById(id); if (el) el.textContent = n > 0 ? `(${n})` : ''; };
+      setCnt('ifCntAll', c.total || 0);
+      setCnt('ifCntDrafts', c.drafts || 0);
+      setCnt('ifCntPosts', c.posts || 0);
+      setCnt('ifCntInsights', c.insights || 0);
+      renderAiInboxFiltered();
+      updateInboxBadge(c.total || 0);
     } catch (e) {
       document.getElementById('aiInboxList').innerHTML = `<p style="color:var(--red)">Fehler: ${e.message}</p>`;
     }
+  }
+
+  function setInboxFilter(val, btn) {
+    _inboxFilter = val;
+    document.querySelectorAll('[data-inbox-filter]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderAiInboxFiltered();
+  }
+
+  function renderAiInboxFiltered() {
+    if (!_inboxData) return;
+    const query = (document.getElementById('inboxSearch')?.value || '').toLowerCase().trim();
+    let items = _inboxData.items || [];
+    if (_inboxFilter === 'week') {
+      const cutoff = Date.now() - 7 * 86400000;
+      items = items.filter(i => i.created_at && new Date(i.created_at).getTime() >= cutoff);
+    } else if (_inboxFilter !== 'all') {
+      items = items.filter(i => i.kind === _inboxFilter);
+    }
+    if (query) {
+      items = items.filter(i =>
+        (i.title || '').toLowerCase().includes(query) ||
+        (i.summary || '').toLowerCase().includes(query) ||
+        (i.agent_name || '').toLowerCase().includes(query)
+      );
+    }
+    renderAiInbox({ items });
   }
 
   function updateInboxBadge(count) {
@@ -1011,30 +1090,100 @@
       <div>${item.recommendation}</div>`);
   }
 
-  /* ── DIRECT-ASK ───────────────────────────────────────── */
+  /* ── DIRECT-ASK (konversations-fähig, localStorage pro Agent) ─── */
+  // Konversationen pro Agent: localStorage["chat_<agent>"] = [{role:'user'|'assistant', content:'...'}, ...]
+  // Cap auf 20 Turns clientseitig, Backend cappt nochmal.
+  const CHAT_STORAGE_KEY = (agent) => `simpletrailer_chat_${agent}`;
+  const CHAT_MAX_TURNS = 20;
+
+  function loadAgentConversation() {
+    const agent = document.getElementById('askAgent').value;
+    const raw = localStorage.getItem(CHAT_STORAGE_KEY(agent));
+    let conv = [];
+    try { conv = raw ? JSON.parse(raw) : []; } catch (e) { conv = []; }
+    renderChatHistory(conv);
+    document.getElementById('askResult').innerHTML = '';
+  }
+
+  function saveAgentConversation(agent, conv) {
+    // Trim falls zu lang
+    if (conv.length > CHAT_MAX_TURNS) conv = conv.slice(-CHAT_MAX_TURNS);
+    localStorage.setItem(CHAT_STORAGE_KEY(agent), JSON.stringify(conv));
+  }
+
+  function resetAgentConversation() {
+    const agent = document.getElementById('askAgent').value;
+    if (!confirm(`Konversation mit "${agent}" löschen?`)) return;
+    localStorage.removeItem(CHAT_STORAGE_KEY(agent));
+    renderChatHistory([]);
+    document.getElementById('askResult').innerHTML = '';
+  }
+
+  function renderChatHistory(conv) {
+    const box = document.getElementById('chatHistory');
+    const cnt = document.getElementById('chatTurnCount');
+    if (!conv || conv.length === 0) {
+      box.style.display = 'none';
+      cnt.textContent = '';
+      return;
+    }
+    box.style.display = 'block';
+    box.innerHTML = conv.map((m, i) => {
+      const isUser = m.role === 'user';
+      const bg = isUser ? '#1a1a1a' : '#1a0f29';
+      const border = isUser ? 'var(--border)' : '#3a1a5f';
+      const label = isUser ? 'Du' : 'Agent';
+      const labelColor = isUser ? 'var(--gray)' : '#a78bfa';
+      // Sanitize: bei assistant erlauben wir HTML (kommt von uns), bei user escapen
+      const content = isUser ? escapeHtml(m.content) : m.content;
+      return `<div style="background:${bg};border:1px solid ${border};border-radius:8px;padding:10px 14px;margin-bottom:8px;">
+        <div style="font-size:.65rem;color:${labelColor};text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">${label}</div>
+        <div style="font-size:.88rem;line-height:1.55;color:#ddd;white-space:${isUser ? 'pre-wrap' : 'normal'};">${content}</div>
+      </div>`;
+    }).join('');
+    box.scrollTop = box.scrollHeight;
+    const userTurns = conv.filter(m => m.role === 'user').length;
+    cnt.textContent = `${userTurns} Frage${userTurns !== 1 ? 'n' : ''} in dieser Konversation`;
+  }
+
   async function askAgentSubmit() {
     const agent = document.getElementById('askAgent').value;
     const question = document.getElementById('askQuestion').value.trim();
     const btn = document.getElementById('askBtn');
     const result = document.getElementById('askResult');
     if (!question) { result.innerHTML = '<p style="color:#ef4444;">Bitte Frage eingeben.</p>'; return; }
-    btn.disabled = true; btn.textContent = 'Antwort wird generiert…'; result.innerHTML = '<p style="color:var(--gray);">⏳ Agent denkt nach (5-15 Sek)…</p>';
+
+    // Bestehende Konversation laden
+    let conv = [];
+    try { conv = JSON.parse(localStorage.getItem(CHAT_STORAGE_KEY(agent)) || '[]'); } catch (e) { conv = []; }
+    conv.push({ role: 'user', content: question });
+
+    // Optimistisch rendern damit Frage sofort sichtbar
+    renderChatHistory(conv);
+    document.getElementById('askQuestion').value = '';
+    btn.disabled = true; btn.textContent = 'Agent denkt…';
+    result.innerHTML = '<p style="color:var(--gray);font-size:.85rem;">⏳ Antwort wird generiert (5-15 Sek)…</p>';
+
     try {
       const r = await fetch('/api/admin?section=direct-ask', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
-        body: JSON.stringify({ agent, question }),
+        body: JSON.stringify({ agent, messages: conv }),
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || 'Fehler');
-      result.innerHTML = `<div style="background:#1a0f29;border:1px solid #3a1a5f;border-radius:10px;padding:16px;color:#ddd;">
-        <div style="font-size:.7rem;color:#a78bfa;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Antwort von ${agent}</div>
-        <div>${d.answer}</div>
-      </div>`;
-      document.getElementById('askQuestion').value = '';
-      // Refresh Inbox damit Antwort erscheint
-      setTimeout(loadAiInbox, 500);
+      conv.push({ role: 'assistant', content: d.answer || '' });
+      saveAgentConversation(agent, conv);
+      renderChatHistory(conv);
+      result.innerHTML = '';
+      // Bei erster Frage einer Konversation landet sie in der Inbox → refreshen
+      if (conv.filter(m => m.role === 'user').length === 1) {
+        setTimeout(loadAiInbox, 500);
+      }
     } catch (e) {
+      // User-Eintrag wieder entfernen damit Konversation konsistent bleibt
+      conv.pop();
+      renderChatHistory(conv);
       result.innerHTML = `<p style="color:#ef4444;">Fehler: ${escapeHtml(e.message)}</p>`;
     } finally {
       btn.disabled = false; btn.textContent = 'Fragen →';
@@ -1241,6 +1390,57 @@
     renderRevenueChart(paidBookings);
     renderTrailerStats(paidBookings);
     loadTuevTable();
+    loadBremenWatcher();
+  }
+
+  /* ── BREMEN-TERMIN-WATCHER ────────────────────────────── */
+  async function loadBremenWatcher() {
+    try {
+      const r = await fetch('/api/admin?section=watcher-config', { headers: { Authorization: `Bearer ${authToken}` } });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Fehler');
+      const fmtD = (s) => s ? new Date(s + 'T12:00:00').toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' }) : '–';
+      const fmtTS = (s) => s ? new Date(s).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) + ' Uhr' : '–';
+      document.getElementById('bremenDeadlineInput').value = d.bremen_termin_deadline || '';
+      document.getElementById('bremenLastCheck').textContent = fmtTS(d.last_check_at);
+      const earliestEl = document.getElementById('bremenEarliest');
+      if (d.last_earliest_date) {
+        const earlier = d.bremen_termin_deadline && d.last_earliest_date < d.bremen_termin_deadline;
+        earliestEl.innerHTML = `<span style="color:${earlier ? '#ef4444' : '#fff'};font-weight:${earlier ? '700' : '500'};">${fmtD(d.last_earliest_date)}${earlier ? ' 🚨 FRÜHER!' : ''}</span>`;
+      } else {
+        earliestEl.textContent = '– (Cron noch nicht gelaufen)';
+      }
+      if (d.error) {
+        document.getElementById('bremenStatus').innerHTML = `<span style="color:#f59e0b;">⚠ ${escapeHtml(d.error)}</span>`;
+      }
+    } catch (e) {
+      document.getElementById('bremenStatus').innerHTML = `<span style="color:#ef4444;">Fehler: ${escapeHtml(e.message)}</span>`;
+    }
+  }
+
+  async function saveBremenDeadline() {
+    const value = document.getElementById('bremenDeadlineInput').value;
+    if (value && !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      document.getElementById('bremenStatus').innerHTML = '<span style="color:#ef4444;">Format: YYYY-MM-TT</span>';
+      return;
+    }
+    const btn = document.getElementById('bremenSaveBtn');
+    btn.disabled = true; btn.textContent = 'Speichere…';
+    try {
+      const r = await fetch('/api/admin?section=watcher-config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
+        body: JSON.stringify({ bremen_termin_deadline: value || null }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Fehler');
+      document.getElementById('bremenStatus').innerHTML = '<span style="color:#22c55e;">✓ Gespeichert — Cron nutzt das ab nächstem Lauf (binnen 1 Min).</span>';
+      setTimeout(() => { document.getElementById('bremenStatus').innerHTML = ''; loadBremenWatcher(); }, 2500);
+    } catch (e) {
+      document.getElementById('bremenStatus').innerHTML = `<span style="color:#ef4444;">Fehler: ${escapeHtml(e.message)}</span>`;
+    } finally {
+      btn.disabled = false; btn.textContent = 'Speichern';
+    }
   }
 
   /* ── TÜV/Wartungs-Tabelle ─────────────────────────────── */

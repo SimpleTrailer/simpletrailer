@@ -91,6 +91,57 @@ module.exports = async (req, res) => {
         }
       } catch (e) {}
 
+      // TÜV / Wartung — fällig in ≤ 7 Tagen (oder bereits überfällig) → red
+      try {
+        const { data: trailers } = await supabase.from('trailers')
+          .select('name, next_tuev_date, next_maintenance_date');
+        const today = new Date(); today.setHours(0,0,0,0);
+        const inDays = (d) => Math.ceil((new Date(d + 'T12:00:00') - today) / 86400000);
+        const overdueOrSoon = [];
+        for (const t of (trailers || [])) {
+          if (t.next_tuev_date) {
+            const d = inDays(t.next_tuev_date);
+            if (d <= 7) overdueOrSoon.push({ name: t.name, kind: 'TÜV', days: d });
+          }
+          if (t.next_maintenance_date) {
+            const d = inDays(t.next_maintenance_date);
+            if (d <= 7) overdueOrSoon.push({ name: t.name, kind: 'Wartung', days: d });
+          }
+        }
+        if (overdueOrSoon.length > 0) {
+          const detail = overdueOrSoon
+            .map(o => `${o.kind} "${o.name}": ${o.days < 0 ? `vor ${Math.abs(o.days)}T überfällig` : (o.days === 0 ? 'HEUTE!' : `in ${o.days} Tag${o.days===1?'':'en'}`)}`)
+            .join(' · ');
+          items.push({
+            severity: 'red',
+            icon: '🔧',
+            title: `${overdueOrSoon.length} TÜV/Wartung in ≤ 7 Tagen`,
+            detail,
+          });
+        }
+      } catch (e) {}
+
+      // Bremen-Zulassungs-Termin: aktueller frühester Termin (info)
+      try {
+        const { data: watcher } = await supabase.from('termin_watcher_state')
+          .select('bremen_termin_deadline, last_earliest_date')
+          .eq('id', 1)
+          .maybeSingle();
+        if (watcher?.bremen_termin_deadline && watcher?.last_earliest_date) {
+          const deadline = new Date(watcher.bremen_termin_deadline + 'T12:00:00');
+          const earliest = new Date(watcher.last_earliest_date + 'T12:00:00');
+          if (earliest < deadline) {
+            const fmt = (d) => d.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' });
+            items.push({
+              severity: 'red',
+              icon: '🚨',
+              title: `Früherer Bremen-Termin verfügbar: ${fmt(earliest)}`,
+              detail: `Dein gebuchter Termin ist ${fmt(deadline)} — bei service.bremen.de buchen!`,
+            });
+          }
+        }
+      } catch (e) {}
+
       if (items.length === 0) {
         items.push({ severity: 'green', icon: '🟢', title: 'Alles ruhig', detail: 'Keine Anomalien, keine offenen Tasks.' });
       }
@@ -186,17 +237,37 @@ module.exports = async (req, res) => {
     }
 
     // ─── DIRECT-ASK: User stellt Live-Frage an einen Agent ───
+    // Backward-compatible: { agent, question }  ODER  { agent, messages: [...] }
+    // messages = [{ role: 'user'|'assistant', content: '...' }, ...]  (mit letzter user-Frage)
     if (section === 'direct-ask' && req.method === 'POST') {
       if (!process.env.ANTHROPIC_API_KEY) return res.status(500).json({ error: 'ANTHROPIC_API_KEY missing' });
       const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
-      const { agent, question } = body;
-      if (!agent || !question) return res.status(400).json({ error: 'agent + question required' });
+      const { agent, question, messages } = body;
+      if (!agent) return res.status(400).json({ error: 'agent required' });
+
+      // Eingabe normalisieren → conv (Anthropic-format messages)
+      let conv;
+      if (Array.isArray(messages) && messages.length > 0) {
+        conv = messages
+          .filter(m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string' && m.content.trim())
+          .map(m => ({ role: m.role, content: m.content }));
+        // Letzter Eintrag MUSS user sein (sonst hat Agent nichts zu beantworten)
+        if (!conv.length || conv[conv.length - 1].role !== 'user') {
+          return res.status(400).json({ error: 'letzte Message muss role=user sein' });
+        }
+        // Sicherheits-Cap: max ~20 turns (vermeidet Token-Bombe)
+        if (conv.length > 20) conv = conv.slice(-20);
+      } else if (typeof question === 'string' && question.trim()) {
+        conv = [{ role: 'user', content: question }];
+      } else {
+        return res.status(400).json({ error: 'question oder messages required' });
+      }
 
       const AGENT_PROMPTS = require('./_agent-prompts.js');
       const systemPrompt = AGENT_PROMPTS[agent];
       if (!systemPrompt) return res.status(404).json({ error: `Agent '${agent}' nicht verfuegbar` });
 
-      // Inter-Agent: letzte 5 Insights als Cross-Context
+      // Inter-Agent: letzte 3 Insights als Cross-Context
       const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
       const { data: recent } = await supabase.from('ai_insights')
         .select('type, recommendation, created_at')
@@ -221,24 +292,64 @@ module.exports = async (req, res) => {
             model: 'claude-haiku-4-5-20251001',
             max_tokens: 2500,
             system: systemPrompt + crossContext,
-            messages: [{ role: 'user', content: question }],
+            messages: conv,
           }),
         });
         if (!r.ok) throw new Error(`Anthropic ${r.status}: ${(await r.text()).slice(0, 200)}`);
         const data = await r.json();
         const answer = data.content?.[0]?.text || '';
 
-        // In ai_insights speichern (so dass es auch in Inbox erscheint)
-        await supabase.from('ai_insights').insert({
-          type: 'direct-ask',
-          agent_name: agent,
-          question,
-          recommendation: answer,
-        });
+        // Nur die ERSTE Frage einer Konversation in Inbox speichern
+        // (sonst landet jede Folge-Frage als eigener Eintrag und überflutet die Inbox)
+        const isFollowUp = conv.length > 1;
+        if (!isFollowUp) {
+          await supabase.from('ai_insights').insert({
+            type: 'direct-ask',
+            agent_name: agent,
+            question: conv[conv.length - 1].content,
+            recommendation: answer,
+          });
+        }
 
         return res.status(200).json({ ok: true, answer, agent });
       } catch (err) {
         return res.status(500).json({ error: err.message });
+      }
+    }
+
+    // ─── WATCHER-CONFIG: Bremen-Termin-Deadline lesen/setzen ───
+    if (section === 'watcher-config') {
+      if (req.method === 'GET') {
+        try {
+          const { data } = await supabase
+            .from('termin_watcher_state')
+            .select('bremen_termin_deadline, last_earliest_date, last_check_at, last_pushed_date')
+            .eq('id', 1)
+            .maybeSingle();
+          return res.status(200).json({
+            bremen_termin_deadline: data?.bremen_termin_deadline || null,
+            last_earliest_date:     data?.last_earliest_date     || null,
+            last_check_at:          data?.last_check_at          || null,
+            last_pushed_date:       data?.last_pushed_date       || null,
+          });
+        } catch (e) {
+          return res.status(200).json({
+            bremen_termin_deadline: null,
+            error: 'Spalte fehlt — Migration supabase-migration-bremen-deadline.sql noch nicht ausgeführt',
+          });
+        }
+      }
+      if (req.method === 'POST') {
+        const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+        const { bremen_termin_deadline } = body;
+        if (bremen_termin_deadline !== undefined && bremen_termin_deadline !== null && bremen_termin_deadline !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(bremen_termin_deadline)) {
+          return res.status(400).json({ error: 'bremen_termin_deadline muss YYYY-MM-DD sein' });
+        }
+        const { error } = await supabase
+          .from('termin_watcher_state')
+          .upsert({ id: 1, bremen_termin_deadline: bremen_termin_deadline || null }, { onConflict: 'id' });
+        if (error) return res.status(500).json({ error: error.message });
+        return res.status(200).json({ ok: true });
       }
     }
 

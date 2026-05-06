@@ -9,6 +9,7 @@
  */
 const { createClient } = require('@supabase/supabase-js');
 const { Resend } = require('resend');
+const { getLionEmail } = require('../_lion-push.js');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -106,8 +107,8 @@ Kein Marketing-BS.`;
     await resend.emails.send({
       from: 'SimpleTrailer Strategie <buchung@simpletrailer.de>',
       reply_to: 'info@simpletrailer.de',
-      to: 'info@simpletrailer.de',
-      subject: `⚡ Mid-Week-Check — ${paid.length} Buchungen letzte 3 Tage`,
+      to: getLionEmail('briefing'),
+      subject: `[ST-Briefing] ⚡ Mid-Week-Check — ${paid.length} Buchungen letzte 3 Tage`,
       html
     });
 

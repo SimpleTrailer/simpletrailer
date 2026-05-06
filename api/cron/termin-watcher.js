@@ -4,12 +4,14 @@
  * Läuft jede Minute (Vercel Pro). Lädt service.bremen.de URL,
  * parst kleinstes verfügbares Datum, vergleicht mit Deadline.
  *
- * Bei Treffer (Datum vor TERMIN_WATCH_DEADLINE) UND Datum hat sich
- * geändert seit letzter Push: Mail mit Direkt-Link an Lion.
+ * Bei Treffer (Datum vor termin_watcher_state.bremen_termin_deadline)
+ * UND Datum hat sich geändert seit letzter Push: Mail mit Direkt-Link.
  *
  * VORAUSSETZUNG:
- * - ENV: TERMIN_WATCH_DEADLINE (z.B. '2026-05-19') und CRON_SECRET
- * - Tabelle termin_watcher_state (siehe supabase-migration-termin-watcher.sql)
+ * - ENV: CRON_SECRET
+ * - Tabelle termin_watcher_state mit bremen_termin_deadline (Spalte aus
+ *   supabase-migration-bremen-deadline.sql, im Admin pflegbar)
+ * - Fallback wenn Spalte leer: ENV TERMIN_WATCH_DEADLINE oder '2026-05-19'
  */
 const { createClient } = require('@supabase/supabase-js');
 const { pushLion } = require('../_lion-push.js');
@@ -28,7 +30,23 @@ module.exports = async (req, res) => {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  const deadlineStr = process.env.TERMIN_WATCH_DEADLINE || '2026-05-19';
+  // Deadline aus DB lesen (im Admin pflegbar). Fallback: ENV / hardcoded.
+  let deadlineStr = null;
+  try {
+    const { data: stateRow } = await supabase
+      .from('termin_watcher_state')
+      .select('bremen_termin_deadline')
+      .eq('id', 1)
+      .maybeSingle();
+    if (stateRow?.bremen_termin_deadline) {
+      deadlineStr = stateRow.bremen_termin_deadline;
+    }
+  } catch (e) {
+    // Spalte evtl. noch nicht migriert — fallback unten
+  }
+  if (!deadlineStr) {
+    deadlineStr = process.env.TERMIN_WATCH_DEADLINE || '2026-05-19';
+  }
   const deadline = new Date(deadlineStr + 'T23:59:59');
 
   try {
@@ -102,7 +120,7 @@ module.exports = async (req, res) => {
 
     await pushLion({
       severity: 'critical',
-      subject_prefix: '🚨 TERMIN!',
+      category: 'urgent',
       title: `Bremen-Zulassung: Termin am ${dayLabel}`,
       htmlBody: `
         <p style="font-size:1rem;"><strong>Frühster freier Termin: ${dayLabel}</strong> (in ${daysFromNow} Tag${daysFromNow > 1 ? 'en' : ''})</p>

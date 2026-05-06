@@ -11,6 +11,7 @@
  */
 const { createClient } = require('@supabase/supabase-js');
 const { Resend } = require('resend');
+const { getLionEmail } = require('../_lion-push.js');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -122,8 +123,8 @@ Liefere den HTML-Report.`;
     await resend.emails.send({
       from: 'SimpleTrailer Watch <buchung@simpletrailer.de>',
       reply_to: 'info@simpletrailer.de',
-      to: 'info@simpletrailer.de',
-      subject: `🔭 Konkurrenz-Report ${new Date().toLocaleDateString('de-DE',{month:'long'})} — Bremen`,
+      to: getLionEmail('routine'),
+      subject: `[ST-Routine] 🔭 Konkurrenz-Report ${new Date().toLocaleDateString('de-DE',{month:'long'})} — Bremen`,
       html
     });
 

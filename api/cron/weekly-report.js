@@ -9,6 +9,7 @@
  */
 const { createClient } = require('@supabase/supabase-js');
 const { Resend } = require('resend');
+const { getLionEmail } = require('../_lion-push.js');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 const resend   = new Resend(process.env.RESEND_API_KEY);
@@ -109,8 +110,8 @@ module.exports = async (req, res) => {
     await resend.emails.send({
       from: 'SimpleTrailer Report <buchung@simpletrailer.de>',
       reply_to: 'info@simpletrailer.de',
-      to: 'info@simpletrailer.de',
-      subject: `📊 Wochen-Report: ${thisWeek.length} Buchungen · ${eur(sumRev(thisWeek))}`,
+      to: getLionEmail('briefing'),
+      subject: `[ST-Briefing] 📊 Wochen-Report: ${thisWeek.length} Buchungen · ${eur(sumRev(thisWeek))}`,
       html
     });
 
