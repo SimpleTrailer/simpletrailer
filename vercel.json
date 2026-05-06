@@ -51,6 +51,22 @@
     {
       "path": "/api/cron/legal-quarterly-audit",
       "schedule": "0 9 1 1,4,7,10 *"
+    },
+    {
+      "path": "/api/cron/termin-watcher",
+      "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/cron/booking-watcher",
+      "schedule": "*/2 * * * *"
+    },
+    {
+      "path": "/api/cron/tuev-check",
+      "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/cron/budget-optimizer",
+      "schedule": "0 19 * * 0"
     }
   ],
   "headers": [

@@ -133,6 +133,136 @@ module.exports = async (req, res) => {
       return res.status(200).json({ ok: true });
     }
 
+    // ─── AI-INBOX: alle pending Items aggregiert ───
+    if (section === 'ai-inbox') {
+      const [drafts, posts, insights] = await Promise.all([
+        supabase.from('content_drafts').select('id,type,title,slug,meta_description,status,created_at').eq('status', 'draft').order('created_at', { ascending: false }).limit(20).then(r => r.data || []).catch(() => []),
+        supabase.from('social_posts_queue').select('id,scheduled_for,topic_type,caption,hashtags,image_prompt,status').eq('status', 'draft').order('scheduled_for', { ascending: true }).limit(20).then(r => r.data || []).catch(() => []),
+        supabase.from('ai_insights').select('id,type,recommendation,agent_name,question,created_at,acknowledged_at').is('acknowledged_at', null).order('created_at', { ascending: false }).limit(15).then(r => r.data || []).catch(() => []),
+      ]);
+
+      const items = [
+        ...drafts.map(d => ({ kind: 'content-draft', id: d.id, title: d.title, summary: (d.meta_description || '').slice(0, 200), type: d.type, created_at: d.created_at })),
+        ...posts.map(p => ({ kind: 'social-post', id: p.id, title: `${p.topic_type} · ${p.scheduled_for}`, summary: p.caption.slice(0, 200), caption: p.caption, hashtags: p.hashtags, image_prompt: p.image_prompt, scheduled_for: p.scheduled_for, created_at: p.scheduled_for })),
+        ...insights.map(i => ({ kind: 'ai-insight', id: i.id, title: i.type === 'direct-ask' ? `Antwort von ${i.agent_name}: ${i.question?.slice(0, 60)}` : (i.type || 'Insight'), summary: i.recommendation.replace(/<[^>]+>/g, '').slice(0, 250), recommendation: i.recommendation, agent_name: i.agent_name, type: i.type, created_at: i.created_at })),
+      ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+      return res.status(200).json({
+        items,
+        counts: { drafts: drafts.length, posts: posts.length, insights: insights.length, total: items.length },
+      });
+    }
+
+    // ─── INBOX-ACTION: approve/reject/edit/acknowledge ───
+    if (section === 'inbox-action' && req.method === 'POST') {
+      const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+      const { kind, id, action, payload } = body;
+      if (!kind || !id || !action) return res.status(400).json({ error: 'kind+id+action required' });
+
+      try {
+        if (kind === 'content-draft') {
+          const newStatus = action === 'approve' ? 'approved' : (action === 'reject' ? 'rejected' : null);
+          if (action === 'edit' && payload) {
+            await supabase.from('content_drafts').update({ ...payload, updated_at: new Date().toISOString() }).eq('id', id);
+          } else if (newStatus) {
+            await supabase.from('content_drafts').update({ status: newStatus, updated_at: new Date().toISOString() }).eq('id', id);
+          }
+        } else if (kind === 'social-post') {
+          if (action === 'approve' || action === 'mark-posted') {
+            await supabase.from('social_posts_queue').update({ status: 'posted', posted_at: new Date().toISOString(), posted_by: 'manual' }).eq('id', id);
+          } else if (action === 'reject' || action === 'skip') {
+            await supabase.from('social_posts_queue').update({ status: 'skipped' }).eq('id', id);
+          } else if (action === 'edit' && payload) {
+            await supabase.from('social_posts_queue').update(payload).eq('id', id);
+          }
+        } else if (kind === 'ai-insight') {
+          // Acknowledge = wegklicken (nicht löschen, aber aus Inbox raus)
+          await supabase.from('ai_insights').update({ acknowledged_at: new Date().toISOString() }).eq('id', id);
+        }
+        return res.status(200).json({ ok: true });
+      } catch (err) {
+        return res.status(500).json({ error: err.message });
+      }
+    }
+
+    // ─── DIRECT-ASK: User stellt Live-Frage an einen Agent ───
+    if (section === 'direct-ask' && req.method === 'POST') {
+      if (!process.env.ANTHROPIC_API_KEY) return res.status(500).json({ error: 'ANTHROPIC_API_KEY missing' });
+      const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+      const { agent, question } = body;
+      if (!agent || !question) return res.status(400).json({ error: 'agent + question required' });
+
+      const AGENT_PROMPTS = require('./_agent-prompts.js');
+      const systemPrompt = AGENT_PROMPTS[agent];
+      if (!systemPrompt) return res.status(404).json({ error: `Agent '${agent}' nicht verfuegbar` });
+
+      // Inter-Agent: letzte 5 Insights als Cross-Context
+      const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
+      const { data: recent } = await supabase.from('ai_insights')
+        .select('type, recommendation, created_at')
+        .gte('created_at', sevenDaysAgo)
+        .neq('type', 'direct-ask')
+        .order('created_at', { ascending: false })
+        .limit(3);
+
+      const crossContext = (recent || []).length > 0
+        ? `\n\n# Aktueller System-Kontext (andere Agent-Insights letzte 7 Tage):\n${recent.map(r => `- ${r.type}: ${r.recommendation.replace(/<[^>]+>/g, '').slice(0, 300)}`).join('\n')}`
+        : '';
+
+      try {
+        const r = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': process.env.ANTHROPIC_API_KEY,
+            'anthropic-version': '2023-06-01',
+          },
+          body: JSON.stringify({
+            model: 'claude-haiku-4-5-20251001',
+            max_tokens: 2500,
+            system: systemPrompt + crossContext,
+            messages: [{ role: 'user', content: question }],
+          }),
+        });
+        if (!r.ok) throw new Error(`Anthropic ${r.status}: ${(await r.text()).slice(0, 200)}`);
+        const data = await r.json();
+        const answer = data.content?.[0]?.text || '';
+
+        // In ai_insights speichern (so dass es auch in Inbox erscheint)
+        await supabase.from('ai_insights').insert({
+          type: 'direct-ask',
+          agent_name: agent,
+          question,
+          recommendation: answer,
+        });
+
+        return res.status(200).json({ ok: true, answer, agent });
+      } catch (err) {
+        return res.status(500).json({ error: err.message });
+      }
+    }
+
+    // ─── UPDATE-TRAILER-DATES: TÜV/Wartung pro Anhänger setzen ───
+    if (section === 'update-trailer-dates' && req.method === 'POST') {
+      const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+      const { trailer_id, next_tuev_date, next_maintenance_date } = body;
+      if (!trailer_id) return res.status(400).json({ error: 'trailer_id required' });
+
+      const updates = {};
+      if (next_tuev_date !== undefined) updates.next_tuev_date = next_tuev_date || null;
+      if (next_maintenance_date !== undefined) updates.next_maintenance_date = next_maintenance_date || null;
+
+      const { error } = await supabase.from('trailers').update(updates).eq('id', trailer_id);
+      if (error) return res.status(500).json({ error: error.message });
+      return res.status(200).json({ ok: true });
+    }
+
+    // ─── TRAILERS: Liste mit TÜV/Wartung-Daten ───
+    if (section === 'trailers') {
+      const { data } = await supabase.from('trailers').select('id, name, type, is_available, next_tuev_date, next_maintenance_date');
+      return res.status(200).json({ trailers: data || [] });
+    }
+
     if (section === 'heartbeats') {
       // Live-Visitor-Count aus live_sessions (last_seen < 60s ago)
       const cutoff = new Date(Date.now() - 60000).toISOString();

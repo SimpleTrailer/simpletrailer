@@ -11,10 +11,9 @@
  * Bei keiner: einfach OK zurück.
  */
 const { createClient } = require('@supabase/supabase-js');
-const { Resend } = require('resend');
+const { pushLion } = require('./_lion-push.js');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
-const resend   = new Resend(process.env.RESEND_API_KEY);
 
 module.exports = async (req, res) => {
   // Auth via Vercel-Cron-Header oder manuelles Token
@@ -92,31 +91,25 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Wenn Anomalien: Email an info@
+    // Wenn Anomalien: pushLion() (Subject-Prefix [ST-Alert] für Mail-Filter)
     if (anomalies.length > 0) {
-      const html = `<!DOCTYPE html><html><body style="font-family:system-ui;background:#0D0D0D;color:#fff;margin:0;padding:0;">
-        <div style="max-width:600px;margin:0 auto;padding:32px 20px;">
-          <h1 style="font-size:1.4rem;margin:0 0 8px;">⚠️ SimpleTrailer Anomalie-Alert</h1>
-          <p style="color:#888;font-size:.9rem;margin:0 0 24px;">${new Date().toLocaleString('de-DE',{timeZone:'Europe/Berlin'})} Uhr</p>
-          ${anomalies.map(a => `
-            <div style="background:#1a0a0a;border-left:3px solid ${a.severity==='red'?'#ef4444':'#f59e0b'};border-radius:6px;padding:14px 18px;margin-bottom:14px;">
-              <h3 style="margin:0 0 6px;font-size:.95rem;">${a.severity==='red'?'🔴':'🟡'} ${a.title}</h3>
-              <p style="margin:0 0 8px;color:#aaa;font-size:.85rem;">${a.detail}</p>
-              ${a.list ? `<pre style="background:#0a0a0a;padding:10px;border-radius:6px;font-size:.78rem;color:#bbb;white-space:pre-wrap;margin:8px 0 0;">${a.list}</pre>` : ''}
-            </div>
-          `).join('')}
-          <p style="font-size:.78rem;color:#666;margin:24px 0 0;text-align:center;">
-            Cockpit: <a href="https://simpletrailer.de/admin" style="color:#E85D00;">simpletrailer.de/admin</a>
-          </p>
-        </div>
-      </body></html>`;
+      const hasRed = anomalies.some(a => a.severity === 'red');
+      const htmlBody = `
+        <p style="color:#888;font-size:.85rem;margin:0 0 16px;">${new Date().toLocaleString('de-DE',{timeZone:'Europe/Berlin'})} Uhr</p>
+        ${anomalies.map(a => `
+          <div style="background:#1a0a0a;border-left:3px solid ${a.severity==='red'?'#ef4444':'#f59e0b'};border-radius:6px;padding:14px 18px;margin-bottom:14px;">
+            <h3 style="margin:0 0 6px;font-size:.95rem;">${a.severity==='red'?'🔴':'🟡'} ${a.title}</h3>
+            <p style="margin:0 0 8px;color:#aaa;font-size:.85rem;">${a.detail}</p>
+            ${a.list ? `<pre style="background:#0a0a0a;padding:10px;border-radius:6px;font-size:.78rem;color:#bbb;white-space:pre-wrap;margin:8px 0 0;">${a.list}</pre>` : ''}
+          </div>
+        `).join('')}`;
 
-      await resend.emails.send({
-        from: 'SimpleTrailer Alert <buchung@simpletrailer.de>',
-        reply_to: 'info@simpletrailer.de',
-        to: 'info@simpletrailer.de',
-        subject: `⚠️ ${anomalies.length} Anomalie${anomalies.length>1?'n':''} erkannt — SimpleTrailer`,
-        html
+      await pushLion({
+        severity: hasRed ? 'red' : 'yellow',
+        category: 'alert',
+        title: `${anomalies.length} Anomalie${anomalies.length>1?'n':''} erkannt`,
+        htmlBody,
+        link: 'https://simpletrailer.de/admin',
       });
     }
 

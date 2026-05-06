@@ -116,7 +116,7 @@ Nutze die passenden Skills/Agents je nach Aufgaben-Typ — nicht alles selbst ma
 | **Web-Recherche** (aktuelle Preise, Produkt-Vergleiche, neue APIs) | **WebSearch** + **WebFetch** |
 | **Status-Übersicht / Backlog-Update** | **Plan-Mode** mit Plan-File-Update |
 
-### 🤖 SimpleTrailer-eigener AI-Stab (in `.claude/agents/`) — 9 Agents
+### 🤖 SimpleTrailer-eigener AI-Stab (in `.claude/agents/`) — 10 Agents
 
 Diese 9 spezialisierten Agents sind exakt auf SimpleTrailer trainiert. Nutze sie statt Allgemein-Claude für die jeweiligen Domänen:
 
@@ -139,6 +139,7 @@ Diese 9 spezialisierten Agents sind exakt auf SimpleTrailer trainiert. Nutze sie
 |---|---|---|
 | **consultant** | Strategische Fragen, Wachstum, Conversion-Analyse | Priorisierte Empfehlungen (Aufwand × Effekt). Cron generiert wöchentlich |
 | **competitor-watcher** | Konkurrenz-Beobachtung Bremen | Preis-Vergleich, Marketing-Hooks, neue Anbieter-Alerts. Cron monatlich |
+| **budget-optimizer** | Werbe-Budget-Empfehlung (Google/Meta) basierend auf Daten | Multi-Agent-Chain (consultant→budget-optimizer). Cron So 21:00 Berlin |
 | **mobile-app-architect** | Apple/Google Submission, App-Store-Themen, Native Plugins, Capacitor | Submission-Checklisten, Rejection-Antworten, Native-Code |
 
 **Aufruf:** `Agent({ subagent_type: "<name>", description: "...", prompt: "..." })`
