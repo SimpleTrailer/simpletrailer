@@ -374,6 +374,34 @@ module.exports = async (req, res) => {
       return res.status(200).json({ trailers: data || [] });
     }
 
+    if (section === 'trailer-positions') {
+      // Live-Positionen aller Trailer + Sync-State + offene Theft-Alerts
+      const { data: trailers } = await supabase
+        .from('trailers')
+        .select('id, name, tracker_imei, last_lat, last_lng, last_seen_at, last_speed_kmh, last_battery_percent, is_moving');
+      const { data: syncState } = await supabase
+        .from('tracker_sync_state').select('*').eq('id', 1).maybeSingle();
+      const { data: theftAlerts } = await supabase
+        .from('theft_alerts').select('*').eq('status', 'open')
+        .order('triggered_at', { ascending: false }).limit(10);
+      return res.status(200).json({
+        trailers: trailers || [],
+        sync_state: syncState || null,
+        open_theft_alerts: theftAlerts || [],
+      });
+    }
+
+    if (section === 'resolve-theft-alert' && req.method === 'POST') {
+      const { alert_id, new_status, notes } = body;
+      if (!alert_id || !['false_alarm', 'resolved', 'investigating'].includes(new_status)) {
+        return res.status(400).json({ error: 'alert_id + new_status required' });
+      }
+      await supabase.from('theft_alerts')
+        .update({ status: new_status, notes: notes || null })
+        .eq('id', alert_id);
+      return res.status(200).json({ ok: true });
+    }
+
     if (section === 'heartbeats') {
       // Live-Visitor-Count aus live_sessions (last_seen < 60s ago)
       const cutoff = new Date(Date.now() - 60000).toISOString();

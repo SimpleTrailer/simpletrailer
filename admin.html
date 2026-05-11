@@ -6,6 +6,8 @@
   <link rel="apple-touch-icon" href="/logo-icon.png?v=5" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin – SimpleTrailer</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
   <script src="/analytics.js?v=11" defer></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -277,6 +279,21 @@
             <span style="font-size:.7rem;color:#666;margin-left:auto;">consultant-Agent</span>
           </div>
           <div id="cpAiInsight" style="font-size:.92rem;line-height:1.6;color:#ddd;">Noch keine Empfehlung — der consultant analysiert Sonntag-Abend zum ersten Mal.</div>
+        </div>
+
+        <!-- 📍 LIVE-TRACKER (Teltonika TAT240 via Traccar) -->
+        <div id="cpTrackerBox" style="background:#0f0f0f;border:1px solid var(--border);border-radius:14px;padding:18px 22px;margin-bottom:18px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+            <span style="font-size:1.1rem;">📍</span>
+            <strong style="font-size:.85rem;letter-spacing:.05em;text-transform:uppercase;color:var(--gray);">Live-Anhänger-Standorte</strong>
+            <span id="cpTrackerSyncState" style="margin-left:auto;font-size:.72rem;color:var(--gray);">–</span>
+          </div>
+          <div id="cpTheftAlertsBar" style="display:none;background:linear-gradient(135deg,#1f0a0a,#1a1a1a);border:1.5px solid #ef4444;border-radius:10px;padding:12px 16px;margin-bottom:12px;"></div>
+          <div id="cpTrackerMap" style="height:340px;border-radius:10px;background:#0d0d0d;border:1px solid var(--border);"></div>
+          <div id="cpTrackerList" style="margin-top:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;"></div>
+          <div id="cpTrackerHint" style="display:none;margin-top:12px;padding:12px;background:#1a1410;border-left:3px solid var(--orange);border-radius:6px;font-size:.82rem;color:#bbb;">
+            ⚠️ Noch keine Tracker konfiguriert. Siehe <a href="/GPS-SETUP.md" style="color:var(--orange);">GPS-SETUP.md</a> für Schritt-für-Schritt-Anleitung.
+          </div>
         </div>
 
         <!-- LINK ZU AI-STAB + STATISTIKEN -->
@@ -1334,6 +1351,134 @@
       const agoLabel = ago === 0 ? 'heute' : ago === 1 ? 'gestern' : `vor ${ago} Tagen`;
       document.getElementById('cpAiInsight').innerHTML = `<div style="margin-bottom:8px;font-size:.72rem;color:var(--gray);text-transform:uppercase;letter-spacing:.05em;">${agoLabel}</div>${d.aiInsight.recommendation}`;
     }
+
+    // Live-Tracker-Karte (Standorte)
+    loadTrackerMap();
+  }
+
+  /* ── LIVE-TRACKER-KARTE ──────────────────────────────────── */
+  let trackerMap = null;
+  const trackerMarkers = {};
+
+  async function loadTrackerMap() {
+    try {
+      const r = await fetch('/api/admin?section=trailer-positions', { headers: { Authorization: `Bearer ${authToken}` } });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Fehler');
+
+      const trailers = d.trailers || [];
+      const sync = d.sync_state || {};
+      const alerts = d.open_theft_alerts || [];
+
+      // Sync-Status oben rechts
+      const syncEl = document.getElementById('cpTrackerSyncState');
+      if (sync.last_sync_at) {
+        const ago = Math.floor((Date.now() - new Date(sync.last_sync_at).getTime()) / 1000);
+        const agoLabel = ago < 60 ? `${ago}s` : ago < 3600 ? `${Math.floor(ago/60)}m` : `${Math.floor(ago/3600)}h`;
+        syncEl.textContent = sync.last_sync_ok ? `Letzter Sync vor ${agoLabel}` : `⚠ Sync-Fehler vor ${agoLabel}`;
+        syncEl.style.color = sync.last_sync_ok ? 'var(--gray)' : '#ef4444';
+      } else {
+        syncEl.textContent = 'Noch nie synchronisiert';
+      }
+
+      // Theft-Alerts oben prominent
+      const alertBar = document.getElementById('cpTheftAlertsBar');
+      if (alerts.length > 0) {
+        alertBar.style.display = 'block';
+        alertBar.innerHTML = `<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+          <span style="font-size:1.2rem;">🚨</span>
+          <strong style="color:#ef4444;">DIEBSTAHL-ALARM${alerts.length>1?'E':''} — ${alerts.length} offen</strong>
+        </div>` + alerts.map(a => {
+          const tn = trailers.find(t => t.id === a.trailer_id)?.name || 'Unbekannt';
+          const mapsLink = `https://www.google.com/maps?q=${a.current_lat},${a.current_lng}`;
+          return `<div style="background:#0d0d0d;border-radius:6px;padding:10px 14px;margin-bottom:6px;font-size:.82rem;">
+            <strong>${tn}</strong> · ${a.distance_meters}m entfernt · <a href="${mapsLink}" target="_blank" style="color:#60a5fa;">→ Maps</a>
+            <span style="float:right;display:flex;gap:6px;">
+              <button onclick="resolveTheftAlert(${a.id},'false_alarm')" style="background:#1a1a1a;color:#bbb;border:1px solid var(--border);padding:3px 8px;border-radius:4px;font-size:.7rem;cursor:pointer;">Fehlalarm</button>
+              <button onclick="resolveTheftAlert(${a.id},'investigating')" style="background:#1f1606;color:#f59e0b;border:1px solid #f59e0b;padding:3px 8px;border-radius:4px;font-size:.7rem;cursor:pointer;">Untersuche</button>
+              <button onclick="resolveTheftAlert(${a.id},'resolved')" style="background:#0a1f0a;color:#4ade80;border:1px solid #4ade80;padding:3px 8px;border-radius:4px;font-size:.7rem;cursor:pointer;">Erledigt</button>
+            </span>
+          </div>`;
+        }).join('');
+      } else {
+        alertBar.style.display = 'none';
+      }
+
+      const withGps = trailers.filter(t => t.last_lat && t.last_lng);
+      const noTracker = !trailers.some(t => t.tracker_imei);
+
+      // Hint anzeigen falls noch kein IMEI gepflegt
+      document.getElementById('cpTrackerHint').style.display = noTracker ? 'block' : 'none';
+
+      // Karte initialisieren (falls noch nicht)
+      if (!trackerMap && typeof L !== 'undefined') {
+        trackerMap = L.map('cpTrackerMap', { zoomControl: true }).setView([53.0793, 8.8017], 11);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', {
+          attribution: '© OSM © CARTO', maxZoom: 19, subdomains: 'abcd',
+        }).addTo(trackerMap);
+      }
+
+      // Marker updaten
+      if (trackerMap) {
+        Object.keys(trackerMarkers).forEach(id => {
+          if (!withGps.find(t => t.id === id)) {
+            trackerMap.removeLayer(trackerMarkers[id]);
+            delete trackerMarkers[id];
+          }
+        });
+        const bounds = [];
+        withGps.forEach(t => {
+          const ll = [parseFloat(t.last_lat), parseFloat(t.last_lng)];
+          bounds.push(ll);
+          const color = t.is_moving ? '#ef4444' : '#4ade80';
+          const minsAgo = t.last_seen_at ? Math.floor((Date.now() - new Date(t.last_seen_at).getTime()) / 60000) : null;
+          const popup = `<div style="color:#000;font-family:Inter,sans-serif;">
+            <strong>${t.name}</strong><br>
+            ${t.is_moving ? `🚗 fährt (${t.last_speed_kmh||0} km/h)` : '🅿️ steht'}<br>
+            Akku: ${t.last_battery_percent != null ? t.last_battery_percent+'%' : '—'}<br>
+            ${minsAgo != null ? `Vor ${minsAgo} Min gesehen` : ''}
+          </div>`;
+          if (trackerMarkers[t.id]) {
+            trackerMarkers[t.id].setLatLng(ll).setPopupContent(popup);
+          } else {
+            const icon = L.divIcon({
+              html: `<div style="width:18px;height:18px;background:${color};border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 2px ${color}66;"></div>`,
+              className: '', iconSize: [18, 18], iconAnchor: [9, 9],
+            });
+            trackerMarkers[t.id] = L.marker(ll, { icon }).bindPopup(popup).addTo(trackerMap);
+          }
+        });
+        if (bounds.length === 1) trackerMap.setView(bounds[0], 14);
+        else if (bounds.length > 1) trackerMap.fitBounds(bounds, { padding: [40, 40] });
+      }
+
+      // Karten-Liste unten
+      document.getElementById('cpTrackerList').innerHTML = trailers.map(t => {
+        const hasGps = t.last_lat && t.last_lng;
+        const minsAgo = t.last_seen_at ? Math.floor((Date.now() - new Date(t.last_seen_at).getTime()) / 60000) : null;
+        const statusColor = !t.tracker_imei ? '#666' : hasGps ? (t.is_moving ? '#ef4444' : '#4ade80') : '#f59e0b';
+        const statusText = !t.tracker_imei ? 'Kein Tracker' : !hasGps ? 'Wartet auf 1. Position' : t.is_moving ? `Fährt (${t.last_speed_kmh||0} km/h)` : 'Steht';
+        return `<div style="background:#1a1a1a;border:1px solid var(--border);border-left:3px solid ${statusColor};border-radius:8px;padding:10px 14px;">
+          <div style="font-size:.85rem;font-weight:600;margin-bottom:4px;">${t.name}</div>
+          <div style="font-size:.72rem;color:${statusColor};">● ${statusText}</div>
+          ${hasGps ? `<div style="font-size:.7rem;color:var(--gray);margin-top:3px;">Vor ${minsAgo}m · Akku ${t.last_battery_percent != null ? t.last_battery_percent+'%' : '—'}</div>` : ''}
+        </div>`;
+      }).join('');
+    } catch (e) {
+      console.warn('Tracker-Map-Fehler:', e);
+    }
+  }
+
+  async function resolveTheftAlert(alertId, newStatus) {
+    if (newStatus === 'false_alarm' && !confirm('Wirklich als Fehlalarm markieren?')) return;
+    try {
+      await fetch('/api/admin?section=resolve-theft-alert', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
+        body: JSON.stringify({ alert_id: alertId, new_status: newStatus }),
+      });
+      loadTrackerMap();
+    } catch (e) { alert('Fehler: ' + e.message); }
   }
 
   /* ── DATA ─────────────────────────────────────────────── */

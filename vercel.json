@@ -67,6 +67,10 @@
     {
       "path": "/api/cron/budget-optimizer",
       "schedule": "0 19 * * 0"
+    },
+    {
+      "path": "/api/cron/sync-tracker-positions",
+      "schedule": "* * * * *"
     }
   ],
   "headers": [
