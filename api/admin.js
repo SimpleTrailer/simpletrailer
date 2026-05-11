@@ -391,7 +391,60 @@ module.exports = async (req, res) => {
       });
     }
 
+    if (section === 'calculator-state') {
+      // Lade State des eingeloggten Users + echte Auslastung der letzten 30/90 Tage als Bonus
+      const { data: state } = await supabase
+        .from('admin_calculator_state')
+        .select('state, updated_at')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      // Echte Auslastung: paid bookings letzte 30/90 Tage / (Anzahl Anhänger * Tage)
+      const { data: trailers } = await supabase.from('trailers').select('id');
+      const trailerCount = (trailers || []).length || 1;
+      const sinceLong = new Date(Date.now() - 90 * 86400000).toISOString();
+      const { data: bookings } = await supabase.from('bookings')
+        .select('start_time, end_time, status, created_at')
+        .gte('created_at', sinceLong)
+        .in('status', ['confirmed', 'active', 'returned']);
+
+      const calcAuslastung = (windowDays) => {
+        const since = Date.now() - windowDays * 86400000;
+        let totalRentedHours = 0;
+        (bookings || []).forEach(b => {
+          const start = Math.max(new Date(b.start_time).getTime(), since);
+          const end   = Math.min(new Date(b.end_time).getTime(), Date.now());
+          if (end > start) totalRentedHours += (end - start) / 3600000;
+        });
+        const possibleHours = trailerCount * windowDays * 24;
+        return possibleHours > 0 ? Math.round((totalRentedHours / possibleHours) * 100) : 0;
+      };
+
+      return res.status(200).json({
+        state: (state && state.state) || null,
+        updated_at: state ? state.updated_at : null,
+        real_usage: {
+          last_30d: calcAuslastung(30),
+          last_90d: calcAuslastung(90),
+          trailer_count: trailerCount,
+        },
+      });
+    }
+
+    if (section === 'calculator-state-save' && req.method === 'POST') {
+      const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+      const { state } = body;
+      if (!state || typeof state !== 'object') {
+        return res.status(400).json({ error: 'state required' });
+      }
+      await supabase.from('admin_calculator_state').upsert({
+        user_id: user.id, state, updated_at: new Date().toISOString(),
+      }, { onConflict: 'user_id' });
+      return res.status(200).json({ ok: true });
+    }
+
     if (section === 'resolve-theft-alert' && req.method === 'POST') {
+      const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
       const { alert_id, new_status, notes } = body;
       if (!alert_id || !['false_alarm', 'resolved', 'investigating'].includes(new_status)) {
         return res.status(400).json({ error: 'alert_id + new_status required' });

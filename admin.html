@@ -197,6 +197,10 @@
     </div>
     <style>
       @keyframes livePulse { 0%,100% { transform:scale(1); opacity:1 } 50% { transform:scale(1.4); opacity:.6 } }
+    /* Rechner-Tab: 2-Spalten auf Desktop */
+    @media (min-width: 1024px) {
+      #rechnerColumns { grid-template-columns: 380px 1fr !important; }
+    }
     </style>
 
     <!-- TABS -->
@@ -206,6 +210,7 @@
       <button class="tab-btn" id="tabNutzer" onclick="switchTab('nutzer')">👤 Nutzer</button>
       <button class="tab-btn" id="tabAistab" onclick="switchTab('aistab')">🤖 AI-Stab</button>
       <button class="tab-btn" id="tabStatistiken" onclick="switchTab('statistiken')">📊 Statistiken</button>
+      <button class="tab-btn" id="tabRechner" onclick="switchTab('rechner')">🧮 Rechner</button>
     </div>
 
     <!-- ═══════════════════════════════════════════════ COCKPIT TAB -->
@@ -803,6 +808,150 @@
       </div>
     </div>
 
+    <!-- ═══════════════════════════════════════════════ RECHNER TAB -->
+    <div id="tabContentRechner" style="display:none">
+      <div style="border-bottom:2px solid var(--white);padding-bottom:16px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:end;flex-wrap:wrap;gap:14px;">
+        <div>
+          <div style="font-size:.7rem;color:var(--orange);text-transform:uppercase;letter-spacing:.3em;font-weight:700;margin-bottom:6px;">SimpleTrailer GbR</div>
+          <h1 style="font-size:2.3rem;font-weight:900;line-height:1;margin:0;">Business-Rechner</h1>
+          <p style="font-size:.82rem;color:var(--gray);margin:8px 0 0;">Eingaben werden automatisch gespeichert. <span id="rechnerSavedHint"></span></p>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <span id="rechnerRealUsage" style="font-size:.78rem;color:var(--gray);"></span>
+          <button onclick="resetRechner()" style="background:#1a1a1a;border:1px solid var(--border);color:var(--white);padding:8px 14px;border-radius:8px;font-family:inherit;font-size:.78rem;cursor:pointer;">↺ Zurücksetzen</button>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr;gap:18px;" id="rechnerGrid">
+
+        <!-- HAUPTANZEIGE OBEN -->
+        <section id="rechnerHero" style="padding:24px;border-radius:14px;border:2px solid var(--border);background:#0f0f0f;"></section>
+
+        <!-- ZWEI-SPALTEN UNTEN -->
+        <div style="display:grid;grid-template-columns:1fr;gap:18px;" id="rechnerColumns">
+
+          <!-- LINKE SPALTE: Inputs -->
+          <div style="display:flex;flex-direction:column;gap:14px;" id="rechnerInputs">
+
+            <!-- Hauptstellschrauben -->
+            <section style="background:#0f0f0f;border:1px solid var(--border);border-radius:12px;padding:18px;">
+              <h2 style="font-size:.78rem;color:var(--gray);text-transform:uppercase;letter-spacing:.1em;margin:0 0 14px;border-bottom:1px solid var(--border);padding-bottom:8px;">⚙️ Hauptstellschrauben</h2>
+              <div data-input="anzahlAnhaenger" data-label="Anzahl Anhänger" data-min="1" data-max="100" data-step="1" data-unit=" Stk"></div>
+              <div data-input="auslastung" data-label="Auslastung" data-min="10" data-max="70" data-step="1" data-unit="%" data-hint=""></div>
+              <div data-input="mietPreis" data-label="Mietpreis / Tag brutto" data-min="15" data-max="50" data-step="1" data-unit=" €" data-hint="Bremer Markt: 20–35 €"></div>
+              <div data-input="anschaffung" data-label="Anschaffung pro Anhänger" data-min="400" data-max="3000" data-step="50" data-unit=" €"></div>
+            </section>
+
+            <!-- Finanzierung -->
+            <section style="background:#0f0f0f;border:1px solid var(--border);border-radius:12px;padding:18px;">
+              <h2 style="font-size:.78rem;color:var(--gray);text-transform:uppercase;letter-spacing:.1em;margin:0 0 14px;border-bottom:1px solid var(--border);padding-bottom:8px;">💰 Finanzierung</h2>
+              <div style="display:flex;gap:8px;margin-bottom:14px;">
+                <button id="rechnerCashBtn" onclick="setFinanziert(false)" style="flex:1;background:var(--white);color:var(--bg);border:none;padding:10px;border-radius:8px;font-family:inherit;font-weight:600;font-size:.85rem;cursor:pointer;">Cash</button>
+                <button id="rechnerFinBtn" onclick="setFinanziert(true)" style="flex:1;background:#1a1a1a;color:var(--gray);border:1px solid var(--border);padding:10px;border-radius:8px;font-family:inherit;font-weight:600;font-size:.85rem;cursor:pointer;">Finanziert</button>
+              </div>
+              <div id="rechnerFinanzInputs" style="display:none;">
+                <div data-input="zinssatz" data-label="Zinssatz" data-min="3" data-max="15" data-step="0.5" data-unit="% p.a."></div>
+                <div data-input="laufzeit" data-label="Laufzeit" data-min="12" data-max="84" data-step="6" data-unit=" Mon"></div>
+              </div>
+              <div id="rechnerKapitalHint" style="margin-top:10px;padding:10px 14px;background:#1a1410;border-left:3px solid var(--orange);border-radius:6px;font-size:.78rem;color:#ddd;"></div>
+            </section>
+
+            <!-- Kosten pro Anhänger -->
+            <section style="background:linear-gradient(135deg,#1f1606,#0f0f0f);border:2px solid #3a2410;border-radius:12px;padding:18px;">
+              <h2 style="font-size:.78rem;color:var(--orange);text-transform:uppercase;letter-spacing:.1em;margin:0 0 6px;border-bottom:1px solid #3a2410;padding-bottom:8px;">📦 Kosten pro Anhänger / Monat</h2>
+              <p style="font-size:.72rem;color:var(--gray);margin:0 0 12px;">Skalieren mit Flottengröße</p>
+              <div id="rechnerKapitalRow" style="background:#1f1606;border-left:3px solid var(--orange);padding:10px 12px;border-radius:6px;margin-bottom:12px;font-size:.82rem;display:flex;justify-content:space-between;align-items:center;">
+                <span>🔒 <strong id="rechnerKapitalLabel">Abschreibung (AfA)</strong></span>
+                <span style="font-family:'Courier New',monospace;font-weight:700;" id="rechnerKapitalValue">—</span>
+              </div>
+              <div data-input="versicherung" data-label="Versicherung" data-min="0" data-max="80" data-step="1" data-unit=" €" data-hint="HP+TK gewerblich, ~250 €/Jahr"></div>
+              <div data-input="marketing" data-label="Marketing" data-min="0" data-max="80" data-step="1" data-unit=" €" data-hint="Google Ads etc., pro Anhänger"></div>
+              <div data-input="wartung" data-label="Wartung/Reparatur" data-min="0" data-max="80" data-step="1" data-unit=" €"></div>
+              <div data-input="verschleiss" data-label="Plane/Verschleiß" data-min="0" data-max="80" data-step="1" data-unit=" €"></div>
+              <div data-input="tracker" data-label="Tracker SIM" data-min="0" data-max="50" data-step="1" data-unit=" €"></div>
+              <div data-input="tuev" data-label="TÜV (anteilig)" data-min="0" data-max="50" data-step="1" data-unit=" €"></div>
+              <div data-input="stellplatz" data-label="Stellplatz" data-min="0" data-max="200" data-step="5" data-unit=" €"></div>
+              <div style="margin-top:14px;padding-top:14px;border-top:2px solid #3a2410;display:flex;justify-content:space-between;font-weight:700;color:var(--orange);">
+                <span>Summe / Anhänger</span>
+                <span style="font-family:'Courier New',monospace;" id="rechnerKostenSumme">— €</span>
+              </div>
+            </section>
+
+            <!-- Fixkosten Firma -->
+            <section style="background:#0f0f0f;border:1px solid var(--border);border-radius:12px;padding:18px;">
+              <h2 style="font-size:.78rem;color:var(--gray);text-transform:uppercase;letter-spacing:.1em;margin:0 0 6px;border-bottom:1px solid var(--border);padding-bottom:8px;">🏢 Fixkosten Firma / Monat</h2>
+              <p style="font-size:.72rem;color:var(--gray);margin:0 0 12px;">Unabhängig von Flottengröße</p>
+              <div data-input="steuerberater" data-label="Steuerberater" data-min="0" data-max="500" data-step="5" data-unit=" €"></div>
+              <div data-input="tools" data-label="Tools (Claude, Software)" data-min="0" data-max="500" data-step="5" data-unit=" €"></div>
+              <div data-input="haftpflicht" data-label="Betriebshaftpflicht" data-min="0" data-max="500" data-step="5" data-unit=" €"></div>
+              <div data-input="sonstiges" data-label="IHK + Sonstiges" data-min="0" data-max="500" data-step="5" data-unit=" €"></div>
+              <div style="margin-top:14px;padding-top:14px;border-top:2px solid var(--border);display:flex;justify-content:space-between;font-weight:700;">
+                <span>Summe Fixkosten</span>
+                <span style="font-family:'Courier New',monospace;" id="rechnerFixSumme">— €</span>
+              </div>
+            </section>
+
+            <!-- Steuern & Privat -->
+            <section style="background:#0f0f0f;border:1px solid var(--border);border-radius:12px;padding:18px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:8px;">
+                <h2 style="font-size:.78rem;color:var(--gray);text-transform:uppercase;letter-spacing:.1em;margin:0;">📊 Steuern & Privat</h2>
+                <button onclick="toggleSteuerInfo()" style="background:#1a1a1a;color:var(--gray);border:1px solid var(--border);padding:4px 10px;border-radius:6px;font-size:.7rem;cursor:pointer;">? Info</button>
+              </div>
+              <div id="rechnerSteuerInfo" style="display:none;background:#0d1929;border:1px solid #1e3a5f;border-radius:8px;padding:12px;font-size:.78rem;color:#ccc;margin-bottom:14px;line-height:1.6;">
+                <p style="margin:0 0 8px;"><strong>Was ist der Steuer/KV-Satz?</strong></p>
+                <p style="margin:0 0 8px;">Vom Gewinn (EBIT) gehen ab:</p>
+                <ul style="margin:0 0 8px;padding-left:18px;">
+                  <li><strong>Einkommensteuer</strong> — bei GbR zahlt jeder Gesellschafter persönlich. Bei 25-30k€ Gewinn pro Person: ~12-18% effektiv.</li>
+                  <li><strong>Krankenversicherung</strong> — Selbstständig: freiwillig gesetzlich ~16-17%. Privat oft günstiger.</li>
+                  <li>Solidaritätszuschlag entfällt bei euch (Freibetrag).</li>
+                </ul>
+                <p style="margin:0;"><strong>Faustregel:</strong> 65-75% bleiben netto übrig. Genauen Wert beim Steuerberater erfragen.</p>
+              </div>
+              <div data-input="steuerKvSatz" data-label="Steuer + KV (Abzug vom Gewinn)" data-min="20" data-max="45" data-step="1" data-unit="%" data-hint="Standard: 30%"></div>
+              <div data-input="nettoProPerson" data-label="Netto-Bedarf pro Person / Monat" data-min="1200" data-max="4000" data-step="100" data-unit=" €"></div>
+            </section>
+          </div>
+
+          <!-- RECHTE SPALTE: Output -->
+          <div style="display:flex;flex-direction:column;gap:14px;" id="rechnerOutput">
+
+            <!-- Monats-GuV -->
+            <section style="background:#0f0f0f;border:1px solid var(--border);border-radius:12px;padding:18px;">
+              <h2 style="font-size:.78rem;color:var(--gray);text-transform:uppercase;letter-spacing:.1em;margin:0 0 14px;border-bottom:1px solid var(--border);padding-bottom:8px;">📈 Monats-GuV · <span id="rechnerGuvCount">– Anhänger</span></h2>
+              <table style="width:100%;font-size:.88rem;border-collapse:collapse;" id="rechnerGuvTable"></table>
+            </section>
+
+            <!-- Pro Anhänger -->
+            <section style="background:#0f0f0f;border:1px solid var(--border);border-radius:12px;padding:18px;">
+              <h2 style="font-size:.78rem;color:var(--gray);text-transform:uppercase;letter-spacing:.1em;margin:0 0 14px;border-bottom:1px solid var(--border);padding-bottom:8px;">📊 Pro Anhänger / Monat</h2>
+              <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;" id="rechnerProAnh"></div>
+            </section>
+
+            <!-- Jahres-Hochrechnung -->
+            <section style="background:linear-gradient(135deg,#0f0f0f,#0a0a0a);border:1px solid var(--orange);border-radius:12px;padding:18px;">
+              <h2 style="font-size:.78rem;color:var(--orange);text-transform:uppercase;letter-spacing:.1em;margin:0 0 14px;">📅 Jahres-Hochrechnung</h2>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;" id="rechnerJahres"></div>
+            </section>
+
+            <!-- Schnell-Szenarien -->
+            <section style="background:linear-gradient(135deg,#1a1410,#0f0f0f);border:1px solid #3a2410;border-radius:12px;padding:18px;">
+              <h2 style="font-size:.78rem;color:var(--orange);text-transform:uppercase;letter-spacing:.1em;margin:0 0 14px;">⚡ Schnell-Szenarien</h2>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;">
+                <button onclick="setScenario(2,20,25)" style="background:#1a1a1a;border:1px solid var(--border);color:var(--white);padding:12px;border-radius:8px;font-family:inherit;font-size:.78rem;cursor:pointer;">Heute (2)</button>
+                <button onclick="setScenario(15,30,28)" style="background:#1a1a1a;border:1px solid var(--border);color:var(--white);padding:12px;border-radius:8px;font-family:inherit;font-size:.78rem;cursor:pointer;">Phase 1 (15)</button>
+                <button onclick="setScenario(30,33,30)" style="background:#1a1a1a;border:1px solid var(--border);color:var(--white);padding:12px;border-radius:8px;font-family:inherit;font-size:.78rem;cursor:pointer;">Phase 2 (30)</button>
+                <button onclick="setScenario(50,40,32)" style="background:#1a1a1a;border:1px solid var(--border);color:var(--white);padding:12px;border-radius:8px;font-family:inherit;font-size:.78rem;cursor:pointer;">Ziel (50)</button>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:24px;padding-top:14px;border-top:1px solid var(--border);font-size:.72rem;color:var(--gray);">
+        <strong>Annahmen:</strong> 30,4 Tage/Monat · MwSt 19% · GbR-Steuer/KV pauschal · Marketing & Versicherung skalieren linear pro Anhänger. Eingaben bleiben gespeichert.
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -1002,7 +1151,7 @@
   /* ── TABS ─────────────────────────────────────────────── */
   function switchTab(tab) {
     currentTab = tab;
-    ['cockpit','buchungen','nutzer','aistab','statistiken'].forEach(t => {
+    ['cockpit','buchungen','nutzer','aistab','statistiken','rechner'].forEach(t => {
       const cap = t.charAt(0).toUpperCase() + t.slice(1);
       const contentEl = document.getElementById('tabContent' + cap);
       const buttonEl  = document.getElementById('tab' + cap);
@@ -1013,6 +1162,7 @@
     if (tab === 'statistiken') renderStatistiken();
     if (tab === 'cockpit') loadCockpit();
     if (tab === 'aistab') { loadAiInbox(); loadAgentConversation(); loadBremenWatcher(); }
+    if (tab === 'rechner') loadRechner();
   }
 
   /* ── AI-INBOX ─────────────────────────────────────────── */
@@ -2048,6 +2198,300 @@
   function closeModal(e) {
     if (e.target === document.getElementById('modalBg'))
       document.getElementById('modalBg').classList.remove('open');
+  }
+
+  /* ══════════════════════════════════════════════════════════════════
+   *   BUSINESS-RECHNER (Tab 6)
+   * ════════════════════════════════════════════════════════════════ */
+
+  const RECHNER_DEFAULTS = {
+    anzahlAnhaenger: 20, auslastung: 30, mietPreis: 28, anschaffung: 700,
+    finanziert: false, zinssatz: 8, laufzeit: 48,
+    versicherung: 21, wartung: 13, tuev: 3, tracker: 5, verschleiss: 8,
+    marketing: 10, stellplatz: 0,
+    steuerberater: 125, tools: 80, haftpflicht: 33, sonstiges: 60,
+    steuerKvSatz: 30, nettoProPerson: 1800,
+  };
+
+  let rechnerState = { ...RECHNER_DEFAULTS };
+  let rechnerLoaded = false;
+  let rechnerSaveTimer = null;
+  let rechnerRealUsage = null;
+
+  const fmtNum = (n) => new Intl.NumberFormat('de-DE', { maximumFractionDigits: 0 }).format(Math.round(n || 0));
+  const fmtSign = (n) => (n >= 0 ? '+' : '') + fmtNum(n);
+
+  async function loadRechner() {
+    try {
+      const r = await fetch('/api/admin?section=calculator-state', { headers: { Authorization: `Bearer ${authToken}` } });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Fehler');
+      rechnerState = { ...RECHNER_DEFAULTS, ...(d.state || {}) };
+      rechnerRealUsage = d.real_usage || null;
+      renderRechnerInputs();
+      renderRechner();
+      rechnerLoaded = true;
+    } catch (e) {
+      console.warn('Rechner-Load-Fehler:', e);
+      rechnerState = { ...RECHNER_DEFAULTS };
+      renderRechnerInputs();
+      renderRechner();
+      rechnerLoaded = true;
+    }
+  }
+
+  function renderRechnerInputs() {
+    // Alle <div data-input="..."> mit Slider+Number-Input ausfüllen
+    document.querySelectorAll('#tabContentRechner [data-input]').forEach(el => {
+      const key  = el.dataset.input;
+      const lbl  = el.dataset.label || key;
+      const min  = parseFloat(el.dataset.min);
+      const max  = parseFloat(el.dataset.max);
+      const step = parseFloat(el.dataset.step) || 1;
+      const unit = el.dataset.unit || '';
+      const hint = el.dataset.hint || '';
+      const val  = rechnerState[key] ?? 0;
+      const sliderVal = Math.max(min, Math.min(max, val));
+      el.innerHTML = `
+        <div style="margin-bottom:14px;">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;">
+            <label style="font-size:.7rem;color:var(--gray);text-transform:uppercase;letter-spacing:.05em;font-weight:600;">${lbl}</label>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <input type="number" data-input-num="${key}" value="${val}" step="${step}"
+                     style="width:80px;background:#1a1a1a;color:#fff;border:1px solid var(--border);border-radius:6px;padding:4px 8px;text-align:right;font-family:'Courier New',monospace;font-size:.85rem;font-weight:700;">
+              <span style="font-size:.7rem;color:var(--gray);min-width:30px;">${unit.trim()}</span>
+            </div>
+          </div>
+          <input type="range" data-input-slider="${key}" min="${min}" max="${max}" step="${step}" value="${sliderVal}"
+                 style="width:100%;accent-color:var(--orange);">
+          ${hint ? `<div style="font-size:.68rem;color:var(--gray);margin-top:3px;">${hint}</div>` : ''}
+        </div>
+      `;
+
+      const numEl    = el.querySelector(`[data-input-num="${key}"]`);
+      const sliderEl = el.querySelector(`[data-input-slider="${key}"]`);
+
+      sliderEl.addEventListener('input', (e) => {
+        const v = parseFloat(e.target.value);
+        rechnerState[key] = v;
+        numEl.value = v;
+        updateRechner();
+      });
+      numEl.addEventListener('input', (e) => {
+        const v = parseFloat(e.target.value) || 0;
+        rechnerState[key] = v;
+        // Slider nur clamp aktualisieren
+        sliderEl.value = Math.max(parseFloat(sliderEl.min), Math.min(parseFloat(sliderEl.max), v));
+        updateRechner();
+      });
+    });
+
+    // Echt-Auslastung Hinweis
+    if (rechnerRealUsage) {
+      document.getElementById('rechnerRealUsage').innerHTML =
+        `📊 Echte Auslastung: <strong style="color:var(--white)">${rechnerRealUsage.last_30d}%</strong> (30d) · ${rechnerRealUsage.last_90d}% (90d) · ${rechnerRealUsage.trailer_count} Anhänger`;
+    }
+  }
+
+  function computeRechner() {
+    const s = rechnerState;
+    const tageProMonat = 30.4 * (s.auslastung / 100);
+    const umsatzBruttoProAnh = tageProMonat * s.mietPreis;
+    const umsatzNettoProAnh  = umsatzBruttoProAnh / 1.19;
+
+    let kapitalkosten;
+    if (s.finanziert) {
+      const m = s.zinssatz / 100 / 12;
+      kapitalkosten = (s.anschaffung * m) / (1 - Math.pow(1 + m, -s.laufzeit));
+    } else {
+      kapitalkosten = s.anschaffung / 60;
+    }
+
+    const direktKostenProAnh = s.versicherung + s.wartung + s.tuev + s.tracker
+      + s.verschleiss + s.marketing + s.stellplatz + kapitalkosten;
+    const dbProAnh = umsatzNettoProAnh - direktKostenProAnh;
+
+    const umsatzBruttoMonat = umsatzBruttoProAnh * s.anzahlAnhaenger;
+    const umsatzNettoMonat  = umsatzNettoProAnh  * s.anzahlAnhaenger;
+    const direktKostenMonat = direktKostenProAnh * s.anzahlAnhaenger;
+    const dbMonat = dbProAnh * s.anzahlAnhaenger;
+    const fixkostenMonat = s.steuerberater + s.tools + s.haftpflicht + s.sonstiges;
+    const ebitMonat = dbMonat - fixkostenMonat;
+    const steuerKvAbzug = ebitMonat * (s.steuerKvSatz / 100);
+    const nettoBeideMonat = ebitMonat - steuerKvAbzug;
+    const nettoProPersonMonat = nettoBeideMonat / 2;
+    const bedarfBeide = s.nettoProPerson * 2;
+    const ueberschussNetto = nettoBeideMonat - bedarfBeide;
+
+    const benoetigterDbProMonat = bedarfBeide / (1 - s.steuerKvSatz / 100) + fixkostenMonat;
+    const benoetigteAnhaenger = dbProAnh > 0 ? benoetigterDbProMonat / dbProAnh : Infinity;
+
+    // 3-Wege-Lösung (statt nur Anhänger): wie viel mehr Auslastung ODER mehr Preis ODER mehr Anzahl?
+    let altPreis = null, altAuslastung = null;
+    if (ueberschussNetto < 0 && dbProAnh > 0) {
+      // Mehr Mietpreis: löse umsatzNetto-Differenz auf
+      const fehlbetragVorSteuern = -ueberschussNetto / (1 - s.steuerKvSatz / 100);
+      const fehlbetragProAnhProMonat = fehlbetragVorSteuern / s.anzahlAnhaenger;
+      const fehlbetragProTagBrutto = (fehlbetragProAnhProMonat / tageProMonat) * 1.19;
+      altPreis = s.mietPreis + fehlbetragProTagBrutto;
+
+      // Mehr Auslastung: aus DB pro Anhänger ableiten
+      const benoetigteTage = tageProMonat + (fehlbetragProAnhProMonat / (s.mietPreis / 1.19));
+      altAuslastung = (benoetigteTage / 30.4) * 100;
+    }
+
+    return {
+      tageProMonat, umsatzBruttoProAnh, umsatzNettoProAnh, kapitalkosten,
+      direktKostenProAnh, dbProAnh,
+      umsatzBruttoMonat, umsatzNettoMonat, direktKostenMonat, dbMonat,
+      fixkostenMonat, ebitMonat, steuerKvAbzug, nettoBeideMonat, nettoProPersonMonat,
+      bedarfBeide, ueberschussNetto,
+      gesamtInvest: s.anschaffung * s.anzahlAnhaenger,
+      benoetigteAnhaenger,
+      umsatzJahr: umsatzBruttoMonat * 12,
+      ebitJahr: ebitMonat * 12,
+      altPreis, altAuslastung,
+    };
+  }
+
+  function renderRechner() {
+    const s = rechnerState;
+    const c = computeRechner();
+    const erfolg = c.ueberschussNetto >= 0;
+    const color  = erfolg ? '#4ade80' : '#ef4444';
+    const bg     = erfolg ? 'rgba(74,222,128,.05)' : 'rgba(239,68,68,.05)';
+
+    // Cash/Finanziert Buttons
+    document.getElementById('rechnerCashBtn').style.background = s.finanziert ? '#1a1a1a' : 'var(--white)';
+    document.getElementById('rechnerCashBtn').style.color = s.finanziert ? 'var(--gray)' : 'var(--bg)';
+    document.getElementById('rechnerCashBtn').style.border = s.finanziert ? '1px solid var(--border)' : 'none';
+    document.getElementById('rechnerFinBtn').style.background = s.finanziert ? 'var(--white)' : '#1a1a1a';
+    document.getElementById('rechnerFinBtn').style.color = s.finanziert ? 'var(--bg)' : 'var(--gray)';
+    document.getElementById('rechnerFinBtn').style.border = s.finanziert ? 'none' : '1px solid var(--border)';
+    document.getElementById('rechnerFinanzInputs').style.display = s.finanziert ? 'block' : 'none';
+
+    document.getElementById('rechnerKapitalHint').innerHTML = s.finanziert
+      ? `💸 <strong>Rate ${fmtNum(c.kapitalkosten)} €/Monat</strong> pro Anhänger fließt in die Kosten unten ein`
+      : `📊 <strong>AfA ${fmtNum(c.kapitalkosten)} €/Monat</strong> (5 Jahre) pro Anhänger fließt in die Kosten unten ein`;
+
+    document.getElementById('rechnerKapitalLabel').textContent = s.finanziert ? 'Finanzierungsrate' : 'Abschreibung (AfA)';
+    document.getElementById('rechnerKapitalValue').textContent = fmtNum(c.kapitalkosten) + ' €';
+
+    document.getElementById('rechnerKostenSumme').textContent = fmtNum(c.direktKostenProAnh) + ' €';
+    document.getElementById('rechnerFixSumme').textContent    = fmtNum(c.fixkostenMonat) + ' €';
+
+    // HERO: Netto + Bedarf
+    let wegeHtml = '';
+    if (!erfolg && isFinite(c.benoetigteAnhaenger)) {
+      const wege = [];
+      const mehrAnh = Math.ceil(c.benoetigteAnhaenger - s.anzahlAnhaenger);
+      if (mehrAnh > 0) wege.push(`<li><strong>+${mehrAnh} Anhänger</strong> (von ${s.anzahlAnhaenger} auf ${Math.ceil(c.benoetigteAnhaenger)})</li>`);
+      if (c.altPreis && c.altPreis < 100) wege.push(`<li><strong>Mietpreis +${(c.altPreis - s.mietPreis).toFixed(1)} €</strong> (von ${s.mietPreis} auf ${c.altPreis.toFixed(0)} €/Tag)</li>`);
+      if (c.altAuslastung && c.altAuslastung < 90) wege.push(`<li><strong>Auslastung +${(c.altAuslastung - s.auslastung).toFixed(0)} Pkt</strong> (von ${s.auslastung}% auf ${c.altAuslastung.toFixed(0)}%)</li>`);
+      wegeHtml = `<div style="margin-top:14px;padding-top:14px;border-top:1px solid #3a1a1a;">
+        <div style="font-size:.78rem;color:var(--gray);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">3 mögliche Wege zum Ziel</div>
+        <ul style="margin:0;padding-left:18px;font-size:.85rem;line-height:1.7;">${wege.join('')}</ul>
+        <div style="font-size:.72rem;color:var(--gray);margin-top:6px;">Oder eine Kombination davon.</div>
+      </div>`;
+    } else if (!erfolg && !isFinite(c.benoetigteAnhaenger)) {
+      wegeHtml = `<div style="margin-top:14px;padding-top:14px;border-top:1px solid #3a1a1a;font-size:.85rem;color:#fbbf24;">⚠ Deckungsbeitrag pro Anhänger ist negativ — mehr Anhänger löst nichts. Hebel: Mietpreis oder Auslastung hoch.</div>`;
+    } else {
+      wegeHtml = `<div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(74,222,128,.2);font-size:.85rem;color:#4ade80;">✓ Geht auf! Mindestens ${fmtNum(Math.ceil(c.benoetigteAnhaenger))} Anhänger benötigt.</div>`;
+    }
+    document.getElementById('rechnerHero').style.borderColor = color;
+    document.getElementById('rechnerHero').style.background = bg;
+    document.getElementById('rechnerHero').innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;">
+        <div>
+          <div style="font-size:.7rem;color:var(--gray);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Netto pro Person</div>
+          <div style="font-size:2.3rem;font-weight:900;color:${color};line-height:1;">${fmtNum(c.nettoProPersonMonat)} €</div>
+          <div style="font-size:.72rem;color:var(--gray);margin-top:3px;">pro Monat (nach Steuern + KV)</div>
+        </div>
+        <div>
+          <div style="font-size:.7rem;color:var(--gray);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Bedarf gedeckt?</div>
+          <div style="font-size:2.3rem;font-weight:900;color:${color};line-height:1;">${fmtSign(c.ueberschussNetto)} €</div>
+          <div style="font-size:.72rem;color:var(--gray);margin-top:3px;">vs. Bedarf ${fmtNum(c.bedarfBeide)} €/Mon (beide)</div>
+        </div>
+      </div>
+      ${wegeHtml}
+    `;
+
+    // GuV-Tabelle
+    document.getElementById('rechnerGuvCount').textContent = `${s.anzahlAnhaenger} Anhänger`;
+    document.getElementById('rechnerGuvTable').innerHTML = `
+      <tr style="border-bottom:1px solid #1f1f1f;"><td style="padding:8px 0;">Umsatz brutto</td><td style="padding:8px 0;text-align:right;font-family:'Courier New',monospace;">${fmtNum(c.umsatzBruttoMonat)} €</td></tr>
+      <tr style="border-bottom:1px solid #1f1f1f;color:var(--gray);"><td style="padding:4px 0 4px 16px;font-size:.78rem;">– MwSt 19%</td><td style="padding:4px 0;text-align:right;font-family:'Courier New',monospace;font-size:.78rem;">–${fmtNum(c.umsatzBruttoMonat - c.umsatzNettoMonat)} €</td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:8px 0;font-weight:700;">Umsatz netto</td><td style="padding:8px 0;text-align:right;font-family:'Courier New',monospace;font-weight:700;">${fmtNum(c.umsatzNettoMonat)} €</td></tr>
+      <tr style="border-bottom:1px solid #1f1f1f;color:#f87171;"><td style="padding:8px 0;">– Anhängerkosten (${fmtNum(c.direktKostenProAnh)} €/Stk)</td><td style="padding:8px 0;text-align:right;font-family:'Courier New',monospace;">–${fmtNum(c.direktKostenMonat)} €</td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:8px 0;font-weight:700;">Deckungsbeitrag</td><td style="padding:8px 0;text-align:right;font-family:'Courier New',monospace;font-weight:700;">${fmtNum(c.dbMonat)} €</td></tr>
+      <tr style="border-bottom:1px solid #1f1f1f;color:#f87171;"><td style="padding:8px 0;">– Fixkosten Firma</td><td style="padding:8px 0;text-align:right;font-family:'Courier New',monospace;">–${fmtNum(c.fixkostenMonat)} €</td></tr>
+      <tr style="border-bottom:2px solid var(--white);"><td style="padding:10px 0;font-weight:700;font-size:1rem;">EBIT (Vorsteuer-Gewinn)</td><td style="padding:10px 0;text-align:right;font-family:'Courier New',monospace;font-weight:700;font-size:1.1rem;">${fmtNum(c.ebitMonat)} €</td></tr>
+      <tr style="color:var(--gray);"><td style="padding:4px 0 4px 16px;font-size:.78rem;">– ESt + KV (${s.steuerKvSatz}%)</td><td style="padding:4px 0;text-align:right;font-family:'Courier New',monospace;font-size:.78rem;">–${fmtNum(c.steuerKvAbzug)} €</td></tr>
+      <tr style="background:#1a1a1a;"><td style="padding:10px;font-weight:700;">Auszahlung netto (beide)</td><td style="padding:10px;text-align:right;font-family:'Courier New',monospace;font-weight:700;">${fmtNum(c.nettoBeideMonat)} €</td></tr>
+    `;
+
+    // Pro-Anhänger-Kacheln
+    document.getElementById('rechnerProAnh').innerHTML = `
+      <div style="text-align:center;"><div style="font-size:.68rem;color:var(--gray);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Vermietete Tage</div><div style="font-size:1.5rem;font-weight:700;font-family:'Courier New',monospace;">${fmtNum(c.tageProMonat)}</div><div style="font-size:.7rem;color:var(--gray);">/ 30,4</div></div>
+      <div style="text-align:center;"><div style="font-size:.68rem;color:var(--gray);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Umsatz brutto</div><div style="font-size:1.5rem;font-weight:700;font-family:'Courier New',monospace;">${fmtNum(c.umsatzBruttoProAnh)} €</div></div>
+      <div style="text-align:center;"><div style="font-size:.68rem;color:var(--gray);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Kosten</div><div style="font-size:1.5rem;font-weight:700;font-family:'Courier New',monospace;color:#f87171;">${fmtNum(c.direktKostenProAnh)} €</div></div>
+      <div style="text-align:center;"><div style="font-size:.68rem;color:var(--gray);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">DB</div><div style="font-size:1.5rem;font-weight:700;font-family:'Courier New',monospace;color:${c.dbProAnh > 0 ? '#4ade80' : '#f87171'};">${fmtNum(c.dbProAnh)} €</div></div>
+    `;
+
+    // Jahres
+    document.getElementById('rechnerJahres').innerHTML = `
+      <div><div style="font-size:.68rem;color:var(--gray);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Umsatz brutto / Jahr</div><div style="font-size:1.4rem;font-weight:700;font-family:'Courier New',monospace;">${fmtNum(c.umsatzJahr)} €</div></div>
+      <div><div style="font-size:.68rem;color:var(--gray);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">EBIT / Jahr</div><div style="font-size:1.4rem;font-weight:700;font-family:'Courier New',monospace;">${fmtNum(c.ebitJahr)} €</div></div>
+      <div><div style="font-size:.68rem;color:var(--gray);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Investition gesamt</div><div style="font-size:1.4rem;font-weight:700;font-family:'Courier New',monospace;color:var(--orange);">${fmtNum(c.gesamtInvest)} €</div></div>
+    `;
+  }
+
+  function updateRechner() {
+    renderRechner();
+    if (!rechnerLoaded) return;
+    if (rechnerSaveTimer) clearTimeout(rechnerSaveTimer);
+    rechnerSaveTimer = setTimeout(saveRechnerState, 400);
+  }
+
+  async function saveRechnerState() {
+    try {
+      await fetch('/api/admin?section=calculator-state-save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
+        body: JSON.stringify({ state: rechnerState }),
+      });
+      const hint = document.getElementById('rechnerSavedHint');
+      if (hint) {
+        hint.textContent = '✓ gespeichert ' + new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+        hint.style.color = '#4ade80';
+        setTimeout(() => { hint.textContent = ''; }, 2500);
+      }
+    } catch (e) { console.warn('Save-Fehler:', e); }
+  }
+
+  function setFinanziert(yes) {
+    rechnerState.finanziert = yes;
+    updateRechner();
+  }
+
+  function setScenario(anz, ausl, preis) {
+    rechnerState.anzahlAnhaenger = anz;
+    rechnerState.auslastung = ausl;
+    rechnerState.mietPreis = preis;
+    renderRechnerInputs();
+    updateRechner();
+  }
+
+  function toggleSteuerInfo() {
+    const el = document.getElementById('rechnerSteuerInfo');
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  }
+
+  async function resetRechner() {
+    if (!confirm('Wirklich alle Werte auf Standard zurücksetzen?')) return;
+    rechnerState = { ...RECHNER_DEFAULTS };
+    renderRechnerInputs();
+    updateRechner();
   }
 </script>
 </body>
