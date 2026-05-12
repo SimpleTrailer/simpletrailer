@@ -112,29 +112,43 @@ module.exports = async (req, res) => {
       const isMoving = speedKmh > 3; // Threshold: 3 km/h
       const recordedAt = pos.fixTime || pos.deviceTime || nowIso;
 
-      // Trailer-Tabelle updaten
-      await supabase.from('trailers').update({
-        last_lat: lat,
-        last_lng: lng,
+      // Ungültige GPS-Positionen (0,0 oder valid=false) NICHT übernehmen.
+      // Diese werden vom Tracker als Default gesendet wenn er keinen Fix hat.
+      // last_lat/lng behält die zuletzt GÜLTIGE Position — Mieter/Admin sieht
+      // immer noch wo der Anhänger zuletzt mit echtem GPS-Fix war.
+      const positionValid = pos.valid === true
+                         && Math.abs(lat) > 0.0001
+                         && Math.abs(lng) > 0.0001;
+
+      const trailerUpdate = {
         last_seen_at: recordedAt,
         last_speed_kmh: speedKmh,
         last_battery_percent: battery,
         is_moving: isMoving,
-      }).eq('id', t.id);
+      };
+      if (positionValid) {
+        trailerUpdate.last_lat = lat;
+        trailerUpdate.last_lng = lng;
+      }
+      await supabase.from('trailers').update(trailerUpdate).eq('id', t.id);
 
-      // Historie eintragen (nur wenn Position sich geändert hat, sonst Spam)
-      const distFromLast = distanceMeters(t.last_lat, t.last_lng, lat, lng);
-      if (distFromLast > 10 || !t.last_lat) {
-        await supabase.from('trailer_positions').insert({
-          trailer_id: t.id, lat, lng, speed_kmh: speedKmh,
-          heading_degrees: pos.course ? Math.round(pos.course) : null,
-          battery_percent: battery, recorded_at: recordedAt,
-        });
-        positionsStored++;
+      // Historie nur mit gültigen Positionen + wenn sie sich geändert hat
+      let distFromLast = 0;
+      if (positionValid) {
+        distFromLast = distanceMeters(t.last_lat, t.last_lng, lat, lng);
+        if (distFromLast > 10 || !t.last_lat) {
+          await supabase.from('trailer_positions').insert({
+            trailer_id: t.id, lat, lng, speed_kmh: speedKmh,
+            heading_degrees: pos.course ? Math.round(pos.course) : null,
+            battery_percent: battery, recorded_at: recordedAt,
+          });
+          positionsStored++;
+        }
       }
 
       // 5) Diebstahl-Alarm-Check: Bewegung außerhalb aktiver Buchung?
-      if (isMoving && distFromLast > 300) {
+      // Nur bei VALID Position auslösen — bei 0,0-Defaults keinen Fehlalarm.
+      if (positionValid && isMoving && distFromLast > 300) {
         const { data: activeBookings } = await supabase
           .from('bookings')
           .select('id, status, start_time, end_time')
