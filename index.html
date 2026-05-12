@@ -2805,11 +2805,13 @@
         } catch(e) { t._address = 'Bremen'; }
       }));
 
-      // Marker für jeden Anhänger
+      // Marker für jeden Anhänger — bevorzugt LIVE-GPS-Position (display_lat/lng aus API)
       allTrailers.forEach(t => {
-        if (!t.lat || !t.lng) return;
-        const marker = L.marker([t.lat, t.lng], { icon: makeIcon(t.is_available) });
-        const distKm = userLocation ? haversineKm(userLocation.lat, userLocation.lng, t.lat, t.lng) : null;
+        const lat = t.display_lat ?? t.lat;
+        const lng = t.display_lng ?? t.lng;
+        if (!lat || !lng) return;
+        const marker = L.marker([lat, lng], { icon: makeIcon(t.is_available) });
+        const distKm = userLocation ? haversineKm(userLocation.lat, userLocation.lng, lat, lng) : null;
         marker.bindPopup(makePopupContent(t, distKm));
         marker.on('click', () => openTrailerModal('flexible'));
         marker.addTo(map);
@@ -2822,6 +2824,27 @@
   }
 
   loadMapTrailers();
+
+  // Live-Position-Update: alle 60s nur Marker-Position updaten (ohne Karte neu zu bauen)
+  setInterval(async () => {
+    try {
+      const r = await fetch('/api/get-trailers');
+      const d = await r.json();
+      (d.trailers || []).forEach(t => {
+        const entry = allMarkers.find(m => m.trailer.id === t.id);
+        if (!entry) return;
+        const lat = t.display_lat ?? t.lat;
+        const lng = t.display_lng ?? t.lng;
+        if (lat && lng) {
+          entry.marker.setLatLng([lat, lng]);
+          entry.trailer.display_lat = lat;
+          entry.trailer.display_lng = lng;
+          entry.trailer.is_moving = t.is_moving;
+          entry.trailer.position_minutes_ago = t.position_minutes_ago;
+        }
+      });
+    } catch(e) { /* silent */ }
+  }, 60000);
 
   // HAMBURGER
   const hamburger = document.getElementById('hamburger');
