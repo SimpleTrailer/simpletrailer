@@ -5,13 +5,13 @@
  * Voraussetzung: Tabelle 'push_tokens' in Supabase. SQL siehe unten / SETUP-NEEDED.md.
  */
 const { createClient } = require('@supabase/supabase-js');
+const { setCors } = require('./_cors');
 
 const supabase     = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 const supabaseAuth = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
 
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  setCors(req, res);
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST')    return res.status(405).json({ error: 'Method Not Allowed' });

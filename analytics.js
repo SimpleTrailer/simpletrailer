@@ -163,6 +163,78 @@
   }
 
   // ────────────────────────────────────────────────────────────
+  // 7) GOOGLE ADS + GA4 (gtag.js)
+  // ────────────────────────────────────────────────────────────
+  // SETUP:
+  //  1) Google Ads Konto anlegen (ads.google.com)
+  //  2) "Tools → Conversions → Neu" → Typ "Webseite" → Event "purchase"
+  //     → Liefert "Conversion-ID" (Format: AW-1234567890) + "Conversion-Label"
+  //  3) GA4-Property in analytics.google.com anlegen → "Web-Datenstream"
+  //     → Liefert Mess-ID (Format: G-XXXXXXXXXX)
+  //  4) Drei IDs unten eintragen, deployen, fertig.
+  //  5) Conversion-Event wird auf booking-confirm.html automatisch gefeuert.
+  const GOOGLE_ADS_CONVERSION_ID    = ''; // z.B. 'AW-1234567890'
+  const GOOGLE_ADS_CONVERSION_LABEL = ''; // z.B. 'AbCdEfGhIjK'
+  const GA4_MEASUREMENT_ID          = ''; // z.B. 'G-XXXXXXXXXX'
+
+  window.ST_ADS_CONFIG = {
+    adsId:      GOOGLE_ADS_CONVERSION_ID,
+    adsLabel:   GOOGLE_ADS_CONVERSION_LABEL,
+    ga4Id:      GA4_MEASUREMENT_ID,
+  };
+
+  try {
+    const anyId = GOOGLE_ADS_CONVERSION_ID || GA4_MEASUREMENT_ID;
+    const onProd = location.hostname === 'simpletrailer.de'
+                || location.hostname.endsWith('.vercel.app');
+    if (!anyId && onProd) {
+      console.info('[analytics] Google-Ads-/GA4-IDs noch nicht gesetzt — Conversion-Tracking inaktiv. Siehe analytics.js Section 7.');
+    }
+    if (anyId && onProd) {
+      // gtag.js Stub
+      window.dataLayer = window.dataLayer || [];
+      window.gtag = function () { window.dataLayer.push(arguments); };
+      window.gtag('js', new Date());
+      // Beide IDs konfigurieren wenn gesetzt
+      if (GOOGLE_ADS_CONVERSION_ID) window.gtag('config', GOOGLE_ADS_CONVERSION_ID);
+      if (GA4_MEASUREMENT_ID)       window.gtag('config', GA4_MEASUREMENT_ID, { anonymize_ip: true });
+      // gtag.js Script async laden (eine ID reicht zum Initialisieren)
+      const initId = GOOGLE_ADS_CONVERSION_ID || GA4_MEASUREMENT_ID;
+      const g = document.createElement('script');
+      g.async = true;
+      g.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(initId);
+      document.head.appendChild(g);
+    }
+  } catch (e) { /* ignore */ }
+
+  // Helper: Conversion auf Buchungs-Bestätigung feuern.
+  // Aufruf von booking-confirm.html: window.stcFireBookingConversion(amount, bookingId)
+  window.stcFireBookingConversion = function (amountEur, transactionId) {
+    try {
+      const cfg = window.ST_ADS_CONFIG || {};
+      // Google Ads Conversion
+      if (window.gtag && cfg.adsId && cfg.adsLabel) {
+        window.gtag('event', 'conversion', {
+          send_to: cfg.adsId + '/' + cfg.adsLabel,
+          value: Number(amountEur) || 0,
+          currency: 'EUR',
+          transaction_id: transactionId || ''
+        });
+      }
+      // GA4 purchase Event
+      if (window.gtag && cfg.ga4Id) {
+        window.gtag('event', 'purchase', {
+          transaction_id: transactionId || '',
+          value: Number(amountEur) || 0,
+          currency: 'EUR'
+        });
+      }
+      // Auch in unsere internen Custom-Events
+      if (window.stcTrack) window.stcTrack('booking_purchase', { value: amountEur, id: transactionId });
+    } catch (e) { /* ignore */ }
+  };
+
+  // ────────────────────────────────────────────────────────────
   // 5) Auto-Tracking wichtiger Funnel-Schritte
   // ────────────────────────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', function () {

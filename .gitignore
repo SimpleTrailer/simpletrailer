@@ -3,3 +3,12 @@
 skills-lock.json
 node_modules/
 package-lock.json
+
+# Secrets — niemals committen
+.env
+.env.*
+*.pem
+*.p12
+*.keystore
+credentials.json
+service-account*.json

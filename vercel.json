@@ -71,6 +71,10 @@
     {
       "path": "/api/cron/sync-tracker-positions",
       "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/cron/review-request",
+      "schedule": "0 10 * * *"
     }
   ],
   "headers": [

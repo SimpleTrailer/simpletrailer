@@ -3,9 +3,15 @@ const { createClient } = require('@supabase/supabase-js');
 const supabase     = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 const supabaseAuth = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
 
+// Admin-Whitelist — nur diese Mails dürfen den Endpoint nutzen.
+// Override per ENV ADMIN_EMAILS (Komma-getrennt) — sonst Default.
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || 'admin@simpletrailer.de,info@simpletrailer.de,lion@simpletrailer.de')
+  .split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+
+const { setCors } = require('./_cors');
+
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET' && req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
@@ -14,6 +20,10 @@ module.exports = async (req, res) => {
   const token = auth.replace('Bearer ', '');
   const { data: { user }, error: authError } = await supabaseAuth.auth.getUser(token);
   if (authError || !user) return res.status(401).json({ error: 'Ungültiger Token' });
+  // 🔐 Admin-Whitelist: nur konfigurierte Mails — schützt vor Datenleak durch normale Kunden.
+  if (!ADMIN_EMAILS.includes((user.email || '').toLowerCase())) {
+    return res.status(403).json({ error: 'Forbidden — kein Admin-Zugang' });
+  }
 
   const section = req.query.section || 'data';
 

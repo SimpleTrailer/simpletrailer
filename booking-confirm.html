@@ -136,6 +136,19 @@
       sessionStorage.removeItem('st_client_secret');
       sessionStorage.removeItem('st_pi_id');
 
+      // Conversion-Event für Google Ads + GA4 feuern (sobald Buchung bestätigt).
+      // analytics.js ist defer-geladen → ggf. noch nicht ready. Bis zu 10× retry
+      // mit 200ms Abstand (= 2s) — danach sicher verloren, akzeptables Trade-off.
+      (function fireConversion(amount, id, attempts) {
+        try {
+          if (typeof window.stcFireBookingConversion === 'function') {
+            window.stcFireBookingConversion(amount, id);
+            return;
+          }
+          if (attempts < 10) setTimeout(() => fireConversion(amount, id, attempts + 1), 200);
+        } catch (e) { /* ignore */ }
+      })(data.amount, data.booking_id, 0);
+
     } catch (err) {
       showError(err.message);
     }

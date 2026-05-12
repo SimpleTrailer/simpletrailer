@@ -16,7 +16,7 @@ Alle automatischen Reports, Alerts und Benachrichtigungen landen dort. Du brauch
 | 💡 Wöchentliche AI-Empfehlung | Sonntags 20:00 Berlin (auch im Cockpit) |
 | 🎫 Echte Buchungen (Stripe-Bestätigungen) | sofort |
 
-→ **Ein Mailfilter mit dem Absender `buchung@simpletrailer.de`** sortiert die Reports in einen Unterordner — saubere Inbox.
+→ **Ein Mailfilter mit dem Absender `agents@simpletrailer.de`** sortiert die Reports in einen Unterordner — saubere Inbox. Echte Buchungs-/Rückgabe-Mails an Kunden kommen weiterhin von `buchung@simpletrailer.de`.
 
 ---
 

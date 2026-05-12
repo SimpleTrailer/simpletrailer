@@ -306,6 +306,24 @@
     letter-spacing: .02em;
   }
   .stc-footer span { color: #888; }
+  /* "Mit Mensch sprechen" — dezent default, prominenter wenn .escalate gesetzt */
+  .stc-human {
+    padding: 8px 16px; background: #0F0F10;
+    border-top: 1px solid #222;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    font-size: .75rem; color: #888;
+    flex-shrink: 0;
+    transition: background .25s, border-color .25s;
+  }
+  .stc-human a {
+    color: #E85D00; text-decoration: none; font-weight: 600; white-space: nowrap;
+  }
+  .stc-human a:hover { color: #FF8C42; }
+  .stc-human.escalate {
+    background: linear-gradient(135deg,#1a0d00,#0F0F10);
+    border-top-color: #E85D00;
+    color: #ddd;
+  }
   `;
   const styleEl = document.createElement('style');
   styleEl.textContent = css;
@@ -339,6 +357,10 @@
             <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </button>
+      </div>
+      <div class="stc-human" id="stcHuman">
+        <span>Lieber mit einem Menschen sprechen?</span>
+        <a href="#" id="stcHumanLink">Direkt schreiben →</a>
       </div>
       <div class="stc-footer">KI-gestützt · <span>powered by Claude</span></div>
     </div>
@@ -594,6 +616,61 @@
       sendMessage(inputEl.value);
     }
   });
+
+  // ===== "Mit Mensch sprechen" Button ==============================
+  // Permanent dezent sichtbar, eskaliert nach 3+ User-Messages oder wenn der
+  // Bot sagt "kann ich nicht beantworten / schreib uns" — Lead-Capture-Hebel.
+  const humanBox  = document.getElementById('stcHuman');
+  const humanLink = document.getElementById('stcHumanLink');
+
+  function escalateHuman() {
+    if (humanBox) humanBox.classList.add('escalate');
+  }
+
+  if (humanLink) {
+    humanLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      // Letzte 2 Bot-/User-Nachrichten als Kontext in den Mail-Body packen
+      const lastMsgs = (history || []).slice(-4)
+        .map(m => (m.role === 'user' ? 'Ich: ' : 'Simply: ') +
+                  (typeof m.content === 'string' ? m.content : ''))
+        .join('\n');
+      const subject = encodeURIComponent('Anfrage über Simply-Chat');
+      const body = encodeURIComponent(
+        'Hallo SimpleTrailer-Team,\n\n' +
+        'ich habe eine Frage die Simply mir nicht beantworten konnte:\n\n[Hier deine Frage]\n\n' +
+        '---\nVerlauf:\n' + lastMsgs
+      );
+      window.location.href = 'mailto:info@simpletrailer.de?subject=' + subject + '&body=' + body;
+    });
+  }
+
+  // Eskalations-Trigger: ab der 3. User-Message ODER bot signalisiert Limit.
+  // Wird über MutationObserver an die Messages-Liste gehängt — kein Polling,
+  // kein Memory-Leak. Hört auf zu beobachten sobald escalate aktiv ist.
+  const ESCALATE_HINTS = [
+    'kann ich dir nicht', 'leider keine', 'schreib uns', 'info@simpletrailer.de',
+    'kontaktiere uns', 'persönlich beantworten', 'da müssten wir', 'außerhalb meines'
+  ];
+  function checkEscalation() {
+    try {
+      if (!humanBox || humanBox.classList.contains('escalate')) return true;
+      const userMsgs = (history || []).filter(m => m.role === 'user').length;
+      const lastBot  = ((history || []).filter(m => m.role === 'assistant').slice(-1)[0] || {}).content || '';
+      const lastBotStr = typeof lastBot === 'string' ? lastBot.toLowerCase() : '';
+      if (userMsgs >= 3 || ESCALATE_HINTS.some(h => lastBotStr.includes(h))) {
+        escalateHuman();
+        return true;
+      }
+    } catch (e) { /* ignore */ }
+    return false;
+  }
+  if (messagesEl && window.MutationObserver) {
+    const obs = new MutationObserver(() => {
+      if (checkEscalation()) obs.disconnect();
+    });
+    obs.observe(messagesEl, { childList: true, subtree: true, characterData: true });
+  }
 
   // ===== Mobile Keyboard Handling ===================================
   // iOS/Android Tastatur deckt sonst das Input-Feld zu — mit Visual Viewport

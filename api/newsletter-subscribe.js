@@ -10,6 +10,7 @@
 const { createClient } = require('@supabase/supabase-js');
 const { Resend } = require('resend');
 const crypto = require('crypto');
+const { isRateLimited } = require('./_rate-limit');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -20,6 +21,11 @@ module.exports = async (req, res) => {
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
+
+  // Rate-Limit: max 5/Stunde, max 2/Minute pro IP — verhindert Mail-Spam.
+  if (isRateLimited(req, { maxPerHour: 5, maxPerMinute: 2 })) {
+    return res.status(429).json({ error: 'Zu viele Anfragen. Bitte später erneut versuchen.' });
+  }
 
   let body = req.body;
   if (typeof body === 'string') {
