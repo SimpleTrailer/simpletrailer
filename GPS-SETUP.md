@@ -129,7 +129,7 @@ In der App diese Werte eingeben:
 
 | Parameter | Wert |
 |---|---|
-| **APN** | `iot.1nce.net` |
+| **APN** | `sensor.net` *(für ältere 1NCE-SIMs; bei neueren ggf. `iot.1nce.net` – wenn `sensor.net` nicht klappt, anderen testen)* |
 | **APN Username** | (leer) |
 | **APN Password** | (leer) |
 | **Server Domain** | `tracker.simpletrailer.de` (OHNE `https://`) |
