@@ -557,6 +557,43 @@ module.exports = async (req, res) => {
         if (insights && insights[0]) latestInsight = insights[0];
       } catch (e) { /* Tabelle existiert evtl. noch nicht */ }
 
+      // Rückgabe-Statistiken (letzte 30 Tage): Heatmap-Daten + KPIs
+      let returnStats = null;
+      try {
+        const since = new Date(Date.now() - 30 * 86400000).toISOString();
+        const { data: returns } = await supabase.from('bookings')
+          .select('id, return_status, return_lat, return_lng, return_distance_m, return_extra_fee, actual_return_time, free_floating, trailers(name)')
+          .eq('status', 'returned')
+          .gte('actual_return_time', since)
+          .not('return_status', 'is', null)
+          .order('actual_return_time', { ascending: false });
+        const rs = returns || [];
+        const byStatus = { heimat: 0, free_floating_ok: 0, wrong_spot_in_bremen: 0, outside_bremen: 0 };
+        rs.forEach(r => { if (byStatus[r.return_status] != null) byStatus[r.return_status]++; });
+        const distances = rs.map(r => r.return_distance_m).filter(d => d != null && d >= 0);
+        const avgDist = distances.length ? Math.round(distances.reduce((a,b)=>a+b,0) / distances.length) : null;
+        const totalFees = rs.reduce((s, r) => s + (Number(r.return_extra_fee) || 0), 0);
+        const wrongCount = byStatus.wrong_spot_in_bremen + byStatus.outside_bremen;
+        const wrongPct = rs.length ? Math.round((wrongCount / rs.length) * 100) : 0;
+        returnStats = {
+          total: rs.length,
+          byStatus,
+          avgDistanceM: avgDist,
+          wrongPct,
+          totalExtraFees: Math.round(totalFees * 100) / 100,
+          recent: rs.slice(0, 20).map(r => ({
+            id: r.id,
+            status: r.return_status,
+            distance_m: r.return_distance_m,
+            extra_fee: r.return_extra_fee,
+            free_floating: r.free_floating,
+            returned_at: r.actual_return_time,
+            trailer_name: r.trailers?.name || '–',
+            lat: r.return_lat, lng: r.return_lng,
+          })),
+        };
+      } catch (e) { /* Spalten evtl. noch nicht migriert */ }
+
       return res.status(200).json({
         live: {
           activeBookings: activeBookings.length,
@@ -573,6 +610,7 @@ module.exports = async (req, res) => {
         trailers,
         anomalies,
         aiInsight: latestInsight,
+        returnStats,
         timestamp: new Date().toISOString(),
       });
     }

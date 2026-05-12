@@ -121,7 +121,7 @@ Liefere den HTML-Report.`;
     </body></html>`;
 
     await resend.emails.send({
-      from: 'SimpleTrailer Watch <buchung@simpletrailer.de>',
+      from: 'SimpleTrailer Watch <agents@simpletrailer.de>',
       reply_to: 'info@simpletrailer.de',
       to: getLionEmail('routine'),
       subject: `[ST-Routine] 🔭 Konkurrenz-Report ${new Date().toLocaleDateString('de-DE',{month:'long'})} — Bremen`,

@@ -209,7 +209,7 @@ Liefere das JSON.`;
     </body></html>`;
 
     await resend.emails.send({
-      from: 'SimpleTrailer Social <buchung@simpletrailer.de>',
+      from: 'SimpleTrailer Social <agents@simpletrailer.de>',
       reply_to: 'info@simpletrailer.de',
       to: getLionEmail('approval'),
       subject: `[ST-Approval] 📱 Insta-Post ready: ${plan.type} fuer ${tomorrow.toLocaleDateString('de-DE',{weekday:'short'})}`,

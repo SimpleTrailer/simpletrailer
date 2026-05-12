@@ -71,10 +71,28 @@ module.exports = async (req, res) => {
       const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLng/2)**2;
       return Math.round(2 * R * Math.asin(Math.sqrt(a)));
     }
-    // Bremen-Bounding-Box Check (grobe Approximation – Geofence-Polygon ist serverseitig genauer)
+    // Bremen-Polygon (Stadtgrenze, ca. 19 Punkte)
+    // SYNC: identische Punkte in booking.html (BREMEN_POLYGON). Wenn hier geändert, dort auch.
+    const BREMEN_POLYGON = [
+      [53.218, 8.625], [53.213, 8.690], [53.193, 8.732], [53.175, 8.745],
+      [53.156, 8.792], [53.145, 8.890], [53.137, 8.940], [53.108, 8.960],
+      [53.075, 8.985], [53.045, 8.980], [53.025, 8.890], [53.005, 8.838],
+      [52.998, 8.798], [53.008, 8.700], [53.075, 8.598], [53.110, 8.580],
+      [53.137, 8.598], [53.165, 8.620], [53.187, 8.620]
+    ];
     function inBremen(lat, lng) {
       if (lat == null || lng == null) return false;
-      return lat >= 53.000 && lat <= 53.230 && lng >= 8.600 && lng <= 8.985;
+      // Ray-Casting Point-in-Polygon
+      let inside = false;
+      for (let i = 0, j = BREMEN_POLYGON.length - 1; i < BREMEN_POLYGON.length; j = i++) {
+        const [yi, xi] = BREMEN_POLYGON[i];
+        const [yj, xj] = BREMEN_POLYGON[j];
+        if (((yi > lat) !== (yj > lat)) &&
+            (lng < (xj - xi) * (lat - yi) / (yj - yi) + xi)) {
+          inside = !inside;
+        }
+      }
+      return inside;
     }
 
     let returnDistanceM = null;
@@ -83,16 +101,27 @@ module.exports = async (req, res) => {
     if (returnLat != null && booking.pickup_lat != null) {
       returnDistanceM = distMeters(booking.pickup_lat, booking.pickup_lng, returnLat, returnLng);
       const insideBremen = inBremen(returnLat, returnLng);
+      // Wenn free_floating-Spalte fehlt (Buchung vor Migration), niemals Strafe abbuchen — Safe Default.
+      const ffKnown = booking.free_floating === true || booking.free_floating === false;
       if (returnDistanceM <= 100) {
         returnStatus = 'heimat';
       } else if (!insideBremen) {
-        returnStatus = 'outside_bremen';
-        returnExtraFee = 50.00; // AGB §13.6 — Rückführungspauschale
+        if (ffKnown) {
+          returnStatus = 'outside_bremen';
+          returnExtraFee = 50.00; // AGB §13.6 — Rückführungspauschale
+        } else {
+          console.warn('free_floating-Spalte fehlt für booking', booking_id, '— keine Strafe trotz Out-of-Bremen.');
+          returnStatus = 'outside_bremen';
+        }
       } else if (booking.free_floating === true) {
         returnStatus = 'free_floating_ok';
-      } else {
+      } else if (booking.free_floating === false) {
         returnStatus = 'wrong_spot_in_bremen';
         returnExtraFee = 50.00; // AGB §13.6 — Falsch-Rückgabe-Pauschale
+      } else {
+        // Spalte fehlt: kein Fee, nur Status setzen für Statistik
+        console.warn('free_floating-Spalte fehlt für booking', booking_id, '— behandle als heimat.');
+        returnStatus = 'heimat';
       }
     }
 

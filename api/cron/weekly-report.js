@@ -108,7 +108,7 @@ module.exports = async (req, res) => {
     </body></html>`;
 
     await resend.emails.send({
-      from: 'SimpleTrailer Report <buchung@simpletrailer.de>',
+      from: 'SimpleTrailer Report <agents@simpletrailer.de>',
       reply_to: 'info@simpletrailer.de',
       to: getLionEmail('briefing'),
       subject: `[ST-Briefing] 📊 Wochen-Report: ${thisWeek.length} Buchungen · ${eur(sumRev(thisWeek))}`,

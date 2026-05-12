@@ -105,7 +105,7 @@ Kein Marketing-BS.`;
     </body></html>`;
 
     await resend.emails.send({
-      from: 'SimpleTrailer Strategie <buchung@simpletrailer.de>',
+      from: 'SimpleTrailer Strategie <agents@simpletrailer.de>',
       reply_to: 'info@simpletrailer.de',
       to: getLionEmail('briefing'),
       subject: `[ST-Briefing] ⚡ Mid-Week-Check — ${paid.length} Buchungen letzte 3 Tage`,

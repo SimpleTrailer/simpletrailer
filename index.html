@@ -2446,7 +2446,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
   // MAP
-  const map = L.map('map', { zoomControl: true, scrollWheelZoom: false }).setView([53.0793, 8.8017], 13);
+  const map = L.map('map', { zoomControl: true, scrollWheelZoom: false }).setView([53.0793, 8.8017], 12);
 
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
     attribution: '© <a href="https://www.openstreetmap.org/copyright">OSM</a> © <a href="https://carto.com/">CARTO</a>',
@@ -2827,10 +2827,40 @@
         } catch(e) { t._address = 'Bremen'; }
       }));
 
-      // Marker für jeden Anhänger — bevorzugt LIVE-GPS-Position (display_lat/lng aus API)
+      // Auto-Spread: Anhänger am exakt selben Standort leicht versetzen
+      // damit sich Marker nicht überlagern und alle sichtbar sind.
+      // Gruppierung über gerundeten Koordinaten-Key (~10m Toleranz).
+      const groups = {};
       allTrailers.forEach(t => {
         const lat = t.display_lat ?? t.lat;
         const lng = t.display_lng ?? t.lng;
+        if (!lat || !lng) return;
+        const key = `${lat.toFixed(4)},${lng.toFixed(4)}`;
+        (groups[key] = groups[key] || []).push(t);
+      });
+      // Pro Gruppe: wenn >1, Anhänger im Kreis um den Mittelpunkt anordnen
+      Object.values(groups).forEach(group => {
+        if (group.length === 1) {
+          group[0]._displayLat = group[0].display_lat ?? group[0].lat;
+          group[0]._displayLng = group[0].display_lng ?? group[0].lng;
+          return;
+        }
+        const lat0 = group[0].display_lat ?? group[0].lat;
+        const lng0 = group[0].display_lng ?? group[0].lng;
+        // ~0.00015° ≈ 15m Radius (lat-cos-Korrektur für lng)
+        const radius = 0.00018;
+        const cosLat = Math.cos(lat0 * Math.PI / 180);
+        group.forEach((t, i) => {
+          const angle = (2 * Math.PI * i) / group.length;
+          t._displayLat = lat0 + radius * Math.sin(angle);
+          t._displayLng = lng0 + (radius / Math.max(cosLat, 0.1)) * Math.cos(angle);
+        });
+      });
+
+      // Marker für jeden Anhänger — bevorzugt LIVE-GPS-Position (display_lat/lng aus API)
+      allTrailers.forEach(t => {
+        const lat = t._displayLat ?? t.display_lat ?? t.lat;
+        const lng = t._displayLng ?? t.display_lng ?? t.lng;
         if (!lat || !lng) return;
         const marker = L.marker([lat, lng], { icon: makeIcon(t) });
         const distKm = userLocation ? haversineKm(userLocation.lat, userLocation.lng, lat, lng) : null;
@@ -2855,16 +2885,22 @@
       (d.trailers || []).forEach(t => {
         const entry = allMarkers.find(m => m.trailer.id === t.id);
         if (!entry) return;
-        const lat = t.display_lat ?? t.lat;
-        const lng = t.display_lng ?? t.lng;
-        if (lat && lng) entry.marker.setLatLng([lat, lng]);
+        const newLat = t.display_lat ?? t.lat;
+        const newLng = t.display_lng ?? t.lng;
+        // Nur Marker-Position bewegen wenn sich die ROHE Position geändert hat
+        // (sonst zerstört der Live-Refresh das Auto-Spread bei gleichem Standort).
+        const oldRawLat = entry.trailer.display_lat ?? entry.trailer.lat;
+        const oldRawLng = entry.trailer.display_lng ?? entry.trailer.lng;
+        const moved = newLat && newLng && (newLat !== oldRawLat || newLng !== oldRawLng);
+        if (moved) entry.marker.setLatLng([newLat, newLng]);
         // Trailer-Daten aktualisieren
         Object.assign(entry.trailer, {
-          display_lat: lat, display_lng: lng,
+          display_lat: newLat, display_lng: newLng,
           is_moving: t.is_moving, position_minutes_ago: t.position_minutes_ago,
           is_available: t.is_available, currently_booked: t.currently_booked,
           available_from: t.available_from, position_live: t.position_live,
         });
+        const lat = newLat, lng = newLng;
         // Icon-Farbe updaten falls Buchungs-Status sich geändert hat
         entry.marker.setIcon(makeIcon(entry.trailer));
         // Popup-Inhalt updaten

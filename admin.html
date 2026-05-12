@@ -277,13 +277,26 @@
         </div>
 
         <!-- AI INSIGHT (Empfehlung der Woche) -->
-        <div style="background:linear-gradient(135deg,#1a0f29,#0d0d0d);border:1px solid #3a1a5f;border-radius:14px;padding:20px 24px;margin-bottom:18px;">
+        <style>
+          #cpAiInsight h2, #cpAiInsight h3 { color:#c4b5fd; font-size:1rem; margin:18px 0 8px; font-weight:700; letter-spacing:.01em; }
+          #cpAiInsight h4 { color:#a78bfa; font-size:.92rem; margin:14px 0 6px; font-weight:700; }
+          #cpAiInsight p { margin:8px 0; color:#ddd; }
+          #cpAiInsight ul, #cpAiInsight ol { margin:8px 0; padding-left:22px; }
+          #cpAiInsight li { margin:5px 0; color:#ddd; }
+          #cpAiInsight strong { color:#fff; font-weight:700; }
+          #cpAiInsight em { color:#c4b5fd; font-style:normal; }
+          #cpAiInsight code { background:rgba(167,139,250,0.12); color:#c4b5fd; padding:1px 6px; border-radius:4px; font-size:.85em; }
+          #cpAiInsight a { color:#a78bfa; }
+          #cpAiInsight > *:first-child { margin-top:0; }
+          #cpAiInsight > *:last-child  { margin-bottom:0; }
+        </style>
+        <div style="background:linear-gradient(135deg,#1a0f29,#0d0d0d);border:1px solid #3a1a5f;border-radius:14px;padding:22px 26px;margin-bottom:18px;">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
             <span style="font-size:1.1rem;">💡</span>
             <strong style="font-size:.85rem;letter-spacing:.05em;text-transform:uppercase;color:#a78bfa;">Empfehlung der Woche</strong>
             <span style="font-size:.7rem;color:#666;margin-left:auto;">consultant-Agent</span>
           </div>
-          <div id="cpAiInsight" style="font-size:.92rem;line-height:1.6;color:#ddd;">Noch keine Empfehlung — der consultant analysiert Sonntag-Abend zum ersten Mal.</div>
+          <div id="cpAiInsight" style="font-size:.93rem;line-height:1.65;color:#ddd;">Noch keine Empfehlung — der consultant analysiert Sonntag-Abend zum ersten Mal.</div>
         </div>
 
         <!-- 📍 LIVE-TRACKER (Teltonika TAT240 via Traccar) -->
@@ -298,6 +311,46 @@
           <div id="cpTrackerList" style="margin-top:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;"></div>
           <div id="cpTrackerHint" style="display:none;margin-top:12px;padding:12px;background:#1a1410;border-left:3px solid var(--orange);border-radius:6px;font-size:.82rem;color:#bbb;">
             ⚠️ Noch keine Tracker konfiguriert. Siehe <a href="/GPS-SETUP.md" style="color:var(--orange);">GPS-SETUP.md</a> für Schritt-für-Schritt-Anleitung.
+          </div>
+        </div>
+
+        <!-- 🧭 RÜCKGABE-STATISTIK (Falsch-Rückgaben, Distanzen, Heatmap) -->
+        <div id="cpReturnStatsBox" style="background:#0f0f0f;border:1px solid var(--border);border-radius:14px;padding:18px 22px;margin-bottom:18px;display:none;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+            <span style="font-size:1.1rem;">🧭</span>
+            <strong style="font-size:.85rem;letter-spacing:.05em;text-transform:uppercase;color:var(--gray);">Rückgabe-Statistik (30 Tage)</strong>
+            <span id="cpReturnStatsTotal" style="margin-left:auto;font-size:.72rem;color:var(--gray);">–</span>
+          </div>
+          <!-- KPI-Reihe -->
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px;">
+            <div style="background:#0a1f0a;border:1px solid #22c55e33;border-radius:10px;padding:12px 14px;">
+              <div style="font-size:.68rem;color:#4ade80;letter-spacing:.08em;text-transform:uppercase;font-weight:700;">Heimat-Rückgabe</div>
+              <div id="cpRetHeimat" style="font-size:1.5rem;font-weight:800;margin-top:4px;">–</div>
+            </div>
+            <div style="background:#0a1422;border:1px solid #3b82f633;border-radius:10px;padding:12px 14px;">
+              <div style="font-size:.68rem;color:#60a5fa;letter-spacing:.08em;text-transform:uppercase;font-weight:700;">Egal-wo OK</div>
+              <div id="cpRetFreeOk" style="font-size:1.5rem;font-weight:800;margin-top:4px;">–</div>
+            </div>
+            <div style="background:#1f1606;border:1px solid #f59e0b33;border-radius:10px;padding:12px 14px;">
+              <div style="font-size:.68rem;color:#fbbf24;letter-spacing:.08em;text-transform:uppercase;font-weight:700;">Falsch-Quote</div>
+              <div id="cpRetWrongPct" style="font-size:1.5rem;font-weight:800;margin-top:4px;">–</div>
+            </div>
+            <div style="background:#1f0a0a;border:1px solid #ef444433;border-radius:10px;padding:12px 14px;">
+              <div style="font-size:.68rem;color:#f87171;letter-spacing:.08em;text-transform:uppercase;font-weight:700;">Pauschalen-Umsatz</div>
+              <div id="cpRetFees" style="font-size:1.5rem;font-weight:800;margin-top:4px;">–</div>
+            </div>
+            <div style="background:#171717;border:1px solid var(--border);border-radius:10px;padding:12px 14px;">
+              <div style="font-size:.68rem;color:var(--gray);letter-spacing:.08em;text-transform:uppercase;font-weight:700;">⌀ Distanz</div>
+              <div id="cpRetAvgDist" style="font-size:1.5rem;font-weight:800;margin-top:4px;">–</div>
+            </div>
+          </div>
+          <!-- Heatmap (Karte) + Recent-Liste nebeneinander -->
+          <div style="display:grid;grid-template-columns:1fr;gap:14px;">
+            <div id="cpReturnMap" style="height:280px;border-radius:10px;background:#0d0d0d;border:1px solid var(--border);"></div>
+            <div>
+              <div style="font-size:.72rem;color:var(--gray);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Letzte Rückgaben</div>
+              <div id="cpReturnList" style="max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;"></div>
+            </div>
           </div>
         </div>
 
@@ -1427,6 +1480,34 @@
     cockpitTimer = setTimeout(() => { if (currentTab === 'cockpit') loadCockpit(); }, 30000);
   }
 
+  // Macht AI-Empfehlung schön: strippt Codefences (```html), konvertiert leichtes Markdown,
+  // damit auch alte Einträge sauber rendern (consultant liefert sonst HTML, manchmal in ``` gewrappt).
+  function renderAiRecommendation(raw) {
+    if (!raw) return '';
+    let s = String(raw).trim();
+    // 1) Markdown-Codeblock-Wrapper entfernen
+    s = s.replace(/^```html\s*/i, '').replace(/^```\s*/, '').replace(/\s*```$/, '').trim();
+    // 2) Wenn schon HTML drin ist (mind. ein Tag), durchlassen
+    const hasHtml = /<\/?(h[1-6]|p|ul|ol|li|strong|em|br|div|span)\b/i.test(s);
+    if (hasHtml) return s;
+    // 3) Sonst leichtes Markdown → HTML
+    //   - ** bold **
+    s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    //   - # Headlines
+    s = s.replace(/^###\s+(.+)$/gm, '<h4 style="margin:14px 0 6px;font-size:.95rem;">$1</h4>');
+    s = s.replace(/^##\s+(.+)$/gm, '<h3 style="margin:16px 0 8px;font-size:1.02rem;">$1</h3>');
+    //   - Listen: zusammenhängende "- " oder "* "-Zeilen als ein <ul> zusammenfassen (greedy)
+    s = s.replace(/(^|\n)((?:[-*]\s+.+(?:\n|$))+)/g, (m, pre, block) => {
+      const items = block.trim().split(/\n/).map(l => l.replace(/^[-*]\s+/, '').trim()).filter(Boolean);
+      return pre + '<ul style="margin:8px 0;padding-left:22px;">' + items.map(i => `<li style="margin:3px 0;">${i}</li>`).join('') + '</ul>';
+    });
+    //   - Absätze (doppelte Newlines)
+    s = s.split(/\n\n+/).map(p => p.trim()).filter(Boolean).map(p =>
+      /^<(h[1-6]|ul|ol|p|div)/i.test(p) ? p : `<p style="margin:8px 0;">${p.replace(/\n/g, '<br>')}</p>`
+    ).join('');
+    return s;
+  }
+
   function renderCockpit(d) {
     const eur = (n) => (n || 0).toFixed(2).replace('.', ',') + ' €';
     const eurNet = (n) => ((n || 0) / 1.19).toFixed(2).replace('.', ',') + ' €';
@@ -1499,11 +1580,80 @@
     if (d.aiInsight) {
       const ago = Math.floor((Date.now() - new Date(d.aiInsight.created_at).getTime()) / 86400000);
       const agoLabel = ago === 0 ? 'heute' : ago === 1 ? 'gestern' : `vor ${ago} Tagen`;
-      document.getElementById('cpAiInsight').innerHTML = `<div style="margin-bottom:8px;font-size:.72rem;color:var(--gray);text-transform:uppercase;letter-spacing:.05em;">${agoLabel}</div>${d.aiInsight.recommendation}`;
+      document.getElementById('cpAiInsight').innerHTML = `<div style="margin-bottom:8px;font-size:.72rem;color:var(--gray);text-transform:uppercase;letter-spacing:.05em;">${agoLabel}</div>${renderAiRecommendation(d.aiInsight.recommendation)}`;
     }
 
     // Live-Tracker-Karte (Standorte)
     loadTrackerMap();
+
+    // Rückgabe-Statistik
+    renderReturnStats(d.returnStats);
+  }
+
+  /* ── RÜCKGABE-STATISTIK ─────────────────────────────────── */
+  let returnStatsMap = null;
+  function renderReturnStats(rs) {
+    const box = document.getElementById('cpReturnStatsBox');
+    if (!box) return;
+    // Erst sichtbar machen wenn Daten + mindestens 1 Rückgabe da
+    if (!rs || rs.total === 0) { box.style.display = 'none'; return; }
+    box.style.display = 'block';
+
+    document.getElementById('cpReturnStatsTotal').textContent = `${rs.total} Rückgaben`;
+    document.getElementById('cpRetHeimat').textContent  = rs.byStatus.heimat;
+    document.getElementById('cpRetFreeOk').textContent  = rs.byStatus.free_floating_ok;
+    document.getElementById('cpRetWrongPct').textContent = rs.wrongPct + ' %';
+    document.getElementById('cpRetFees').textContent    = rs.totalExtraFees.toFixed(2).replace('.',',') + ' €';
+    document.getElementById('cpRetAvgDist').textContent = rs.avgDistanceM != null
+      ? (rs.avgDistanceM >= 1000 ? (rs.avgDistanceM/1000).toFixed(1).replace('.',',') + ' km'
+                                 : rs.avgDistanceM + ' m')
+      : '–';
+
+    // Liste der letzten Rückgaben
+    const statusMeta = {
+      heimat:               { label: 'Heimat',         color: '#4ade80', bg: '#0a1f0a' },
+      free_floating_ok:     { label: 'Egal-wo OK',     color: '#60a5fa', bg: '#0a1422' },
+      wrong_spot_in_bremen: { label: 'Falsch in BRE',  color: '#fbbf24', bg: '#1f1606' },
+      outside_bremen:       { label: 'Außerhalb BRE',  color: '#f87171', bg: '#1f0a0a' },
+    };
+    document.getElementById('cpReturnList').innerHTML = rs.recent.map(r => {
+      const m = statusMeta[r.status] || { label: r.status, color: '#888', bg: '#171717' };
+      const when = new Date(r.returned_at).toLocaleString('de-DE', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+      const dist = r.distance_m != null ? (r.distance_m >= 1000 ? (r.distance_m/1000).toFixed(1).replace('.',',') + ' km' : r.distance_m + ' m') : '–';
+      const fee = Number(r.extra_fee) > 0 ? ` · <span style="color:#f87171;">+${Number(r.extra_fee).toFixed(2).replace('.',',')}€</span>` : '';
+      return `<div style="background:${m.bg};border-left:3px solid ${m.color};padding:8px 12px;border-radius:6px;font-size:.8rem;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+        <span><strong style="color:${m.color};">${m.label}</strong> · ${r.trailer_name}${fee}</span>
+        <span style="color:var(--gray);">${dist} · ${when}</span>
+      </div>`;
+    }).join('') || '<div style="color:var(--gray);font-size:.82rem;">Noch keine Daten.</div>';
+
+    // Heatmap-Karte (Leaflet)
+    if (typeof L === 'undefined') return;
+    const el = document.getElementById('cpReturnMap');
+    if (!returnStatsMap) {
+      returnStatsMap = L.map(el, { zoomControl: true, attributionControl: false }).setView([53.0793, 8.8017], 12);
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        subdomains: 'abcd', maxZoom: 18
+      }).addTo(returnStatsMap);
+    } else {
+      // Sammle alle Marker erst — eachLayer + removeLayer in Iteration ist unzuverlässig (Iterator-Bug).
+      const toRemove = [];
+      returnStatsMap.eachLayer(l => {
+        if (l instanceof L.CircleMarker || l instanceof L.Marker) toRemove.push(l);
+      });
+      toRemove.forEach(l => returnStatsMap.removeLayer(l));
+    }
+    const bounds = L.latLngBounds([]);
+    rs.recent.forEach(r => {
+      if (r.lat == null || r.lng == null) return;
+      const m = statusMeta[r.status] || { color: '#888' };
+      L.circleMarker([r.lat, r.lng], {
+        radius: 7, color: m.color, fillColor: m.color, fillOpacity: 0.55, weight: 2
+      }).addTo(returnStatsMap).bindTooltip(`${m.label || r.status} · ${r.trailer_name}`, { direction: 'top' });
+      bounds.extend([r.lat, r.lng]);
+    });
+    if (bounds.isValid()) returnStatsMap.fitBounds(bounds, { padding: [30, 30], maxZoom: 14 });
+    setTimeout(() => returnStatsMap.invalidateSize(), 80);
   }
 
   /* ── LIVE-TRACKER-KARTE ──────────────────────────────────── */

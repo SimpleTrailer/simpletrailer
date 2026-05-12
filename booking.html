@@ -12,6 +12,9 @@
   <script src="https://js.stripe.com/v3/"></script>
   <script src="/native-bridge.js?v=9" defer></script>
   <script src="/analytics.js?v=11" defer></script>
+  <!-- Leaflet für Rückgabe-Zone-Visualisierung in Step 4 -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -672,7 +675,7 @@
     </div>
   </div>
 
-  <!-- STEP 4: Schutzpaket -->
+  <!-- STEP 4: Schutzpaket + Rückgabe-Option -->
   <div class="step-content" id="step4" style="max-width:560px;margin-left:auto;margin-right:auto;">
     <div class="card">
       <p class="field-label" style="margin-bottom:4px;">Schutzpaket wählen</p>
@@ -704,6 +707,43 @@
         </div>
       </div>
     </div>
+
+    <!-- RÜCKGABE-OPTION: Heimat-Stellplatz (frei) vs. Egal-wo in Bremen (+15€) -->
+    <div class="card">
+      <p class="field-label" style="margin-bottom:4px;">Rückgabe-Option</p>
+      <p style="color:var(--gray);font-size:.78rem;margin-bottom:14px;">Wo gibst du den Anhänger zurück? Die erlaubte Zone siehst du unten auf der Karte.</p>
+      <div class="insurance-grid">
+        <div class="insurance-option selected" id="ret-home" onclick="selectReturnMode(false)">
+          <div class="ins-radio"></div>
+          <div class="ins-body">
+            <div class="ins-name">Zurück zum Stellplatz</div>
+            <div class="ins-desc">Du bringst den Anhänger zurück, wo du ihn abgeholt hast (Toleranz ca. 100 m).</div>
+          </div>
+          <div class="ins-price free">0,00 €</div>
+        </div>
+        <div class="insurance-option" id="ret-free" onclick="selectReturnMode(true)">
+          <div class="ins-radio"></div>
+          <div class="ins-body">
+            <div class="ins-name">Egal-wo in Bremen <span class="ins-badge">Flexibel</span></div>
+            <div class="ins-desc">Stell ihn an einem legalen Parkplatz im Stadtgebiet Bremen ab — kein Halteverbot, kein Privatgrund.</div>
+          </div>
+          <div class="ins-price">+15,00 €</div>
+        </div>
+      </div>
+      <p style="font-size:.7rem;color:var(--gray);margin-top:8px;text-align:right;">Alle Preise inkl. 19 % USt.</p>
+
+      <!-- Karte: Heimat-Kreis ODER Bremen-Polygon -->
+      <div id="returnZoneMap" style="height:240px;margin-top:14px;border-radius:10px;overflow:hidden;border:1px solid var(--border);background:#0a0a0a;"></div>
+
+      <!-- Warnhinweis: 50€ bei Fehlrückgabe + Halteverbot-Konsequenzen -->
+      <div style="background:#1f1606;border-left:3px solid #f59e0b;padding:12px 14px;border-radius:8px;margin-top:14px;">
+        <div style="font-size:.82rem;font-weight:700;color:#fbbf24;margin-bottom:4px;">⚠ Rückgabe außerhalb der Zone</div>
+        <div id="returnZoneWarning" style="font-size:.78rem;color:#ddd;line-height:1.5;">
+          Wird der Anhänger nicht innerhalb der erlaubten Zone abgestellt, berechnen wir eine Rückführungspauschale von <strong style="color:#fbbf24;">50,00 €</strong> (siehe <a href="#" onclick="openLegalModal('agb');return false;" style="color:#fbbf24;">AGB §13.6</a>). Dir bleibt der Nachweis vorbehalten, dass kein oder ein geringerer Schaden entstanden ist. Zusätzlich gilt: keine Halteverbote, kein Privatgrund, nicht verkehrsbehindernd — sonst trägst Du Bußgelder und Abschleppkosten (AGB §13.5).
+        </div>
+      </div>
+    </div>
+
     <button class="btn btn-orange" onclick="goStep5()">Weiter zur Zahlung →</button>
     <div style="text-align:center;margin-top:12px;">
       <a href="#" onclick="goToStep(3)" style="color:var(--gray);font-size:.85rem;text-decoration:none;">← Zurück</a>
@@ -719,6 +759,7 @@
       <div class="summary-row"><span class="label">Tarif</span><span id="sumTarif">–</span></div>
       <div class="summary-row"><span class="label">Mietpreis</span><span id="sumBase">–</span></div>
       <div class="summary-row" id="sumInsRow" style="display:none"><span class="label" id="sumInsLabel">Schutzpaket</span><span id="sumIns">–</span></div>
+      <div class="summary-row" id="sumFreeFloatRow" style="display:none"><span class="label">Rückgabe egal-wo</span><span id="sumFreeFloat">–</span></div>
       <div class="summary-row"><span class="label">Von</span><span id="sumVon">–</span></div>
       <div class="summary-row"><span class="label">Bis</span><span id="sumBis">–</span></div>
       <div class="summary-total"><span>Gesamt</span><span class="amount" id="sumTotal">–</span></div>
@@ -833,6 +874,8 @@
   const stripeClient = Stripe(STRIPE_PK);
 
   let trailerId      = null;
+  let trailerPickup  = { lat: null, lng: null, name: '' }; // Heimat-Stellplatz für Rückgabe-Zone
+  let selectedFreeFloating = false; // false = Heimat-Rückgabe (frei), true = irgendwo in Bremen (+15€)
   let stripeElements = null;
   let trailerPrices  = { kurztrip: 9, halftag: 18, day: 29, extra_day: 24, weekend: 59, week: 119 };
 
@@ -850,6 +893,91 @@
     ['none','basis','premium'].forEach(t => {
       document.getElementById(`ins-${t}`).classList.toggle('selected', t === type);
     });
+  }
+
+  /* ── RÜCKGABE-ZONE ───────────────────────────────────
+     SYNC: identisches Polygon in api/process-return.js (BREMEN_POLYGON).
+     Wenn das hier geändert wird, dort auch anpassen — sonst weicht Visualisierung
+     von Strafzonen-Berechnung ab. */
+  const BREMEN_POLYGON = [
+    [53.218, 8.625], [53.213, 8.690], [53.193, 8.732], [53.175, 8.745],
+    [53.156, 8.792], [53.145, 8.890], [53.137, 8.940], [53.108, 8.960],
+    [53.075, 8.985], [53.045, 8.980], [53.025, 8.890], [53.005, 8.838],
+    [52.998, 8.798], [53.008, 8.700], [53.075, 8.598], [53.110, 8.580],
+    [53.137, 8.598], [53.165, 8.620], [53.187, 8.620]
+  ];
+  const FREE_FLOATING_FEE = 15.00;
+  const RETURN_PENALTY    = 50.00;
+
+  let zoneMap = null, zoneHomeCircle = null, zoneHomeMarker = null, zoneBremenPoly = null;
+
+  function selectReturnMode(freeFloating) {
+    selectedFreeFloating = !!freeFloating;
+    document.getElementById('ret-home').classList.toggle('selected', !selectedFreeFloating);
+    document.getElementById('ret-free').classList.toggle('selected', selectedFreeFloating);
+    updateZoneMap();
+  }
+
+  function initZoneMap() {
+    if (zoneMap) return; // bereits initialisiert
+    if (typeof L === 'undefined') return; // Leaflet noch nicht geladen
+    const el = document.getElementById('returnZoneMap');
+    if (!el) return;
+    // Trailer-Daten noch nicht geladen → spaeter retry (sonst Karte ohne Heimat-Kreis).
+    if (!trailerPickup.lat || !trailerPickup.lng) {
+      setTimeout(initZoneMap, 250);
+      return;
+    }
+
+    const center = [trailerPickup.lat, trailerPickup.lng];
+
+    zoneMap = L.map(el, {
+      zoomControl: true, scrollWheelZoom: false, dragging: false,
+      doubleClickZoom: false, boxZoom: false, keyboard: false, attributionControl: false
+    }).setView(center, 14);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      subdomains: 'abcd', maxZoom: 18
+    }).addTo(zoneMap);
+
+    // Heimat-Stellplatz-Marker (Pin)
+    if (trailerPickup.lat && trailerPickup.lng) {
+      zoneHomeMarker = L.marker([trailerPickup.lat, trailerPickup.lng], {
+        icon: L.divIcon({
+          className: '',
+          html: '<div style="width:22px;height:22px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#E85D00;border:3px solid #ff8a3d;box-shadow:0 2px 8px rgba(0,0,0,.6);"></div>',
+          iconSize: [22, 22], iconAnchor: [11, 22]
+        })
+      }).addTo(zoneMap).bindTooltip('Heimat-Stellplatz', { direction: 'top', offset: [0, -20] });
+    }
+
+    updateZoneMap();
+  }
+
+  function updateZoneMap() {
+    if (!zoneMap) return;
+    // Beide Layer entfernen, je nach Modus neu zeichnen
+    if (zoneHomeCircle) { zoneHomeCircle.remove(); zoneHomeCircle = null; }
+    if (zoneBremenPoly) { zoneBremenPoly.remove(); zoneBremenPoly = null; }
+
+    if (!selectedFreeFloating) {
+      // 100m-Heimat-Kreis
+      if (trailerPickup.lat && trailerPickup.lng) {
+        zoneHomeCircle = L.circle([trailerPickup.lat, trailerPickup.lng], {
+          radius: 100, color: '#22c55e', fillColor: '#22c55e', fillOpacity: 0.18, weight: 2
+        }).addTo(zoneMap);
+        zoneMap.setView([trailerPickup.lat, trailerPickup.lng], 16);
+      }
+    } else {
+      // Bremen-Polygon
+      zoneBremenPoly = L.polygon(BREMEN_POLYGON, {
+        color: '#22c55e', fillColor: '#22c55e', fillOpacity: 0.12, weight: 2
+      }).addTo(zoneMap);
+      zoneMap.fitBounds(zoneBremenPoly.getBounds(), { padding: [10, 10] });
+    }
+
+    // Karte muss nach Resize/Tab-Wechsel ggf. neu vermessen werden
+    setTimeout(() => zoneMap.invalidateSize(), 50);
   }
 
   // Trailer laden – aus URL-Parameter ?trailer=ID oder erster verfügbarer
@@ -872,6 +1000,12 @@
       }
       const t   = data[0];
       trailerId = t.id;
+      // Heimat-Stellplatz: bevorzugt aktuelle Live-Position (Tracker), Fallback statischer Stellplatz
+      trailerPickup = {
+        lat: Number(t.last_lat ?? t.lat) || null,
+        lng: Number(t.last_lng ?? t.lng) || null,
+        name: t.name || 'PKW-Anhänger',
+      };
       trailerPrices = {
         kurztrip:  t.price_kurztrip  || 9,
         halftag:   t.price_halftag   || 18,
@@ -1119,11 +1253,15 @@
     return Math.round(p.base * insuranceRate * 100) / 100;
   }
 
+  function getFreeFloatingFee() {
+    return selectedFreeFloating ? FREE_FLOATING_FEE : 0;
+  }
+
   function getTotalPrice() {
     const sMs = new Date(document.getElementById('startTime').value).getTime() || 0;
     const eMs = new Date(document.getElementById('endTime').value).getTime()   || 0;
     const p = calcPrice(sMs, eMs); if (!p) return 0;
-    return p.base + getInsuranceAmount();
+    return p.base + getInsuranceAmount() + getFreeFloatingFee();
   }
 
   function updateInsurancePrices(base) {
@@ -1669,6 +1807,15 @@
     }
     goToStep(4);
     updatePriceDisplay();
+    // Zone-Karte initialisieren (Leaflet ggf. noch nicht ready → poll)
+    if (typeof L !== 'undefined') {
+      initZoneMap();
+    } else {
+      const t = setInterval(() => {
+        if (typeof L !== 'undefined') { clearInterval(t); initZoneMap(); }
+      }, 100);
+      setTimeout(() => clearInterval(t), 5000);
+    }
   }
 
   async function goStep5() {
@@ -1814,6 +1961,16 @@
     } else {
       document.getElementById('sumInsRow').style.display = 'none';
     }
+    // Free-Floating-Zeile
+    const ffRow = document.getElementById('sumFreeFloatRow');
+    if (ffRow) {
+      if (selectedFreeFloating) {
+        ffRow.style.display = 'flex';
+        document.getElementById('sumFreeFloat').textContent = '+' + FREE_FLOATING_FEE.toFixed(2).replace('.',',') + ' €';
+      } else {
+        ffRow.style.display = 'none';
+      }
+    }
   }
 
   async function initStripe() {
@@ -1838,7 +1995,8 @@
           insurance_amount: getInsuranceAmount(),
           user_id:          bookingUser.id,
           booking_mode:     bookingMode,
-          agb_version:      '2026-04-27'
+          agb_version:      '2026-04-27',
+          free_floating:    selectedFreeFloating
         })
       });
 

@@ -80,7 +80,8 @@ Liefere als HTML-Snippet (max 500 Wörter) mit Struktur:
 3. **📊 Was die Daten sagen** (konkrete Beobachtungen)
 4. **⚠️ Was Du NICHT machen solltest** (Anti-Empfehlungen)
 
-Format: HTML mit <h3>, <p>, <ul>, <strong>. Keine <html>/<body>-Tags.`;
+Format: REINES HTML-Snippet mit <h3>, <p>, <ul>, <strong>. Keine <html>/<body>-Tags.
+WICHTIG: Antworte NUR mit dem HTML-Snippet selbst — KEIN Markdown-Codeblock, KEIN \`\`\`html ... \`\`\` drumherum, KEINE Einleitung wie "Hier ist mein HTML:". Direkt mit <h3> oder <p> beginnen.`;
 
     const userMessage = `Aktuelle Daten der letzten 4 Wochen:\n\n${JSON.stringify(dataSummary, null, 2)}\n\nWelche 3 konkreten Schritte sollte ich diese Woche angehen, um SimpleTrailer schneller wachsen zu lassen? Berücksichtige: Wir sind frisch live, haben evtl. wenig oder keine Buchungen, brauchen erste Sichtbarkeit + Test-Kunden + Optimierung des Conversion-Funnels.`;
 
@@ -105,8 +106,15 @@ Format: HTML mit <h3>, <p>, <ul>, <strong>. Keine <html>/<body>-Tags.`;
     }
 
     const data = await anthropicRes.json();
-    const recommendation = data.content?.[0]?.text || '';
+    let recommendation = data.content?.[0]?.text || '';
     if (!recommendation) throw new Error('No recommendation generated');
+
+    // Cleanup: Codefences/Markdown-Wrapper entfernen, falls das Modell sich nicht an "reines HTML" gehalten hat
+    recommendation = recommendation
+      .replace(/^\s*```html\s*/i, '')
+      .replace(/^\s*```\s*/, '')
+      .replace(/\s*```\s*$/, '')
+      .trim();
 
     // In ai_insights speichern
     const { error: insertError } = await supabase

@@ -109,7 +109,7 @@ module.exports = async (req, res) => {
     </body></html>`;
 
     await resend.emails.send({
-      from: 'SimpleTrailer Bug-Triage <buchung@simpletrailer.de>',
+      from: 'SimpleTrailer Bug-Triage <agents@simpletrailer.de>',
       reply_to: 'info@simpletrailer.de',
       to: getLionEmail('briefing'),
       subject: `[ST-Briefing] 🐛 ${filtered.length} aktive Bugs — Top: ${top[0]?.title?.slice(0, 60) || 'unbekannt'}`,

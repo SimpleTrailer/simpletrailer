@@ -126,7 +126,7 @@ Fuehre den Audit durch.`;
     </body></html>`;
 
     await resend.emails.send({
-      from: 'SimpleTrailer Legal <buchung@simpletrailer.de>',
+      from: 'SimpleTrailer Legal <agents@simpletrailer.de>',
       reply_to: 'info@simpletrailer.de',
       to: getLionEmail('routine'),
       subject: `[ST-Routine] ⚖️ Legal-Audit Quartal — Pruefung von AGB/Datenschutz/Impressum`,

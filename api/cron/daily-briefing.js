@@ -293,7 +293,7 @@ module.exports = async (req, res) => {
     </body></html>`;
 
     await resend.emails.send({
-      from: 'SimpleTrailer Briefing <buchung@simpletrailer.de>',
+      from: 'SimpleTrailer Briefing <agents@simpletrailer.de>',
       reply_to: 'info@simpletrailer.de',
       to: getLionEmail('briefing'),
       subject: `[ST-Briefing] ☀️ Dein Tagesplan — ${items.filter(i=>i.severity==='red').length}🔴 ${items.filter(i=>i.severity==='yellow').length}🟡`,

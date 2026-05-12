@@ -180,7 +180,7 @@ Liefere das JSON.`;
     </body></html>`;
 
     await resend.emails.send({
-      from: 'SimpleTrailer Content <buchung@simpletrailer.de>',
+      from: 'SimpleTrailer Content <agents@simpletrailer.de>',
       reply_to: 'info@simpletrailer.de',
       to: getLionEmail('approval'),
       subject: `[ST-Approval] 📝 Ratgeber-Draft: ${draft.title.slice(0, 60)}`,
