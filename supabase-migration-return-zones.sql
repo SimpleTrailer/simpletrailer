@@ -54,7 +54,8 @@ $$ LANGUAGE plpgsql IMMUTABLE;
 -- VIEW: Anhänger mit aktueller Verfügbarkeit (berechnet aus Buchungen)
 -- Vereinfacht Frontend-Queries.
 -- =====================================================================
-CREATE OR REPLACE VIEW trailer_availability AS
+DROP VIEW IF EXISTS trailer_availability;
+CREATE VIEW trailer_availability AS
 SELECT
   t.*,
   (
@@ -72,4 +73,5 @@ SELECT
       AND b.status IN ('confirmed','active')
       AND b.start_time > NOW()
     ORDER BY b.start_time ASC LIMIT 1
-  ) AS next_booking_start;
+  ) AS next_booking_start
+FROM trailers t;
