@@ -9,7 +9,7 @@ module.exports = async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('trailers')
-      .select('id,name,type,description,lat,lng,is_available,image_url,price_kurztrip,price_halftag,price_day,price_extra_day,price_weekend,price_week,last_lat,last_lng,last_seen_at,is_moving')
+      .select('id,name,type,description,lat,lng,is_available,image_url,price_kurztrip,price_halftag,price_day,price_extra_day,price_weekend,price_week,tracker_imei,last_lat,last_lng,last_seen_at,is_moving')
       .order('type');
     if (error) throw error;
 
