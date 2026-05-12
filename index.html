@@ -2491,9 +2491,20 @@
     });
   })();
 
-  function makeIcon(available) {
-    const color  = available ? '#22c55e' : '#f87171';
-    const border = available ? '#4cff91' : '#ff6b6b';
+  function makeIcon(trailer) {
+    // Backwards-compat: wenn nur Bool übergeben wird, fallback auf einfaches Verhalten
+    if (typeof trailer === 'boolean') {
+      return makeIconColored(trailer ? '#22c55e' : '#f87171', trailer ? '#4cff91' : '#ff6b6b');
+    }
+    // Status-basierte Farben:
+    //  grün (verfügbar, evtl. live-Position)
+    //  orange (gerade gebucht, kommt zurück)
+    //  grau (nicht im Angebot / is_available=false)
+    if (trailer.currently_booked) return makeIconColored('#f59e0b', '#fbbf24');
+    if (trailer.is_available)     return makeIconColored('#22c55e', '#4cff91');
+    return makeIconColored('#6b7280', '#9ca3af');
+  }
+  function makeIconColored(color, border) {
     return L.divIcon({
       className: '',
       html: `<div style="width:26px;height:26px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:${color};border:3px solid ${border};box-shadow:0 2px 10px rgba(0,0,0,0.5);"></div>`,
@@ -2518,16 +2529,27 @@
 
   /* ── POPUP CONTENT ───────────────────────────── */
   function makePopupContent(t, distKm) {
-    const statusText = t.is_available
-      ? `<span style="color:#22c55e;font-weight:700;">✓ Verfügbar</span>`
-      : `<span style="color:#f87171;">Aktuell belegt</span>`;
-    const bookBtn = t.is_available
-      ? `<button onclick="goBook('${t.id}')" style="display:block;width:100%;margin-top:8px;background:#E85D00;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-weight:700;font-size:.82rem;cursor:pointer;font-family:inherit;">Jetzt buchen →</button>`
-      : '';
+    let statusText, bookBtn;
+    if (t.currently_booked) {
+      const freiText = t.available_from
+        ? `<span style="font-size:.78rem;color:#666;">Frei ab ${new Date(t.available_from).toLocaleString('de-DE', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'})} Uhr</span><br>`
+        : '';
+      statusText = `<span style="color:#f59e0b;font-weight:700;">● Gerade unterwegs</span><br>${freiText}`;
+      bookBtn = `<button onclick="goBook('${t.id}')" style="display:block;width:100%;margin-top:8px;background:#1f2937;color:#fff;border:1px solid #f59e0b;padding:8px 14px;border-radius:6px;font-weight:700;font-size:.82rem;cursor:pointer;font-family:inherit;">Für später buchen →</button>`;
+    } else if (t.is_available) {
+      const liveLabel = t.position_live
+        ? `<span style="font-size:.7rem;color:#22c55e;display:block;">📍 Live-Position</span>`
+        : '';
+      statusText = `<span style="color:#22c55e;font-weight:700;">✓ Verfügbar</span>${liveLabel}`;
+      bookBtn = `<button onclick="goBook('${t.id}')" style="display:block;width:100%;margin-top:8px;background:#E85D00;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-weight:700;font-size:.82rem;cursor:pointer;font-family:inherit;">Jetzt buchen →</button>`;
+    } else {
+      statusText = `<span style="color:#6b7280;">Aktuell nicht im Angebot</span>`;
+      bookBtn = '';
+    }
     const distLine = distKm != null
       ? `<span style="font-size:.8rem;color:#60a5fa;font-weight:600;display:block;margin:2px 0;">📍 ${fmtDist(distKm)} entfernt</span>`
       : '';
-    return `<div style="min-width:160px;font-family:system-ui,sans-serif;">
+    return `<div style="min-width:180px;font-family:system-ui,sans-serif;">
       <strong style="font-size:.95rem;">${t.name}</strong><br>
       <span style="font-size:.78rem;color:#666;">${t.type || ''}</span><br>
       <span style="font-size:.82rem;">ab ${t.price_kurztrip || 9} €</span><br>
@@ -2810,7 +2832,7 @@
         const lat = t.display_lat ?? t.lat;
         const lng = t.display_lng ?? t.lng;
         if (!lat || !lng) return;
-        const marker = L.marker([lat, lng], { icon: makeIcon(t.is_available) });
+        const marker = L.marker([lat, lng], { icon: makeIcon(t) });
         const distKm = userLocation ? haversineKm(userLocation.lat, userLocation.lng, lat, lng) : null;
         marker.bindPopup(makePopupContent(t, distKm));
         marker.on('click', () => openTrailerModal('flexible'));
@@ -2825,7 +2847,7 @@
 
   loadMapTrailers();
 
-  // Live-Position-Update: alle 60s nur Marker-Position updaten (ohne Karte neu zu bauen)
+  // Live-Update: alle 60s Marker-Position + Status (Farbe + Popup) aktualisieren
   setInterval(async () => {
     try {
       const r = await fetch('/api/get-trailers');
@@ -2835,14 +2857,24 @@
         if (!entry) return;
         const lat = t.display_lat ?? t.lat;
         const lng = t.display_lng ?? t.lng;
-        if (lat && lng) {
-          entry.marker.setLatLng([lat, lng]);
-          entry.trailer.display_lat = lat;
-          entry.trailer.display_lng = lng;
-          entry.trailer.is_moving = t.is_moving;
-          entry.trailer.position_minutes_ago = t.position_minutes_ago;
-        }
+        if (lat && lng) entry.marker.setLatLng([lat, lng]);
+        // Trailer-Daten aktualisieren
+        Object.assign(entry.trailer, {
+          display_lat: lat, display_lng: lng,
+          is_moving: t.is_moving, position_minutes_ago: t.position_minutes_ago,
+          is_available: t.is_available, currently_booked: t.currently_booked,
+          available_from: t.available_from, position_live: t.position_live,
+        });
+        // Icon-Farbe updaten falls Buchungs-Status sich geändert hat
+        entry.marker.setIcon(makeIcon(entry.trailer));
+        // Popup-Inhalt updaten
+        const distKm = userLocation ? haversineKm(userLocation.lat, userLocation.lng, lat, lng) : null;
+        entry.marker.setPopupContent(makePopupContent(entry.trailer, distKm));
       });
+      // Badge "X verfügbar" auch updaten
+      const free = (d.trailers || []).filter(t => t.is_available).length;
+      const badge = document.getElementById('mapBadgeText');
+      if (badge) badge.textContent = `${free} verfügbar in Bremen`;
     } catch(e) { /* silent */ }
   }, 60000);
 
