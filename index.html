@@ -7,8 +7,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <!-- SEO -->
-  <title>Anhänger mieten Bremen – SimpleTrailer | Online buchen ab 9 €</title>
-  <meta name="description" content="PKW-Anhänger in Bremen mieten. Online buchen, mit dem Handy entsperren, sofort losfahren. Stundenweise ab 9 €, Tagestarif 29 €, Wochenende 59 €. Kontaktlos & 24/7." />
+  <title>Anhänger mieten Bremen ab 9 € – 24/7 online | SimpleTrailer</title>
+  <meta name="description" content="Anhänger mieten in Bremen ab 9 €/3 h – 24/7 online buchen, kontaktlos per Code abholen, ohne Kaution. PKW-Anhänger für Umzug, Möbel &amp; Sperrmüll. Tag 29 €, Wochenende 59 €." />
   <meta name="keywords" content="Anhänger mieten Bremen, PKW-Anhänger Bremen, Trailer Verleih Bremen, Anhängervermietung, Transport Bremen, Umzug, kontaktlos mieten" />
   <meta name="author" content="SimpleTrailer GbR" />
   <meta name="robots" content="index, follow, max-image-preview:large" />
@@ -18,8 +18,8 @@
   <!-- Open Graph (Facebook, WhatsApp, LinkedIn) -->
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="SimpleTrailer" />
-  <meta property="og:title" content="Anhänger mieten in Bremen – online in 60 Sekunden gebucht" />
-  <meta property="og:description" content="PKW-Anhänger ab 9 €. Online buchen, mit dem Handy entsperren, losfahren. Verfügbar 24/7 in Bremen." />
+  <meta property="og:title" content="Anhänger mieten Bremen – ab 9 €, 24/7 online buchbar" />
+  <meta property="og:description" content="PKW-Anhänger in Bremen ab 9 €/3 h. Online buchen, per Code abholen, losfahren. Ohne Kaution, ohne Wartezeit – 24/7." />
   <meta property="og:url" content="https://simpletrailer.de/" />
   <meta property="og:image" content="https://simpletrailer.de/og-image.png" />
   <meta property="og:image:width" content="1200" />
@@ -28,8 +28,8 @@
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Anhänger mieten Bremen – SimpleTrailer" />
-  <meta name="twitter:description" content="Online buchen, sofort losfahren. PKW-Anhänger ab 9 € in Bremen." />
+  <meta name="twitter:title" content="Anhänger mieten Bremen – ab 9 €, 24/7 online" />
+  <meta name="twitter:description" content="PKW-Anhänger in Bremen ab 9 €/3 h. Online buchen, per Code abholen, losfahren. Ohne Kaution." />
   <meta name="twitter:image" content="https://simpletrailer.de/og-image.png" />
 
   <!-- PWA Manifest + Apple-Touch-Icon -->
@@ -45,7 +45,7 @@
     "@id": "https://simpletrailer.de/#business",
     "name": "SimpleTrailer",
     "alternateName": "SimpleTrailer GbR",
-    "description": "PKW-Anhänger-Vermietung in Bremen. 24/7 online buchen, kontaktlos abholen mit Code per Push, sofort losfahren.",
+    "description": "PKW-Anhänger mieten in Bremen ab 9 €/3 h. 24/7 online buchen, kontaktlos per Code abholen, ohne Kaution. Tagestarif 29 €, Wochenende 59 €, Woche 119 € – alle Preise inkl. MwSt.",
     "url": "https://simpletrailer.de",
     "logo": "https://simpletrailer.de/og-image.png",
     "image": [
@@ -266,12 +266,25 @@
     .price-card.reveal:nth-child(4){ transition-delay: 0.30s; }
     .review-card.reveal:nth-child(2){ transition-delay: 0.12s; }
     .review-card.reveal:nth-child(3){ transition-delay: 0.24s; }
-    /* USE-CASE CARDS (dezent, lädt zum Buchen ein ohne penetrant zu sein) */
+    /* USE-CASE CARDS (3x2 Grid, jede Karte mit Buchen-CTA) */
+    .usecase-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    @media (max-width: 880px) {
+      .usecase-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 480px) {
+      .usecase-grid { grid-template-columns: 1fr; }
+    }
     .usecase-card {
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 14px;
-      padding: 20px 18px;
+      padding: 22px 20px 18px;
       text-decoration: none;
       color: inherit;
       text-align: left;
@@ -282,16 +295,36 @@
       gap: 6px;
       transition: all .22s ease;
       cursor: pointer;
+      position: relative;
     }
     .usecase-card:hover {
       border-color: var(--orange);
       transform: translateY(-2px);
       background: #1c1612;
     }
-    .usecase-icon { font-size: 1.7rem; line-height: 1; margin-bottom: 4px; }
-    .usecase-title { font-size: .98rem; font-weight: 700; color: var(--white); letter-spacing: -.01em; }
-    .usecase-meta { font-size: .8rem; color: var(--gray); line-height: 1.5; }
-    .usecase-meta strong { color: var(--orange); font-weight: 700; }
+    .usecase-icon { font-size: 1.8rem; line-height: 1; margin-bottom: 6px; }
+    .usecase-title { font-size: 1rem; font-weight: 700; color: var(--white); letter-spacing: -.01em; }
+    .usecase-meta { font-size: .82rem; color: var(--gray); line-height: 1.5; }
+    .usecase-meta strong { color: var(--white); font-weight: 700; }
+    .usecase-cta {
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid #222;
+      font-size: .8rem;
+      font-weight: 700;
+      color: var(--orange);
+      letter-spacing: -.01em;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: color .22s ease;
+    }
+    .usecase-cta::after {
+      content: '→';
+      transition: transform .22s ease;
+    }
+    .usecase-card:hover .usecase-cta { color: var(--orange-h); }
+    .usecase-card:hover .usecase-cta::after { transform: translateX(4px); }
 
     /* TRUST GRID */
     .trust-grid {
@@ -1974,44 +2007,50 @@
   </div>
 </section>
 
-<!-- USE-CASES: Wofür Leute den Anhänger brauchen — dezent, SEO-Long-Tail-Booster -->
+<!-- USE-CASES: Wofür Leute den Anhänger brauchen — 3x2 Grid mit Buchen-CTA -->
 <section id="anwendungen" style="padding:60px 5% 40px;">
   <div class="section-inner">
-    <div class="reveal" style="text-align:center;margin-bottom:36px;">
+    <div class="reveal" style="text-align:center;margin-bottom:32px;">
       <p class="section-tag">Wofür Anhänger?</p>
       <h2 class="section-title">Für jede Tour der passende Tarif</h2>
-      <p style="color:var(--text-muted);max-width:560px;margin:0 auto;line-height:1.6;font-size:.95rem;">Egal ob Sperrmüll am Samstag oder Festival-Wochenende — du brauchst keinen eigenen Anhänger, du brauchst einen <strong>für jetzt</strong>.</p>
+      <p style="color:var(--text-muted);max-width:520px;margin:0 auto;line-height:1.6;font-size:.95rem;">Vom Sperrmüll-Termin bis zum IKEA-Sonntag — wähle deinen Einsatz und buche direkt.</p>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;max-width:1100px;margin:0 auto;">
+    <div class="usecase-grid">
       <button type="button" onclick="openTrailerModal('flexible')" class="usecase-card reveal">
         <div class="usecase-icon">📦</div>
         <div class="usecase-title">Möbel transportieren</div>
         <div class="usecase-meta">Sofa, Schrank, Bett · ab <strong>29 €/Tag</strong></div>
+        <div class="usecase-cta">Jetzt buchen</div>
       </button>
       <button type="button" onclick="openTrailerModal('flexible')" class="usecase-card reveal">
         <div class="usecase-icon">🗑️</div>
         <div class="usecase-title">Sperrmüll fahren</div>
-        <div class="usecase-meta">Bremen-Recyclinghof · <strong>9 €/3h</strong> reicht</div>
+        <div class="usecase-meta">Bremen-Recyclinghof · <strong>9 €/3h</strong></div>
+        <div class="usecase-cta">Jetzt buchen</div>
       </button>
       <button type="button" onclick="openTrailerModal('flexible')" class="usecase-card reveal">
-        <div class="usecase-icon">🛋️</div>
+        <div class="usecase-icon">🛒</div>
         <div class="usecase-title">IKEA-Großeinkauf</div>
         <div class="usecase-meta">Brinkum auch Sonntag · <strong>9 €/3h</strong></div>
+        <div class="usecase-cta">Jetzt buchen</div>
       </button>
       <button type="button" onclick="openTrailerModal('flexible')" class="usecase-card reveal">
         <div class="usecase-icon">🌳</div>
         <div class="usecase-title">Gartenabfälle</div>
         <div class="usecase-meta">Erde, Grünschnitt · <strong>9 €/3h</strong></div>
+        <div class="usecase-cta">Jetzt buchen</div>
       </button>
       <button type="button" onclick="openTrailerModal('weekend')" class="usecase-card reveal">
         <div class="usecase-icon">🎪</div>
         <div class="usecase-title">Festival-Wochenende</div>
         <div class="usecase-meta">Breminale, Maifest · <strong>59 €/WE</strong></div>
+        <div class="usecase-cta">Jetzt buchen</div>
       </button>
       <button type="button" onclick="openTrailerModal('week')" class="usecase-card reveal">
-        <div class="usecase-icon">🏠</div>
+        <div class="usecase-icon">🚚</div>
         <div class="usecase-title">Umzug Bremen</div>
         <div class="usecase-meta">Komplette Woche · <strong>119 €/Woche</strong></div>
+        <div class="usecase-cta">Jetzt buchen</div>
       </button>
     </div>
   </div>
