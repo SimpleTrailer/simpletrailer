@@ -69,6 +69,17 @@ module.exports = async (req, res) => {
 
       const insType   = meta.insurance_type   || 'none';
       const insAmount = parseFloat(meta.insurance_amount || '0') || 0;
+      const freeFloating = meta.free_floating === '1';
+
+      // Pickup-Position aus aktuellem Tracker-Standort einfrieren
+      // (= "Heimat" für die Standard-Rückgabe-Prüfung).
+      const { data: trailerNow } = await supabase
+        .from('trailers')
+        .select('last_lat,last_lng,lat,lng')
+        .eq('id', meta.trailer_id)
+        .maybeSingle();
+      const pickupLat = (trailerNow?.last_lat ?? trailerNow?.lat) || null;
+      const pickupLng = (trailerNow?.last_lng ?? trailerNow?.lng) || null;
 
       const baseInsert = {
         trailer_id: meta.trailer_id, customer_name: meta.customer_name,
@@ -80,7 +91,9 @@ module.exports = async (req, res) => {
         user_id: meta.user_id || null,
         stripe_payment_intent_id: payment_intent_id,
         stripe_customer_id: pi.customer, stripe_payment_method_id: pi.payment_method,
-        status: 'confirmed', access_code, return_token, precheck_token
+        status: 'confirmed', access_code, return_token, precheck_token,
+        free_floating: freeFloating,
+        pickup_lat: pickupLat, pickup_lng: pickupLng
       };
       // AGB-Felder optional anhaengen — wenn die DB-Spalten noch nicht existieren,
       // fallen wir auf das Insert OHNE AGB-Felder zurueck (kein Buchungs-Abbruch).
@@ -94,10 +107,11 @@ module.exports = async (req, res) => {
         .from('bookings').insert(insertWithAgb).select('*, trailers(name)').single();
 
       if (bookingError && /column .* does not exist/i.test(bookingError.message || '')) {
-        // Fallback: AGB-Spalten fehlen in der DB -> ohne sie speichern
-        console.warn('AGB-Spalten fehlen in DB, fallback auf Basis-Insert. Bitte ALTER TABLE in Supabase ausfuehren.');
+        // Fallback: AGB- oder Free-Floating-Spalten fehlen in der DB -> ohne sie speichern
+        console.warn('Spalte fehlt in DB, fallback auf Basis-Insert ohne neue Felder. Bitte ALTER TABLE in Supabase ausfuehren.');
+        const { free_floating, pickup_lat, pickup_lng, ...minimal } = baseInsert;
         ({ data: booking, error: bookingError } = await supabase
-          .from('bookings').insert(baseInsert).select('*, trailers(name)').single());
+          .from('bookings').insert(minimal).select('*, trailers(name)').single());
       }
 
       if (bookingError) throw bookingError;

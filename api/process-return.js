@@ -50,12 +50,89 @@ module.exports = async (req, res) => {
       }
     }
 
-    await supabase.from('bookings').update({
+    // === RÜCKGABE-ZONE prüfen ===
+    // Aktueller Tracker-Standort holen + Distanz zum Abholort + Status berechnen.
+    const { data: trailerNow } = await supabase
+      .from('trailers')
+      .select('last_lat,last_lng,is_moving')
+      .eq('id', booking.trailer_id)
+      .maybeSingle();
+
+    const returnLat = trailerNow?.last_lat || null;
+    const returnLng = trailerNow?.last_lng || null;
+
+    // Haversine-Distanz (Meter)
+    function distMeters(lat1, lng1, lat2, lng2) {
+      if (lat1 == null || lat2 == null) return null;
+      const R = 6371000;
+      const toRad = (d) => d * Math.PI / 180;
+      const dLat = toRad(lat2 - lat1);
+      const dLng = toRad(lng2 - lng1);
+      const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLng/2)**2;
+      return Math.round(2 * R * Math.asin(Math.sqrt(a)));
+    }
+    // Bremen-Bounding-Box Check (grobe Approximation – Geofence-Polygon ist serverseitig genauer)
+    function inBremen(lat, lng) {
+      if (lat == null || lng == null) return false;
+      return lat >= 53.000 && lat <= 53.230 && lng >= 8.600 && lng <= 8.985;
+    }
+
+    let returnDistanceM = null;
+    let returnStatus = null;
+    let returnExtraFee = 0;
+    if (returnLat != null && booking.pickup_lat != null) {
+      returnDistanceM = distMeters(booking.pickup_lat, booking.pickup_lng, returnLat, returnLng);
+      const insideBremen = inBremen(returnLat, returnLng);
+      if (returnDistanceM <= 100) {
+        returnStatus = 'heimat';
+      } else if (!insideBremen) {
+        returnStatus = 'outside_bremen';
+        returnExtraFee = 50.00; // AGB §13.6 — Rückführungspauschale
+      } else if (booking.free_floating === true) {
+        returnStatus = 'free_floating_ok';
+      } else {
+        returnStatus = 'wrong_spot_in_bremen';
+        returnExtraFee = 50.00; // AGB §13.6 — Falsch-Rückgabe-Pauschale
+      }
+    }
+
+    // Aufpreis charge (Stripe Off-Session)
+    let returnExtraFeePiId = null;
+    if (returnExtraFee > 0 && booking.stripe_payment_method_id && booking.stripe_customer_id) {
+      try {
+        const feePi = await stripe.paymentIntents.create({
+          amount: Math.round(returnExtraFee * 100), currency: 'eur',
+          customer: booking.stripe_customer_id,
+          payment_method: booking.stripe_payment_method_id,
+          confirm: true, off_session: true,
+          receipt_email: booking.customer_email,
+          description: `SimpleTrailer – ${returnStatus === 'outside_bremen' ? 'Rückführung außerhalb Bremen' : 'Falsch-Rückgabe (nicht am Abholort)'}`,
+          metadata: { booking_id, type: 'return_extra_fee', return_status: returnStatus }
+        });
+        returnExtraFeePiId = feePi.id;
+      } catch (stripeErr) {
+        console.error('Rückgabe-Aufpreis Stripe-Charge fehlgeschlagen:', stripeErr.message);
+      }
+    }
+
+    const bookingUpdate = {
       status: 'returned', actual_return_time: now.toISOString(),
       return_photo_url: photo_url || null,
       late_fee_amount: lateFeeAmount,
-      late_fee_payment_intent_id: lateFeePaymentIntentId
-    }).eq('id', booking_id);
+      late_fee_payment_intent_id: lateFeePaymentIntentId,
+    };
+    // Neue Felder optional anhängen — DB-Fallback wenn Migration noch nicht durchgelaufen.
+    const bookingUpdateWithZone = { ...bookingUpdate,
+      return_lat: returnLat, return_lng: returnLng,
+      return_distance_m: returnDistanceM,
+      return_status: returnStatus,
+      return_extra_fee: returnExtraFee,
+    };
+    let { error: updErr } = await supabase.from('bookings').update(bookingUpdateWithZone).eq('id', booking_id);
+    if (updErr && /column .* does not exist/i.test(updErr.message || '')) {
+      console.warn('Return-Zone-Spalten fehlen — fallback ohne Zone-Felder. supabase-migration-return-zones.sql ausführen.');
+      await supabase.from('bookings').update(bookingUpdate).eq('id', booking_id);
+    }
 
     await supabase.from('trailers').update({ is_available: true }).eq('id', booking.trailer_id);
 

@@ -11,7 +11,7 @@ module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
   try {
-    const { trailer_id, pricing_type, start_time, end_time, customer_name, customer_email, customer_phone, customer_address, insurance_type, insurance_amount, user_id, booking_mode, agb_version } = req.body;
+    const { trailer_id, pricing_type, start_time, end_time, customer_name, customer_email, customer_phone, customer_address, insurance_type, insurance_amount, user_id, booking_mode, agb_version, free_floating } = req.body;
     // AGB-Akzeptanz fuer Beweissicherung
     const agbAcceptedAt = new Date().toISOString();
     const agbAcceptedIp = (req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || req.connection?.remoteAddress || '').split(',')[0].trim();
@@ -95,7 +95,13 @@ module.exports = async (req, res) => {
     const insType   = ['basis','premium'].includes(insurance_type) ? insurance_type : 'none';
     const insRate   = insType === 'basis' ? 0.15 : insType === 'premium' ? 0.30 : 0;
     const insAmount = Math.round(baseAmount * insRate * 100) / 100;
-    const amount    = baseAmount + insAmount;
+
+    // Free-Floating-Aufpreis: 15€ wenn Mieter im Bremen-Stadtgebiet (statt am Heimat-Stellplatz)
+    // abstellen darf. Pauschale, deckt Logistik/Re-Positionierung ab.
+    const freeFloating = !!free_floating;
+    const freeFloatingFee = freeFloating ? 15.00 : 0;
+
+    const amount    = baseAmount + insAmount + freeFloatingFee;
     const amountInCents = Math.round(amount * 100);
 
     const existing = await stripe.customers.list({ email: customer_email, limit: 1 });
@@ -117,13 +123,14 @@ module.exports = async (req, res) => {
       automatic_payment_methods: { enabled: true },
       receipt_email: customer_email,
       description: `SimpleTrailer – ${trailer.name} – ${pricing_type}`,
-      metadata: { trailer_id, pricing_type, start_time, end_time, customer_name, customer_email, customer_phone: customer_phone || '', customer_address: customer_address || '', insurance_type: insType, insurance_amount: String(insAmount), user_id: user_id || '', agb_version: agb_version || '2026-04-27', agb_accepted_at: agbAcceptedAt, agb_accepted_ip: agbAcceptedIp }
+      metadata: { trailer_id, pricing_type, start_time, end_time, customer_name, customer_email, customer_phone: customer_phone || '', customer_address: customer_address || '', insurance_type: insType, insurance_amount: String(insAmount), user_id: user_id || '', agb_version: agb_version || '2026-04-27', agb_accepted_at: agbAcceptedAt, agb_accepted_ip: agbAcceptedIp, free_floating: freeFloating ? '1' : '0', free_floating_fee: String(freeFloatingFee) }
     });
 
     return res.status(200).json({
       client_secret: paymentIntent.client_secret,
       payment_intent_id: paymentIntent.id,
       amount, base_amount: baseAmount, insurance_amount: insAmount, insurance_type: insType,
+      free_floating: freeFloating, free_floating_fee: freeFloatingFee,
       trailer_name: trailer.name
     });
 
