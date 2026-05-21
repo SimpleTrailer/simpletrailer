@@ -12,6 +12,7 @@
 const { createClient } = require('@supabase/supabase-js');
 const { Resend } = require('resend');
 const { getLionEmail } = require('../_lion-push.js');
+const { pushToInbox } = require('../_inbox.js');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -120,13 +121,23 @@ Liefere den HTML-Report.`;
       </div>
     </body></html>`;
 
-    await resend.emails.send({
-      from: 'SimpleTrailer Watch <agents@simpletrailer.de>',
-      reply_to: 'info@simpletrailer.de',
-      to: getLionEmail('routine'),
-      subject: `[ST-Routine] 🔭 Konkurrenz-Report ${new Date().toLocaleDateString('de-DE',{month:'long'})} — Bremen`,
-      html
+    const subject = `🔭 Konkurrenz-Report ${new Date().toLocaleDateString('de-DE',{month:'long'})} — Bremen`;
+    const inbox = await pushToInbox({
+      agent: 'competitor-watcher',
+      severity: 'info',
+      title: subject,
+      summary: `Monatlicher Bremen-Markt-Check: Preise, neue Anbieter, Gaps`,
+      bodyHtml: html,
     });
+    if (!inbox.written) {
+      await resend.emails.send({
+        from: 'SimpleTrailer Watch <agents@simpletrailer.de>',
+        reply_to: 'info@simpletrailer.de',
+        to: getLionEmail('routine'),
+        subject: `[ST-Routine] ${subject}`,
+        html
+      });
+    }
 
     return res.status(200).json({ ok: true, report_length: reportHtml.length });
   } catch (err) {

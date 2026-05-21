@@ -314,6 +314,47 @@
           </div>
         </div>
 
+        <!-- 📥 AGENT-INBOX (Routine-Reports der Crons — statt Mail) -->
+        <style>
+          #cpAgentInboxList .ainbox-item { background:#0f0f0f; border:1px solid var(--border); border-left:3px solid #3a1a5f; border-radius:10px; padding:12px 14px; margin-bottom:8px; cursor:pointer; transition:all .15s; display:flex; gap:10px; align-items:flex-start; }
+          #cpAgentInboxList .ainbox-item:hover { border-left-color:var(--orange); background:#141414; }
+          #cpAgentInboxList .ainbox-item.unread { border-left-color:#a78bfa; }
+          #cpAgentInboxList .ainbox-item.warn { border-left-color:#f59e0b; }
+          #cpAgentInboxList .ainbox-item.critical { border-left-color:#ef4444; background:#1f0a0a; }
+          #cpAgentInboxList .ainbox-meta { font-size:.7rem; color:#666; }
+          #cpAgentInboxList .ainbox-title { font-size:.92rem; font-weight:600; color:#fff; margin:2px 0; }
+          #cpAgentInboxList .ainbox-summary { font-size:.78rem; color:#aaa; line-height:1.5; }
+          #cpAgentInboxList .ainbox-item.read { opacity:.55; }
+          #cpAgentInboxList .ainbox-agent { font-size:.65rem; padding:2px 8px; border-radius:6px; background:#1a1a1a; color:#888; letter-spacing:.05em; text-transform:uppercase; font-weight:700; flex-shrink:0; }
+          .ainbox-modal { position:fixed; inset:0; background:rgba(0,0,0,.85); display:none; align-items:center; justify-content:center; z-index:9999; padding:20px; }
+          .ainbox-modal.open { display:flex; }
+          .ainbox-modal-inner { background:#0f0f0f; border:1px solid var(--border); border-radius:14px; max-width:760px; width:100%; max-height:85vh; overflow-y:auto; padding:24px; }
+          .ainbox-modal-inner .modal-close { float:right; background:#1a1a1a; color:#fff; border:1px solid var(--border); padding:6px 12px; border-radius:6px; cursor:pointer; font-family:inherit; font-size:.78rem; }
+          .ainbox-modal-inner h1, .ainbox-modal-inner h2, .ainbox-modal-inner h3 { color:#fff; }
+          .ainbox-modal-inner table { width:100%; }
+        </style>
+        <div id="cpAgentInboxBox" style="background:#0f0f0f;border:1px solid var(--border);border-radius:14px;padding:18px 22px;margin-bottom:18px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+            <span style="font-size:1.1rem;">📥</span>
+            <strong style="font-size:.85rem;letter-spacing:.05em;text-transform:uppercase;color:var(--gray);">Agent-Inbox</strong>
+            <span id="cpAgentInboxBadge" style="background:#a78bfa;color:#0d0d0d;font-size:.68rem;font-weight:800;padding:2px 8px;border-radius:10px;display:none;">0 ungelesen</span>
+            <span style="margin-left:auto;display:flex;gap:8px;align-items:center;">
+              <label style="font-size:.7rem;color:var(--gray);display:flex;align-items:center;gap:5px;cursor:pointer;">
+                <input type="checkbox" id="cpAgentInboxOnlyUnread" onchange="loadAgentInbox()" /> Nur ungelesen
+              </label>
+              <button onclick="markAllInboxRead()" style="background:#1a1a1a;color:var(--gray);border:1px solid var(--border);padding:5px 10px;border-radius:5px;font-size:.72rem;cursor:pointer;font-family:inherit;">Alle gelesen</button>
+            </span>
+          </div>
+          <div id="cpAgentInboxList" style="max-height:380px;overflow-y:auto;">
+            <p style="color:var(--gray);font-size:.82rem;">Wird geladen…</p>
+          </div>
+        </div>
+
+        <!-- Detail-Modal -->
+        <div class="ainbox-modal" id="ainboxModal" onclick="if(event.target===this)closeAinboxModal()">
+          <div class="ainbox-modal-inner" id="ainboxModalInner"></div>
+        </div>
+
         <!-- 🧭 RÜCKGABE-STATISTIK (Falsch-Rückgaben, Distanzen, Heatmap) -->
         <div id="cpReturnStatsBox" style="background:#0f0f0f;border:1px solid var(--border);border-radius:14px;padding:18px 22px;margin-bottom:18px;display:none;">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
@@ -1588,6 +1629,103 @@
 
     // Rückgabe-Statistik
     renderReturnStats(d.returnStats);
+
+    // Agent-Inbox
+    loadAgentInbox();
+  }
+
+  /* ── AGENT-INBOX ──────────────────────────────────── */
+  async function loadAgentInbox() {
+    try {
+      const onlyUnread = document.getElementById('cpAgentInboxOnlyUnread')?.checked;
+      const filter = onlyUnread ? '?filter=unread' : '';
+      const r = await fetch('/api/admin?section=agent-inbox' + (filter ? '&filter=unread' : ''),
+        { headers: { Authorization: `Bearer ${authToken}` } });
+      const d = await r.json();
+      const list = document.getElementById('cpAgentInboxList');
+      const badge = document.getElementById('cpAgentInboxBadge');
+
+      if (d.warning) {
+        list.innerHTML = `<p style="color:#f59e0b;font-size:.82rem;">⚠ ${d.warning}</p>`;
+        badge.style.display = 'none';
+        return;
+      }
+      if (typeof d.unread === 'number' && d.unread > 0) {
+        badge.textContent = `${d.unread} ungelesen`;
+        badge.style.display = 'inline-block';
+      } else {
+        badge.style.display = 'none';
+      }
+      if (!d.messages || d.messages.length === 0) {
+        list.innerHTML = '<p style="color:var(--gray);font-size:.82rem;">Keine Nachrichten — alles in Ordnung. 👌</p>';
+        return;
+      }
+      const agentLabels = {
+        'daily-briefing': '☀️ Briefing',
+        'weekly-report': '📊 Report',
+        'midweek-check': '⚡ Mid-Week',
+        'bug-triager': '🐛 Bugs',
+        'competitor-watcher': '🔭 Konkurrenz',
+        'legal-quarterly-audit': '⚖️ Legal',
+      };
+      list.innerHTML = d.messages.map(m => {
+        const sevClass = m.severity === 'critical' ? 'critical' : (m.severity === 'warn' ? 'warn' : '');
+        const unread = m.read_at == null ? 'unread' : 'read';
+        const when = new Date(m.created_at).toLocaleString('de-DE', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+        const agentLabel = agentLabels[m.agent_name] || m.agent_name;
+        return `<div class="ainbox-item ${unread} ${sevClass}" onclick="openAinboxMessage('${m.id}')">
+          <span class="ainbox-agent">${agentLabel}</span>
+          <div style="flex:1;min-width:0;">
+            <div class="ainbox-meta">${when}</div>
+            <div class="ainbox-title">${escapeHtml(m.title || '')}</div>
+            ${m.summary ? `<div class="ainbox-summary">${escapeHtml(m.summary)}</div>` : ''}
+          </div>
+        </div>`;
+      }).join('');
+      window._ainboxCache = Object.fromEntries(d.messages.map(m => [m.id, m]));
+    } catch (e) {
+      console.error('loadAgentInbox:', e);
+    }
+  }
+
+  async function openAinboxMessage(id) {
+    const msg = (window._ainboxCache || {})[id];
+    if (!msg) return;
+    document.getElementById('ainboxModalInner').innerHTML = `
+      <button class="modal-close" onclick="closeAinboxModal()">Schließen ×</button>
+      <div style="color:#888;font-size:.72rem;margin-bottom:6px;">${escapeHtml(msg.agent_name)} · ${new Date(msg.created_at).toLocaleString('de-DE')}</div>
+      <h2 style="margin:0 0 14px;font-size:1.2rem;">${escapeHtml(msg.title || '')}</h2>
+      <div style="font-size:.9rem;line-height:1.5;">${msg.body_html || msg.summary || ''}</div>
+    `;
+    document.getElementById('ainboxModal').classList.add('open');
+    // Beim Öffnen als gelesen markieren
+    if (msg.read_at == null) {
+      try {
+        await fetch('/api/admin?section=inbox-mark-read', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${authToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id })
+        });
+        msg.read_at = new Date().toISOString();
+        loadAgentInbox();
+      } catch (e) { /* ignore */ }
+    }
+  }
+
+  function closeAinboxModal() {
+    document.getElementById('ainboxModal').classList.remove('open');
+  }
+
+  async function markAllInboxRead() {
+    if (!confirm('Alle Agent-Nachrichten als gelesen markieren?')) return;
+    try {
+      await fetch('/api/admin?section=inbox-mark-read', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${authToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ all: true })
+      });
+      loadAgentInbox();
+    } catch (e) { alert('Fehler: ' + e.message); }
   }
 
   /* ── RÜCKGABE-STATISTIK ─────────────────────────────────── */

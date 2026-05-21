@@ -183,6 +183,47 @@ module.exports = async (req, res) => {
       }
     }
 
+    // === AGENT-INBOX (Routine-Reports der 6 Crons im Cockpit) ===
+    if (section === 'agent-inbox') {
+      const onlyUnread = req.query.filter === 'unread';
+      try {
+        let query = supabase.from('agent_messages')
+          .select('id, agent_name, severity, title, summary, body_html, read_at, created_at')
+          .order('created_at', { ascending: false })
+          .limit(50);
+        if (onlyUnread) query = query.is('read_at', null);
+        const { data, error: err } = await query;
+        if (err) throw err;
+        const { count: unreadCount } = await supabase.from('agent_messages')
+          .select('id', { count: 'exact', head: true })
+          .is('read_at', null);
+        return res.status(200).json({ messages: data || [], unread: unreadCount || 0 });
+      } catch (e) {
+        if (/relation .* does not exist/i.test(e.message || '')) {
+          return res.status(200).json({ messages: [], unread: 0, warning: 'agent_messages table missing — supabase-migration-agent-inbox.sql ausführen.' });
+        }
+        return res.status(500).json({ error: e.message });
+      }
+    }
+
+    if (section === 'inbox-mark-read' && req.method === 'POST') {
+      let body = req.body;
+      if (typeof body === 'string') { try { body = JSON.parse(body); } catch (e) { body = {}; } }
+      const ids = Array.isArray(body?.ids) ? body.ids : (body?.id ? [body.id] : []);
+      const all = body?.all === true;
+      try {
+        let q = supabase.from('agent_messages').update({ read_at: new Date().toISOString() });
+        if (all) q = q.is('read_at', null);
+        else if (ids.length) q = q.in('id', ids);
+        else return res.status(400).json({ error: 'ids oder all=true erforderlich' });
+        const { error: err } = await q;
+        if (err) throw err;
+        return res.status(200).json({ ok: true });
+      } catch (e) {
+        return res.status(500).json({ error: e.message });
+      }
+    }
+
     if (section === 'mark-posted' && req.method === 'POST') {
       const id = req.query.id || req.body?.id;
       if (!id) return res.status(400).json({ error: 'id required' });

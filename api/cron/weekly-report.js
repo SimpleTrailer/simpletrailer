@@ -10,6 +10,7 @@
 const { createClient } = require('@supabase/supabase-js');
 const { Resend } = require('resend');
 const { getLionEmail } = require('../_lion-push.js');
+const { pushToInbox } = require('../_inbox.js');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 const resend   = new Resend(process.env.RESEND_API_KEY);
@@ -107,13 +108,23 @@ module.exports = async (req, res) => {
       </div>
     </body></html>`;
 
-    await resend.emails.send({
-      from: 'SimpleTrailer Report <agents@simpletrailer.de>',
-      reply_to: 'info@simpletrailer.de',
-      to: getLionEmail('briefing'),
-      subject: `[ST-Briefing] 📊 Wochen-Report: ${thisWeek.length} Buchungen · ${eur(sumRev(thisWeek))}`,
-      html
+    const subject = `📊 Wochen-Report: ${thisWeek.length} Buchungen · ${eur(sumRev(thisWeek))}`;
+    const inbox = await pushToInbox({
+      agent: 'weekly-report',
+      severity: 'info',
+      title: subject,
+      summary: `${thisWeek.length} Buchungen diese Woche · ${eur(sumRev(thisWeek))} Brutto`,
+      bodyHtml: html,
     });
+    if (!inbox.written) {
+      await resend.emails.send({
+        from: 'SimpleTrailer Report <agents@simpletrailer.de>',
+        reply_to: 'info@simpletrailer.de',
+        to: getLionEmail('briefing'),
+        subject: `[ST-Briefing] ${subject}`,
+        html
+      });
+    }
 
     return res.status(200).json({
       ok: true,

@@ -15,6 +15,7 @@
 const { createClient } = require('@supabase/supabase-js');
 const { Resend } = require('resend');
 const { getLionEmail } = require('../_lion-push.js');
+const { pushToInbox } = require('../_inbox.js');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -292,15 +293,31 @@ module.exports = async (req, res) => {
       </div>
     </body></html>`;
 
-    await resend.emails.send({
-      from: 'SimpleTrailer Briefing <agents@simpletrailer.de>',
-      reply_to: 'info@simpletrailer.de',
-      to: getLionEmail('briefing'),
-      subject: `[ST-Briefing] ☀️ Dein Tagesplan — ${items.filter(i=>i.severity==='red').length}🔴 ${items.filter(i=>i.severity==='yellow').length}🟡`,
-      html
+    const redCount = items.filter(i => i.severity === 'red').length;
+    const yellowCount = items.filter(i => i.severity === 'yellow').length;
+    const subject = `☀️ Dein Tagesplan — ${redCount}🔴 ${yellowCount}🟡`;
+
+    // Erst in Inbox schreiben (Cockpit-Box). Fallback Mail nur wenn Migration fehlt.
+    const inbox = await pushToInbox({
+      agent: 'daily-briefing',
+      severity: redCount > 0 ? 'critical' : (yellowCount > 0 ? 'warn' : 'info'),
+      title: subject,
+      summary: `${items.length} Punkte: ${redCount} kritisch · ${yellowCount} wichtig · ${items.length - redCount - yellowCount} info`,
+      bodyHtml: html,
     });
 
-    return res.status(200).json({ ok: true, items_count: items.length, severity_breakdown: items.reduce((acc,i)=>{acc[i.severity]=(acc[i.severity]||0)+1;return acc;},{}) });
+    if (!inbox.written) {
+      // Safety-Net: Migration noch nicht da → wie früher per Mail
+      await resend.emails.send({
+        from: 'SimpleTrailer Briefing <agents@simpletrailer.de>',
+        reply_to: 'info@simpletrailer.de',
+        to: getLionEmail('briefing'),
+        subject: `[ST-Briefing] ${subject}`,
+        html
+      });
+    }
+
+    return res.status(200).json({ ok: true, items_count: items.length, delivery: inbox.written ? 'inbox' : 'mail-fallback' });
   } catch (err) {
     console.error('daily-briefing:', err);
     return res.status(500).json({ error: err.message });

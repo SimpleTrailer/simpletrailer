@@ -9,6 +9,7 @@ const { Resend } = require('resend');
 const { readFileSync } = require('fs');
 const { join } = require('path');
 const { getLionEmail } = require('../_lion-push.js');
+const { pushToInbox } = require('../_inbox.js');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -125,13 +126,23 @@ Fuehre den Audit durch.`;
       </div>
     </body></html>`;
 
-    await resend.emails.send({
-      from: 'SimpleTrailer Legal <agents@simpletrailer.de>',
-      reply_to: 'info@simpletrailer.de',
-      to: getLionEmail('routine'),
-      subject: `[ST-Routine] ⚖️ Legal-Audit Quartal — Pruefung von AGB/Datenschutz/Impressum`,
-      html
+    const subject = `⚖️ Legal-Audit Quartal — Prüfung von AGB/Datenschutz/Impressum`;
+    const inbox = await pushToInbox({
+      agent: 'legal-quarterly-audit',
+      severity: 'info',
+      title: subject,
+      summary: 'Quartalsweise Rechts-Prüfung der AGB/DSE/Impressum durch legal-checker',
+      bodyHtml: html,
     });
+    if (!inbox.written) {
+      await resend.emails.send({
+        from: 'SimpleTrailer Legal <agents@simpletrailer.de>',
+        reply_to: 'info@simpletrailer.de',
+        to: getLionEmail('routine'),
+        subject: `[ST-Routine] ${subject}`,
+        html
+      });
+    }
 
     return res.status(200).json({ ok: true, length: reportHtml.length });
   } catch (err) {

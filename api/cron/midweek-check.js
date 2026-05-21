@@ -10,6 +10,7 @@
 const { createClient } = require('@supabase/supabase-js');
 const { Resend } = require('resend');
 const { getLionEmail } = require('../_lion-push.js');
+const { pushToInbox } = require('../_inbox.js');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -104,13 +105,23 @@ Kein Marketing-BS.`;
       </div>
     </body></html>`;
 
-    await resend.emails.send({
-      from: 'SimpleTrailer Strategie <agents@simpletrailer.de>',
-      reply_to: 'info@simpletrailer.de',
-      to: getLionEmail('briefing'),
-      subject: `[ST-Briefing] ⚡ Mid-Week-Check — ${paid.length} Buchungen letzte 3 Tage`,
-      html
+    const subject = `⚡ Mid-Week-Check — ${paid.length} Buchungen letzte 3 Tage`;
+    const inbox = await pushToInbox({
+      agent: 'midweek-check',
+      severity: 'info',
+      title: subject,
+      summary: `${paid.length} Buchungen seit Sonntag · Strategie-Empfehlung im Detail`,
+      bodyHtml: html,
     });
+    if (!inbox.written) {
+      await resend.emails.send({
+        from: 'SimpleTrailer Strategie <agents@simpletrailer.de>',
+        reply_to: 'info@simpletrailer.de',
+        to: getLionEmail('briefing'),
+        subject: `[ST-Briefing] ${subject}`,
+        html
+      });
+    }
 
     return res.status(200).json({ ok: true, recommendation_length: recommendation.length });
   } catch (err) {

@@ -11,6 +11,7 @@
  */
 const { Resend } = require('resend');
 const { getLionEmail } = require('../_lion-push.js');
+const { pushToInbox } = require('../_inbox.js');
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 const SENTRY_ORG = 'simpletrailer-gbr';
@@ -108,13 +109,23 @@ module.exports = async (req, res) => {
       </div>
     </body></html>`;
 
-    await resend.emails.send({
-      from: 'SimpleTrailer Bug-Triage <agents@simpletrailer.de>',
-      reply_to: 'info@simpletrailer.de',
-      to: getLionEmail('briefing'),
-      subject: `[ST-Briefing] 🐛 ${filtered.length} aktive Bugs — Top: ${top[0]?.title?.slice(0, 60) || 'unbekannt'}`,
-      html
+    const subject = `🐛 ${filtered.length} aktive Bugs — Top: ${top[0]?.title?.slice(0, 60) || 'unbekannt'}`;
+    const inbox = await pushToInbox({
+      agent: 'bug-triager',
+      severity: filtered.length >= 5 ? 'warn' : 'info',
+      title: subject,
+      summary: `${filtered.length} aktive Sentry-Issues — Top: ${top[0]?.title?.slice(0, 80) || 'keine'}`,
+      bodyHtml: html,
     });
+    if (!inbox.written) {
+      await resend.emails.send({
+        from: 'SimpleTrailer Bug-Triage <agents@simpletrailer.de>',
+        reply_to: 'info@simpletrailer.de',
+        to: getLionEmail('briefing'),
+        subject: `[ST-Briefing] ${subject}`,
+        html
+      });
+    }
 
     return res.status(200).json({
       ok: true,
