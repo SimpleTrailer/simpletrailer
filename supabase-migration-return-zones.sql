@@ -53,9 +53,12 @@ $$ LANGUAGE plpgsql IMMUTABLE;
 -- =====================================================================
 -- VIEW: Anhänger mit aktueller Verfügbarkeit (berechnet aus Buchungen)
 -- Vereinfacht Frontend-Queries.
+-- security_invoker=true: View nutzt Rechte des Abfragenden, nicht des
+-- Erstellers — RLS auf trailers/bookings wird sauber respektiert.
 -- =====================================================================
 DROP VIEW IF EXISTS trailer_availability;
-CREATE VIEW trailer_availability AS
+CREATE VIEW trailer_availability
+WITH (security_invoker = true) AS
 SELECT
   t.*,
   (
