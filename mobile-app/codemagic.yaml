@@ -1,0 +1,97 @@
+# Codemagic CI/CD für SimpleTrailer iOS-Build (kein Mac nötig)
+# https://codemagic.io — ~30 EUR/Monat für 500 Build-Minuten
+#
+# Workflow: simpletrailer-ios
+#  1) Capacitor sync
+#  2) Pod install
+#  3) Build IPA + Signing mit Apple-Connect-API-Key
+#  4) Upload zu App Store Connect (TestFlight)
+#
+# SETUP-VORAUSSETZUNGEN (einmalig in Codemagic UI):
+#  - "App Store Connect API"-Integration verknüpfen (Key + Issuer-ID + Key-ID)
+#  - Code-Signing-Identity: "Automatic" mit Apple-Connect-API-Key
+#  - Environment-Variable: APPLE_TEAM_ID (deine Team-ID nach Apple Approval)
+#  - Environment-Variable: BUNDLE_ID = de.simpletrailer.app
+#  - GitHub-Repo verbinden, Branch: main (oder mobile-app-development)
+
+workflows:
+  simpletrailer-ios:
+    name: SimpleTrailer iOS Release
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: SimpleTrailer-AppStoreConnect-Key
+
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: $BUNDLE_ID
+      vars:
+        XCODE_WORKSPACE: "ios/App/App.xcworkspace"
+        XCODE_SCHEME: "App"
+        BUNDLE_ID: "de.simpletrailer.app"
+      xcode: latest
+      cocoapods: default
+      node: 20
+
+    triggering:
+      events:
+        - push
+        - tag
+      branch_patterns:
+        - pattern: 'main'
+          include: true
+        - pattern: 'mobile-app-development'
+          include: true
+      tag_patterns:
+        - pattern: 'ios-v*'
+          include: true
+
+    scripts:
+      - name: Install npm deps
+        working_directory: mobile-app
+        script: |
+          npm ci
+
+      - name: Capacitor sync iOS
+        working_directory: mobile-app
+        script: |
+          npx cap sync ios
+
+      - name: Pod install
+        working_directory: mobile-app/ios/App
+        script: |
+          pod install --repo-update
+
+      - name: Set build number (timestamp)
+        working_directory: mobile-app/ios/App
+        script: |
+          BUILD_NUMBER=$(date +%s)
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" App/Info.plist
+
+      - name: Build IPA
+        working_directory: mobile-app
+        script: |
+          xcode-project use-profiles
+          xcode-project build-ipa \
+            --workspace "$XCODE_WORKSPACE" \
+            --scheme "$XCODE_SCHEME"
+
+    artifacts:
+      - mobile-app/build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        beta_groups:
+          - SimpleTrailer-Internal
+        submit_to_app_store: false  # erst manuell submitten, nachdem Test ok
+
+      email:
+        recipients:
+          - info@simpletrailer.de
+        notify:
+          success: true
+          failure: true

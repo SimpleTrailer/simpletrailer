@@ -18,7 +18,7 @@ Anhänger mieten in Bremen
 
 ## Promo-Text (max 170 Zeichen, jederzeit ohne Review änderbar)
 ```
-Neu: Push-Benachrichtigungen, native Foto-Aufnahme bei Übergabe und schnellere Buchung. Anhänger ab 5,90 €/Stunde – jetzt mit dem Handy mieten.
+Neu: Push-Benachrichtigungen, native Foto-Aufnahme bei Übergabe und schnellere Buchung. Anhänger ab 9 €/3 h in Bremen – ohne Kaution, 24/7 online.
 ```
 
 ## Beschreibung (max 4000 Zeichen)
@@ -39,7 +39,7 @@ SO FUNKTIONIERT'S
 DEINE VORTEILE
 
 • Verfügbar 24/7 – auch nachts und am Wochenende
-• Stundenweise ab 5,90 €, faire Tagestarife
+• Ab 9 €/3 h, 29 €/Tag, 59 €/Wochenende, 119 €/Woche – inkl. MwSt
 • Optionaler Basis- oder Premium-Schutz
 • Keine versteckten Gebühren
 • Echtzeit-Verfügbarkeit – du siehst direkt, was frei ist

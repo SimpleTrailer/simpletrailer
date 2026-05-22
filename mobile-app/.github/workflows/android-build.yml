@@ -11,6 +11,15 @@ on:
     paths:
       - 'mobile-app/**'
   workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'debug oder release-aab'
+        required: false
+        default: 'debug'
+        type: choice
+        options:
+          - debug
+          - release-aab
 
 jobs:
   build-android:
@@ -48,14 +57,52 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x android/gradlew
 
+      # === DEBUG-APK (Standard, kein Signing nötig) ===
       - name: Build debug APK
+        if: ${{ inputs.build_type != 'release-aab' }}
         run: |
           cd android
           ./gradlew assembleDebug --no-daemon
 
-      - name: Upload APK artifact
+      - name: Upload debug APK
+        if: ${{ inputs.build_type != 'release-aab' }}
         uses: actions/upload-artifact@v4
         with:
           name: simpletrailer-debug-apk
           path: mobile-app/android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
+
+      # === RELEASE-AAB (signed, für Play Store Upload) ===
+      # Benötigt Secrets im GitHub-Repo:
+      #   ANDROID_KEYSTORE_BASE64  → release.keystore base64-encoded
+      #   ANDROID_KEYSTORE_PASSWORD
+      #   ANDROID_KEY_ALIAS         → "simpletrailer"
+      #   ANDROID_KEY_PASSWORD
+      - name: Decode keystore
+        if: ${{ inputs.build_type == 'release-aab' }}
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/app/release.keystore
+
+      - name: Write keystore.properties
+        if: ${{ inputs.build_type == 'release-aab' }}
+        run: |
+          cat > android/keystore.properties <<EOF
+          storeFile=app/release.keystore
+          storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
+          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+          EOF
+
+      - name: Build release AAB
+        if: ${{ inputs.build_type == 'release-aab' }}
+        run: |
+          cd android
+          ./gradlew bundleRelease --no-daemon
+
+      - name: Upload release AAB
+        if: ${{ inputs.build_type == 'release-aab' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: simpletrailer-release-aab
+          path: mobile-app/android/app/build/outputs/bundle/release/app-release.aab
+          retention-days: 90

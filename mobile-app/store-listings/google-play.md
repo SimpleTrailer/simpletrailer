@@ -31,9 +31,9 @@ Online buchen, mit dem Handy entsperren, losfahren – ohne Schalter, ohne Warte
 5. Bei Rückgabe einfach Foto hochladen – fertig
 
 🛻 UNSER ANGEBOT
-• Moderne PKW-Anhänger mit Plane (1.500 kg zul. Gesamtgewicht)
-• Stundenweise ab 5,90 €
-• Tagestarif, Wochenende, Wochenpreis – flexible Tarife
+• Moderne PKW-Anhänger mit Plane (750 kg zul. Gesamtgewicht, Klasse B reicht)
+• Ab 9 €/3 h, 29 €/Tag, 59 €/Wochenende, 119 €/Woche – inkl. MwSt
+• Flexible Tarife: stunden-, tage- oder wochenweise
 • Optional: Basis- oder Premium-Versicherung
 • Verfügbar 24/7 – auch nachts und am Wochenende
 
