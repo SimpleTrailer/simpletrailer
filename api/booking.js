@@ -65,21 +65,23 @@ module.exports = async (req, res) => {
       const amount = pi.amount / 100;
       const return_token    = crypto.randomBytes(32).toString('hex');
       const precheck_token  = crypto.randomBytes(32).toString('hex');
-      const access_code     = Math.floor(100000 + Math.random() * 900000).toString();
 
       const insType   = meta.insurance_type   || 'none';
       const insAmount = parseFloat(meta.insurance_amount || '0') || 0;
       const freeFloating = meta.free_floating === '1';
 
-      // Pickup-Position aus aktuellem Tracker-Standort einfrieren
-      // (= "Heimat" für die Standard-Rückgabe-Prüfung).
+      // Pickup-Position + Anhänger-Code aus trailers-Tabelle holen.
+      // Code = fester Zahlenschloss-Code des Anhängers (manuell in trailers.access_code gepflegt).
+      // Fallback: 6-stellig zufällig wenn kein fester Code hinterlegt (Migration noch ausstehend).
       const { data: trailerNow } = await supabase
         .from('trailers')
-        .select('last_lat,last_lng,lat,lng')
+        .select('last_lat,last_lng,lat,lng,access_code')
         .eq('id', meta.trailer_id)
         .maybeSingle();
       const pickupLat = (trailerNow?.last_lat ?? trailerNow?.lat) || null;
       const pickupLng = (trailerNow?.last_lng ?? trailerNow?.lng) || null;
+      const access_code = (trailerNow?.access_code && String(trailerNow.access_code).trim())
+        || Math.floor(100000 + Math.random() * 900000).toString();
 
       const baseInsert = {
         trailer_id: meta.trailer_id, customer_name: meta.customer_name,

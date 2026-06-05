@@ -404,7 +404,7 @@ module.exports = async (req, res) => {
       }
     }
 
-    // ─── UPDATE-TRAILER-DATES: TÜV/Wartung pro Anhänger setzen ───
+    // ─── UPDATE-TRAILER-DATES: TÜV/Wartung pro Anhänger setzen (Legacy-Endpoint, bleibt aktiv) ───
     if (section === 'update-trailer-dates' && req.method === 'POST') {
       const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
       const { trailer_id, next_tuev_date, next_maintenance_date } = body;
@@ -419,9 +419,70 @@ module.exports = async (req, res) => {
       return res.status(200).json({ ok: true });
     }
 
-    // ─── TRAILERS: Liste mit TÜV/Wartung-Daten ───
+    // ─── UPDATE-TRAILER: Vollständige Flotten-Daten (Code, TÜV, Kennzeichen, etc.) ───
+    if (section === 'update-trailer' && req.method === 'POST') {
+      const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+      const { trailer_id } = body;
+      if (!trailer_id) return res.status(400).json({ error: 'trailer_id required' });
+
+      // Whitelist der bearbeitbaren Felder — verhindert ungewollte Spalten-Updates
+      const ALLOWED = [
+        'access_code', 'license_plate', 'chassis_number',
+        'insurance_until', 'purchase_date', 'internal_notes',
+        'next_tuev_date', 'next_maintenance_date',
+        'is_available'
+      ];
+      const updates = {};
+      for (const k of ALLOWED) {
+        if (body[k] === undefined) continue;
+        // Leerer String → NULL (sauberer in DB als '')
+        updates[k] = (body[k] === '' || body[k] === null) ? null : body[k];
+      }
+      if (!Object.keys(updates).length) {
+        return res.status(400).json({ error: 'Keine Felder zum Updaten' });
+      }
+
+      const { error } = await supabase.from('trailers').update(updates).eq('id', trailer_id);
+      if (error) {
+        // Wenn Spalte fehlt → Migration noch nicht gelaufen
+        if (/column .* does not exist/i.test(error.message || '')) {
+          return res.status(500).json({
+            error: 'DB-Spalte fehlt — bitte supabase-migration-trailer-fleet.sql ausführen.',
+            detail: error.message
+          });
+        }
+        return res.status(500).json({ error: error.message });
+      }
+      return res.status(200).json({ ok: true, updated: Object.keys(updates) });
+    }
+
+    // ─── TRAILERS: Vollständige Liste mit allen Flotten-Daten ───
     if (section === 'trailers') {
-      const { data } = await supabase.from('trailers').select('id, name, type, is_available, next_tuev_date, next_maintenance_date');
+      // Versuche das ganze Set — bei fehlenden Spalten fallback auf Basis-Liste
+      let data, error;
+      try {
+        const r = await supabase.from('trailers').select(
+          'id, name, type, is_available, image_url, access_code, license_plate, chassis_number, ' +
+          'next_tuev_date, next_maintenance_date, insurance_until, purchase_date, internal_notes, ' +
+          'price_3h, price_day, price_weekend, late_fee_per_hour, ' +
+          'last_lat, last_lng, last_seen_at, last_battery_percent, last_speed_kmh, ' +
+          'created_at'
+        );
+        data = r.data; error = r.error;
+      } catch (e) { error = e; }
+
+      if (error && /column .* does not exist/i.test(error.message || '')) {
+        // Fallback: nur garantierte Spalten (Migration noch ausstehend)
+        const r2 = await supabase.from('trailers').select(
+          'id, name, type, is_available, image_url, next_tuev_date, next_maintenance_date, ' +
+          'price_3h, price_day, price_weekend, last_lat, last_lng, last_seen_at, created_at'
+        );
+        return res.status(200).json({
+          trailers: r2.data || [],
+          warning: 'Migration trailer-fleet noch nicht gelaufen — Code/Kennzeichen/etc. fehlen.'
+        });
+      }
+      if (error) return res.status(500).json({ error: error.message });
       return res.status(200).json({ trailers: data || [] });
     }
 
