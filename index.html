@@ -327,16 +327,38 @@
     /* USE-CASE CARDS (3x2 Grid, jede Karte mit Buchen-CTA) */
     .usecase-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       gap: 14px;
-      max-width: 1100px;
+      max-width: 1180px;
       margin: 0 auto;
     }
-    @media (max-width: 880px) {
-      .usecase-grid { grid-template-columns: repeat(2, 1fr); }
+    @media (max-width: 980px) {
+      .usecase-grid { grid-template-columns: repeat(2, 1fr); max-width: 700px; }
     }
     @media (max-width: 480px) {
-      .usecase-grid { grid-template-columns: 1fr; }
+      .usecase-grid { grid-template-columns: 1fr; max-width: 380px; }
+    }
+    /* Demnächst-Karte (Auto-Transport) dezenter dargestellt */
+    .usecase-card.soon { cursor: pointer; }
+    .usecase-card.soon .usecase-image img { opacity: 0.85; }
+    .usecase-card.soon .usecase-cta {
+      color: var(--gray);
+      font-weight: 600;
+    }
+    .usecase-card.soon .usecase-cta::after { content: '🕐'; transform: none !important; }
+    .usecase-card.soon:hover .usecase-cta { color: var(--orange); }
+    .usecase-soon-badge {
+      position: absolute;
+      top: 10px; right: 10px;
+      background: var(--orange);
+      color: #fff;
+      font-size: .68rem;
+      font-weight: 800;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 999px;
+      z-index: 3;
     }
     .usecase-card {
       background: var(--card);
@@ -1953,7 +1975,7 @@
 
       <!-- PKW-Anhänger mit Plane -->
       <div class="trailer-card reveal">
-        <div class="trailer-card-img">
+        <div class="trailer-card-img contain-light">
           <picture>
             <source srcset="anhaenger-mit-plane-mieten-bremen-simpletrailer.webp" type="image/webp" />
             <img src="anhaenger-mit-plane-mieten-bremen-simpletrailer.png?v=1" alt="PKW-Anhänger mit Plane mieten in Bremen — SimpleTrailer"
@@ -1982,11 +2004,11 @@
 
       <!-- Autotransporter -->
       <div class="trailer-card unavailable reveal">
-        <div class="trailer-card-img">
+        <div class="trailer-card-img contain-light">
           <picture>
-            <source srcset="use-auto.webp" type="image/webp" />
-            <img src="use-auto.jpg" alt="Autotransporter mit Auto in Bremen mieten — SimpleTrailer"
-                 loading="lazy" decoding="async" width="1200" height="800"
+            <source srcset="autotransporter-mieten-bremen-simpletrailer.webp" type="image/webp" />
+            <img src="autotransporter-mieten-bremen-simpletrailer.png?v=1" alt="Autotransporter mieten in Bremen — SimpleTrailer"
+                 loading="lazy" decoding="async" width="600" height="400"
                  onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
           </picture>
           <div class="trailer-card-img-placeholder" style="display:none;">🚗</div>
@@ -2136,22 +2158,22 @@
           </picture>
         </div>
         <div class="usecase-content">
-          <div class="usecase-title">Möbel transportieren</div>
-          <div class="usecase-meta">Sofa, Schrank, Bett · ab <strong>29 €/Tag</strong></div>
+          <div class="usecase-title">Umzug &amp; Möbel</div>
+          <div class="usecase-meta">Sofa, Schrank, Kartons · ab <strong>29 €/Tag</strong></div>
           <div class="usecase-cta">Jetzt buchen</div>
         </div>
       </button>
       <button type="button" onclick="openTrailerModal('flexible')" class="usecase-card has-image reveal">
         <div class="usecase-image">
-          <span class="usecase-badge" aria-hidden="true">🗑️</span>
+          <span class="usecase-badge" aria-hidden="true">🌿</span>
           <picture>
             <source srcset="/use-garten.webp" type="image/webp">
             <img src="/use-garten.jpg" alt="Anhänger mit Sperrmüll und Gartenabfällen" loading="lazy" decoding="async" width="1200" height="800">
           </picture>
         </div>
         <div class="usecase-content">
-          <div class="usecase-title">Sperrmüll fahren</div>
-          <div class="usecase-meta">Bremen-Recyclinghof · <strong>9 €/3h</strong></div>
+          <div class="usecase-title">Sperrmüll &amp; Garten</div>
+          <div class="usecase-meta">Recyclinghof, Grünschnitt · ab <strong>9 €/3 h</strong></div>
           <div class="usecase-cta">Jetzt buchen</div>
         </div>
       </button>
@@ -2160,55 +2182,28 @@
           <span class="usecase-badge" aria-hidden="true">🛒</span>
           <picture>
             <source srcset="/use-bremen.webp" type="image/webp">
-            <img src="/use-bremen.jpg" alt="Anhänger im Bremer Stadtverkehr" loading="lazy" decoding="async" width="1200" height="800">
+            <img src="/use-bremen.jpg" alt="Anhänger im Bremer Stadtverkehr für Großeinkauf" loading="lazy" decoding="async" width="1200" height="800">
           </picture>
         </div>
         <div class="usecase-content">
-          <div class="usecase-title">IKEA-Großeinkauf</div>
-          <div class="usecase-meta">Brinkum auch Sonntag · <strong>9 €/3h</strong></div>
+          <div class="usecase-title">Großeinkauf</div>
+          <div class="usecase-meta">IKEA, Baumarkt, Möbelhaus · ab <strong>9 €/3 h</strong></div>
           <div class="usecase-cta">Jetzt buchen</div>
         </div>
       </button>
-      <button type="button" onclick="openTrailerModal('flexible')" class="usecase-card has-image reveal">
+      <button type="button" onclick="openNotifyModal('Autotransporter')" class="usecase-card has-image soon reveal">
         <div class="usecase-image">
-          <span class="usecase-badge" aria-hidden="true">🌳</span>
+          <span class="usecase-badge" aria-hidden="true">🚗</span>
+          <span class="usecase-soon-badge">Demnächst</span>
           <picture>
-            <source srcset="/use-garten.webp" type="image/webp">
-            <img src="/use-garten.jpg" alt="Anhänger für Gartenarbeit mit Grünschnitt" loading="lazy" decoding="async" width="1200" height="800">
+            <source srcset="/use-auto.webp" type="image/webp">
+            <img src="/use-auto.jpg" alt="Autotransporter mit Auto in Bremen demnächst verfügbar" loading="lazy" decoding="async" width="1200" height="800">
           </picture>
         </div>
         <div class="usecase-content">
-          <div class="usecase-title">Gartenabfälle</div>
-          <div class="usecase-meta">Erde, Grünschnitt · <strong>9 €/3h</strong></div>
-          <div class="usecase-cta">Jetzt buchen</div>
-        </div>
-      </button>
-      <button type="button" onclick="openTrailerModal('weekend')" class="usecase-card has-image reveal">
-        <div class="usecase-image">
-          <span class="usecase-badge" aria-hidden="true">🎪</span>
-          <picture>
-            <source srcset="/use-bremen.webp" type="image/webp">
-            <img src="/use-bremen.jpg" alt="Anhänger in Bremen für Festival-Tour" loading="lazy" decoding="async" width="1200" height="800">
-          </picture>
-        </div>
-        <div class="usecase-content">
-          <div class="usecase-title">Festival-Wochenende</div>
-          <div class="usecase-meta">Breminale, Maifest · <strong>59 €/WE</strong></div>
-          <div class="usecase-cta">Jetzt buchen</div>
-        </div>
-      </button>
-      <button type="button" onclick="openTrailerModal('week')" class="usecase-card has-image reveal">
-        <div class="usecase-image">
-          <span class="usecase-badge" aria-hidden="true">🚚</span>
-          <picture>
-            <source srcset="/use-umzug.webp" type="image/webp">
-            <img src="/use-umzug.jpg" alt="Anhänger beim Umzug in Bremen mit Kartons" loading="lazy" decoding="async" width="1200" height="800">
-          </picture>
-        </div>
-        <div class="usecase-content">
-          <div class="usecase-title">Umzug Bremen</div>
-          <div class="usecase-meta">Komplette Woche · <strong>119 €/Woche</strong></div>
-          <div class="usecase-cta">Jetzt buchen</div>
+          <div class="usecase-title">Auto-Transport</div>
+          <div class="usecase-meta">Autotransporter · <strong>bald verfügbar</strong></div>
+          <div class="usecase-cta">Benachrichtigen</div>
         </div>
       </button>
     </div>
