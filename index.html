@@ -1693,62 +1693,99 @@
     .md-book   { margin-top: 4px; }
     .md-pickup { padding-top: 12px; }
 
-    /* DESKTOP: 2-Spalten-Grid – links Bild+Specs+Buchen, rechts groß die Karte */
+    /* DESKTOP: 2-Spalten-Grid mit Header oben durchgehend, Bild und Karte als Cards gleich gross */
     @media (min-width: 769px) {
       .trailer-modal-panel { max-width: 980px; }
 
       #modalDetailView {
         display: grid !important;
-        grid-template-columns: 1.05fr 1fr;
+        grid-template-columns: 1fr 1fr;
         grid-template-areas:
+          "header header"
           "img    route"
-          "header route"
           "specs  route"
           "book   route"
           "pickup route";
-        column-gap: 0;
-        row-gap: 12px;
-        padding: 0 0 20px;
+        column-gap: 18px;
+        row-gap: 14px;
+        padding: 18px 20px 22px;
       }
-      #modalDetailImgWrap   { grid-area: img;    margin: 0; padding: 0; }
-      #modalDetailHeader    { grid-area: header; padding: 14px 22px 0 22px; }
+      /* HEADER über beide Spalten — klare Hierarchie oben */
+      #modalDetailHeader {
+        grid-area: header;
+        padding: 0;
+        margin: 0;
+        border-bottom: 1px solid #232323;
+        padding-bottom: 14px;
+      }
+      /* BILD als Card — matched optisch die Karte rechts */
+      #modalDetailImgWrap {
+        grid-area: img;
+        margin: 0;
+        padding: 0;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid #2a2a2a;
+        background: #0e0e0e;
+        aspect-ratio: 4 / 3;
+        align-self: start;
+      }
+      .modal-detail-img,
+      .modal-detail-img-placeholder {
+        border-radius: 0;
+        aspect-ratio: 4 / 3;
+        height: 100%;
+        width: 100%;
+      }
+      /* SPECS direkt unter dem Bild — kein extra padding */
+      #modalDetailSpecs { grid-area: specs; padding: 0; }
+      /* BUCHEN-BUTTON kompakter, nicht volle Breite */
+      #modalDetailBookBtn {
+        grid-area: book;
+        margin: 0;
+        max-width: 100%;
+      }
+      #modalDetailPickup {
+        grid-area: pickup;
+        padding: 0;
+        margin: 0;
+        text-align: left;
+      }
+      /* RECHTE SPALTE: Karte + Card stacken, gemeinsam mit dem Bild oben buendig */
       #modalDetailRouteWrap {
         grid-area: route;
         margin: 0;
-        padding: 14px 18px 0 8px;
+        padding: 0;
         display: flex;
         flex-direction: column;
-        gap: 0;
+        gap: 10px;
       }
-      #modalDetailSpecs     { grid-area: specs;  padding: 0 22px; }
-      #modalDetailBookBtn   { grid-area: book;   margin: 6px 22px 0; }
-      #modalDetailPickup    { grid-area: pickup; padding: 0 22px; margin-top: 4px; }
-
-      /* Karte füllt die rechte Spalte über die volle Höhe */
+      /* Karte: aspect-ratio matched dem Bild auf gleicher Hoehe */
       #modalDetailRouteWrap .modal-detail-routemap {
         height: auto;
-        flex: 1 1 auto;
-        min-height: 380px;
+        flex: 0 0 auto;
+        aspect-ratio: 4 / 3;
+        min-height: 0;
         border-radius: 12px;
         border: 1px solid #2a2a2a;
       }
-      /* Auto-Route Card (wenn Standort gesetzt) — kompakt unter der Map */
+      /* "Mit Auto"-Card direkt unter der Karte */
       #modalDetailRouteWrap .modal-route-card {
-        border-radius: 10px;
+        border-radius: 12px;
         border: 1px solid #2a2a2a;
         border-top: 1px solid #2a2a2a;
-        margin-top: 10px;
-        margin-bottom: 0;
+        margin: 0;
+        flex: 0 0 auto;
       }
-      /* Standort-Eingabe-Card (wenn KEIN Standort) — füllt rechte Spalte vertikal */
+      /* Standort-Eingabe-Card (wenn KEIN Standort) — gleiche Hoehe wie Bild links */
       #modalDetailRouteWrap .modal-detail-loc-prompt {
-        flex: 1 1 auto;
-        min-height: 420px;
+        flex: 0 0 auto;
+        aspect-ratio: 4 / 3;
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: stretch;
-        padding: 32px 28px;
+        padding: 28px 24px;
         margin-bottom: 0;
         text-align: center;
         background:
