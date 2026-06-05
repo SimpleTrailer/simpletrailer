@@ -1024,85 +1024,55 @@
     .steps {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
-      gap: 16px;
+      gap: 0;
       position: relative;
-      margin-top: 44px;
     }
 
     .steps::before {
       content: '';
       position: absolute;
-      top: 44px; left: 10%; right: 10%;
+      top: 28px; left: 4%; right: 4%;
       height: 2px;
-      background: linear-gradient(to right, transparent 0%, #2a2a2a 8%, #2a2a2a 92%, transparent 100%);
-      z-index: 0;
+      background: #2a2a2a;
     }
 
     .steps-line {
       position: absolute;
-      top: 44px; left: 10%;
+      top: 28px; left: 4%;
       height: 2px;
       width: 0;
-      background: linear-gradient(to right, var(--orange), rgba(232,93,0,0.35));
+      background: linear-gradient(to right, var(--orange), rgba(232,93,0,0.25));
       z-index: 1;
       pointer-events: none;
       will-change: width;
-      box-shadow: 0 0 12px rgba(232,93,0,0.4);
     }
 
-    .step {
-      padding: 24px 18px 22px;
-      background: rgba(26,26,26,0.4);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      position: relative;
-      z-index: 2;
-      transition: border-color .25s, transform .25s, background .25s;
-      backdrop-filter: blur(4px);
-      -webkit-backdrop-filter: blur(4px);
-    }
-
-    .step:hover {
-      border-color: rgba(232,93,0,0.4);
-      transform: translateY(-3px);
-      background: rgba(26,26,26,0.7);
-    }
-
-    .step-icon {
-      width: 44px; height: 44px;
-      border-radius: 12px;
-      background: linear-gradient(135deg, rgba(232,93,0,0.18) 0%, rgba(232,93,0,0.05) 100%);
-      border: 1px solid rgba(232,93,0,0.25);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.35rem;
-      margin: 0 auto 14px;
-      box-shadow: 0 0 20px rgba(232,93,0,0.12);
-    }
+    .step { padding: 0 20px; }
 
     .step-num {
-      font-size: 0.72rem;
-      font-weight: 700;
+      font-size: 2.8rem;
+      font-weight: 800;
       color: var(--orange);
-      letter-spacing: 0.12em;
+      letter-spacing: -0.06em;
       line-height: 1;
-      margin-bottom: 12px;
-      text-align: center;
-      text-transform: uppercase;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
 
-    .step h3 {
-      font-size: 1rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      margin-bottom: 8px;
-      text-align: center;
+    .step-num::before {
+      content: '';
+      display: block;
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: var(--orange);
+      flex-shrink: 0;
+      box-shadow: 0 0 12px rgba(232,93,0,0.6);
     }
-    .step p {
-      font-size: 0.86rem;
-      color: var(--gray);
-      line-height: 1.6;
-      text-align: center;
-    }
+
+    .step h3 { font-size: 1rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8px; }
+    .step p  { font-size: 0.88rem; color: var(--gray); line-height: 1.6; }
 
     /* PRICING */
     #preise {
@@ -1837,8 +1807,8 @@
         0%, 100% { transform: translateX(0); }
         50%       { transform: translateX(5px); }
       }
-      .steps { grid-template-columns: repeat(3, 1fr); gap: 14px; }
-      .steps::before, .steps-line { display: none; }
+      .steps { grid-template-columns: repeat(3, 1fr); gap: 36px 24px; }
+      .steps::before { display: none; }
       /* minmax(0, 1fr) erlaubt Spalten kleiner als ihr min-content zu werden — sonst sprengen lange Texte (mit white-space:nowrap) das Grid */
       .pricing-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 12px; row-gap: 20px; max-width: none; }
       .price-card { min-width: 0; }
@@ -1923,14 +1893,23 @@
       .nav-links li:last-child { border-bottom: none; }
       .nav-links li a { display: block; padding: 12px 0; font-size: .95rem; color: #bbb; }
 
-      /* Steps: 1 Spalte gestapelt auf Mobile, Cards behalten Background */
-      .steps { grid-template-columns: 1fr; gap: 12px; }
-      .steps::before, .steps-line { display: none; }
-      .step { padding: 20px 18px; }
-      .step-icon { width: 40px; height: 40px; font-size: 1.2rem; margin-bottom: 10px; }
-      .step-num { font-size: 0.7rem; margin-bottom: 8px; }
-      .step h3 { font-size: 0.98rem; }
-      .step p { font-size: 0.84rem; }
+      /* Steps: vertikale Timeline auf Mobile */
+      .steps { grid-template-columns: 1fr; padding-left: 44px; }
+      .steps::before {
+        display: block !important;
+        top: 8px; left: 14px; right: auto;
+        bottom: 8px; height: auto; width: 2px;
+      }
+      .steps-line {
+        top: 8px; left: 14px;
+        height: 0; width: 2px;
+        background: linear-gradient(to bottom, var(--orange), rgba(232,93,0,.25));
+        will-change: height;
+      }
+      .step { padding: 0 0 36px; position: relative; }
+      .step:last-child { padding-bottom: 0; }
+      .step-num { font-size: 2.2rem; margin-bottom: 12px; gap: 8px; }
+      .step-num::before { position: absolute; left: -30px; top: 10px; width: 14px; height: 14px; }
 
       /* Booking-Box im Hero – Mobile 1-Flow */
       .booking-box { padding: 16px; gap: 10px; }
@@ -2327,44 +2306,36 @@
 <!-- HOW IT WORKS -->
 <section id="how">
   <div class="section-inner">
-    <div class="reveal" style="text-align:center;">
+    <div class="reveal">
       <p class="section-tag">So läuft's ab</p>
-      <h2 class="section-title">In 5 einfachen Schritten</h2>
-      <p style="color:var(--gray);max-width:580px;margin:14px auto 0;font-size:1rem;line-height:1.6;">
-        Vom „Wo finde ich den Anhänger?" bis zum „Schlüssel zurück, fertig." — alles online, ohne Personal, jederzeit.
-      </p>
+      <h2 class="section-title">Buchen in 5 Schritten</h2>
     </div>
     <div class="steps">
       <div class="steps-line"></div>
       <div class="step reveal">
-        <div class="step-icon" aria-hidden="true">📍</div>
         <div class="step-num">01</div>
         <h3>Auf Karte finden</h3>
         <p>Sieh live, ob der Anhänger gerade frei ist. Kein Anruf, kein Warten – direkt auf der Karte.</p>
       </div>
       <div class="step reveal">
-        <div class="step-icon" aria-hidden="true">📅</div>
         <div class="step-num">02</div>
         <h3>Zeit aussuchen</h3>
         <p>3 Stunden, ein Tag oder das ganze Wochenende – du wählst, wir machen das möglich.</p>
       </div>
       <div class="step reveal">
-        <div class="step-icon" aria-hidden="true">💳</div>
         <div class="step-num">03</div>
         <h3>Direkt zahlen</h3>
         <p>Karte, PayPal – fertig. Der Zugangscode kommt sofort per Mail. Keine Überraschungen.</p>
       </div>
       <div class="step reveal">
-        <div class="step-icon" aria-hidden="true">🚗</div>
         <div class="step-num">04</div>
         <h3>Abholen & losfahren</h3>
-        <p>Code eingeben, kurzes Foto vom Anhänger (Schutz für beide Seiten), ankuppeln, los. Kein Büro, keine Schlüsselübergabe.</p>
+        <p>Code eingeben, kurzes Foto vom Anhänger (Schutz für beide Seiten), ankuppeln, los. Keine Schlüsselübergabe.</p>
       </div>
       <div class="step reveal">
-        <div class="step-icon" aria-hidden="true">📸</div>
         <div class="step-num">05</div>
         <h3>Zurück & abschließen</h3>
-        <p>Anhänger zurück an den Stellplatz, Foto in der Rückgabe-Maske hochladen, Schloss zu. Wir prüfen automatisch — fertig.</p>
+        <p>Anhänger zurück an den Stellplatz, Foto in der Rückgabe-Maske hochladen, Schloss zu. Wir prüfen automatisch.</p>
       </div>
     </div>
   </div>
@@ -3656,7 +3627,7 @@
         line.style.height = (progress * 100).toFixed(2) + '%';
       } else {
         line.style.height = '2px';
-        line.style.width  = (progress * 80).toFixed(2) + '%';
+        line.style.width  = (progress * 92).toFixed(2) + '%';
       }
     }
 
