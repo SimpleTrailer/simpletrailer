@@ -1709,6 +1709,83 @@
     }
     .modal-detail-pickup strong { color: #ccc; }
 
+    /* DETAIL-VIEW: Standort-Eingabe (wenn keine User-Location bekannt ist) */
+    .modal-detail-loc-prompt {
+      background: linear-gradient(135deg, rgba(232,93,0,0.10) 0%, rgba(232,93,0,0.03) 100%);
+      border: 1px solid rgba(232,93,0,0.28);
+      border-radius: 12px;
+      padding: 13px 14px;
+      margin-bottom: 14px;
+    }
+    .mdl-prompt-title {
+      font-size: .9rem; font-weight: 700; color: #fff; margin-bottom: 4px;
+      letter-spacing: -.01em;
+    }
+    .mdl-prompt-sub {
+      font-size: .76rem; color: #aaa; margin-bottom: 10px; line-height: 1.45;
+    }
+    .mdl-prompt-row {
+      display: flex; gap: 8px; position: relative;
+    }
+    .mdl-prompt-row input {
+      flex: 1; min-width: 0;
+      background: #0d0d0d;
+      border: 1px solid #383838;
+      border-radius: 8px;
+      padding: 9px 11px;
+      color: #fff;
+      font-size: .86rem;
+      font-family: inherit;
+      transition: border-color .15s;
+    }
+    .mdl-prompt-row input:focus {
+      outline: none;
+      border-color: var(--orange);
+    }
+    .mdl-prompt-row input::placeholder { color: #555; }
+    .mdl-prompt-gps {
+      background: #1A1A1A;
+      border: 1px solid #383838;
+      border-radius: 8px;
+      padding: 0 12px;
+      color: #fff;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: .78rem;
+      font-weight: 600;
+      font-family: inherit;
+      transition: border-color .15s, background .15s;
+      flex-shrink: 0;
+    }
+    .mdl-prompt-gps:hover {
+      background: #232323;
+      border-color: var(--orange);
+      color: var(--orange);
+    }
+    .mdl-prompt-gps.loading {
+      opacity: 0.6; cursor: wait;
+    }
+    .mdl-prompt-gps.loading svg {
+      animation: mdl-spin 1s linear infinite;
+    }
+    @keyframes mdl-spin {
+      to { transform: rotate(360deg); }
+    }
+    #modalDetailLocSuggestDrop {
+      display: none; position: absolute;
+      top: calc(100% + 4px); left: 0; right: 0;
+      background: #181818;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      z-index: 100;
+      overflow: hidden;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
     /* MAP FILTER */
     .map-filter-btn {
       padding: 5px 12px;
@@ -3854,6 +3931,8 @@
   let modalMap = null, modalMapMarkers = [], modalMode = 'flexible';
   let pendingStart = null, pendingEnd = null;
   let modalTrailers = [];
+  // Aktuell im Detail-View angezeigter Trailer-Index (für Re-Renders nach Location-Update)
+  let currentDetailIdx = null;
   let modalDetailMap = null, modalDetailMarkers = [], modalDetailRouteLayer = null;
   const MODE_LABEL = { flexible: 'Individuell', day: 'Ganzer Tag', weekend: 'Wochenende', week: '1 Woche' };
 
@@ -3903,6 +3982,57 @@
       const bounds = L.latLngBounds([[userLocation.lat, userLocation.lng], [trailer.lat, trailer.lng]]);
       modalDetailMap.fitBounds(bounds, { padding: [30, 30] });
     });
+  }
+
+  /* ── DETAIL-VIEW STANDORT-EINGABE ─────────────── */
+  let _modalDetailLocAcTimer = null;
+  function onModalDetailLocInput(val) {
+    clearTimeout(_modalDetailLocAcTimer);
+    const q = (val || '').trim();
+    const drop = document.getElementById('modalDetailLocSuggestDrop');
+    if (q.length < 2) { if (drop) drop.style.display = 'none'; return; }
+    _modalDetailLocAcTimer = setTimeout(async () => {
+      try {
+        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q + ' Deutschland')}&format=json&limit=5&countrycodes=de&accept-language=de`;
+        const res = await fetch(url, { headers: { 'Accept-Language': 'de' } });
+        const data = await res.json();
+        if (!drop) return;
+        if (!data.length) { drop.style.display = 'none'; return; }
+        drop.innerHTML = data.map(r => {
+          const parts = r.display_name.split(',');
+          const label = parts.slice(0, 2).join(',').trim();
+          return `<div class="suggest-item" onclick="selectModalDetailLocSuggestion(${r.lat},${r.lon},'${label.replace(/'/g,"\\'")}')">
+            <span class="suggest-icon"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 10-16 0c0 3 2.7 6.9 8 11.7z"/></svg></span>
+            ${label}
+          </div>`;
+        }).join('');
+        drop.style.display = 'block';
+      } catch(e) {}
+    }, 280);
+  }
+  function selectModalDetailLocSuggestion(lat, lng, name) {
+    setUserLocation(parseFloat(lat), parseFloat(lng));
+    // Detail-View mit neuer Location neu rendern (Route + Distanz erscheinen)
+    if (currentDetailIdx != null) showModalDetail(currentDetailIdx);
+  }
+  function useMyLocationForDetail() {
+    if (!navigator.geolocation) {
+      alert('Standort wird vom Browser nicht unterstützt — bitte Adresse eingeben.');
+      return;
+    }
+    const btn = document.querySelector('.mdl-prompt-gps');
+    if (btn) btn.classList.add('loading');
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        setUserLocation(pos.coords.latitude, pos.coords.longitude);
+        if (currentDetailIdx != null) showModalDetail(currentDetailIdx);
+      },
+      () => {
+        if (btn) btn.classList.remove('loading');
+        alert('Standort konnte nicht ermittelt werden. Bitte Adresse manuell eingeben.');
+      },
+      { timeout: 10000, maximumAge: 60000 }
+    );
   }
 
   function openTrailerModal(mode, start, end) {
@@ -3985,6 +4115,7 @@
   function showModalDetail(idx) {
     const t = modalTrailers[idx];
     if (!t) return;
+    currentDetailIdx = idx;
 
     document.getElementById('modalListView').style.display   = 'none';
     document.getElementById('modalDetailView').style.display = 'block';
@@ -4015,7 +4146,7 @@
       </div>
     `;
 
-    // Auto-Route Box (zeigt sich nur wenn userLocation gesetzt)
+    // Auto-Route Box: bei userLocation → Auto-Route, sonst Eingabe-Card für Standort
     document.getElementById('modalDetailRouteBox').innerHTML = userLocation
       ? `<div class="modal-route-card" id="modalRouteCard">
            <div style="display:flex;align-items:center;gap:10px;">
@@ -4026,7 +4157,23 @@
              </div>
            </div>
          </div>`
-      : '';
+      : `<div class="modal-detail-loc-prompt">
+           <div class="mdl-prompt-title">🚗 Route & Entfernung berechnen</div>
+           <div class="mdl-prompt-sub">Adresse oder PLZ — wir zeigen dir Distanz und Fahrtzeit zum Anhänger</div>
+           <div class="mdl-prompt-row">
+             <input type="text" id="modalDetailLocInput" placeholder="z. B. Bremen, Hauptstr. 5"
+                    autocomplete="off" oninput="onModalDetailLocInput(this.value)" />
+             <button onclick="useMyLocationForDetail()" class="mdl-prompt-gps" title="Standort verwenden" type="button">
+               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                 <circle cx="12" cy="12" r="3.5"/>
+                 <line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/>
+                 <line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/>
+               </svg>
+               <span>GPS</span>
+             </button>
+             <div id="modalDetailLocSuggestDrop"></div>
+           </div>
+         </div>`;
 
     // Specs
     document.getElementById('modalDetailSpecs').innerHTML = `
