@@ -734,6 +734,30 @@
       </div>
     </div>
 
+    <!-- STORNOSCHUTZ — kostenfreie Stornierung bis 30 Min vor Mietbeginn -->
+    <div class="card">
+      <p class="field-label" style="margin-bottom:4px;">Flexibel bleiben? 🛡️</p>
+      <p style="color:var(--gray);font-size:.78rem;margin-bottom:14px;">Pläne ändern sich — mit Stornoschutz bleibst du flexibel.</p>
+      <div class="insurance-grid">
+        <div class="insurance-option selected" id="cp-yes" onclick="selectCancellationProtection(true)">
+          <div class="ins-radio"></div>
+          <div class="ins-body">
+            <div class="ins-name">Mit Stornoschutz <span class="ins-badge">Empfohlen</span></div>
+            <div class="ins-desc">Kostenfreie Stornierung bis <strong style="color:#fff;">30 Min vor Mietbeginn</strong>. Du bekommst den vollen Mietpreis zurück (Schutzgebühr selbst wird nicht erstattet).</div>
+          </div>
+          <div class="ins-price" id="cp-yes-price">–</div>
+        </div>
+        <div class="insurance-option" id="cp-no" onclick="selectCancellationProtection(false)">
+          <div class="ins-radio"></div>
+          <div class="ins-body">
+            <div class="ins-name">Ohne Stornoschutz</div>
+            <div class="ins-desc">Stornierung bis 24h vor Mietbeginn kostenfrei, danach Staffel gem. AGB § 6.</div>
+          </div>
+          <div class="ins-price free">0,00 €</div>
+        </div>
+      </div>
+    </div>
+
     <!-- RÜCKGABE-OPTION: Heimat-Stellplatz (frei) vs. Egal-wo in Bremen (+15€) -->
     <div class="card">
       <p class="field-label" style="margin-bottom:4px;">Rückgabe-Option</p>
@@ -785,6 +809,7 @@
       <div class="summary-row"><span class="label">Tarif</span><span id="sumTarif">–</span></div>
       <div class="summary-row"><span class="label">Mietpreis</span><span id="sumBase">–</span></div>
       <div class="summary-row" id="sumInsRow" style="display:none"><span class="label" id="sumInsLabel">Schutzpaket</span><span id="sumIns">–</span></div>
+      <div class="summary-row" id="sumCpRow" style="display:none"><span class="label">Stornoschutz</span><span id="sumCp">–</span></div>
       <div class="summary-row" id="sumFreeFloatRow" style="display:none"><span class="label">Rückgabe egal-wo</span><span id="sumFreeFloat">–</span></div>
       <div class="summary-row"><span class="label">Von</span><span id="sumVon">–</span></div>
       <div class="summary-row"><span class="label">Bis</span><span id="sumBis">–</span></div>
@@ -910,8 +935,11 @@
   let bookingToken   = null;
   let bookedRanges   = [];
   let calYear, calMonth;
-  let selectedInsurance = 'basis';
-  let insuranceRate     = 0.15;
+  let selectedInsurance     = 'basis';
+  let insuranceRate         = 0.15;
+  let cancellationProtection = true;  // default: vorausgewählt
+  const CP_RATE   = 0.10;   // 10% vom Mietpreis
+  const CP_MIN    = 3.00;    // Mindestgebühr
   let bookingMode       = 'flexible'; // 'flexible' | 'weekend' | 'week'
   let calClickState     = 'start';   // 'start' | 'end' — for flexible mode only
 
@@ -929,6 +957,7 @@
   function updatePriceDisplay() {
     const p = calcPrice(getStartMs(), getEndMs());
     if (p) updateInsurancePrices(p.base);
+    updateCancellationProtectionPrice();
   }
 
   function selectInsurance(type) {
@@ -1328,11 +1357,37 @@
     return selectedFreeFloating ? FREE_FLOATING_FEE : 0;
   }
 
+  // Stornoschutz-Gebühr: 10% vom Mietpreis, mindestens 3 €. 0 wenn nicht gewählt.
+  function getCancellationProtectionFee() {
+    if (!cancellationProtection) return 0;
+    const sMs = new Date(document.getElementById('startTime').value).getTime() || 0;
+    const eMs = new Date(document.getElementById('endTime').value).getTime()   || 0;
+    const p = calcPrice(sMs, eMs); if (!p) return 0;
+    return Math.max(CP_MIN, Math.round(p.base * CP_RATE * 100) / 100);
+  }
+
   function getTotalPrice() {
     const sMs = new Date(document.getElementById('startTime').value).getTime() || 0;
     const eMs = new Date(document.getElementById('endTime').value).getTime()   || 0;
     const p = calcPrice(sMs, eMs); if (!p) return 0;
-    return p.base + getInsuranceAmount() + getFreeFloatingFee();
+    return p.base + getInsuranceAmount() + getFreeFloatingFee() + getCancellationProtectionFee();
+  }
+
+  function selectCancellationProtection(yes) {
+    cancellationProtection = !!yes;
+    document.getElementById('cp-yes').classList.toggle('selected', yes);
+    document.getElementById('cp-no').classList.toggle('selected', !yes);
+    updateCancellationProtectionPrice();
+  }
+
+  function updateCancellationProtectionPrice() {
+    const el = document.getElementById('cp-yes-price');
+    if (!el) return;
+    const sMs = new Date(document.getElementById('startTime').value).getTime() || 0;
+    const eMs = new Date(document.getElementById('endTime').value).getTime()   || 0;
+    const p = calcPrice(sMs, eMs);
+    const fee = p ? Math.max(CP_MIN, Math.round(p.base * CP_RATE * 100) / 100) : CP_MIN;
+    el.textContent = '+' + fee.toFixed(2).replace('.', ',') + ' €';
   }
 
   function updateInsurancePrices(base) {
@@ -2056,6 +2111,17 @@
         ffRow.style.display = 'none';
       }
     }
+    // Stornoschutz-Zeile
+    const cpRow = document.getElementById('sumCpRow');
+    if (cpRow) {
+      const cpFee = getCancellationProtectionFee();
+      if (cancellationProtection && cpFee > 0) {
+        cpRow.style.display = 'flex';
+        document.getElementById('sumCp').textContent = '+' + cpFee.toFixed(2).replace('.',',') + ' €';
+      } else {
+        cpRow.style.display = 'none';
+      }
+    }
   }
 
   async function initStripe() {
@@ -2081,7 +2147,9 @@
           user_id:          bookingUser.id,
           booking_mode:     bookingMode,
           agb_version:      '2026-06-05',
-          free_floating:    selectedFreeFloating
+          free_floating:    selectedFreeFloating,
+          cancellation_protection:     cancellationProtection,
+          cancellation_protection_fee: getCancellationProtectionFee()
         })
       });
 

@@ -11,7 +11,7 @@ module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
   try {
-    const { trailer_id, pricing_type, start_time, end_time, customer_name, customer_email, customer_phone, customer_address, insurance_type, insurance_amount, user_id, booking_mode, agb_version, free_floating } = req.body;
+    const { trailer_id, pricing_type, start_time, end_time, customer_name, customer_email, customer_phone, customer_address, insurance_type, insurance_amount, user_id, booking_mode, agb_version, free_floating, cancellation_protection } = req.body;
     // AGB-Akzeptanz fuer Beweissicherung
     const agbAcceptedAt = new Date().toISOString();
     const agbAcceptedIp = (req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || req.connection?.remoteAddress || '').split(',')[0].trim();
@@ -101,7 +101,14 @@ module.exports = async (req, res) => {
     const freeFloating = !!free_floating;
     const freeFloatingFee = freeFloating ? 15.00 : 0;
 
-    const amount    = baseAmount + insAmount + freeFloatingFee;
+    // Stornoschutz: 10% vom Mietpreis (NETTO = baseAmount ohne Schutz), mindestens 3 €.
+    // Berechnung serverseitig — Client-Wert ist nur Anzeige, der Server ist Single Source of Truth.
+    const cancellationProtection = !!cancellation_protection;
+    const cancellationProtectionFee = cancellationProtection
+      ? Math.max(3.00, Math.round(baseAmount * 0.10 * 100) / 100)
+      : 0;
+
+    const amount    = baseAmount + insAmount + freeFloatingFee + cancellationProtectionFee;
     const amountInCents = Math.round(amount * 100);
 
     const existing = await stripe.customers.list({ email: customer_email, limit: 1 });
@@ -123,7 +130,7 @@ module.exports = async (req, res) => {
       automatic_payment_methods: { enabled: true },
       receipt_email: customer_email,
       description: `SimpleTrailer – ${trailer.name} – ${pricing_type}`,
-      metadata: { trailer_id, pricing_type, start_time, end_time, customer_name, customer_email, customer_phone: customer_phone || '', customer_address: customer_address || '', insurance_type: insType, insurance_amount: String(insAmount), user_id: user_id || '', agb_version: agb_version || '2026-06-05', agb_accepted_at: agbAcceptedAt, agb_accepted_ip: agbAcceptedIp, free_floating: freeFloating ? '1' : '0', free_floating_fee: String(freeFloatingFee) }
+      metadata: { trailer_id, pricing_type, start_time, end_time, customer_name, customer_email, customer_phone: customer_phone || '', customer_address: customer_address || '', insurance_type: insType, insurance_amount: String(insAmount), user_id: user_id || '', agb_version: agb_version || '2026-06-05', agb_accepted_at: agbAcceptedAt, agb_accepted_ip: agbAcceptedIp, free_floating: freeFloating ? '1' : '0', free_floating_fee: String(freeFloatingFee), cancellation_protection: cancellationProtection ? '1' : '0', cancellation_protection_fee: String(cancellationProtectionFee) }
     });
 
     return res.status(200).json({

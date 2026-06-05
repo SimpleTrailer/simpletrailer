@@ -69,6 +69,8 @@ module.exports = async (req, res) => {
       const insType   = meta.insurance_type   || 'none';
       const insAmount = parseFloat(meta.insurance_amount || '0') || 0;
       const freeFloating = meta.free_floating === '1';
+      const cancellationProtection = meta.cancellation_protection === '1';
+      const cancellationProtectionFee = parseFloat(meta.cancellation_protection_fee || '0') || 0;
 
       // Pickup-Position + Anhänger-Code aus trailers-Tabelle holen.
       // Code = fester Zahlenschloss-Code des Anhängers (manuell in trailers.access_code gepflegt).
@@ -95,6 +97,8 @@ module.exports = async (req, res) => {
         stripe_customer_id: pi.customer, stripe_payment_method_id: pi.payment_method,
         status: 'confirmed', access_code, return_token, precheck_token,
         free_floating: freeFloating,
+        cancellation_protection: cancellationProtection,
+        cancellation_protection_fee: cancellationProtectionFee,
         pickup_lat: pickupLat, pickup_lng: pickupLng
       };
       // AGB-Felder optional anhaengen — wenn die DB-Spalten noch nicht existieren,
@@ -109,9 +113,9 @@ module.exports = async (req, res) => {
         .from('bookings').insert(insertWithAgb).select('*, trailers(name)').single();
 
       if (bookingError && /column .* does not exist/i.test(bookingError.message || '')) {
-        // Fallback: AGB- oder Free-Floating-Spalten fehlen in der DB -> ohne sie speichern
+        // Fallback: AGB- / Free-Floating- / Stornoschutz-Spalten fehlen in der DB -> ohne sie speichern
         console.warn('Spalte fehlt in DB, fallback auf Basis-Insert ohne neue Felder. Bitte ALTER TABLE in Supabase ausfuehren.');
-        const { free_floating, pickup_lat, pickup_lng, ...minimal } = baseInsert;
+        const { free_floating, pickup_lat, pickup_lng, cancellation_protection, cancellation_protection_fee, ...minimal } = baseInsert;
         ({ data: booking, error: bookingError } = await supabase
           .from('bookings').insert(minimal).select('*, trailers(name)').single());
       }
@@ -189,11 +193,13 @@ module.exports = async (req, res) => {
                 <tr><td style="padding:6px 0;color:#666;">Mietbeginn</td><td style="padding:6px 0;font-weight:600;">${fmt(meta.start_time)} Uhr</td></tr>
                 <tr><td style="padding:6px 0;color:#666;">Mietende</td><td style="padding:6px 0;font-weight:600;">${fmt(meta.end_time)} Uhr</td></tr>
                 <tr><td style="padding:6px 0;color:#666;">Schutzpaket</td><td style="padding:6px 0;font-weight:600;">${insType === 'none' ? 'Ohne Schutzpaket – volle Mieterhaftung gem. AGB § 9' : insType === 'basis' ? 'Basis-Schutz · 500 € Selbstbeteiligung' : 'Premium-Schutz · 50 € Selbstbeteiligung'}</td></tr>
+                <tr><td style="padding:6px 0;color:#666;">Stornoschutz</td><td style="padding:6px 0;font-weight:600;">${cancellationProtection ? `Aktiv (${cancellationProtectionFee.toFixed(2).replace('.', ',')} €) · kostenfreie Stornierung bis 30 Min vor Mietbeginn` : 'Nicht gebucht · Storno-Staffel gem. AGB § 6'}</td></tr>
               </table>
 
               <h3 style="font-size:.95rem;color:#0D0D0D;margin:20px 0 8px;font-family:Arial,sans-serif;">Vergütung & Umsatzsteuer</h3>
               <table style="width:100%;font-size:.85rem;font-family:Arial,sans-serif;border-collapse:collapse;">
-                <tr><td style="padding:6px 0;color:#666;width:60%;">Mietpreis netto (inkl. ggf. Schutzpaket)</td><td style="padding:6px 0;text-align:right;font-weight:600;">${(amount / 1.19).toFixed(2).replace('.',',')} €</td></tr>
+                <tr><td style="padding:6px 0;color:#666;width:60%;">Mietpreis netto (inkl. ggf. Schutzpaket${cancellationProtection ? ' + Stornoschutz' : ''})</td><td style="padding:6px 0;text-align:right;font-weight:600;">${(amount / 1.19).toFixed(2).replace('.',',')} €</td></tr>
+                ${cancellationProtection ? `<tr><td style="padding:6px 0;color:#666;font-size:.78rem;font-style:italic;">davon Stornoschutz (brutto)</td><td style="padding:6px 0;text-align:right;color:#666;font-size:.78rem;font-style:italic;">${cancellationProtectionFee.toFixed(2).replace('.',',')} €</td></tr>` : ''}
                 <tr><td style="padding:6px 0;color:#666;">zzgl. 19 % Umsatzsteuer</td><td style="padding:6px 0;text-align:right;font-weight:600;">${(amount - amount / 1.19).toFixed(2).replace('.',',')} €</td></tr>
                 <tr style="border-top:2px solid #ddd;"><td style="padding:8px 0 6px;color:#0D0D0D;font-weight:700;">Gesamtbetrag (brutto, gezahlt)</td><td style="padding:8px 0 6px;text-align:right;font-weight:700;color:#0D0D0D;">${amount.toFixed(2).replace('.',',')} €</td></tr>
                 <tr><td style="padding:14px 0 6px;color:#666;font-size:.78rem;" colspan="2"><em>Diese Buchungsbestätigung dient zugleich als Rechnung gemäß § 14 UStG.</em></td></tr>
