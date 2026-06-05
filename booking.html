@@ -2085,7 +2085,10 @@
     const insAmt  = getInsuranceAmount();
     const insLabels = { basis: 'Basis Schutz (+15%)', premium: 'Premium Schutz (+30%)' };
     const meta    = bookingUser?.user_metadata || {};
-    const name    = `${meta.first_name || ''} ${meta.last_name || ''}`.trim() || bookingUser?.email || '–';
+    // Verifizierte DL-Daten haben Vorrang (Stripe Identity = Master)
+    const name    = (meta.dl_first_name && meta.dl_last_name)
+      ? `${meta.dl_first_name} ${meta.dl_last_name}`
+      : `${meta.first_name || ''} ${meta.last_name || ''}`.trim() || bookingUser?.email || '–';
 
     document.getElementById('sumTarif').textContent  = p ? p.label : '–';
     document.getElementById('sumBase').textContent   = p ? p.base.toFixed(2).replace('.',',') + ' €' : '–';
@@ -2138,7 +2141,9 @@
           pricing_type:     calcPrice(getStartMs(), getEndMs())?.key || 'flexible',
           start_time:       document.getElementById('startTime').value,
           end_time:         document.getElementById('endTime').value,
-          customer_name:    `${bookingUser.user_metadata?.first_name || ''} ${bookingUser.user_metadata?.last_name || ''}`.trim() || bookingUser.email,
+          customer_name:    (bookingUser.user_metadata?.dl_first_name && bookingUser.user_metadata?.dl_last_name)
+                              ? `${bookingUser.user_metadata.dl_first_name} ${bookingUser.user_metadata.dl_last_name}`
+                              : `${bookingUser.user_metadata?.first_name || ''} ${bookingUser.user_metadata?.last_name || ''}`.trim() || bookingUser.email,
           customer_email:   bookingUser.email,
           customer_phone:   bookingUser.user_metadata?.phone   || '',
           customer_address: bookingUser.user_metadata?.address || '',

@@ -94,6 +94,16 @@ async function handleIdentityEvent(event) {
     // Wir gehen von Klasse B aus, sobald ein gültiger Führerschein verifiziert wurde
     meta.dl_classes = ['B'];
     meta.dl_failure_reason = null;
+
+    // AUTOFILL: Verifizierte Stripe-Identity-Daten sind ab jetzt Master.
+    // Vorname/Nachname/Geburtsdatum aus user_metadata werden überschrieben,
+    // damit Buchung, Rechnung und Mietvertrag exakt die geprüften Daten verwenden.
+    if (meta.dl_first_name) meta.first_name = meta.dl_first_name;
+    if (meta.dl_last_name)  meta.last_name  = meta.dl_last_name;
+    if (meta.dl_first_name && meta.dl_last_name) {
+      meta.full_name = `${meta.dl_first_name} ${meta.dl_last_name}`;
+    }
+    if (meta.dl_dob) meta.birthdate = meta.dl_dob;
   }
 
   if (event.type === 'identity.verification_session.requires_input') {
