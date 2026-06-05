@@ -1751,64 +1751,27 @@
     .leaflet-popup-close-button { color: #888 !important; }
     .leaflet-popup-close-button:hover { color: #fff !important; }
 
-    /* TRAILER-MARKER – transparente Anhänger-Bilder als Map-Marker */
+    /* TRAILER-MARKER – kleine transparente Anhänger-Bilder als Map-Marker */
     .trailer-marker-icon {
-      position: relative;
-      width: 60px; height: 44px;
+      width: 36px; height: 26px;
       pointer-events: auto;
     }
     .trailer-marker-icon .tm-img {
-      width: 55px;
-      height: auto;
-      max-height: 38px;
+      width: 100%;
+      height: 100%;
       object-fit: contain;
-      object-position: bottom center;
-      position: absolute;
-      bottom: 4px; left: 50%;
-      transform: translateX(-50%);
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.55)) drop-shadow(0 1px 1px rgba(0,0,0,0.4));
-      transition: transform .22s ease, filter .22s ease;
-      z-index: 2;
+      object-position: center bottom;
+      display: block;
+      transition: transform .2s ease;
       -webkit-user-drag: none;
       user-select: none;
     }
-    .trailer-marker-icon .tm-shadow {
-      position: absolute;
-      bottom: 1px; left: 50%;
-      transform: translateX(-50%);
-      width: 42px; height: 6px;
-      background: radial-gradient(ellipse at center, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.2) 45%, transparent 75%);
-      z-index: 1;
-      pointer-events: none;
-      filter: blur(0.5px);
-    }
-    .trailer-marker-icon .tm-status {
-      position: absolute;
-      top: 2px; right: 4px;
-      width: 9px; height: 9px;
-      border-radius: 50%;
-      border: 1.5px solid;
-      z-index: 3;
-      box-shadow: 0 0 0 1px rgba(0,0,0,0.5), 0 0 4px rgba(0,0,0,0.5);
-    }
-    /* Pulse-Animation nur bei "Verfügbar" — zieht Aufmerksamkeit auf buchbare Anhänger */
-    .trailer-marker-icon .tm-status--available {
-      animation: tm-pulse 2.4s ease-in-out infinite;
-    }
-    @keyframes tm-pulse {
-      0%, 100% { transform: scale(1);    box-shadow: 0 0 0 1px rgba(0,0,0,0.5), 0 0 4px rgba(34,197,94,0.5); }
-      50%      { transform: scale(1.25); box-shadow: 0 0 0 1px rgba(0,0,0,0.5), 0 0 10px rgba(34,197,94,0.85); }
-    }
     .trailer-marker-icon:hover .tm-img {
-      transform: translateX(-50%) translateY(-3px) scale(1.1);
-      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.65)) drop-shadow(0 1px 3px rgba(232,93,0,0.4));
+      transform: scale(1.18);
     }
 
     @media (max-width: 768px) {
-      .trailer-marker-icon { width: 48px; height: 36px; }
-      .trailer-marker-icon .tm-img { width: 44px; max-height: 30px; }
-      .trailer-marker-icon .tm-shadow { width: 34px; height: 5px; }
-      .trailer-marker-icon .tm-status { width: 8px; height: 8px; top: 1px; right: 3px; }
+      .trailer-marker-icon { width: 30px; height: 22px; }
     }
 
     .leaflet-control-attribution {
@@ -3043,27 +3006,27 @@
       return makeIconColored(trailer ? '#22c55e' : '#f87171', trailer ? '#4cff91' : '#ff6b6b');
     }
 
-    // Status-Farben (grün = verfügbar, orange = gebucht, grau = nicht im Angebot)
-    let statusColor = '#22c55e', statusBorder = '#4cff91', statusLabel = 'Verfügbar', statusClass = 'tm-status--available';
-    if (trailer.currently_booked)   { statusColor = '#f59e0b'; statusBorder = '#fbbf24'; statusLabel = 'Gerade gebucht';    statusClass = 'tm-status--booked'; }
-    else if (!trailer.is_available) { statusColor = '#6b7280'; statusBorder = '#9ca3af'; statusLabel = 'Nicht im Angebot'; statusClass = 'tm-status--unavailable'; }
-
     // Marker-Bild bestimmen (custom > type-fallback)
     const imgUrl = trailer.marker_image_url || trailer.image_url || TYPE_MARKER_IMAGES[trailer.type];
 
-    // Kein Bild verfügbar → klassischer Pin
-    if (!imgUrl) return makeIconColored(statusColor, statusBorder);
+    // Kein Bild verfügbar → klassischer Pin (Status-Farben als Fallback)
+    if (!imgUrl) {
+      if (trailer.currently_booked)   return makeIconColored('#f59e0b', '#fbbf24');
+      if (trailer.is_available)       return makeIconColored('#22c55e', '#4cff91');
+      return makeIconColored('#6b7280', '#9ca3af');
+    }
+
+    // Label für Accessibility/Tooltip
+    let label = 'Verfügbar';
+    if (trailer.currently_booked) label = 'Gerade gebucht';
+    else if (!trailer.is_available) label = 'Nicht im Angebot';
 
     return L.divIcon({
       className: 'trailer-marker-icon',
-      html: `
-        <div class="tm-shadow" aria-hidden="true"></div>
-        <img class="tm-img" src="${imgUrl}" alt="${statusLabel}" />
-        <span class="tm-status ${statusClass}" style="background:${statusColor};border-color:${statusBorder};" title="${statusLabel}"></span>
-      `,
-      iconSize: [60, 44],
-      iconAnchor: [30, 40],
-      popupAnchor: [0, -40]
+      html: `<img class="tm-img" src="${imgUrl}" alt="${label}" title="${label}" />`,
+      iconSize: [36, 26],
+      iconAnchor: [18, 24],
+      popupAnchor: [0, -24]
     });
   }
   function makeIconColored(color, border) {
