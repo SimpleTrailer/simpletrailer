@@ -148,11 +148,18 @@
     "aggregateRating": {
       "@type": "AggregateRating",
       "ratingValue": "5.0",
-      "reviewCount": "10",
+      "reviewCount": "11",
       "bestRating": "5",
       "worstRating": "1"
     },
     "review": [
+      {
+        "@type": "Review",
+        "author": { "@type": "Person", "name": "Ronja Elina" },
+        "datePublished": "2026-06-05",
+        "reviewBody": "Das Anhänger mieten hat super einfach funktioniert über die Website. Kann ich nur empfehlen.",
+        "reviewRating": { "@type": "Rating", "ratingValue": "5", "bestRating": "5" }
+      },
       {
         "@type": "Review",
         "author": { "@type": "Person", "name": "Business LR" },
@@ -1622,8 +1629,27 @@
     .modal-route-card {
       background: linear-gradient(180deg, #161616 0%, #1c1612 100%);
       border: 1px solid #2a2a2a; border-radius: 10px;
-      padding: 11px 14px; margin-bottom: 14px;
+      padding: 12px 14px; margin-bottom: 14px;
+      display: flex; align-items: center; gap: 12px;
     }
+    .modal-route-card .mrc-icon {
+      width: 38px; height: 38px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, rgba(232,93,0,0.20) 0%, rgba(232,93,0,0.06) 100%);
+      border: 1px solid rgba(232,93,0,0.30);
+      color: var(--orange);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .modal-route-card .mrc-content { min-width: 0; flex: 1; }
+    .modal-route-card .mrc-label {
+      font-size: .68rem; color: #888; letter-spacing: 0.08em;
+      text-transform: uppercase; font-weight: 600; margin-bottom: 2px;
+    }
+    .modal-route-card .mrc-info {
+      font-weight: 700; font-size: .95rem; color: #fff; letter-spacing: -.01em;
+    }
+    .modal-route-card .mrc-info span { color: var(--orange); }
 
     /* TRAILER MODAL Layout */
     .trailer-modal-bg {
@@ -1714,14 +1740,36 @@
         margin-top: 10px;
         margin-bottom: 0;
       }
-      /* Standort-Eingabe-Card (wenn KEIN Standort) — größer, da keine Map */
+      /* Standort-Eingabe-Card (wenn KEIN Standort) — füllt rechte Spalte vertikal */
       #modalDetailRouteWrap .modal-detail-loc-prompt {
         flex: 1 1 auto;
-        min-height: 380px;
+        min-height: 420px;
         display: flex;
         flex-direction: column;
         justify-content: center;
-        padding: 24px 22px;
+        align-items: stretch;
+        padding: 32px 28px;
+        margin-bottom: 0;
+        text-align: center;
+        background:
+          radial-gradient(circle at 50% 30%, rgba(232,93,0,0.08) 0%, transparent 60%),
+          linear-gradient(135deg, rgba(232,93,0,0.06) 0%, rgba(232,93,0,0.02) 100%);
+      }
+      /* Pin-Illustration nur auf Desktop */
+      #modalDetailRouteWrap .mdl-prompt-illu { display: block; }
+      #modalDetailRouteWrap .mdl-prompt-title {
+        justify-content: center;
+        font-size: 1.05rem;
+      }
+      #modalDetailRouteWrap .mdl-prompt-sub {
+        max-width: 320px;
+        margin-left: auto; margin-right: auto;
+        margin-bottom: 18px;
+      }
+      #modalDetailRouteWrap .mdl-prompt-row {
+        max-width: 380px;
+        margin: 0 auto;
+        width: 100%;
       }
       .modal-detail-img,
       .modal-detail-img-placeholder {
@@ -1796,12 +1844,22 @@
       background: linear-gradient(135deg, rgba(232,93,0,0.10) 0%, rgba(232,93,0,0.03) 100%);
       border: 1px solid rgba(232,93,0,0.28);
       border-radius: 12px;
-      padding: 13px 14px;
+      padding: 18px 18px 16px;
       margin-bottom: 14px;
+      position: relative;
+      overflow: hidden;
     }
+    /* Pin-Illustration: nur auf Desktop sichtbar (zentriert) */
+    .mdl-prompt-illu { display: none; color: rgba(232,93,0,0.55); margin: 0 auto 8px; }
     .mdl-prompt-title {
       font-size: .9rem; font-weight: 700; color: #fff; margin-bottom: 4px;
       letter-spacing: -.01em;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .mdl-prompt-title::before {
+      content: ''; display: inline-block; width: 6px; height: 6px;
+      background: var(--orange); border-radius: 50%;
+      box-shadow: 0 0 8px rgba(232,93,0,0.7);
     }
     .mdl-prompt-sub {
       font-size: .76rem; color: #aaa; margin-bottom: 10px; line-height: 1.45;
@@ -2574,14 +2632,14 @@
     <div class="reveal" style="text-align:center;">
       <p class="section-tag">Bewertungen</p>
       <h2 class="section-title">Was unsere Mieter sagen.</h2>
-      <a href="https://g.page/r/Cd6jwKdwS_Y7EAE" target="_blank" rel="noopener" class="reviews-summary reveal" aria-label="5,0 Sterne aus 10 Google-Bewertungen — bei Google ansehen">
+      <a href="https://g.page/r/Cd6jwKdwS_Y7EAE" target="_blank" rel="noopener" class="reviews-summary reveal" aria-label="5,0 Sterne aus 11 Google-Bewertungen — bei Google ansehen">
         <span class="rs-stars" aria-hidden="true">★★★★★</span>
         <span class="rs-rating">5,0</span>
         <span class="rs-divider"></span>
         <span class="rs-meta">
           <span class="rs-google">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.28 1.4-1.07 2.59-2.28 3.39v2.85h3.67c2.16-1.99 3.41-4.92 3.41-8.48z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.67-2.85c-1.02.68-2.32 1.09-4.26 1.09-3.27 0-6.04-2.21-7.03-5.18H1.18v3.25C3.15 21.34 7.27 24 12 24z"/><path fill="#FBBC04" d="M4.97 14.15c-.25-.74-.4-1.53-.4-2.35s.15-1.61.4-2.35V6.2H1.18C.42 7.7 0 9.32 0 11.8c0 2.48.42 4.1 1.18 5.6l3.79-3.25z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.36.61 4.61 1.81l3.25-3.25C17.95 1.32 15.24 0 12 0 7.27 0 3.15 2.66 1.18 6.2l3.79 3.25C5.96 6.96 8.73 4.75 12 4.75z"/></svg>
-            10 Google-Bewertungen
+            11 Google-Bewertungen
           </span>
           <span style="opacity:.7;">→</span>
         </span>
@@ -2590,6 +2648,18 @@
   </div>
   <div class="reviews-track-wrapper">
     <div class="reviews-track" id="reviewsTrack">
+
+      <div class="review-card">
+        <div class="review-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
+        <p class="review-text">Das Anhänger mieten hat super einfach funktioniert über die Website. Kann ich nur empfehlen.</p>
+        <div class="review-author">
+          <div class="review-avatar">RE</div>
+          <div class="review-meta">
+            <span class="review-name">Ronja Elina</span>
+            <span class="review-verified"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.28 1.4-1.07 2.59-2.28 3.39v2.85h3.67c2.16-1.99 3.41-4.92 3.41-8.48z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.67-2.85c-1.02.68-2.32 1.09-4.26 1.09-3.27 0-6.04-2.21-7.03-5.18H1.18v3.25C3.15 21.34 7.27 24 12 24z"/><path fill="#FBBC04" d="M4.97 14.15c-.25-.74-.4-1.53-.4-2.35s.15-1.61.4-2.35V6.2H1.18C.42 7.7 0 9.32 0 11.8c0 2.48.42 4.1 1.18 5.6l3.79-3.25z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.36.61 4.61 1.81l3.25-3.25C17.95 1.32 15.24 0 12 0 7.27 0 3.15 2.66 1.18 6.2l3.79 3.25C5.96 6.96 8.73 4.75 12 4.75z"/></svg>Verifiziert via Google · vor 1 Stunde</span>
+          </div>
+        </div>
+      </div>
 
       <div class="review-card">
         <div class="review-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
@@ -2629,6 +2699,18 @@
 
       <div class="review-card">
         <div class="review-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
+        <p class="review-text">Erstes Mal einen Anhänger ausgeliehen, da ich umziehen musste. Durch einen Kollegen auf die Jungs aufmerksam geworden. Kontakt und Buchung waren einfach. Alles top, sollte ich nochmal umziehen sofort wieder.</p>
+        <div class="review-author">
+          <div class="review-avatar">MG</div>
+          <div class="review-meta">
+            <span class="review-name">Marvin G.</span>
+            <span class="review-verified"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.28 1.4-1.07 2.59-2.28 3.39v2.85h3.67c2.16-1.99 3.41-4.92 3.41-8.48z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.67-2.85c-1.02.68-2.32 1.09-4.26 1.09-3.27 0-6.04-2.21-7.03-5.18H1.18v3.25C3.15 21.34 7.27 24 12 24z"/><path fill="#FBBC04" d="M4.97 14.15c-.25-.74-.4-1.53-.4-2.35s.15-1.61.4-2.35V6.2H1.18C.42 7.7 0 9.32 0 11.8c0 2.48.42 4.1 1.18 5.6l3.79-3.25z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.36.61 4.61 1.81l3.25-3.25C17.95 1.32 15.24 0 12 0 7.27 0 3.15 2.66 1.18 6.2l3.79 3.25C5.96 6.96 8.73 4.75 12 4.75z"/></svg>Verifiziert via Google · vor 5 Tagen</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="review-card">
+        <div class="review-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
         <p class="review-text">Sind immer wieder sehr zufrieden mit dem Service! Flexibel, praktisch, gut.</p>
         <div class="review-author">
           <div class="review-avatar">LS</div>
@@ -2658,18 +2740,6 @@
           <div class="review-avatar">MG</div>
           <div class="review-meta">
             <span class="review-name">Maren G.</span>
-            <span class="review-verified"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.28 1.4-1.07 2.59-2.28 3.39v2.85h3.67c2.16-1.99 3.41-4.92 3.41-8.48z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.67-2.85c-1.02.68-2.32 1.09-4.26 1.09-3.27 0-6.04-2.21-7.03-5.18H1.18v3.25C3.15 21.34 7.27 24 12 24z"/><path fill="#FBBC04" d="M4.97 14.15c-.25-.74-.4-1.53-.4-2.35s.15-1.61.4-2.35V6.2H1.18C.42 7.7 0 9.32 0 11.8c0 2.48.42 4.1 1.18 5.6l3.79-3.25z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.36.61 4.61 1.81l3.25-3.25C17.95 1.32 15.24 0 12 0 7.27 0 3.15 2.66 1.18 6.2l3.79 3.25C5.96 6.96 8.73 4.75 12 4.75z"/></svg>Verifiziert via Google · vor 5 Tagen</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="review-card">
-        <div class="review-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
-        <p class="review-text">Erstes Mal einen Anhänger ausgeliehen, da ich umziehen musste. Durch einen Kollegen auf die Jungs aufmerksam geworden. Kontakt und Buchung waren einfach. Alles top, sollte ich nochmal umziehen sofort wieder.</p>
-        <div class="review-author">
-          <div class="review-avatar">MG</div>
-          <div class="review-meta">
-            <span class="review-name">Marvin G.</span>
             <span class="review-verified"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.28 1.4-1.07 2.59-2.28 3.39v2.85h3.67c2.16-1.99 3.41-4.92 3.41-8.48z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.67-2.85c-1.02.68-2.32 1.09-4.26 1.09-3.27 0-6.04-2.21-7.03-5.18H1.18v3.25C3.15 21.34 7.27 24 12 24z"/><path fill="#FBBC04" d="M4.97 14.15c-.25-.74-.4-1.53-.4-2.35s.15-1.61.4-2.35V6.2H1.18C.42 7.7 0 9.32 0 11.8c0 2.48.42 4.1 1.18 5.6l3.79-3.25z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.36.61 4.61 1.81l3.25-3.25C17.95 1.32 15.24 0 12 0 7.27 0 3.15 2.66 1.18 6.2l3.79 3.25C5.96 6.96 8.73 4.75 12 4.75z"/></svg>Verifiziert via Google · vor 5 Tagen</span>
           </div>
         </div>
@@ -4234,16 +4304,28 @@
     // Auto-Route Box: bei userLocation → Auto-Route, sonst Eingabe-Card für Standort
     document.getElementById('modalDetailRouteBox').innerHTML = userLocation
       ? `<div class="modal-route-card" id="modalRouteCard">
-           <div style="display:flex;align-items:center;gap:10px;">
-             <span style="font-size:1.1rem;">🚗</span>
-             <div>
-               <div style="font-size:.72rem;color:#888;letter-spacing:.05em;text-transform:uppercase;">Mit Auto</div>
-               <div id="modalRouteInfo" style="font-weight:700;font-size:.9rem;color:#fff;">Route wird berechnet …</div>
-             </div>
+           <div class="mrc-icon" aria-hidden="true">
+             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+               <path d="M19 17h2v-5l-3-7H6L3 12v5h2"/>
+               <path d="M6 17h12"/>
+               <circle cx="7.5" cy="17.5" r="2"/>
+               <circle cx="16.5" cy="17.5" r="2"/>
+             </svg>
+           </div>
+           <div class="mrc-content">
+             <div class="mrc-label">Mit Auto</div>
+             <div id="modalRouteInfo" class="mrc-info">Route wird berechnet …</div>
            </div>
          </div>`
       : `<div class="modal-detail-loc-prompt">
-           <div class="mdl-prompt-title">🚗 Route & Entfernung berechnen</div>
+           <div class="mdl-prompt-illu" aria-hidden="true">
+             <svg viewBox="0 0 80 80" width="68" height="68" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+               <path d="M40 12c-8 0-14 6-14 14 0 10 14 28 14 28s14-18 14-28c0-8-6-14-14-14z"/>
+               <circle cx="40" cy="26" r="5"/>
+               <path d="M22 60 L58 60" stroke-dasharray="3 4" opacity="0.5"/>
+             </svg>
+           </div>
+           <div class="mdl-prompt-title">Route & Entfernung berechnen</div>
            <div class="mdl-prompt-sub">Adresse oder PLZ — wir zeigen dir Distanz und Fahrtzeit zum Anhänger</div>
            <div class="mdl-prompt-row">
              <input type="text" id="modalDetailLocInput" placeholder="z. B. Bremen, Hauptstr. 5"
