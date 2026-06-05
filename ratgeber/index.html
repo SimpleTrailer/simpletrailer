@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <link rel="apple-touch-icon" href="/logo-icon.png?v=5" />
+  <link rel="apple-touch-icon" href="/logo-icon.png?v=6" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <title>Ratgeber – SimpleTrailer | Anhänger-Wissen für Bremen</title>
@@ -111,21 +111,44 @@
     }
     .article-card {
       background: var(--card); border: 1.5px solid var(--border);
-      border-radius: 18px; padding: 26px 24px; display: flex;
-      flex-direction: column; gap: 14px; transition: border-color .2s, transform .2s;
+      border-radius: 18px; overflow: hidden;
+      display: flex; flex-direction: column;
+      transition: border-color .2s, transform .2s;
       cursor: pointer;
     }
-    .article-card:hover { border-color: var(--orange); transform: translateY(-2px); }
-    .article-icon {
-      font-size: 1.8rem; width: 52px; height: 52px; border-radius: 12px;
-      background: var(--s2); display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
+    .article-card:hover { border-color: var(--orange); transform: translateY(-3px); }
+    .article-card-img {
+      width: 100%;
+      aspect-ratio: 3 / 2;
+      background: #0a0a0a;
+      position: relative;
+      overflow: hidden;
     }
+    .article-card-img img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform .5s ease;
+    }
+    .article-card:hover .article-card-img img { transform: scale(1.05); }
+    .article-card-badge {
+      position: absolute; top: 12px; left: 12px;
+      background: rgba(13,13,13,0.82);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+      z-index: 2;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .article-card-body { padding: 24px 22px 22px; display: flex; flex-direction: column; gap: 12px; flex: 1; }
     .article-title { font-size: 1.15rem; font-weight: 700; letter-spacing: -.02em; line-height: 1.35; }
     .article-desc { color: var(--gray); font-size: .92rem; line-height: 1.6; flex: 1; }
     .article-meta {
       display: flex; align-items: center; gap: 12px;
-      font-size: .76rem; color: var(--gray); padding-top: 10px;
+      font-size: .76rem; color: var(--gray); padding-top: 12px;
       border-top: 1px solid var(--border);
     }
     .article-meta .read-more { color: var(--orange); font-weight: 700; margin-left: auto; }
@@ -173,7 +196,7 @@
 <body>
 
 <nav>
-  <a href="/" class="logo" aria-label="SimpleTrailer Startseite"><img src="/logo.png?v=5" alt="SimpleTrailer - Anhängervermietung Bremen" style="height:36px;width:auto;display:block;" /></a>
+  <a href="/" class="logo" aria-label="SimpleTrailer Startseite"><img src="/logo.png?v=6" alt="SimpleTrailer - Anhängervermietung Bremen" style="height:36px;width:auto;display:block;" /></a>
   <div class="nav-actions">
     <a href="/" class="nav-back">← Startseite</a>
     <a href="/booking" class="nav-cta">Anhänger buchen</a>
@@ -193,44 +216,68 @@
   <div class="articles">
 
     <a href="/ratgeber/welcher-anhaenger-mit-b-fuehrerschein" class="article-card">
-      <div class="article-icon">🪪</div>
-      <div class="article-title">Welcher Anhänger mit B-Führerschein?</div>
-      <div class="article-desc">
-        Klasse B reicht oft — aber nicht immer. Wir zeigen dir die genauen Grenzen,
-        was B96 und BE bringen, und welcher Anhänger zu deinem Auto passt.
+      <div class="article-card-img">
+        <span class="article-card-badge" aria-hidden="true">🪪</span>
+        <picture>
+          <source srcset="/ratgeber-fuehrerschein.webp?v=2" type="image/webp">
+          <img src="/ratgeber-fuehrerschein.jpg?v=2" alt="Mann prüft seinen Führerschein vor PKW-Anhänger und Kofferanhänger" loading="lazy" decoding="async" width="1536" height="1024">
+        </picture>
       </div>
-      <div class="article-meta">
-        <span>📅 29.04.2026</span>
-        <span>⏱ 5 Min</span>
-        <span class="read-more">Lesen →</span>
+      <div class="article-card-body">
+        <div class="article-title">Welcher Anhänger mit B-Führerschein?</div>
+        <div class="article-desc">
+          Klasse B reicht oft — aber nicht immer. Wir zeigen dir die genauen Grenzen,
+          was B96 und BE bringen, und welcher Anhänger zu deinem Auto passt.
+        </div>
+        <div class="article-meta">
+          <span>📅 29.04.2026</span>
+          <span>⏱ 5 Min</span>
+          <span class="read-more">Lesen →</span>
+        </div>
       </div>
     </a>
 
     <a href="/ratgeber/anhaenger-ankuppeln-anleitung" class="article-card">
-      <div class="article-icon">🔗</div>
-      <div class="article-title">Anhänger ankuppeln – die Schritt-für-Schritt-Anleitung</div>
-      <div class="article-desc">
-        Vom Auto-Anfahren bis zum Sicherheits-Check: 7 Schritte, mit denen das
-        Ankuppeln in 3 Minuten sitzt — auch beim ersten Mal.
+      <div class="article-card-img">
+        <span class="article-card-badge" aria-hidden="true">🔗</span>
+        <picture>
+          <source srcset="/ratgeber-ankuppeln.webp?v=2" type="image/webp">
+          <img src="/ratgeber-ankuppeln.jpg?v=2" alt="Anhängerkupplung wird am Auto angekoppelt — Detailaufnahme" loading="lazy" decoding="async" width="1536" height="1024">
+        </picture>
       </div>
-      <div class="article-meta">
-        <span>📅 29.04.2026</span>
-        <span>⏱ 4 Min</span>
-        <span class="read-more">Lesen →</span>
+      <div class="article-card-body">
+        <div class="article-title">Anhänger ankuppeln – die Schritt-für-Schritt-Anleitung</div>
+        <div class="article-desc">
+          Vom Auto-Anfahren bis zum Sicherheits-Check: 7 Schritte, mit denen das
+          Ankuppeln in 3 Minuten sitzt — auch beim ersten Mal.
+        </div>
+        <div class="article-meta">
+          <span>📅 29.04.2026</span>
+          <span>⏱ 4 Min</span>
+          <span class="read-more">Lesen →</span>
+        </div>
       </div>
     </a>
 
     <a href="/ratgeber/anhaenger-richtig-beladen" class="article-card">
-      <div class="article-icon">📦</div>
-      <div class="article-title">Anhänger richtig beladen – Stützlast, Sicherung, Sicherheit</div>
-      <div class="article-desc">
-        Stützlast, zulässiges Gesamtgewicht, Ladungssicherung — die wichtigsten
-        Regeln gegen Unfälle, Bußgelder und kaputte Achsen.
+      <div class="article-card-img">
+        <span class="article-card-badge" aria-hidden="true">📦</span>
+        <picture>
+          <source srcset="/ratgeber-beladen.webp?v=2" type="image/webp">
+          <img src="/ratgeber-beladen.jpg?v=2" alt="Anhänger mit gesicherter Ladung — Möbel und Spanngurte über Kreuz" loading="lazy" decoding="async" width="1536" height="1024">
+        </picture>
       </div>
-      <div class="article-meta">
-        <span>📅 29.04.2026</span>
-        <span>⏱ 4 Min</span>
-        <span class="read-more">Lesen →</span>
+      <div class="article-card-body">
+        <div class="article-title">Anhänger richtig beladen – Stützlast, Sicherung, Sicherheit</div>
+        <div class="article-desc">
+          Stützlast, zulässiges Gesamtgewicht, Ladungssicherung — die wichtigsten
+          Regeln gegen Unfälle, Bußgelder und kaputte Achsen.
+        </div>
+        <div class="article-meta">
+          <span>📅 29.04.2026</span>
+          <span>⏱ 4 Min</span>
+          <span class="read-more">Lesen →</span>
+        </div>
       </div>
     </a>
 
