@@ -54,6 +54,66 @@
     50%      { box-shadow: 0 0 0 6px rgba(34,197,94,0); }
   }
 
+  /* Attention-Tooltip nach 10s — soll Simply bemerkbar machen ohne nervig zu sein */
+  .stc-tooltip {
+    position: fixed;
+    bottom: 96px; right: 20px;
+    max-width: 280px;
+    background: #fff;
+    color: #0D0D0D;
+    padding: 14px 18px;
+    border-radius: 16px 16px 4px 16px;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.25), 0 0 0 1px rgba(232,93,0,0.08);
+    z-index: 99997;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 0.92rem;
+    line-height: 1.4;
+    font-weight: 500;
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+    pointer-events: none;
+    transition: opacity .35s cubic-bezier(0.16, 1, 0.3, 1), transform .35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .stc-tooltip.show {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+  }
+  .stc-tooltip strong { color: #E85D00; font-weight: 700; }
+  .stc-tooltip .stc-tooltip-close {
+    position: absolute;
+    top: 6px; right: 8px;
+    background: transparent; border: none;
+    color: #888; font-size: 1.1rem; cursor: pointer;
+    width: 22px; height: 22px;
+    display: flex; align-items: center; justify-content: center;
+    line-height: 1; padding: 0;
+  }
+  .stc-tooltip .stc-tooltip-close:hover { color: #0D0D0D; }
+  .stc-tooltip-arrow {
+    position: absolute;
+    bottom: -8px; right: 28px;
+    width: 16px; height: 16px;
+    background: #fff;
+    transform: rotate(45deg);
+    border-radius: 0 0 4px 0;
+    box-shadow: 4px 4px 8px rgba(0,0,0,0.06);
+  }
+
+  /* Stärkere Pulse-Animation für FAB während Attention-Phase */
+  .stc-fab.attention {
+    animation: stc-pulse-strong 1.6s ease-in-out 3;
+  }
+  @keyframes stc-pulse-strong {
+    0%, 100% { box-shadow: 0 6px 24px rgba(232,93,0,0.5), 0 0 0 0 rgba(232,93,0,0.55); transform: scale(1); }
+    50%      { box-shadow: 0 6px 24px rgba(232,93,0,0.5), 0 0 0 22px rgba(232,93,0,0); transform: scale(1.06); }
+  }
+
+  /* Mobile: Tooltip etwas kompakter */
+  @media (max-width: 600px) {
+    .stc-tooltip { max-width: calc(100vw - 80px); font-size: 0.85rem; padding: 12px 14px; bottom: 88px; }
+  }
+
   .stc-window {
     position: fixed; bottom: 96px; right: 20px;
     width: 460px; max-width: calc(100vw - 32px);
@@ -608,6 +668,81 @@
   fab.addEventListener('click', openChat);
   closeBtn.addEventListener('click', closeChat);
   backdrop.addEventListener('click', closeChat);
+
+  // ===== Attention-Tooltip nach 10 Sek =====
+  // Macht Simply bemerkbar für User die ihn übersehen.
+  // Nur 1× pro Tab/Session + nicht wenn User schon den Chat geöffnet hat
+  // + nicht wenn User schon History hat (= kennt Simply schon).
+  (function setupAttentionTooltip() {
+    try {
+      if (sessionStorage.getItem('st_simply_attention_shown')) return;
+      if ((history || []).length > 0) return; // User hat schon mit Simply gechattet
+
+      // Tooltip-Element erstellen
+      const tip = document.createElement('div');
+      tip.className = 'stc-tooltip';
+      tip.setAttribute('role', 'dialog');
+      tip.setAttribute('aria-label', 'Hinweis vom Chat-Assistenten');
+      tip.innerHTML = `
+        <button class="stc-tooltip-close" aria-label="Schließen">×</button>
+        <div>👋 Hi! Ich bin <strong>Simply</strong> — kann ich dir bei deiner Buchung helfen?</div>
+        <div class="stc-tooltip-arrow"></div>
+      `;
+      document.body.appendChild(tip);
+
+      const closeTip = (markShown = true) => {
+        tip.classList.remove('show');
+        if (markShown) {
+          try { sessionStorage.setItem('st_simply_attention_shown', '1'); } catch(e) {}
+        }
+        setTimeout(() => { try { tip.remove(); } catch(e) {} }, 400);
+      };
+
+      // Close-Button-Handler
+      tip.querySelector('.stc-tooltip-close').addEventListener('click', (e) => {
+        e.stopPropagation();
+        closeTip(true);
+      });
+
+      // Klick auf Tooltip selbst → öffnet Chat
+      tip.addEventListener('click', () => {
+        closeTip(true);
+        openChat();
+      });
+
+      // Wenn User den FAB klickt während Tooltip sichtbar → schließen ohne mark
+      // (FAB-Klick öffnet Chat ohnehin durch normalen Handler)
+
+      // Nach 10 Sek einblenden
+      const showDelay = 10000;
+      const showT = setTimeout(() => {
+        // Falls zwischenzeitlich Chat geöffnet wurde, nicht mehr zeigen
+        if (win.classList.contains('open')) {
+          tip.remove();
+          try { sessionStorage.setItem('st_simply_attention_shown', '1'); } catch(e) {}
+          return;
+        }
+        // Stärkere Pulse-Animation am FAB starten
+        fab.classList.add('attention');
+        setTimeout(() => fab.classList.remove('attention'), 5000);
+        // Tooltip einblenden
+        tip.classList.add('show');
+        // Auto-hide nach 12 Sek
+        setTimeout(() => {
+          if (tip.classList.contains('show')) closeTip(true);
+        }, 12000);
+      }, showDelay);
+
+      // Wenn User Chat selbst öffnet bevor Tooltip kommt → Cancel
+      fab.addEventListener('click', () => {
+        clearTimeout(showT);
+        try { sessionStorage.setItem('st_simply_attention_shown', '1'); } catch(e) {}
+        if (tip.classList.contains('show')) closeTip(false);
+      }, { once: false });
+
+      // Wenn User Page scrollt — Tooltip bleibt sichtbar (kein Hide)
+    } catch (e) { /* fail silent */ }
+  })();
 
   sendBtn.addEventListener('click', () => sendMessage(inputEl.value));
   inputEl.addEventListener('keydown', (e) => {

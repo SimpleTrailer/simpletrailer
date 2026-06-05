@@ -273,6 +273,30 @@
           "@type": "Answer",
           "text": "Ja, 24 Stunden an 7 Tagen die Woche. Buchung läuft online, der Zugang über das Code-Schloss am Anhänger funktioniert auch nachts und am Wochenende ohne Personal."
         }
+      },
+      {
+        "@type": "Question",
+        "name": "Wie funktioniert die Rückgabe eines Anhängers bei SimpleTrailer?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Anhänger zurück zum Stellplatz, kurz fegen, mit dem Handy ein Foto vom Innenraum hochladen — fertig. Du bekommst innerhalb von Minuten eine Abrechnung per Mail. Wer Free-Floating gebucht hat, darf den Anhänger auch irgendwo im Bremer Stadtgebiet abstellen."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Was passiert bei einem Schaden am Anhänger?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Foto machen und per Mail an info@simpletrailer.de melden. Bei kleinen Schäden greift unsere Haftpflicht. Mit gebuchtem Basis-Schutz ist die Selbstbeteiligung auf 500 € gedeckelt, mit Premium-Schutz auf 50 €. Ohne Schutz haftet der Mieter in Höhe des tatsächlichen Schadens."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Kann ich meine Anhänger-Miete verlängern?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Ja, in der Buchungs-Mail auf 'Buchung verlängern' klicken — solange der Anhänger im neuen Zeitraum noch frei ist. Verlängerung ist günstiger als die Verspätungsgebühr von 15 €/Std."
+        }
       }
     ]
   }
@@ -1263,6 +1287,52 @@
       .reviews-summary .rs-meta { font-size: 0.78rem; }
     }
 
+    /* RATGEBER SEKTION */
+    #ratgeber-section {
+      padding: 80px 5% 40px;
+      background: linear-gradient(180deg, var(--bg) 0%, #110c08 100%);
+    }
+    .ratgeber-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      max-width: 1100px;
+      margin: 32px auto 24px;
+    }
+    @media (max-width: 880px) { .ratgeber-grid { grid-template-columns: 1fr; max-width: 480px; } }
+    .ratgeber-card {
+      display: flex;
+      flex-direction: column;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      text-decoration: none;
+      color: inherit;
+      transition: border-color .22s, transform .22s;
+    }
+    .ratgeber-card:hover { border-color: var(--orange); transform: translateY(-3px); }
+    .ratgeber-card-img { aspect-ratio: 16 / 9; background: #1c1612; display:flex; align-items:center; justify-content:center; font-size: 2.4rem; position: relative; }
+    .ratgeber-card-img::after {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(circle at 50% 60%, rgba(232,93,0,.12) 0%, transparent 70%);
+    }
+    .ratgeber-card-body { padding: 18px 20px 20px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+    .ratgeber-card-tag { font-size: .68rem; color: var(--orange); letter-spacing: .08em; text-transform: uppercase; font-weight: 700; }
+    .ratgeber-card-title { font-size: 1.02rem; font-weight: 700; letter-spacing: -.01em; color: var(--white); line-height: 1.35; }
+    .ratgeber-card-meta { font-size: .82rem; color: var(--gray); line-height: 1.5; margin-top: 2px; flex: 1; }
+    .ratgeber-card-cta { font-size: .82rem; font-weight: 700; color: var(--orange); margin-top: 8px; display: flex; align-items: center; gap: 4px; }
+    .ratgeber-card-cta::after { content: '→'; transition: transform .22s; }
+    .ratgeber-card:hover .ratgeber-card-cta::after { transform: translateX(4px); }
+    .ratgeber-all-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 13px 26px; border-radius: 10px;
+      background: var(--orange); color: #fff; text-decoration: none;
+      font-weight: 700; font-size: .92rem;
+      transition: background .2s;
+    }
+    .ratgeber-all-link:hover { background: var(--orange-hover); }
+
     /* FAQ */
     #faq {
       background: var(--s1);
@@ -1895,7 +1965,7 @@
 
       <div class="hero-trust">
         <div class="trust-pill"><span class="dot"></span><strong>Sofort</strong> verfügbar</div>
-        <div class="trust-pill"><span class="dot"></span><strong>Per Code</strong> abholen</div>
+        <div class="trust-pill"><span class="dot"></span><strong>In deiner Nähe</strong> abholen</div>
         <div class="trust-pill"><span class="dot"></span><strong>Ohne</strong> Kaution</div>
       </div>
 
@@ -2352,41 +2422,13 @@
 
     </div>
   </div>
-</section>
 
-<!-- TRUST / Bewertungen -->
-<section id="trust" style="padding:80px 5% 40px;">
-  <div class="section-inner" style="max-width:900px;margin:0 auto;text-align:center;">
-    <div class="reveal">
-      <p class="section-tag">Vertrauen</p>
-      <h2 class="section-title">Sicher buchen bei SimpleTrailer</h2>
-    </div>
-    <div class="trust-grid reveal">
-      <div class="trust-card">
-        <div class="trust-icon">🔒</div>
-        <h3>SSL-verschlüsselt</h3>
-        <p>Alle Daten werden über HTTPS übertragen. Zahlungen über Stripe (PCI-DSS Level 1).</p>
-      </div>
-      <div class="trust-card">
-        <div class="trust-icon">📍</div>
-        <h3>Lokal in Bremen</h3>
-        <p>SimpleTrailer GbR aus Bremen-Findorff. Persönlicher Service per E-Mail.</p>
-      </div>
-      <div class="trust-card">
-        <div class="trust-icon">🛡️</div>
-        <h3>Optional versichert</h3>
-        <p>Wähle zwischen Basis- (500 € SB) und Premium-Schutz (50 € SB) bei der Buchung.</p>
-      </div>
-      <div class="trust-card">
-        <div class="trust-icon">⚡</div>
-        <h3>Echtzeit-Buchung</h3>
-        <p>Sofort verfügbar, sofort buchbar. Kein Anruf, kein Schalter, kein Warten.</p>
-      </div>
-    </div>
-    <div class="reveal" style="margin-top:48px;padding:24px;background:var(--card);border:1px solid var(--border);border-radius:14px;">
+  <!-- Du warst zufrieden? Bewerte-uns CTA — direkt unter den Reviews -->
+  <div class="section-inner" style="max-width:760px;margin:48px auto 0;padding:0 5%;">
+    <div class="reveal" style="padding:28px 24px;background:var(--card);border:1px solid var(--border);border-radius:14px;text-align:center;">
       <div style="font-size:1.5rem;margin-bottom:8px;">⭐⭐⭐⭐⭐</div>
       <p style="font-weight:700;margin-bottom:6px;">Du warst zufrieden? Bewerte uns.</p>
-      <p style="color:var(--gray);font-size:.88rem;margin-bottom:16px;">Eine kurze Google-Bewertung hilft anderen, uns zu finden — und uns, weiter zu wachsen.</p>
+      <p style="color:var(--gray);font-size:.88rem;margin-bottom:16px;line-height:1.5;">Eine kurze Google-Bewertung hilft anderen, uns zu finden — und uns, weiter zu wachsen.</p>
       <a href="https://g.page/r/Cd6jwKdwS_Y7EAE/review" target="_blank" rel="noopener"
          style="display:inline-block;padding:12px 24px;background:var(--orange);color:#fff;border-radius:10px;font-weight:700;font-size:.92rem;text-decoration:none;">
         Google-Bewertung schreiben →
@@ -2398,9 +2440,10 @@
 <!-- FAQ -->
 <section id="faq">
   <div class="section-inner">
-    <div class="reveal">
+    <div class="reveal" style="text-align:center;margin-bottom:32px;">
       <p class="section-tag">FAQ</p>
       <h2 class="section-title">Kurze Antworten auf echte Fragen</h2>
+      <p style="color:var(--text-muted);max-width:560px;margin:8px auto 0;line-height:1.65;font-size:.95rem;">Alles was du vor deiner ersten Buchung wissen musst — von Führerschein bis Rückgabe. Noch unklar? Frag Simply oder lies im Ratgeber.</p>
     </div>
     <div class="faq-list">
 
@@ -2454,6 +2497,42 @@
         </div>
       </div>
 
+      <div class="faq-item reveal">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Wie funktioniert die Rückgabe?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-a">
+          <div class="faq-a-inner">
+            Anhänger zurück zum Stellplatz, kurz fegen, mit dem Handy ein Foto vom Innenraum hochladen — fertig. Du bekommst innerhalb von Minuten eine Abrechnung per Mail. Wenn du Free-Floating gebucht hast, darfst du auch irgendwo im Bremer Stadtgebiet abstellen.
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-item reveal">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Was passiert bei einem Schaden?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-a">
+          <div class="faq-a-inner">
+            Mach <strong>direkt ein Foto</strong> und melde es per Mail an <a href="mailto:info@simpletrailer.de" style="color:var(--orange);font-weight:600;">info@simpletrailer.de</a>. Bei kleinen Schäden greift unsere Haftpflicht. Wenn du den Basis- oder Premium-Schutz gebucht hast, ist deine Selbstbeteiligung auf 500 € bzw. 50 € gedeckelt. Ohne Schutz haftest du in Höhe des tatsächlichen Schadens.
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-item reveal">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Kann ich die Miete verlängern?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-a">
+          <div class="faq-a-inner">
+            Ja, einfach in deiner Buchungs-Mail auf <em>„Buchung verlängern"</em> klicken — solange der Anhänger für den neuen Zeitraum noch frei ist. Ist günstiger als die Verspätungsgebühr von 15 €/Std. und du behältst die Übersicht.
+          </div>
+        </div>
+      </div>
+
     </div>
 
     <!-- Hinweis: weitere Fragen → Simply Chatbot + Ratgeber -->
@@ -2466,6 +2545,49 @@
       </button>
     </div>
 
+  </div>
+</section>
+
+<!-- RATGEBER -->
+<section id="ratgeber-section">
+  <div class="section-inner">
+    <div class="reveal" style="text-align:center;max-width:640px;margin:0 auto;">
+      <p class="section-tag">Ratgeber</p>
+      <h2 class="section-title">Anhänger-Wissen, kompakt erklärt</h2>
+      <p style="color:var(--text-muted);line-height:1.65;font-size:.95rem;margin-top:8px;">Praktische Anleitungen vor der ersten Fahrt — geschrieben für Anfänger, geprüft von Profis.</p>
+    </div>
+    <div class="ratgeber-grid">
+      <a href="/ratgeber/welcher-anhaenger-mit-b-fuehrerschein" class="ratgeber-card reveal">
+        <div class="ratgeber-card-img" aria-hidden="true">🪪</div>
+        <div class="ratgeber-card-body">
+          <span class="ratgeber-card-tag">Führerschein</span>
+          <h3 class="ratgeber-card-title">Welcher Anhänger mit Führerschein B?</h3>
+          <p class="ratgeber-card-meta">Alles zu 750 kg, 3,5 t und der BE-Erweiterung — mit Rechenbeispielen für dein Auto.</p>
+          <span class="ratgeber-card-cta">Artikel lesen</span>
+        </div>
+      </a>
+      <a href="/ratgeber/anhaenger-richtig-beladen" class="ratgeber-card reveal">
+        <div class="ratgeber-card-img" aria-hidden="true">📦</div>
+        <div class="ratgeber-card-body">
+          <span class="ratgeber-card-tag">Sicherheit</span>
+          <h3 class="ratgeber-card-title">Anhänger richtig beladen</h3>
+          <p class="ratgeber-card-meta">Schwerpunkt, Stützlast, Ladungssicherung — und warum eine falsche Beladung dich Punkte kostet.</p>
+          <span class="ratgeber-card-cta">Artikel lesen</span>
+        </div>
+      </a>
+      <a href="/ratgeber/anhaenger-ankuppeln-anleitung" class="ratgeber-card reveal">
+        <div class="ratgeber-card-img" aria-hidden="true">🔗</div>
+        <div class="ratgeber-card-body">
+          <span class="ratgeber-card-tag">Anleitung</span>
+          <h3 class="ratgeber-card-title">Anhänger ankuppeln Schritt für Schritt</h3>
+          <p class="ratgeber-card-meta">Vom Aufsetzen der Kupplung über Stecker bis Abreißseil — die 6 Schritte für dein erstes Mal.</p>
+          <span class="ratgeber-card-cta">Artikel lesen</span>
+        </div>
+      </a>
+    </div>
+    <div style="text-align:center;margin-top:8px;" class="reveal">
+      <a href="/ratgeber" class="ratgeber-all-link">Alle Ratgeber ansehen →</a>
+    </div>
   </div>
 </section>
 
@@ -2752,7 +2874,7 @@
 </div>
 
 <!-- KI Chat-Widget -->
-<script src="/chat-widget.js?v=6" defer></script>
+<script src="/chat-widget.js?v=7" defer></script>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
