@@ -19,7 +19,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Platzhalter — sobald GBP-Place-ID da, hier einsetzen (auch in process-return.js).
 // Bis dahin: leerer Link → "Auf Google bewerten" wird zur Startseite mit Anker.
-const GBP_REVIEW_URL = 'https://search.google.com/local/writereview?placeid=ChIJ';
+const GBP_REVIEW_URL = 'https://g.page/r/Cd6jwKdwS_Y7EAE/review';
 
 module.exports = async (req, res) => {
   // Auth — wie alle Crons

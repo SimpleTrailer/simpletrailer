@@ -184,7 +184,7 @@ module.exports = async (req, res) => {
         <div style="font-size:1.4rem;margin-bottom:6px;">⭐⭐⭐⭐⭐</div>
         <p style="font-weight:700;font-size:.95rem;margin:0 0 6px;">Wie war deine Erfahrung?</p>
         <p style="color:#888;font-size:.82rem;margin:0 0 16px;line-height:1.5;">Eine kurze Google-Bewertung hilft uns, weiter zu wachsen — und anderen, uns zu finden.</p>
-        <a href="https://search.google.com/local/writereview?placeid=ChIJ" target="_blank"
+        <a href="https://g.page/r/Cd6jwKdwS_Y7EAE/review" target="_blank"
            style="display:inline-block;background:#E85D00;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:700;font-size:.88rem;">
           Auf Google bewerten →
         </a>
