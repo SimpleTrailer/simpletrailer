@@ -144,7 +144,65 @@
         "priceCurrency": "EUR"
       },
       "availability": "https://schema.org/InStock"
-    }
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "5.0",
+      "reviewCount": "10",
+      "bestRating": "5",
+      "worstRating": "1"
+    },
+    "review": [
+      {
+        "@type": "Review",
+        "author": { "@type": "Person", "name": "Business LR" },
+        "datePublished": "2026-06-04",
+        "reviewBody": "Sehr gutes Konzept, hat super geklappt. Immer wieder gerne!",
+        "reviewRating": { "@type": "Rating", "ratingValue": "5", "bestRating": "5" }
+      },
+      {
+        "@type": "Review",
+        "author": { "@type": "Person", "name": "Katja W." },
+        "datePublished": "2026-06-03",
+        "reviewBody": "Preis-Leistung top, gerne wieder!",
+        "reviewRating": { "@type": "Rating", "ratingValue": "5", "bestRating": "5" }
+      },
+      {
+        "@type": "Review",
+        "author": { "@type": "Person", "name": "Martina W." },
+        "datePublished": "2026-06-03",
+        "reviewBody": "Wir mussten Gartenabfall zur Deponie bringen und waren auf der Suche nach einem günstigen Anhänger. Bei SimpleTrailer hat der Preis gepasst und auch die Buchung war einfach. Gerne wieder!",
+        "reviewRating": { "@type": "Rating", "ratingValue": "5", "bestRating": "5" }
+      },
+      {
+        "@type": "Review",
+        "author": { "@type": "Person", "name": "LS Galabau" },
+        "datePublished": "2026-05-31",
+        "reviewBody": "Sind immer wieder sehr zufrieden mit dem Service! Flexibel, praktisch, gut.",
+        "reviewRating": { "@type": "Rating", "ratingValue": "5", "bestRating": "5" }
+      },
+      {
+        "@type": "Review",
+        "author": { "@type": "Person", "name": "YG Nico" },
+        "datePublished": "2026-05-31",
+        "reviewBody": "Absolut empfehlenswerter Anhängerverleih! Die Reservierung verlief unkompliziert, die Abholung und Rückgabe waren schnell und problemlos.",
+        "reviewRating": { "@type": "Rating", "ratingValue": "5", "bestRating": "5" }
+      },
+      {
+        "@type": "Review",
+        "author": { "@type": "Person", "name": "Maren G." },
+        "datePublished": "2026-05-31",
+        "reviewBody": "Alles einwandfrei und gutes Preis-Leistungs-Verhältnis.",
+        "reviewRating": { "@type": "Rating", "ratingValue": "5", "bestRating": "5" }
+      },
+      {
+        "@type": "Review",
+        "author": { "@type": "Person", "name": "Marvin G." },
+        "datePublished": "2026-05-31",
+        "reviewBody": "Erstes Mal einen Anhänger ausgeliehen, da ich umziehen musste. Durch einen Kollegen auf die Jungs aufmerksam geworden. Kontakt und Buchung waren einfach. Alles top, sollte ich nochmal umziehen sofort wieder.",
+        "reviewRating": { "@type": "Rating", "ratingValue": "5", "bestRating": "5" }
+      }
+    ]
   }
   </script>
 
@@ -1127,6 +1185,31 @@
     .review-meta { display: flex; flex-direction: column; gap: 2px; }
     .review-name { font-size: 0.88rem; font-weight: 700; letter-spacing: -0.01em; }
     .review-location { font-size: 0.78rem; color: var(--gray); }
+    .review-date { font-size: 0.72rem; color: var(--gray); font-weight: 500; }
+    .review-verified { display: inline-flex; align-items: center; gap: 4px; font-size: 0.7rem; color: var(--gray); }
+    .review-verified svg { width: 12px; height: 12px; flex-shrink: 0; }
+
+    /* Reviews-Summary Badge (oben über den Karten) */
+    .reviews-summary {
+      display: flex; align-items: center; justify-content: center; gap: 14px;
+      margin: 0 auto 36px; padding: 14px 22px;
+      background: var(--s1); border: 1.5px solid var(--border);
+      border-radius: 999px; max-width: max-content;
+      text-decoration: none; color: inherit;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .reviews-summary:hover { border-color: var(--orange); transform: translateY(-1px); }
+    .reviews-summary .rs-stars { color: var(--orange); font-size: 1.05rem; letter-spacing: 1px; }
+    .reviews-summary .rs-rating { font-weight: 800; font-size: 1.1rem; }
+    .reviews-summary .rs-divider { width: 1px; height: 18px; background: var(--border); }
+    .reviews-summary .rs-meta { font-size: 0.85rem; color: var(--gray); display: flex; align-items: center; gap: 6px; }
+    .reviews-summary .rs-google { display: inline-flex; align-items: center; gap: 4px; font-weight: 600; }
+    .reviews-summary .rs-google svg { width: 14px; height: 14px; }
+    @media (max-width: 480px) {
+      .reviews-summary { gap: 10px; padding: 12px 16px; }
+      .reviews-summary .rs-rating { font-size: 1rem; }
+      .reviews-summary .rs-meta { font-size: 0.78rem; }
+    }
 
     /* FAQ */
     #faq {
@@ -2090,9 +2173,21 @@
 <!-- REVIEWS -->
 <section id="bewertungen">
   <div class="section-inner">
-    <div class="reveal">
+    <div class="reveal" style="text-align:center;">
       <p class="section-tag">Bewertungen</p>
       <h2 class="section-title">Was unsere Mieter sagen.</h2>
+      <a href="https://g.page/r/Cd6jwKdwS_Y7EAE" target="_blank" rel="noopener" class="reviews-summary reveal" aria-label="5,0 Sterne aus 10 Google-Bewertungen — bei Google ansehen">
+        <span class="rs-stars" aria-hidden="true">★★★★★</span>
+        <span class="rs-rating">5,0</span>
+        <span class="rs-divider"></span>
+        <span class="rs-meta">
+          <span class="rs-google">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.28 1.4-1.07 2.59-2.28 3.39v2.85h3.67c2.16-1.99 3.41-4.92 3.41-8.48z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.67-2.85c-1.02.68-2.32 1.09-4.26 1.09-3.27 0-6.04-2.21-7.03-5.18H1.18v3.25C3.15 21.34 7.27 24 12 24z"/><path fill="#FBBC04" d="M4.97 14.15c-.25-.74-.4-1.53-.4-2.35s.15-1.61.4-2.35V6.2H1.18C.42 7.7 0 9.32 0 11.8c0 2.48.42 4.1 1.18 5.6l3.79-3.25z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.36.61 4.61 1.81l3.25-3.25C17.95 1.32 15.24 0 12 0 7.27 0 3.15 2.66 1.18 6.2l3.79 3.25C5.96 6.96 8.73 4.75 12 4.75z"/></svg>
+            10 Google-Bewertungen
+          </span>
+          <span style="opacity:.7;">→</span>
+        </span>
+      </a>
     </div>
   </div>
   <div class="reviews-track-wrapper">
@@ -2100,55 +2195,85 @@
 
       <div class="review-card">
         <div class="review-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
-        <p class="review-text">Super einfach und unkompliziert! Anhänger war sofort verfügbar.</p>
+        <p class="review-text">Sehr gutes Konzept, hat super geklappt. Immer wieder gerne!</p>
         <div class="review-author">
-          <div class="review-avatar">TK</div>
-          <div class="review-meta"><span class="review-name">Thomas K.</span><span class="review-location">Bremen</span></div>
+          <div class="review-avatar">BL</div>
+          <div class="review-meta">
+            <span class="review-name">Business LR</span>
+            <span class="review-verified"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.28 1.4-1.07 2.59-2.28 3.39v2.85h3.67c2.16-1.99 3.41-4.92 3.41-8.48z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.67-2.85c-1.02.68-2.32 1.09-4.26 1.09-3.27 0-6.04-2.21-7.03-5.18H1.18v3.25C3.15 21.34 7.27 24 12 24z"/><path fill="#FBBC04" d="M4.97 14.15c-.25-.74-.4-1.53-.4-2.35s.15-1.61.4-2.35V6.2H1.18C.42 7.7 0 9.32 0 11.8c0 2.48.42 4.1 1.18 5.6l3.79-3.25z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.36.61 4.61 1.81l3.25-3.25C17.95 1.32 15.24 0 12 0 7.27 0 3.15 2.66 1.18 6.2l3.79 3.25C5.96 6.96 8.73 4.75 12 4.75z"/></svg>Verifiziert via Google · vor 1 Tag</span>
+          </div>
         </div>
       </div>
 
       <div class="review-card">
         <div class="review-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
-        <p class="review-text">Endlich ein Verleih ohne Papierkram. Absolut empfehlenswert!</p>
+        <p class="review-text">Preis-Leistung top, gerne wieder!</p>
         <div class="review-author">
-          <div class="review-avatar">SM</div>
-          <div class="review-meta"><span class="review-name">Stefan M.</span><span class="review-location">Bremen</span></div>
+          <div class="review-avatar">KW</div>
+          <div class="review-meta">
+            <span class="review-name">Katja W.</span>
+            <span class="review-verified"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.28 1.4-1.07 2.59-2.28 3.39v2.85h3.67c2.16-1.99 3.41-4.92 3.41-8.48z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.67-2.85c-1.02.68-2.32 1.09-4.26 1.09-3.27 0-6.04-2.21-7.03-5.18H1.18v3.25C3.15 21.34 7.27 24 12 24z"/><path fill="#FBBC04" d="M4.97 14.15c-.25-.74-.4-1.53-.4-2.35s.15-1.61.4-2.35V6.2H1.18C.42 7.7 0 9.32 0 11.8c0 2.48.42 4.1 1.18 5.6l3.79-3.25z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.36.61 4.61 1.81l3.25-3.25C17.95 1.32 15.24 0 12 0 7.27 0 3.15 2.66 1.18 6.2l3.79 3.25C5.96 6.96 8.73 4.75 12 4.75z"/></svg>Verifiziert via Google · vor 2 Tagen</span>
+          </div>
         </div>
       </div>
 
       <div class="review-card">
         <div class="review-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
-        <p class="review-text">Perfekt für den Umzug. Günstig, schnell, unkompliziert.</p>
+        <p class="review-text">Wir mussten Gartenabfall zur Deponie bringen und waren auf der Suche nach einem günstigen Anhänger. Bei SimpleTrailer hat der Preis gepasst und auch die Buchung war einfach. Gerne wieder!</p>
         <div class="review-author">
-          <div class="review-avatar">MB</div>
-          <div class="review-meta"><span class="review-name">Marco B.</span><span class="review-location">Bremen</span></div>
+          <div class="review-avatar">MW</div>
+          <div class="review-meta">
+            <span class="review-name">Martina W.</span>
+            <span class="review-verified"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.28 1.4-1.07 2.59-2.28 3.39v2.85h3.67c2.16-1.99 3.41-4.92 3.41-8.48z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.67-2.85c-1.02.68-2.32 1.09-4.26 1.09-3.27 0-6.04-2.21-7.03-5.18H1.18v3.25C3.15 21.34 7.27 24 12 24z"/><path fill="#FBBC04" d="M4.97 14.15c-.25-.74-.4-1.53-.4-2.35s.15-1.61.4-2.35V6.2H1.18C.42 7.7 0 9.32 0 11.8c0 2.48.42 4.1 1.18 5.6l3.79-3.25z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.36.61 4.61 1.81l3.25-3.25C17.95 1.32 15.24 0 12 0 7.27 0 3.15 2.66 1.18 6.2l3.79 3.25C5.96 6.96 8.73 4.75 12 4.75z"/></svg>Verifiziert via Google · vor 2 Tagen</span>
+          </div>
         </div>
       </div>
 
       <div class="review-card">
         <div class="review-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
-        <p class="review-text">Hat alles super geklappt. Werde ich definitiv wieder nutzen!</p>
+        <p class="review-text">Sind immer wieder sehr zufrieden mit dem Service! Flexibel, praktisch, gut.</p>
         <div class="review-author">
-          <div class="review-avatar">JL</div>
-          <div class="review-meta"><span class="review-name">Jana L.</span><span class="review-location">Bremen</span></div>
+          <div class="review-avatar">LS</div>
+          <div class="review-meta">
+            <span class="review-name">LS Galabau</span>
+            <span class="review-verified"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.28 1.4-1.07 2.59-2.28 3.39v2.85h3.67c2.16-1.99 3.41-4.92 3.41-8.48z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.67-2.85c-1.02.68-2.32 1.09-4.26 1.09-3.27 0-6.04-2.21-7.03-5.18H1.18v3.25C3.15 21.34 7.27 24 12 24z"/><path fill="#FBBC04" d="M4.97 14.15c-.25-.74-.4-1.53-.4-2.35s.15-1.61.4-2.35V6.2H1.18C.42 7.7 0 9.32 0 11.8c0 2.48.42 4.1 1.18 5.6l3.79-3.25z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.36.61 4.61 1.81l3.25-3.25C17.95 1.32 15.24 0 12 0 7.27 0 3.15 2.66 1.18 6.2l3.79 3.25C5.96 6.96 8.73 4.75 12 4.75z"/></svg>Verifiziert via Google · vor 5 Tagen</span>
+          </div>
         </div>
       </div>
 
       <div class="review-card">
         <div class="review-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
-        <p class="review-text">Bester Anhängerverleih den ich kenne. Einfach top!</p>
+        <p class="review-text">Absolut empfehlenswerter Anhängerverleih! Die Reservierung verlief unkompliziert, die Abholung und Rückgabe waren schnell und problemlos.</p>
         <div class="review-author">
-          <div class="review-avatar">KR</div>
-          <div class="review-meta"><span class="review-name">Kevin R.</span><span class="review-location">Bremen</span></div>
+          <div class="review-avatar">YG</div>
+          <div class="review-meta">
+            <span class="review-name">YG Nico</span>
+            <span class="review-verified"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.28 1.4-1.07 2.59-2.28 3.39v2.85h3.67c2.16-1.99 3.41-4.92 3.41-8.48z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.67-2.85c-1.02.68-2.32 1.09-4.26 1.09-3.27 0-6.04-2.21-7.03-5.18H1.18v3.25C3.15 21.34 7.27 24 12 24z"/><path fill="#FBBC04" d="M4.97 14.15c-.25-.74-.4-1.53-.4-2.35s.15-1.61.4-2.35V6.2H1.18C.42 7.7 0 9.32 0 11.8c0 2.48.42 4.1 1.18 5.6l3.79-3.25z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.36.61 4.61 1.81l3.25-3.25C17.95 1.32 15.24 0 12 0 7.27 0 3.15 2.66 1.18 6.2l3.79 3.25C5.96 6.96 8.73 4.75 12 4.75z"/></svg>Verifiziert via Google · vor 5 Tagen</span>
+          </div>
         </div>
       </div>
 
       <div class="review-card">
         <div class="review-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
-        <p class="review-text">Schnelle Buchung, sauberer Anhänger, faire Preise. Mehr braucht man nicht.</p>
+        <p class="review-text">Alles einwandfrei und gutes Preis-Leistungs-Verhältnis.</p>
         <div class="review-author">
-          <div class="review-avatar">LW</div>
-          <div class="review-meta"><span class="review-name">Lukas W.</span><span class="review-location">Bremen</span></div>
+          <div class="review-avatar">MG</div>
+          <div class="review-meta">
+            <span class="review-name">Maren G.</span>
+            <span class="review-verified"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.28 1.4-1.07 2.59-2.28 3.39v2.85h3.67c2.16-1.99 3.41-4.92 3.41-8.48z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.67-2.85c-1.02.68-2.32 1.09-4.26 1.09-3.27 0-6.04-2.21-7.03-5.18H1.18v3.25C3.15 21.34 7.27 24 12 24z"/><path fill="#FBBC04" d="M4.97 14.15c-.25-.74-.4-1.53-.4-2.35s.15-1.61.4-2.35V6.2H1.18C.42 7.7 0 9.32 0 11.8c0 2.48.42 4.1 1.18 5.6l3.79-3.25z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.36.61 4.61 1.81l3.25-3.25C17.95 1.32 15.24 0 12 0 7.27 0 3.15 2.66 1.18 6.2l3.79 3.25C5.96 6.96 8.73 4.75 12 4.75z"/></svg>Verifiziert via Google · vor 5 Tagen</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="review-card">
+        <div class="review-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
+        <p class="review-text">Erstes Mal einen Anhänger ausgeliehen, da ich umziehen musste. Durch einen Kollegen auf die Jungs aufmerksam geworden. Kontakt und Buchung waren einfach. Alles top, sollte ich nochmal umziehen sofort wieder.</p>
+        <div class="review-author">
+          <div class="review-avatar">MG</div>
+          <div class="review-meta">
+            <span class="review-name">Marvin G.</span>
+            <span class="review-verified"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.28 1.4-1.07 2.59-2.28 3.39v2.85h3.67c2.16-1.99 3.41-4.92 3.41-8.48z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.67-2.85c-1.02.68-2.32 1.09-4.26 1.09-3.27 0-6.04-2.21-7.03-5.18H1.18v3.25C3.15 21.34 7.27 24 12 24z"/><path fill="#FBBC04" d="M4.97 14.15c-.25-.74-.4-1.53-.4-2.35s.15-1.61.4-2.35V6.2H1.18C.42 7.7 0 9.32 0 11.8c0 2.48.42 4.1 1.18 5.6l3.79-3.25z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.36.61 4.61 1.81l3.25-3.25C17.95 1.32 15.24 0 12 0 7.27 0 3.15 2.66 1.18 6.2l3.79 3.25C5.96 6.96 8.73 4.75 12 4.75z"/></svg>Verifiziert via Google · vor 5 Tagen</span>
+          </div>
         </div>
       </div>
 
