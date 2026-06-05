@@ -1801,6 +1801,23 @@
       .trailer-marker-icon::after { width: 28px; height: 5px; }
     }
 
+    /* Hover-Tooltip auf den Trailer-Markern */
+    .trailer-marker-tip {
+      background: #1A1A1A !important;
+      color: #fff !important;
+      border: 1px solid #383838 !important;
+      border-radius: 8px !important;
+      padding: 6px 10px !important;
+      font-family: var(--font) !important;
+      font-size: 0.78rem !important;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.55) !important;
+      white-space: nowrap;
+    }
+    .trailer-marker-tip strong { color: var(--orange); font-size: .82rem; }
+    .trailer-marker-tip::before {
+      border-top-color: #383838 !important;
+    }
+
     .leaflet-control-attribution {
       background: rgba(13,13,13,0.85) !important; color: #444 !important;
       border-radius: 6px 0 0 0 !important; font-size: .65rem !important;
@@ -3185,10 +3202,13 @@
       radius: 8, color: '#3b82f6', fillColor: '#60a5fa', fillOpacity: 0.9, weight: 3
     }).addTo(map).bindPopup('<strong style="font-family:system-ui,sans-serif">Dein Standort</strong>');
 
-    // Popup-Inhalte mit Entfernung aktualisieren
+    // Tooltip-Inhalte mit Entfernung aktualisieren
     allMarkers.forEach(({ marker, trailer }) => {
-      if (!trailer.lat || !trailer.lng) return;
-      marker.setPopupContent(makePopupContent(trailer, haversineKm(lat, lng, trailer.lat, trailer.lng)));
+      if (!trailer.lat || !trailer.lng || !marker.getTooltip()) return;
+      const dKm = haversineKm(lat, lng, trailer.lat, trailer.lng);
+      marker.setTooltipContent(
+        `<strong>${trailer.name}</strong><br><span style="opacity:.75">ab ${trailer.price_kurztrip || 9} € · ${fmtDist(dKm)}</span>`
+      );
     });
 
     // Nächsten verfügbaren Anhänger ermitteln
@@ -3441,9 +3461,14 @@
         const lng = t._displayLng ?? t.display_lng ?? t.lng;
         if (!lat || !lng) return;
         const marker = L.marker([lat, lng], { icon: makeIcon(t) });
+        // Click: direkt Detail-Ansicht des angeklickten Anhängers öffnen (kein Popup)
+        marker.on('click', () => openTrailerFromMarker(t.id));
+        // Tooltip für Hover-Vorschau (kurze Info ohne Popup-Overlay)
         const distKm = userLocation ? haversineKm(userLocation.lat, userLocation.lng, lat, lng) : null;
-        marker.bindPopup(makePopupContent(t, distKm));
-        marker.on('click', () => openTrailerModal('flexible'));
+        marker.bindTooltip(
+          `<strong>${t.name}</strong><br><span style="opacity:.75">ab ${t.price_kurztrip || 9} €${distKm != null ? ' · ' + fmtDist(distKm) : ''}</span>`,
+          { direction: 'top', offset: [0, -8], className: 'trailer-marker-tip', opacity: 0.95 }
+        );
         marker.addTo(map);
         allMarkers.push({ marker, trailer: t });
         markerBounds.extend([lat, lng]);
@@ -3487,9 +3512,13 @@
         const lat = newLat, lng = newLng;
         // Icon-Farbe updaten falls Buchungs-Status sich geändert hat
         entry.marker.setIcon(makeIcon(entry.trailer));
-        // Popup-Inhalt updaten
+        // Tooltip-Inhalt updaten (Distanz + Preis)
         const distKm = userLocation ? haversineKm(userLocation.lat, userLocation.lng, lat, lng) : null;
-        entry.marker.setPopupContent(makePopupContent(entry.trailer, distKm));
+        if (entry.marker.getTooltip()) {
+          entry.marker.setTooltipContent(
+            `<strong>${entry.trailer.name}</strong><br><span style="opacity:.75">ab ${entry.trailer.price_kurztrip || 9} €${distKm != null ? ' · ' + fmtDist(distKm) : ''}</span>`
+          );
+        }
       });
       // Badge "X verfügbar" auch updaten
       const badge = document.getElementById('mapBadgeText');
@@ -3884,6 +3913,22 @@
     document.body.style.overflow = 'hidden';
     showModalList();
     buildModalContent();
+  }
+
+  /* Direkt zur Detail-Ansicht eines bestimmten Anhängers springen
+     (z.B. nach Klick auf Karten-Marker). Lädt Liste, sucht per ID, zeigt Detail. */
+  async function openTrailerFromMarker(trailerId) {
+    modalMode    = 'flexible';
+    pendingStart = null;
+    pendingEnd   = null;
+    document.getElementById('trailerModal').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    // Liste laden (setzt modalTrailers)
+    showModalList();
+    await buildModalContent();
+    // Direkt zur Detail-Ansicht des angeklickten Anhängers springen
+    const idx = modalTrailers.findIndex(t => t.id === trailerId);
+    if (idx >= 0) showModalDetail(idx);
   }
 
   function closeTrailerModal() {
