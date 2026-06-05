@@ -227,7 +227,11 @@ module.exports = async (req, res) => {
               </p>
             </div>
 
-            <p style="color:#444;font-size:.72rem;text-align:center;margin-top:24px;">SimpleTrailer · Bremen · info@simpletrailer.de</p>
+            <div style="margin-top:24px;padding:14px 18px;background:#0a0a0a;border-radius:8px;border:1px solid #1f1f1f;color:#888;font-size:.72rem;font-family:Arial,sans-serif;line-height:1.55;text-align:center;">
+              <strong style="color:#bbb;">SimpleTrailer GbR</strong> · Lion Grone &amp; Samuel Obodoefuna · Waltjenstr. 96, 28237 Bremen<br>
+              Steuernummer: 60/176/10854 (Finanzamt Bremen) · USt-IdNr.: DE462214434<br>
+              info@simpletrailer.de · simpletrailer.de
+            </div>
           </div>
         </body></html>`
       }); } catch(emailErr) { console.error('E-Mail Fehler:', emailErr.message); }
