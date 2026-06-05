@@ -1647,6 +1647,64 @@
       border-bottom: none;
     }
 
+    /* DETAIL-VIEW – Mobile: vertikaler Stack, Desktop: 2-Spalten-Grid */
+    #modalDetailView {
+      display: flex; flex-direction: column;
+      padding-bottom: 22px;
+    }
+    .md-cell { box-sizing: border-box; }
+    .md-img { width: 100%; }
+    .md-header,
+    .md-specs,
+    .md-route,
+    .md-pickup {
+      padding-left: 22px; padding-right: 22px;
+    }
+    .md-book { margin: 0 22px; }
+    .md-header { padding-top: 18px; }
+    .md-route  { padding-bottom: 0; padding-top: 0; margin: 14px 0; }
+    .md-specs  { padding-top: 0; }
+    .md-book   { margin-top: 4px; }
+    .md-pickup { padding-top: 12px; }
+
+    /* DESKTOP: 2-Spalten-Grid – links Bild+Specs+Buchen, rechts groß die Karte */
+    @media (min-width: 769px) {
+      .trailer-modal-panel { max-width: 920px; }
+      #modalDetailView {
+        display: grid;
+        grid-template-columns: 1.1fr 1fr;
+        grid-template-areas:
+          "img    route"
+          "header route"
+          "specs  route"
+          "book   route"
+          "pickup route";
+        column-gap: 4px;
+        row-gap: 14px;
+        padding: 0 0 22px;
+      }
+      .md-img    { grid-area: img;    margin: 0; }
+      .md-header { grid-area: header; padding: 18px 22px 0 22px; }
+      .md-route  { grid-area: route;  margin: 0; padding: 18px 22px 0 14px; display: flex; flex-direction: column; }
+      .md-specs  { grid-area: specs;  padding: 0 22px; }
+      .md-book   { grid-area: book;   margin: 8px 22px 0; }
+      .md-pickup { grid-area: pickup; padding: 8px 22px 0; }
+
+      /* Mini-Map: füllt verfügbare Höhe in der rechten Spalte */
+      .modal-detail-routemap {
+        height: 100%;
+        min-height: 340px;
+        border-radius: 12px;
+        border: 1px solid #2a2a2a;
+        flex: 1;
+      }
+      /* Bild rundes Aspect-Ratio bleibt, aber kein bottom-margin */
+      .modal-detail-img,
+      .modal-detail-img-placeholder {
+        border-radius: 0;
+      }
+    }
+
     /* Standort-Banner im Modal */
     #modalLocBanner {
       background: linear-gradient(180deg, rgba(232,93,0,0.10) 0%, rgba(232,93,0,0.04) 100%);
@@ -3049,17 +3107,15 @@
     </div>
     <!-- DETAIL VIEW -->
     <div id="modalDetailView" style="display:none;">
-      <div id="modalDetailImgWrap"></div>
-      <div class="modal-detail-body">
-        <div id="modalDetailHeader"></div>
-        <div id="modalDetailRouteWrap" style="display:none;">
-          <div id="modalDetailMap" class="modal-detail-routemap"></div>
-          <div id="modalDetailRouteBox"></div>
-        </div>
-        <div id="modalDetailSpecs"></div>
-        <a id="modalDetailBookBtn" href="#" class="modal-detail-bookbtn">Jetzt buchen →</a>
-        <div id="modalDetailPickup" class="modal-detail-pickup"></div>
+      <div id="modalDetailImgWrap"   class="md-cell md-img"></div>
+      <div id="modalDetailHeader"    class="md-cell md-header"></div>
+      <div id="modalDetailRouteWrap" class="md-cell md-route">
+        <div id="modalDetailMap" class="modal-detail-routemap"></div>
+        <div id="modalDetailRouteBox"></div>
       </div>
+      <div id="modalDetailSpecs"     class="md-cell md-specs"></div>
+      <a id="modalDetailBookBtn" href="#" class="md-cell md-book modal-detail-bookbtn">Jetzt buchen →</a>
+      <div id="modalDetailPickup"    class="md-cell md-pickup modal-detail-pickup"></div>
     </div>
   </div>
 </div>
