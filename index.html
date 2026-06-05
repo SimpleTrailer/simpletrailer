@@ -1669,36 +1669,60 @@
 
     /* DESKTOP: 2-Spalten-Grid – links Bild+Specs+Buchen, rechts groß die Karte */
     @media (min-width: 769px) {
-      .trailer-modal-panel { max-width: 920px; }
+      .trailer-modal-panel { max-width: 980px; }
+
       #modalDetailView {
-        display: grid;
-        grid-template-columns: 1.1fr 1fr;
+        display: grid !important;
+        grid-template-columns: 1.05fr 1fr;
         grid-template-areas:
           "img    route"
           "header route"
           "specs  route"
           "book   route"
           "pickup route";
-        column-gap: 4px;
-        row-gap: 14px;
-        padding: 0 0 22px;
+        column-gap: 0;
+        row-gap: 12px;
+        padding: 0 0 20px;
       }
-      .md-img    { grid-area: img;    margin: 0; }
-      .md-header { grid-area: header; padding: 18px 22px 0 22px; }
-      .md-route  { grid-area: route;  margin: 0; padding: 18px 22px 0 14px; display: flex; flex-direction: column; }
-      .md-specs  { grid-area: specs;  padding: 0 22px; }
-      .md-book   { grid-area: book;   margin: 8px 22px 0; }
-      .md-pickup { grid-area: pickup; padding: 8px 22px 0; }
+      #modalDetailImgWrap   { grid-area: img;    margin: 0; padding: 0; }
+      #modalDetailHeader    { grid-area: header; padding: 14px 22px 0 22px; }
+      #modalDetailRouteWrap {
+        grid-area: route;
+        margin: 0;
+        padding: 14px 18px 0 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      #modalDetailSpecs     { grid-area: specs;  padding: 0 22px; }
+      #modalDetailBookBtn   { grid-area: book;   margin: 6px 22px 0; }
+      #modalDetailPickup    { grid-area: pickup; padding: 0 22px; margin-top: 4px; }
 
-      /* Mini-Map: füllt verfügbare Höhe in der rechten Spalte */
-      .modal-detail-routemap {
-        height: 100%;
-        min-height: 340px;
+      /* Karte füllt die rechte Spalte über die volle Höhe */
+      #modalDetailRouteWrap .modal-detail-routemap {
+        height: auto;
+        flex: 1 1 auto;
+        min-height: 380px;
         border-radius: 12px;
         border: 1px solid #2a2a2a;
-        flex: 1;
       }
-      /* Bild rundes Aspect-Ratio bleibt, aber kein bottom-margin */
+      /* Auto-Route Card (wenn Standort gesetzt) — kompakt unter der Map */
+      #modalDetailRouteWrap .modal-route-card {
+        border-radius: 10px;
+        border: 1px solid #2a2a2a;
+        border-top: 1px solid #2a2a2a;
+        margin-top: 10px;
+        margin-bottom: 0;
+      }
+      /* Standort-Eingabe-Card (wenn KEIN Standort) — größer, da keine Map */
+      #modalDetailRouteWrap .modal-detail-loc-prompt {
+        flex: 1 1 auto;
+        min-height: 380px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 24px 22px;
+      }
       .modal-detail-img,
       .modal-detail-img-placeholder {
         border-radius: 0;
@@ -1756,7 +1780,7 @@
     }
     /* Leaflet panes haben z-index bis ~700, der Banner muss darüber liegen */
     #modalListView #modalMap { position: relative; z-index: 1; }
-    #modalDetailRouteWrap { margin-bottom: 14px; }
+    /* Mobile: Auto-Route-Card direkt unter Map → flach oben */
     #modalDetailRouteWrap .modal-route-card {
       border-radius: 0 0 10px 10px;
       border-top: none;
