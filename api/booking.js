@@ -132,7 +132,7 @@ module.exports = async (req, res) => {
         from: 'SimpleTrailer <buchung@simpletrailer.de>',
         reply_to: 'info@simpletrailer.de',
         to: meta.customer_email,
-        subject: `✅ Buchung bestätigt #${booking.id.slice(0, 8).toUpperCase()} – SimpleTrailer`,
+        subject: `Mietvertrag #${booking.id.slice(0, 8).toUpperCase()} bestätigt – SimpleTrailer`,
         html: `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0D0D0D;font-family:system-ui,sans-serif;color:#fff;">
           <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
             <div style="text-align:center;margin-bottom:32px;">
@@ -209,11 +209,12 @@ module.exports = async (req, res) => {
 
               <h3 style="font-size:.95rem;color:#0D0D0D;margin:20px 0 8px;font-family:Arial,sans-serif;">Wesentliche Pflichten des Mieters</h3>
               <ul style="font-size:.82rem;line-height:1.6;font-family:Arial,sans-serif;padding-left:20px;margin:0;color:#333;">
-                <li>Pre-Check-Foto vor Abholung anfertigen</li>
-                <li>Anhänger nur im zulässigen Gesamtgewicht und der zugelassenen Fahrerlaubnisklasse nutzen</li>
-                <li>Keine Auslandsfahrten ohne vorherige schriftliche Zustimmung</li>
-                <li>Schäden unverzüglich (innerhalb 2h) per E-Mail melden</li>
-                <li>Pünktliche und gereinigte Rückgabe</li>
+                <li>Pre-Check-Foto <strong>vor Abholung</strong> anfertigen — danach wird der Schloss-Code freigeschaltet</li>
+                <li>Rückgabe-Foto <strong>nach Mietende</strong> hochladen — als Beweissicherung des Zustands</li>
+                <li>Anhänger nur im zulässigen Gesamtgewicht und der zugelassenen Fahrerlaubnisklasse (B oder BE) nutzen</li>
+                <li>Auslandsfahrten innerhalb des Schengen-Raums vorab per E-Mail an info@simpletrailer.de anzeigen</li>
+                <li>Schäden, Unfälle oder technische Probleme unverzüglich (innerhalb 2 Stunden) per E-Mail melden</li>
+                <li>Pünktliche und gereinigte Rückgabe am vereinbarten Stellplatz (oder Bremen-Stadtgebiet bei Flexrückgabe)</li>
               </ul>
 
               <h3 style="font-size:.95rem;color:#0D0D0D;margin:20px 0 8px;font-family:Arial,sans-serif;">Einzugsermächtigung</h3>
@@ -222,14 +223,17 @@ module.exports = async (req, res) => {
               </p>
 
               <div style="background:#f9f9f9;border-left:3px solid #E85D00;padding:14px 18px;margin:24px 0 16px;font-family:Arial,sans-serif;">
-                <p style="font-size:.78rem;color:#666;margin:0 0 4px;line-height:1.5;">
-                  Es gelten die <a href="${siteUrl}/agb.html" style="color:#E85D00;text-decoration:none;font-weight:600;">vollständigen AGB</a> in der zum Buchungszeitpunkt gültigen Fassung. Diese hat der Mieter elektronisch akzeptiert.
+                <p style="font-size:.78rem;color:#333;margin:0 0 6px;line-height:1.55;font-weight:600;">
+                  Vertragsschluss
+                </p>
+                <p style="font-size:.78rem;color:#555;margin:0;line-height:1.55;">
+                  Dieser Mietvertrag ist mit Bezahlung am <strong>${fmt(new Date())} Uhr</strong> elektronisch zustande gekommen. Der Mieter hat die <a href="${siteUrl}/agb.html" style="color:#E85D00;text-decoration:none;font-weight:600;">AGB (Stand ${meta.agb_version || '2026-06-05'})</a> und die <a href="${siteUrl}/datenschutz.html" style="color:#E85D00;text-decoration:none;font-weight:600;">Datenschutzerklärung</a> akzeptiert und dem sofortigen Vertragsbeginn ausdrücklich zugestimmt (kein Widerrufsrecht gem. § 312g Abs. 2 Nr. 9 BGB).
                 </p>
               </div>
 
               <p style="font-size:.7rem;color:#999;font-family:Arial,sans-serif;margin:20px 0 0;text-align:center;line-height:1.5;">
-                Diese E-Mail ersetzt einen unterzeichneten Vertrag.<br>
-                Erstellt am ${fmt(new Date())} Uhr · SimpleTrailer GbR · Bremen
+                Diese E-Mail ist nach § 14 UStG eine vollwertige Rechnung sowie der elektronisch geschlossene Mietvertrag und ersetzt eine eigenhändige Unterschrift.<br>
+                SimpleTrailer GbR · Bremen
               </p>
             </div>
 
