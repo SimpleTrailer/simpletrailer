@@ -3938,11 +3938,16 @@
 
   function renderModalDetailMap(trailer) {
     const wrap = document.getElementById('modalDetailRouteWrap');
+    const mapEl = document.getElementById('modalDetailMap');
+    // Wrap immer sichtbar: enthält entweder die Standort-Eingabe-Card (kein userLocation)
+    // oder die Mini-Map mit Route (userLocation gesetzt).
+    wrap.style.display = 'block';
     if (!userLocation || !trailer.lat || !trailer.lng) {
-      wrap.style.display = 'none';
+      // Keine Location → nur Eingabe-Card zeigen, Mini-Map verstecken
+      if (mapEl) mapEl.style.display = 'none';
       return;
     }
-    wrap.style.display = 'block';
+    if (mapEl) mapEl.style.display = 'block';
     if (!modalDetailMap) {
       modalDetailMap = L.map('modalDetailMap', {
         zoomControl: false, scrollWheelZoom: false, dragging: false,
