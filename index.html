@@ -360,6 +360,36 @@
       transform: translateY(-2px);
       background: #1c1612;
     }
+    /* Use-Case-Karte mit Bild oben */
+    .usecase-card.has-image { padding: 0; overflow: hidden; }
+    .usecase-image {
+      width: 100%;
+      aspect-ratio: 16 / 10;
+      background: #0a0a0a;
+      position: relative;
+      overflow: hidden;
+    }
+    .usecase-image img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform .45s ease;
+    }
+    .usecase-card.has-image:hover .usecase-image img { transform: scale(1.04); }
+    .usecase-image .usecase-badge {
+      position: absolute;
+      top: 10px; left: 10px;
+      background: rgba(13,13,13,0.82);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+      z-index: 2;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .usecase-content { padding: 16px 18px 14px; display:flex; flex-direction:column; gap:5px; }
     .usecase-icon { font-size: 1.8rem; line-height: 1; margin-bottom: 6px; }
     .usecase-title { font-size: 1rem; font-weight: 700; color: var(--white); letter-spacing: -.01em; }
     .usecase-meta { font-size: .82rem; color: var(--gray); line-height: 1.5; }
@@ -1954,9 +1984,9 @@
       <div class="trailer-card unavailable reveal">
         <div class="trailer-card-img">
           <picture>
-            <source srcset="autotransporter-mieten-bremen-simpletrailer.webp" type="image/webp" />
-            <img src="autotransporter-mieten-bremen-simpletrailer.png?v=1" alt="Autotransporter mieten in Bremen — SimpleTrailer"
-                 loading="lazy" decoding="async" width="600" height="400"
+            <source srcset="use-auto.webp" type="image/webp" />
+            <img src="use-auto.jpg" alt="Autotransporter mit Auto in Bremen mieten — SimpleTrailer"
+                 loading="lazy" decoding="async" width="1200" height="800"
                  onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
           </picture>
           <div class="trailer-card-img-placeholder" style="display:none;">🚗</div>
@@ -2097,41 +2127,89 @@
       <p style="color:var(--text-muted);max-width:520px;margin:0 auto;line-height:1.6;font-size:.95rem;">Vom Sperrmüll-Termin bis zum IKEA-Sonntag — wähle deinen Einsatz und buche direkt.</p>
     </div>
     <div class="usecase-grid">
-      <button type="button" onclick="openTrailerModal('flexible')" class="usecase-card reveal">
-        <div class="usecase-icon">📦</div>
-        <div class="usecase-title">Möbel transportieren</div>
-        <div class="usecase-meta">Sofa, Schrank, Bett · ab <strong>29 €/Tag</strong></div>
-        <div class="usecase-cta">Jetzt buchen</div>
+      <button type="button" onclick="openTrailerModal('flexible')" class="usecase-card has-image reveal">
+        <div class="usecase-image">
+          <span class="usecase-badge" aria-hidden="true">📦</span>
+          <picture>
+            <source srcset="/use-umzug.webp" type="image/webp">
+            <img src="/use-umzug.jpg" alt="Anhänger mit Umzugskartons in Bremen" loading="lazy" decoding="async" width="1200" height="800">
+          </picture>
+        </div>
+        <div class="usecase-content">
+          <div class="usecase-title">Möbel transportieren</div>
+          <div class="usecase-meta">Sofa, Schrank, Bett · ab <strong>29 €/Tag</strong></div>
+          <div class="usecase-cta">Jetzt buchen</div>
+        </div>
       </button>
-      <button type="button" onclick="openTrailerModal('flexible')" class="usecase-card reveal">
-        <div class="usecase-icon">🗑️</div>
-        <div class="usecase-title">Sperrmüll fahren</div>
-        <div class="usecase-meta">Bremen-Recyclinghof · <strong>9 €/3h</strong></div>
-        <div class="usecase-cta">Jetzt buchen</div>
+      <button type="button" onclick="openTrailerModal('flexible')" class="usecase-card has-image reveal">
+        <div class="usecase-image">
+          <span class="usecase-badge" aria-hidden="true">🗑️</span>
+          <picture>
+            <source srcset="/use-garten.webp" type="image/webp">
+            <img src="/use-garten.jpg" alt="Anhänger mit Sperrmüll und Gartenabfällen" loading="lazy" decoding="async" width="1200" height="800">
+          </picture>
+        </div>
+        <div class="usecase-content">
+          <div class="usecase-title">Sperrmüll fahren</div>
+          <div class="usecase-meta">Bremen-Recyclinghof · <strong>9 €/3h</strong></div>
+          <div class="usecase-cta">Jetzt buchen</div>
+        </div>
       </button>
-      <button type="button" onclick="openTrailerModal('flexible')" class="usecase-card reveal">
-        <div class="usecase-icon">🛒</div>
-        <div class="usecase-title">IKEA-Großeinkauf</div>
-        <div class="usecase-meta">Brinkum auch Sonntag · <strong>9 €/3h</strong></div>
-        <div class="usecase-cta">Jetzt buchen</div>
+      <button type="button" onclick="openTrailerModal('flexible')" class="usecase-card has-image reveal">
+        <div class="usecase-image">
+          <span class="usecase-badge" aria-hidden="true">🛒</span>
+          <picture>
+            <source srcset="/use-bremen.webp" type="image/webp">
+            <img src="/use-bremen.jpg" alt="Anhänger im Bremer Stadtverkehr" loading="lazy" decoding="async" width="1200" height="800">
+          </picture>
+        </div>
+        <div class="usecase-content">
+          <div class="usecase-title">IKEA-Großeinkauf</div>
+          <div class="usecase-meta">Brinkum auch Sonntag · <strong>9 €/3h</strong></div>
+          <div class="usecase-cta">Jetzt buchen</div>
+        </div>
       </button>
-      <button type="button" onclick="openTrailerModal('flexible')" class="usecase-card reveal">
-        <div class="usecase-icon">🌳</div>
-        <div class="usecase-title">Gartenabfälle</div>
-        <div class="usecase-meta">Erde, Grünschnitt · <strong>9 €/3h</strong></div>
-        <div class="usecase-cta">Jetzt buchen</div>
+      <button type="button" onclick="openTrailerModal('flexible')" class="usecase-card has-image reveal">
+        <div class="usecase-image">
+          <span class="usecase-badge" aria-hidden="true">🌳</span>
+          <picture>
+            <source srcset="/use-garten.webp" type="image/webp">
+            <img src="/use-garten.jpg" alt="Anhänger für Gartenarbeit mit Grünschnitt" loading="lazy" decoding="async" width="1200" height="800">
+          </picture>
+        </div>
+        <div class="usecase-content">
+          <div class="usecase-title">Gartenabfälle</div>
+          <div class="usecase-meta">Erde, Grünschnitt · <strong>9 €/3h</strong></div>
+          <div class="usecase-cta">Jetzt buchen</div>
+        </div>
       </button>
-      <button type="button" onclick="openTrailerModal('weekend')" class="usecase-card reveal">
-        <div class="usecase-icon">🎪</div>
-        <div class="usecase-title">Festival-Wochenende</div>
-        <div class="usecase-meta">Breminale, Maifest · <strong>59 €/WE</strong></div>
-        <div class="usecase-cta">Jetzt buchen</div>
+      <button type="button" onclick="openTrailerModal('weekend')" class="usecase-card has-image reveal">
+        <div class="usecase-image">
+          <span class="usecase-badge" aria-hidden="true">🎪</span>
+          <picture>
+            <source srcset="/use-bremen.webp" type="image/webp">
+            <img src="/use-bremen.jpg" alt="Anhänger in Bremen für Festival-Tour" loading="lazy" decoding="async" width="1200" height="800">
+          </picture>
+        </div>
+        <div class="usecase-content">
+          <div class="usecase-title">Festival-Wochenende</div>
+          <div class="usecase-meta">Breminale, Maifest · <strong>59 €/WE</strong></div>
+          <div class="usecase-cta">Jetzt buchen</div>
+        </div>
       </button>
-      <button type="button" onclick="openTrailerModal('week')" class="usecase-card reveal">
-        <div class="usecase-icon">🚚</div>
-        <div class="usecase-title">Umzug Bremen</div>
-        <div class="usecase-meta">Komplette Woche · <strong>119 €/Woche</strong></div>
-        <div class="usecase-cta">Jetzt buchen</div>
+      <button type="button" onclick="openTrailerModal('week')" class="usecase-card has-image reveal">
+        <div class="usecase-image">
+          <span class="usecase-badge" aria-hidden="true">🚚</span>
+          <picture>
+            <source srcset="/use-umzug.webp" type="image/webp">
+            <img src="/use-umzug.jpg" alt="Anhänger beim Umzug in Bremen mit Kartons" loading="lazy" decoding="async" width="1200" height="800">
+          </picture>
+        </div>
+        <div class="usecase-content">
+          <div class="usecase-title">Umzug Bremen</div>
+          <div class="usecase-meta">Komplette Woche · <strong>119 €/Woche</strong></div>
+          <div class="usecase-cta">Jetzt buchen</div>
+        </div>
       </button>
     </div>
   </div>
