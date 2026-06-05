@@ -18,7 +18,7 @@
 <body>
 
 <h1>Datenschutzerklärung</h1>
-<p class="meta">Stand: 27.04.2026</p>
+<p class="meta">Stand: 05.06.2026</p>
 
 <h2>1. Verantwortlicher</h2>
 <p>
@@ -35,31 +35,39 @@
 <h2>2. Erhobene Daten</h2>
 <p>Bei Nutzung unserer Webseite und mobilen App erheben wir folgende personenbezogene Daten:</p>
 <ul>
-  <li><strong>Konto-Daten:</strong> E-Mail, Vor-/Nachname, Telefonnummer, Adresse</li>
-  <li><strong>Buchungs-Daten:</strong> Anhänger, Mietzeitraum, Versicherungs-Wahl, Preis</li>
+  <li><strong>Konto-Daten:</strong> E-Mail, Vor-/Nachname, Telefonnummer, Adresse, Geburtsdatum (zur Altersverifikation, Mindestalter 18)</li>
+  <li><strong>Buchungs-Daten:</strong> Anhänger, Mietzeitraum, gewähltes Schutzpaket, Stornoschutz, Preis</li>
   <li><strong>Zahlungs-Daten:</strong> Verarbeitet durch Stripe Inc. — wir speichern nur die Stripe-Customer-ID, keine Kartendaten</li>
-  <li><strong>Führerschein-Daten:</strong> Für die einmalige Verifikation via Stripe Identity (Name, Geburtsdatum, Klasse, Ablaufdatum, Führerschein-Nummer). Bilder werden nur 30 Tage bei Stripe gespeichert.</li>
-  <li><strong>Schadens-Fotos:</strong> Vor-/Nach-Mietfotos, gespeichert in Supabase Storage (EU-Region). Werden 6 Monate nach Mietende automatisch gelöscht.</li>
+  <li><strong>Führerschein-Daten:</strong> Für die einmalige Verifikation via Stripe Identity (Name, Geburtsdatum, Führerscheinklassen, Ablaufdatum, Führerschein-Nummer). Bilder werden nur 30 Tage bei Stripe gespeichert.</li>
+  <li><strong>Biometrische Daten:</strong> Im Rahmen der Stripe-Identity-Verifikation erfolgt ein biometrischer Gesichtsabgleich zwischen dem Lichtbild im Führerschein und einem Selfie des Mieters. Diese Verarbeitung erfolgt ausschließlich durch Stripe; uns werden lediglich das Ergebnis und die abgleichten Stammdaten übermittelt.</li>
+  <li><strong>Schadens-Fotos (Pre-Check und Rückgabe):</strong> Vor-/Nach-Mietfotos des Anhängers, gespeichert in Supabase Storage (EU-Region). Werden 6 Monate nach Mietende automatisch gelöscht. Näheres siehe Abschnitt 11.</li>
   <li><strong>Standort:</strong> Nur in der App, nur für "Anhänger in der Nähe". Keine Speicherung serverseitig.</li>
   <li><strong>Push-Token:</strong> Nur in der App, für Buchungs-Erinnerungen. Wird beim Konto-Logout gelöscht.</li>
+  <li><strong>Chat-Verlauf (Webseite):</strong> Wenn du den KI-Chat "Simply" nutzt, werden deine Nachrichten an Anthropic übermittelt. Wir speichern den Chat-Verlauf nicht dauerhaft.</li>
 </ul>
 
 <h2>3. Rechtsgrundlagen</h2>
 <ul>
-  <li><strong>Art. 6 (1) b DSGVO</strong> (Vertragserfüllung): Konto, Buchungen, Zahlungen, Führerschein-Verifikation</li>
-  <li><strong>Art. 6 (1) c DSGVO</strong> (gesetzliche Pflicht): Steuerrechtliche Aufbewahrung Buchungen 10 Jahre</li>
-  <li><strong>Art. 6 (1) f DSGVO</strong> (berechtigtes Interesse): Schadens-Dokumentation, Push-Erinnerungen</li>
-  <li><strong>Art. 6 (1) a DSGVO</strong> (Einwilligung): Standortzugriff in der App</li>
+  <li><strong>Art. 6 (1) b DSGVO</strong> (Vertragserfüllung): Konto, Buchungen, Zahlungen, Führerschein-Verifikation, Foto-Dokumentation</li>
+  <li><strong>Art. 6 (1) c DSGVO</strong> (gesetzliche Pflicht): Steuerrechtliche Aufbewahrung Buchungen 10 Jahre (§ 147 AO)</li>
+  <li><strong>Art. 6 (1) f DSGVO</strong> (berechtigtes Interesse): Schadens-Dokumentation, Push-Erinnerungen, Performance-/Heatmap-Tools, Fehler-Monitoring, GPS-Schutz des Eigentums</li>
+  <li><strong>Art. 6 (1) a DSGVO</strong> (Einwilligung): Standortzugriff in der App, Chat mit Simply</li>
+  <li><strong>Art. 9 (2) a DSGVO</strong> (ausdrückliche Einwilligung): Biometrischer Gesichtsabgleich bei Führerschein-Verifikation über Stripe Identity. Du kannst diese Einwilligung jederzeit widerrufen; ohne erfolgreiche Verifikation ist eine Buchung jedoch nicht möglich.</li>
 </ul>
 
 <h2>4. Auftragsverarbeiter / Drittanbieter</h2>
 <ul>
-  <li><strong>Supabase Inc.</strong> (Datenbank + Auth) — Server-Standort EU (Frankfurt)</li>
-  <li><strong>Stripe Inc.</strong> (Zahlung + Identity-Verifikation) — Server-Standort EU/USA, EU-Standardvertragsklauseln</li>
-  <li><strong>Resend</strong> (Transaktions-Mails) — Server-Standort EU</li>
-  <li><strong>Vercel Inc.</strong> (Hosting) — Server-Standort EU</li>
-  <li><strong>Firebase / Google LLC</strong> (Push-Notifications, nur App) — EU-Standardvertragsklauseln</li>
-  <li><strong>Apple Inc. / Google LLC</strong> (App Store / Play Store) — eigene Datenschutzregeln der Stores gelten zusätzlich</li>
+  <li><strong>Supabase Inc.</strong> (Datenbank + Authentifizierung + Foto-Speicherung) — Server-Standort EU (Frankfurt). Auftragsverarbeitung nach Art. 28 DSGVO.</li>
+  <li><strong>Stripe Payments Europe Ltd. / Stripe Inc.</strong> (Zahlung + Identity-Verifikation inkl. biometrischer Gesichtsabgleich) — Server-Standort EU/USA, Übermittlung auf Basis EU-Standardvertragsklauseln nach Art. 46 DSGVO.</li>
+  <li><strong>Resend (Resend Inc.)</strong> (Transaktions-Mails wie Buchungsbestätigung, Erinnerungen) — Server-Standort EU.</li>
+  <li><strong>Vercel Inc.</strong> (Hosting + Web Analytics) — Hosting in EU-Region (Frankfurt). Übermittlung an Mutter-Konzern USA auf Basis EU-Standardvertragsklauseln nach Art. 46 DSGVO.</li>
+  <li><strong>Anthropic PBC</strong>, USA (KI-Chat "Simply" — nur wenn du den Chat aktiv nutzt) — Übermittlung erfolgt auf Basis EU-Standardvertragsklauseln nach Art. 46 DSGVO.</li>
+  <li><strong>Functional Software Inc. d/b/a Sentry</strong>, USA (Fehler-Monitoring zur Stabilitäts-Sicherung der Webseite) — Art. 6 Abs. 1 lit. f DSGVO; EU-Standardvertragsklauseln nach Art. 46 DSGVO.</li>
+  <li><strong>Microsoft Ireland Operations Ltd.</strong> (Clarity Heatmaps + Session-Recordings — cookielos, IP-Anonymisierung) — Server-Standort EU/USA, Art. 6 Abs. 1 lit. f DSGVO.</li>
+  <li><strong>OpenStreetMap Foundation</strong>, Vereinigtes Königreich (Kartendarstellung und Adress-Suche) — IP-Adresse zur Auslieferung der Kartenkacheln, Art. 6 Abs. 1 lit. f DSGVO.</li>
+  <li><strong>Hetzner Online GmbH</strong>, Gunzenhausen (Server-Hosting für GPS-Telematik-Daten innerhalb Deutschlands) — Auftragsverarbeiter nach Art. 28 DSGVO.</li>
+  <li><strong>Firebase / Google LLC</strong> (Push-Notifications, nur App) — EU-Standardvertragsklauseln nach Art. 46 DSGVO.</li>
+  <li><strong>Apple Inc. / Google LLC</strong> (App Store / Play Store) — eigene Datenschutzregeln der Stores gelten zusätzlich.</li>
 </ul>
 
 <h2>5. Speicherdauer</h2>
@@ -91,7 +99,7 @@
   <li><code>st_app_onboarded_v1</code> (nur App) — Onboarding-Screen schon gesehen</li>
   <li><code>st_pi_id</code>, <code>st_client_secret</code> — Stripe-Zahlungs-Session, gelöscht nach Bezahlung</li>
 </ul>
-<p>Wir nutzen <strong>kein Tracking, kein Werbe-Cookie, kein Google Analytics</strong>.</p>
+<p>Wir nutzen <strong>keine Werbe-Cookies und kein Google Analytics</strong>. Performance- und Heatmap-Tools (cookielos) siehe Abschnitt 8.</p>
 
 <h2>8. Performance-/Heatmap-Tools</h2>
 <p>Wir nutzen <strong>Vercel Web Analytics</strong> und <strong>Microsoft Clarity</strong> für anonyme Statistik (Seitenaufrufe, Heatmaps, Klick-Pfade). Beide Tools arbeiten <strong>cookielos</strong> und ohne personenbezogene Daten. Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an der Verbesserung der Webseite).</p>
@@ -141,7 +149,16 @@
 
 <h2>10. Kontakt</h2>
 <p>Bei Fragen zum Datenschutz: <a href="mailto:info@simpletrailer.de">info@simpletrailer.de</a></p>
-<p><strong>Stand der Datenschutzerklärung:</strong> 11.05.2026 (Ergänzung um Performance-Tools sowie GPS-Tracking der Anhänger).</p>
+
+<h2>11. Foto-Dokumentation (Pre-Check &amp; Rückgabe)</h2>
+<p>Vor Abholung ("Pre-Check") und nach Rückgabe lädst du Fotos des Anhängers in unser System hoch. Zweck ist ausschließlich die Beweissicherung des Anhänger-Zustands zur Klärung etwaiger Schäden.</p>
+<p><strong>Rechtsgrundlage:</strong> Art. 6 Abs. 1 lit. b DSGVO (Durchführung des Mietvertrags) sowie Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an Schadensbeweisen).</p>
+<p><strong>Hinweis zur Aufnahme:</strong> Bitte achte beim Fotografieren darauf, dass keine fremden Personen oder fremde Kfz-Kennzeichen im Bild sind. Sollten dennoch Personen oder fremde Kennzeichen erkennbar sein, verarbeiten wir diese ausschließlich zur Schadensaufklärung und stützen uns auf das berechtigte Interesse nach Art. 6 Abs. 1 lit. f DSGVO.</p>
+<p><strong>Speicherort:</strong> Supabase Storage (EU, Frankfurt).</p>
+<p><strong>Speicherdauer:</strong> 6 Monate nach Mietende. Bei laufender Schadens-Aufklärung bis zum Abschluss des Vorgangs (Art. 17 Abs. 3 lit. e DSGVO).</p>
+<p><strong>Empfänger:</strong> SimpleTrailer GbR intern. Im Schadens- oder Diebstahlsfall ggf. die zuständige Versicherung oder Polizei, jeweils nur auf konkreten Anlass.</p>
+
+<p style="margin-top:32px;font-size:.85rem;color:#888;"><strong>Stand der Datenschutzerklärung:</strong> 05.06.2026 (Ergänzung um vollständige Auftragsverarbeiter-Liste, Art. 9 DSGVO biometrische Verifikation, eigener Abschnitt Foto-Dokumentation).</p>
 
 </body>
 </html>

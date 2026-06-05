@@ -123,7 +123,7 @@ module.exports = async (req, res) => {
       automatic_payment_methods: { enabled: true },
       receipt_email: customer_email,
       description: `SimpleTrailer – ${trailer.name} – ${pricing_type}`,
-      metadata: { trailer_id, pricing_type, start_time, end_time, customer_name, customer_email, customer_phone: customer_phone || '', customer_address: customer_address || '', insurance_type: insType, insurance_amount: String(insAmount), user_id: user_id || '', agb_version: agb_version || '2026-04-27', agb_accepted_at: agbAcceptedAt, agb_accepted_ip: agbAcceptedIp, free_floating: freeFloating ? '1' : '0', free_floating_fee: String(freeFloatingFee) }
+      metadata: { trailer_id, pricing_type, start_time, end_time, customer_name, customer_email, customer_phone: customer_phone || '', customer_address: customer_address || '', insurance_type: insType, insurance_amount: String(insAmount), user_id: user_id || '', agb_version: agb_version || '2026-06-05', agb_accepted_at: agbAcceptedAt, agb_accepted_ip: agbAcceptedIp, free_floating: freeFloating ? '1' : '0', free_floating_fee: String(freeFloatingFee) }
     });
 
     return res.status(200).json({

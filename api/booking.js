@@ -188,7 +188,7 @@ module.exports = async (req, res) => {
                 <tr><td style="padding:6px 0;color:#666;">Tarif</td><td style="padding:6px 0;font-weight:600;">${meta.pricing_type || '–'}</td></tr>
                 <tr><td style="padding:6px 0;color:#666;">Mietbeginn</td><td style="padding:6px 0;font-weight:600;">${fmt(meta.start_time)} Uhr</td></tr>
                 <tr><td style="padding:6px 0;color:#666;">Mietende</td><td style="padding:6px 0;font-weight:600;">${fmt(meta.end_time)} Uhr</td></tr>
-                <tr><td style="padding:6px 0;color:#666;">Schutzpaket</td><td style="padding:6px 0;font-weight:600;">${insType === 'none' ? 'Keine Versicherung – volle Mieterhaftung' : insType === 'basis' ? 'Basis-Schutz · 500 € Selbstbeteiligung' : 'Premium-Schutz · 50 € Selbstbeteiligung'}</td></tr>
+                <tr><td style="padding:6px 0;color:#666;">Schutzpaket</td><td style="padding:6px 0;font-weight:600;">${insType === 'none' ? 'Ohne Schutzpaket – volle Mieterhaftung gem. AGB § 9' : insType === 'basis' ? 'Basis-Schutz · 500 € Selbstbeteiligung' : 'Premium-Schutz · 50 € Selbstbeteiligung'}</td></tr>
               </table>
 
               <h3 style="font-size:.95rem;color:#0D0D0D;margin:20px 0 8px;font-family:Arial,sans-serif;">Vergütung & Umsatzsteuer</h3>

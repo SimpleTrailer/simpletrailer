@@ -660,7 +660,16 @@
         <span>🤳 Selfie zur Identitätsprüfung</span>
         <span>🔒 DSGVO-konform · End-to-End verschlüsselt</span>
       </div>
-      <button class="btn btn-orange" id="dlStartBtn" onclick="startIdentityVerification()">Jetzt verifizieren →</button>
+
+      <!-- Art. 9 DSGVO Einwilligung biometrischer Gesichtsabgleich -->
+      <label class="agb-row" for="biometricCheck" style="margin-bottom:14px;">
+        <input type="checkbox" id="biometricCheck" onchange="updateDlStartState()" />
+        <span class="agb-text">
+          Ich willige in die biometrische Verarbeitung meines Gesichts durch Stripe Identity zum Abgleich mit meinem Führerschein-Lichtbild ein (Art. 9 Abs. 2 lit. a DSGVO). Die Einwilligung kann jederzeit widerrufen werden; ohne erfolgreiche Verifikation ist eine Buchung nicht möglich.
+        </span>
+      </label>
+
+      <button class="btn btn-orange" id="dlStartBtn" onclick="startIdentityVerification()" disabled>Jetzt verifizieren →</button>
       <span class="error-msg" id="errDl" style="margin-top:10px;display:none;"></span>
     </div>
 
@@ -780,6 +789,16 @@
       <div id="payment-element"></div>
       <div id="payment-message"></div>
 
+      <!-- WIDERRUFSBELEHRUNG — sichtbar vor Pay-Button (§ 312g Abs. 2 Nr. 9 BGB) -->
+      <div style="background:#1f1606;border-left:3px solid #f59e0b;padding:12px 14px;border-radius:8px;margin-bottom:14px;">
+        <div style="font-size:.82rem;font-weight:700;color:#fbbf24;margin-bottom:4px;">
+          ⚠ Kein Widerrufsrecht
+        </div>
+        <div style="font-size:.78rem;color:#ddd;line-height:1.5;">
+          Da es sich um die Vermietung eines Beförderungsmittels für einen bestimmten Zeitraum handelt, besteht <strong>kein Widerrufsrecht</strong> (§ 312g Abs. 2 Nr. 9 BGB). Stornierungs-Regelungen siehe AGB § 6.
+        </div>
+      </div>
+
       <!-- AGB Akzeptanz-Checkbox -->
       <label class="agb-row" for="agbCheck">
         <input type="checkbox" id="agbCheck" onchange="updatePayBtnState()" />
@@ -789,6 +808,14 @@
           und die
           <a href="#" onclick="openLegalModal('datenschutz');return false;">Datenschutzerklärung</a>
           und stimme der automatischen Abbuchung etwaiger Verspätungs- und Schadensersatzgebühren von der hinterlegten Zahlungsmethode zu.
+        </span>
+      </label>
+
+      <!-- Widerruf-Ausschluss + sofortiger Vertragsbeginn -->
+      <label class="agb-row" for="widerrufCheck">
+        <input type="checkbox" id="widerrufCheck" onchange="updatePayBtnState()" />
+        <span class="agb-text">
+          Ich habe zur Kenntnis genommen, dass <strong>kein Widerrufsrecht</strong> besteht (§ 312g Abs. 2 Nr. 9 BGB), und stimme dem sofortigen Vertragsbeginn ausdrücklich zu.
         </span>
       </label>
 
@@ -1880,7 +1907,21 @@
     }
   }
 
+  // Verify-Button erst aktiv wenn Art.9-Einwilligung gesetzt
+  function updateDlStartState() {
+    const consent = document.getElementById('biometricCheck')?.checked;
+    const btn = document.getElementById('dlStartBtn');
+    if (btn) btn.disabled = !consent;
+  }
+
   async function startIdentityVerification() {
+    const consent = document.getElementById('biometricCheck')?.checked;
+    if (!consent) {
+      const err = document.getElementById('errDl');
+      err.textContent = 'Bitte willige in die biometrische Verarbeitung ein.';
+      err.style.display = 'block';
+      return;
+    }
     const btn = document.getElementById('dlStartBtn');
     btn.disabled = true;
     btn.textContent = 'Wird gestartet …';
@@ -1996,7 +2037,7 @@
           insurance_amount: getInsuranceAmount(),
           user_id:          bookingUser.id,
           booking_mode:     bookingMode,
-          agb_version:      '2026-04-27',
+          agb_version:      '2026-06-05',
           free_floating:    selectedFreeFloating
         })
       });
@@ -2037,13 +2078,14 @@
     }
   }
 
-  // AGB-Checkbox-Logik
+  // AGB-Checkbox-Logik — Pay-Button nur enabled wenn BEIDE Checkboxen aktiv
   function updatePayBtnState() {
-    const checked = document.getElementById('agbCheck')?.checked;
-    const payBtn  = document.getElementById('payBtn');
+    const agbOk      = document.getElementById('agbCheck')?.checked;
+    const widerrufOk = document.getElementById('widerrufCheck')?.checked;
+    const payBtn    = document.getElementById('payBtn');
     if (!payBtn) return;
     if (payBtn.dataset.stripeReady === '1') {
-      payBtn.disabled = !checked;
+      payBtn.disabled = !(agbOk && widerrufOk);
     }
   }
 
@@ -2059,9 +2101,14 @@
   }
 
   async function submitPayment() {
-    const agbChecked = document.getElementById('agbCheck')?.checked;
+    const agbChecked      = document.getElementById('agbCheck')?.checked;
+    const widerrufChecked = document.getElementById('widerrufCheck')?.checked;
     if (!agbChecked) {
       showPaymentError('Bitte akzeptiere zunächst die AGB und Datenschutzerklärung.');
+      return;
+    }
+    if (!widerrufChecked) {
+      showPaymentError('Bitte bestätige den Hinweis zum Widerrufsrecht.');
       return;
     }
 
