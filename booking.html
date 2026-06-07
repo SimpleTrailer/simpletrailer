@@ -1671,7 +1671,35 @@
     } catch(e) { bookedRanges = []; }
   }
 
-  // Session aus localStorage laden
+  // Supabase Access-Tokens leben nur 1h. Wenn 401 kommt → mit dem Refresh-Token
+  // einen frischen Access-Token holen. Wenn auch das fehlschlägt → Session weg.
+  async function refreshAccessToken() {
+    const saved = localStorage.getItem('st_session');
+    if (!saved) return false;
+    let refresh_token;
+    try { refresh_token = JSON.parse(saved).refresh_token; } catch { return false; }
+    if (!refresh_token) return false;
+    try {
+      const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+        method: 'POST',
+        headers: { apikey: SUPABASE_ANON, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token })
+      });
+      if (!res.ok) {
+        localStorage.removeItem('st_session');
+        return false;
+      }
+      const data = await res.json();
+      bookingToken = data.access_token;
+      bookingUser  = data.user || bookingUser;
+      localStorage.setItem('st_session', JSON.stringify({ access_token: data.access_token, refresh_token: data.refresh_token }));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  // Session aus localStorage laden — bei abgelaufenem Token versucht refreshAccessToken den Token zu erneuern.
   async function checkExistingSession() {
     const saved = localStorage.getItem('st_session');
     if (!saved) return;
@@ -1680,7 +1708,17 @@
       const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
         headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${access_token}` }
       });
-      if (!res.ok) { localStorage.removeItem('st_session'); return; }
+      if (!res.ok) {
+        // Token vermutlich abgelaufen → Refresh versuchen
+        const refreshed = await refreshAccessToken();
+        if (!refreshed) { localStorage.removeItem('st_session'); return; }
+        // Erfolgreich erneuert — Benutzer-Info neu holen
+        const res2 = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+          headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${bookingToken}` }
+        });
+        if (res2.ok) bookingUser = await res2.json();
+        return;
+      }
       const user = await res.json();
       bookingUser  = user;
       bookingToken = access_token;
@@ -1779,7 +1817,8 @@
       if (!res.ok) throw new Error(data.error_description || 'Anmeldung fehlgeschlagen');
       bookingUser  = data.user;
       bookingToken = data.access_token;
-      localStorage.setItem('st_session', JSON.stringify({ access_token: data.access_token }));
+      // Refresh-Token mitspeichern — Access-Token lebt nur 1h, mit Refresh-Token können wir ihn erneuern
+      localStorage.setItem('st_session', JSON.stringify({ access_token: data.access_token, refresh_token: data.refresh_token }));
       showBookingLoggedIn();
       // Auto-weiter zum Führerschein-Step nach erfolgreichem Login
       setTimeout(() => goStep4(), 400);
@@ -1839,7 +1878,7 @@
       if (data.access_token) {
         bookingUser  = data.user;
         bookingToken = data.access_token;
-        localStorage.setItem('st_session', JSON.stringify({ access_token: data.access_token }));
+        localStorage.setItem('st_session', JSON.stringify({ access_token: data.access_token, refresh_token: data.refresh_token }));
         showBookingLoggedIn();
         // Auto-weiter zum Führerschein-Step nach erfolgreicher Registrierung
         setTimeout(() => goStep4(), 400);
@@ -1982,13 +2021,25 @@
   let currentDlStatus = null;
   let dlPollTimer = null;
 
+  // Wrapper: macht den Request mit dem aktuellen Token, bei 401 versucht Refresh + Retry
+  async function authedFetch(url, opts = {}) {
+    if (!bookingToken) return null;
+    const headers = { ...(opts.headers || {}), 'Authorization': `Bearer ${bookingToken}` };
+    let res = await fetch(url, { ...opts, headers });
+    if (res.status === 401) {
+      const refreshed = await refreshAccessToken();
+      if (!refreshed) return res;
+      headers.Authorization = `Bearer ${bookingToken}`;
+      res = await fetch(url, { ...opts, headers });
+    }
+    return res;
+  }
+
   async function fetchLicenseStatus() {
     if (!bookingToken) return null;
     try {
-      const res = await fetch('/api/identity', {
-        headers: { 'Authorization': `Bearer ${bookingToken}` }
-      });
-      if (!res.ok) return null;
+      const res = await authedFetch('/api/identity');
+      if (!res || !res.ok) return null;
       return await res.json();
     } catch { return null; }
   }
@@ -2051,10 +2102,17 @@
     btn.textContent = 'Wird gestartet …';
 
     try {
-      const res = await fetch('/api/identity', {
+      const res = await authedFetch('/api/identity', {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${bookingToken}`, 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' }
       });
+      if (!res) throw new Error('Sitzung abgelaufen — bitte erneut anmelden.');
+      if (res.status === 401) {
+        // Auch nach Refresh nicht autorisiert → User muss neu einloggen
+        switchBookingAccount();
+        goToStep(3);
+        throw new Error('Sitzung abgelaufen — bitte erneut anmelden.');
+      }
       const data = await res.json();
       if (!res.ok || !data.client_secret) throw new Error(data.error || 'Verifikation konnte nicht gestartet werden');
 
