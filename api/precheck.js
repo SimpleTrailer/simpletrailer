@@ -15,12 +15,15 @@ module.exports = async (req, res) => {
     try {
       const { data: booking, error } = await supabase
         .from('bookings')
-        .select('id, customer_name, start_time, end_time, pricing_type, total_amount, insurance_type, precheck_completed_at, status, precheck_token')
+        .select('id, customer_name, start_time, end_time, pricing_type, total_amount, insurance_type, precheck_completed_at, status, precheck_token, trailers(name)')
         .eq('id', id)
         .eq('precheck_token', token)
         .single();
 
       if (error || !booking) return res.status(404).json({ error: 'Buchung nicht gefunden' });
+      // Trailer-Name flach in Response damit Frontend einfach drauf zugreifen kann
+      booking.trailer_name = booking.trailers?.name || null;
+      delete booking.trailers;
       return res.status(200).json({ booking });
     } catch (err) {
       return res.status(500).json({ error: err.message });
@@ -36,13 +39,28 @@ module.exports = async (req, res) => {
 
       const { data: booking, error } = await supabase
         .from('bookings')
-        .select('id, status, access_code, precheck_token, precheck_completed_at, customer_name')
+        .select('id, status, access_code, precheck_token, precheck_completed_at, customer_name, start_time, end_time')
         .eq('id', booking_id)
         .eq('precheck_token', precheck_token)
         .single();
 
       if (error || !booking) return res.status(404).json({ error: 'Buchung nicht gefunden' });
       if (booking.status === 'returned') return res.status(400).json({ error: 'Buchung bereits abgeschlossen' });
+
+      // Schloss-Code darf erst ab 15 Min vor offiziellem Mietbeginn freigeschaltet werden.
+      // So bekommt niemand Codes für Buchungen die noch Tage in der Zukunft liegen.
+      const PRECHECK_WINDOW_MS = 15 * 60 * 1000;
+      const startMs = new Date(booking.start_time).getTime();
+      const nowMs   = Date.now();
+      if (nowMs < startMs - PRECHECK_WINDOW_MS) {
+        return res.status(403).json({
+          error: 'too_early',
+          message: 'Der Pre-Check ist erst ab 15 Minuten vor Mietbeginn möglich.',
+          start_time: booking.start_time,
+          seconds_until_unlock: Math.ceil((startMs - PRECHECK_WINDOW_MS - nowMs) / 1000)
+        });
+      }
+
       if (booking.precheck_completed_at) {
         return res.status(200).json({ access_code: booking.access_code, already_done: true });
       }

@@ -30,6 +30,7 @@
     .countdown .label { font-size:.68rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--gray); margin-bottom:6px; }
     .countdown .time  { font-size:2rem; font-weight:800; letter-spacing:-.02em; font-variant-numeric:tabular-nums; }
     .countdown.late   .time { color:#f87171; }
+    .countdown.pending .time { color:#fbbf24; }
     .countdown.ok     .time { color:var(--green); }
 
     /* UPLOAD */
@@ -200,26 +201,43 @@
   function startCountdown() {
     const el = document.getElementById('countdown');
     const timeEl = document.getElementById('countdownTime');
+    const labelEl = el.querySelector('.label');
+
+    function fmtHMS(ms) {
+      const h = Math.floor(ms / 3600000);
+      const m = Math.floor((ms % 3600000) / 60000);
+      const s = Math.floor((ms % 60000) / 1000);
+      return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    }
+    function fmtDHMS(ms) {
+      const d = Math.floor(ms / 86400000);
+      const rest = ms % 86400000;
+      return d > 0 ? `${d}d ${fmtHMS(rest)}` : fmtHMS(rest);
+    }
 
     function tick() {
-      const now  = new Date();
-      const end  = new Date(booking.end_time);
-      const diff = end - now;
+      const now    = Date.now();
+      const startMs = new Date(booking.start_time).getTime();
+      const endMs   = new Date(booking.end_time).getTime();
 
-      if (diff > 0) {
-        const h  = Math.floor(diff / 3600000);
-        const m  = Math.floor((diff % 3600000) / 60000);
-        const s  = Math.floor((diff % 60000) / 1000);
-        timeEl.textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+      if (now < startMs) {
+        // PENDING: Buchung hat noch nicht begonnen
+        const diff = startMs - now;
+        timeEl.textContent = fmtDHMS(diff);
+        labelEl.textContent = 'Buchung beginnt in';
+        el.className = 'countdown pending';
+      } else if (now <= endMs) {
+        // ACTIVE: Buchung läuft, Countdown bis Rückgabe-Frist
+        const diff = endMs - now;
+        timeEl.textContent = fmtHMS(diff);
+        labelEl.textContent = 'Zeit bis zur Rückgabe';
         el.className = 'countdown ok';
       } else {
-        const overMs = -diff;
-        const h = Math.floor(overMs / 3600000);
-        const m = Math.floor((overMs % 3600000) / 60000);
-        const s = Math.floor((overMs % 60000) / 1000);
-        timeEl.textContent = `+${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        // OVERDUE: Rückgabe-Frist überschritten
+        const overMs = now - endMs;
+        timeEl.textContent = `+${fmtHMS(overMs)}`;
+        labelEl.textContent = 'Verspätung';
         el.className = 'countdown late';
-        document.getElementById('countdown').querySelector('.label').textContent = 'Verspätung';
       }
     }
 
@@ -299,6 +317,12 @@
   }
 
   async function submitReturn() {
+    // Sicherheitsnetz: Rückgabe nur möglich wenn Buchung bereits begonnen hat
+    if (Date.now() < new Date(booking.start_time).getTime()) {
+      alert('Die Buchung hat noch nicht begonnen. Rückgabe ist erst nach Mietbeginn möglich.');
+      return;
+    }
+
     const btn = document.getElementById('returnBtn');
     btn.disabled = true;
     btn.innerHTML = '<div class="spinner"></div> Wird verarbeitet...';

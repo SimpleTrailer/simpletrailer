@@ -89,6 +89,25 @@
     <p style="color:var(--gray)" id="errorMsg">Dieser Link ist nicht gültig oder bereits abgelaufen.</p>
   </div>
 
+  <!-- Buchung läuft noch nicht -->
+  <div id="pendingView" style="display:none">
+    <div style="background:#1a1606;border:1px solid #f59e0b;border-radius:14px;padding:28px 24px;text-align:center;">
+      <div style="font-size:2.4rem;margin-bottom:10px;">🔒</div>
+      <h2 style="margin:0 0 6px;color:#fbbf24;">Buchung beginnt in</h2>
+      <div id="pendingCountdown" style="font-size:2.4rem;font-weight:800;color:#fff;font-variant-numeric:tabular-nums;letter-spacing:-.02em;margin:8px 0;">–</div>
+      <p style="color:#fcd34d;font-size:.88rem;margin:0 0 18px;line-height:1.5;">
+        Der Schloss-Code wird ab 15 Min vor Mietbeginn freigeschaltet. Sobald die Zeit reif ist, kannst du den Pre-Check starten und bekommst den Code.
+      </p>
+      <div style="background:#0a0a0a;border-radius:10px;padding:14px 18px;text-align:left;font-size:.85rem;color:#aaa;">
+        <div style="margin-bottom:4px;"><strong style="color:#fff;">Buchungs-Beginn:</strong> <span id="pendingStartLabel">–</span></div>
+        <div><strong style="color:#fff;">Anhänger:</strong> <span id="pendingTrailerLabel">–</span></div>
+      </div>
+      <p style="color:#888;font-size:.78rem;margin:18px 0 0;">
+        Diese Seite aktualisiert sich automatisch. Du brauchst sie nicht offen lassen — komm einfach zur Buchungszeit wieder zurück.
+      </p>
+    </div>
+  </div>
+
   <div id="mainView" style="display:none">
 
     <div class="step-badge">📋 Vorab-Check · Schritt 1 von 2</div>
@@ -169,6 +188,43 @@
   const PRICING = { '3h':'3 Stunden', day:'Ganzer Tag', weekend:'Wochenende' };
   const INS     = { none:'Kein Schutz', basis:'Basis Schutz (500 € SB)', premium:'Premium Schutz (50 € SB)' };
 
+  // Pre-Check ist erst ab 15 Min vor Mietbeginn freigeschaltet
+  const PRECHECK_WINDOW_MS = 15 * 60 * 1000;
+
+  function isPrecheckUnlocked() {
+    if (!booking) return false;
+    return Date.now() >= new Date(booking.start_time).getTime() - PRECHECK_WINDOW_MS;
+  }
+
+  function showPendingCountdown() {
+    document.getElementById('loadingView').style.display = 'none';
+    document.getElementById('pendingView').style.display = 'block';
+    document.getElementById('pendingStartLabel').textContent   = fmtDate(booking.start_time) + ' Uhr';
+    document.getElementById('pendingTrailerLabel').textContent = booking.trailer_name || 'PKW-Anhänger';
+
+    const tick = () => {
+      const unlockMs = new Date(booking.start_time).getTime() - PRECHECK_WINDOW_MS;
+      const diff = unlockMs - Date.now();
+      if (diff <= 0) {
+        // Freigeschaltet — Hauptansicht zeigen
+        clearInterval(timer);
+        document.getElementById('pendingView').style.display = 'none';
+        document.getElementById('mainView').style.display = 'block';
+        return;
+      }
+      const days = Math.floor(diff / 86400000);
+      const hrs  = Math.floor((diff % 86400000) / 3600000);
+      const mins = Math.floor((diff % 3600000) / 60000);
+      const secs = Math.floor((diff % 60000) / 1000);
+      const parts = [];
+      if (days > 0) parts.push(days + 'd');
+      parts.push(String(hrs).padStart(2,'0') + ':' + String(mins).padStart(2,'0') + ':' + String(secs).padStart(2,'0'));
+      document.getElementById('pendingCountdown').textContent = parts.join(' ');
+    };
+    tick();
+    const timer = setInterval(tick, 1000);
+  }
+
   async function loadBooking() {
     if (!bookingId || !precheckToken) return showError('Ungültiger Link.');
     try {
@@ -178,6 +234,12 @@
       booking = data.booking;
 
       if (booking.status === 'returned') return showError('Diese Buchung ist bereits abgeschlossen.');
+
+      // Wenn Pre-Check noch nicht freigeschaltet → Countdown zeigen, Hauptansicht überspringen
+      if (!isPrecheckUnlocked() && !booking.precheck_completed_at) {
+        showPendingCountdown();
+        return;
+      }
 
       document.getElementById('loadingView').style.display = 'none';
       document.getElementById('mainView').style.display = 'block';
@@ -294,6 +356,12 @@
         body: JSON.stringify({ booking_id: bookingId, precheck_token: precheckToken, photo_url: photoUrl })
       });
       const data = await res.json();
+      if (res.status === 403 && data.error === 'too_early') {
+        // Server-seitig blockiert (z.B. weil User per Bookmark vor Buchungszeit drauf gegangen ist)
+        document.getElementById('mainView').style.display = 'none';
+        showPendingCountdown();
+        return;
+      }
       if (!res.ok) throw new Error(data.error || 'Fehler');
 
       // Formular ausblenden, Success anzeigen
