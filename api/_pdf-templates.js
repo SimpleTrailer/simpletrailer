@@ -8,6 +8,24 @@
  * pdfkit ist eine pure-Node-Lib (keine Headless-Browser-Dependency) → läuft sauber auf Vercel.
  */
 const PDFDocument = require('pdfkit');
+const fs = require('fs');
+const path = require('path');
+
+// Logo aus dem Webseiten-Root (gemeinsam mit dem Frontend-Logo).
+// PDFKit kann PNG-Dateien direkt embedden — wir lesen einmal beim Start ins
+// Memory und cachen den Buffer, damit nicht jeder Request die Datei wieder
+// von der Disk lädt.
+let _logoBuffer = null;
+function getLogo() {
+  if (_logoBuffer !== null) return _logoBuffer;
+  try {
+    const p = path.join(__dirname, '..', 'logo.png');
+    _logoBuffer = fs.readFileSync(p);
+  } catch (e) {
+    _logoBuffer = false; // Markiert "tried but failed"
+  }
+  return _logoBuffer;
+}
 
 // ─── Farben & Konstanten ────────────────────────────────────────
 const ORANGE = '#E85D00';
@@ -52,15 +70,33 @@ function pdfToBuffer(doc) {
 
 // ─── HEADER (gemeinsam für beide PDFs) ────────────────────────
 function drawHeader(doc, title) {
-  // Logo-Wortmarke
-  doc.fontSize(20).fillColor(DARK).font('Helvetica-Bold').text('Simple', 50, 50, { continued: true });
-  doc.fillColor(ORANGE).text('Trailer');
+  // Dunkler Banner-Streifen oben — passt zum Webseiten-Design + macht das
+  // weiße Logo sichtbar (auf weißem PDF-Hintergrund wäre es nicht lesbar).
+  doc.rect(0, 0, 595, 85).fill(DARK);
 
-  // Dokumenttitel rechts
-  doc.fontSize(9).fillColor(GREY).font('Helvetica').text(title.toUpperCase(), 400, 55, { width: 145, align: 'right' });
+  const logo = getLogo();
+  if (logo && logo !== false) {
+    try {
+      // Logo links — Höhe 32px, Breite proportional (Original 1600x257)
+      doc.image(logo, 50, 28, { height: 32 });
+    } catch (e) {
+      // Fallback auf Text wenn pdfkit das PNG nicht verarbeiten kann
+      doc.fontSize(20).fillColor('#fff').font('Helvetica-Bold').text('Simple', 50, 38, { continued: true });
+      doc.fillColor(ORANGE).text('Trailer');
+    }
+  } else {
+    doc.fontSize(20).fillColor('#fff').font('Helvetica-Bold').text('Simple', 50, 38, { continued: true });
+    doc.fillColor(ORANGE).text('Trailer');
+  }
 
-  doc.moveTo(50, 88).lineTo(545, 88).strokeColor(ORANGE).lineWidth(2).stroke();
-  doc.y = 100;
+  // Dokumenttitel rechts auf dem dunklen Banner
+  doc.fontSize(9).fillColor('#bbbbbb').font('Helvetica').text(title.toUpperCase(), 380, 45, { width: 165, align: 'right', characterSpacing: 2 });
+
+  // Orange Akzentlinie als Trenner
+  doc.rect(0, 85, 595, 3).fill(ORANGE);
+
+  doc.y = 110;
+  doc.fillColor(DARK);
 }
 
 function drawFooter(doc) {
@@ -126,27 +162,63 @@ async function generateMietvertrag(p) {
   drawKVRow(doc, 'Schloss-Code',   p.accessCode + ' (wird nach Pre-Check freigeschaltet)', { bold: true });
   drawKVRow(doc, 'Rückgabe-Modus', p.returnModeLabel);
 
-  drawSection(doc, 'Wesentliche Pflichten des Mieters');
+  drawSection(doc, 'Pflichten des Mieters');
   doc.fontSize(8.5).fillColor(DARK).font('Helvetica');
   const pflichten = [
-    'Pre-Check-Foto vor Abholung anfertigen — danach wird der Schloss-Code freigeschaltet.',
-    'Rückgabe-Foto nach Mietende hochladen zur Beweissicherung des Zustands.',
-    'Anhänger nur im zulässigen Gesamtgewicht und der Fahrerlaubnisklasse (B oder BE) nutzen.',
-    'Auslandsfahrten im Schengen-Raum vorab per E-Mail an info@simpletrailer.de anzeigen.',
-    'Schäden, Unfälle oder technische Probleme innerhalb 2 Stunden per E-Mail melden.',
-    'Pünktliche und gereinigte Rückgabe am vereinbarten Stellplatz.'
+    'PRE-CHECK: Vor Abholung ein Foto des Anhängers anfertigen und hochladen. Erst dann wird der Schloss-Code freigeschaltet (frühestens 15 Min vor Mietbeginn).',
+    'RÜCKGABE-FOTO: Nach Mietende ein Foto vom Zustand des Anhängers hochladen. Dient als Beweissicherung für beide Vertragsparteien.',
+    'FAHRERLAUBNIS: Anhänger nur mit gültiger Fahrerlaubnis der Klasse B oder BE führen. Nicht überladen (max. zulässiges Gesamtgewicht beachten).',
+    'LADUNGSSICHERUNG: Ladung gemäß § 22 StVO ordnungsgemäß sichern. Keine Gefahrgüter (ADR-Übereinkommen) transportieren.',
+    'KEINE WEITERGABE: Anhänger nicht an Dritte untervermieten oder gewerblich weitergeben.',
+    'AUSLAND: Fahrten im Schengen-Raum sind erlaubt, müssen aber vorab per E-Mail an info@simpletrailer.de angezeigt werden — sonst trägt der Mieter das Risiko nicht gedeckter Schäden.',
+    'SCHÄDEN MELDEN: Schäden, Unfälle oder technische Probleme innerhalb 2 Stunden per E-Mail an info@simpletrailer.de melden.',
+    'RÜCKGABE-ORT: Anhänger am vereinbarten Stellplatz zurückgeben (bei Heimat-Rückgabe ca. 100 m Toleranz). Bei Flex-Rückgabe: irgendwo im Bremer Stadtgebiet auf einem legalen öffentlichen Parkplatz — KEIN Halteverbot, KEIN Privatgrund, KEINE Anwohnerparkzone, KEINE Zeitbegrenzung kürzer 24 h.',
+    'REINIGUNG: Anhänger gereinigt zurückgeben. Bei nicht ordnungsgemäßer Reinigung wird die Reinigungspauschale automatisch eingezogen.',
+    'GPS-TRACKER: Anhänger ist mit einem Teltonika TAT240 GPS-Tracker ausgestattet. Manipulation, Entfernung, Abdeckung oder Stromlos-Schalten ist verboten.'
   ];
   pflichten.forEach(pf => {
-    doc.text(`•  ${pf}`, 50, doc.y, { width: 495, indent: 4 });
-    doc.moveDown(0.2);
+    doc.text(`•  ${pf}`, 50, doc.y, { width: 495, indent: 4, align: 'justify' });
+    doc.moveDown(0.25);
   });
+
+  // ─── Detaillierte Gebühren- und Strafen-Übersicht ──────────────
+  drawSection(doc, 'Gebühren, Pauschalen und Strafen — vollständige Übersicht');
+  doc.fontSize(8.5).fillColor(DARK).font('Helvetica');
+  doc.text('Der Mieter trägt folgende Kosten bei Eintritt der jeweiligen Bedingung. Die Beträge werden automatisch über die bei der Buchung hinterlegte Zahlungsmethode eingezogen (§ 5 Abs. 3+4 AGB):', 50, doc.y, { width: 495, align: 'justify' });
+  doc.moveDown(0.5);
+
+  const gebuehren = [
+    ['Verspätungsgebühr',         '15,00 € pro angefangener Stunde nach vereinbartem Mietende.'],
+    ['Reinigungspauschale',       '30,00 € bei nicht ordnungsgemäß gereinigter Rückgabe.'],
+    ['Rückführungspauschale',     '50,00 € wenn der Anhänger außerhalb der Rückgabe-Zone abgestellt wird (Bremen-Stadtgebiet bei Flex / 100 m Toleranz beim Heimat-Stellplatz). Bei Entfernungen über 30 km werden zusätzlich die tatsächlichen Kosten (Kraftstoff, Arbeitszeit, Bergung) berechnet.'],
+    ['Falsch-Rückgabe / Bußgeld', 'Verwarn- und Bußgelder, Abschlepp-, Standplatz- und Verwahrkosten bei Verstößen gegen die Rückgabe-Regeln (Halteverbot, Privatgrund, Anwohnerparkzone usw.) plus Bearbeitungspauschale 15,00 €.'],
+    ['Stornogebühr (ohne Add-On)', '90 % des Mietpreises bei Stornierung oder Nichtantritt. Mit Add-On "Kostenlose Stornierung" entfällt diese Gebühr bis 30 Min vor Mietbeginn.'],
+    ['Schäden ohne Schutzpaket',  'Volle Haftung des Mieters bis zur Schadenshöhe. Im Totalschaden- oder Diebstahlfall können dies bis zu mehrere tausend Euro sein (Wiederbeschaffungswert, Gutachter, Wertminderung, Mietausfall, Bergung).'],
+    ['Schäden mit Basis-Schutz',  '500,00 € Selbstbeteiligung pro Schadensfall — bei grober Fahrlässigkeit, Alkohol/Drogen, Überladung oder Weitergabe an Dritte entfällt der Schutz.'],
+    ['Schäden mit Premium-Schutz', '50,00 € Selbstbeteiligung pro Schadensfall — gleicher Ausschluss bei grober Fahrlässigkeit etc.'],
+    ['Bußgeld-Bearbeitung',       '15,00 € pro Bußgeld-Weiterleitung an Behörden (Verkehrsverstöße, Halteverbot, Park-Verstöße).'],
+    ['Tracker-Manipulation',      'Wiederbeschaffungswert des GPS-Trackers ca. 220,00 € zuzüglich Einbaukosten bei Entfernen, Beschädigen oder Stromlos-Setzen.'],
+    ['Schloss-/Komponenten-Verlust', 'Tatsächliche Wiederbeschaffungskosten bei Verlust des Schlosses, des Schlüssels oder anderer Komponenten.'],
+    ['Information bei Schäden > 200 €', 'Vor Abbuchung von Schadensbeträgen über 200 € erhält der Mieter eine E-Mail mit 5 Werktagen Frist zur Stellungnahme — außer Gefahr im Verzug (z. B. Diebstahl).']
+  ];
+  gebuehren.forEach(([titel, beschr]) => {
+    const y = doc.y;
+    doc.font('Helvetica-Bold').fillColor(ORANGE).text(titel, 50, y, { width: 160, continued: false });
+    doc.font('Helvetica').fillColor(DARK).text(beschr, 215, y, { width: 330, align: 'justify' });
+    doc.moveDown(0.4);
+  });
+
+  // Diebstahl-Hinweis
+  drawSection(doc, 'Diebstahl und unberechtigte Nutzung');
+  doc.fontSize(8.5).fillColor(DARK).font('Helvetica');
+  doc.text('Wird der Anhänger außerhalb der gebuchten Mietzeit bewegt oder verlässt er den Rückgabebereich nach Mietende, kann der Vermieter eine unberechtigte Nutzung vermuten und entsprechende Maßnahmen einleiten — insbesondere Polizei-Übermittlung der Position, Strafanzeige und Zurückholen des Anhängers. Der Mieter haftet für Schäden, die durch ein verspätetes Anzeigen eines Verlusts oder Diebstahls entstehen.', 50, doc.y, { width: 495, align: 'justify' });
 
   drawSection(doc, 'Vertragsschluss & Geltung der AGB');
   doc.fontSize(8.5).fillColor(DARK).font('Helvetica');
-  doc.text(`Der Mieter hat die AGB (Stand ${p.agbVersion}) und die Datenschutzerklärung von SimpleTrailer elektronisch akzeptiert und dem sofortigen Vertragsbeginn ausdrücklich zugestimmt. Es besteht kein Widerrufsrecht gem. § 312g Abs. 2 Nr. 9 BGB. Die jeweils aktuellen AGB sind abrufbar unter ${COMPANY.url}/agb.`, 50, doc.y, { width: 495, align: 'justify' });
+  doc.text(`Der Mieter hat die AGB (Stand ${p.agbVersion}) und die Datenschutzerklärung von SimpleTrailer elektronisch akzeptiert und dem sofortigen Vertragsbeginn ausdrücklich zugestimmt. Es besteht kein Widerrufsrecht gem. § 312g Abs. 2 Nr. 9 BGB (Beförderungsmittel-Vermietung für bestimmten Zeitraum). Die jeweils aktuellen AGB sind abrufbar unter ${COMPANY.url}/agb. Bei Widerspruch zwischen diesem Vertragstext und den AGB gehen die Regelungen dieses Vertrags vor; ergänzend gelten die AGB.`, 50, doc.y, { width: 495, align: 'justify' });
 
-  doc.moveDown(1.5);
-  doc.fontSize(8).fillColor(GREY).text(`Dieser Mietvertrag wurde elektronisch geschlossen und ersetzt eine eigenhändige Unterschrift. Die Identitätsfeststellung erfolgte über Stripe Identity (biometrischer Gesichtsabgleich + Lichtbildvergleich).`, { width: 495, align: 'center' });
+  doc.moveDown(1);
+  doc.fontSize(8).fillColor(GREY).text(`Dieser Mietvertrag wurde elektronisch geschlossen und ersetzt eine eigenhändige Unterschrift. Die Identitätsfeststellung erfolgte über Stripe Identity (biometrischer Gesichtsabgleich mit dem Lichtbild auf dem Führerschein).`, { width: 495, align: 'center' });
 
   drawFooter(doc);
   return pdfToBuffer(doc);
