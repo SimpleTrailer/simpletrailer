@@ -163,7 +163,9 @@ module.exports = async (req, res) => {
       await supabase.from('bookings').update(bookingUpdate).eq('id', booking_id);
     }
 
-    await supabase.from('trailers').update({ is_available: true }).eq('id', booking.trailer_id);
+    // is_available wird nicht mehr verändert — der Flag markiert nur "im Service / Wartung".
+    // Verfügbarkeit nach Rückgabe ergibt sich automatisch aus status='returned' der Buchung
+    // (get-trailers.js berechnet currently_booked zeitbasiert).
 
     const total = booking.total_amount + lateFeeAmount;
     const bookingRef = booking_id.slice(0, 8).toUpperCase();

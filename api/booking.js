@@ -122,7 +122,10 @@ module.exports = async (req, res) => {
 
       if (bookingError) throw bookingError;
 
-      await supabase.from('trailers').update({ is_available: false }).eq('id', meta.trailer_id);
+      // Hinweis: is_available wird NICHT mehr auf false gesetzt — die Verfügbarkeit
+      // wird in get-trailers.js zeitbasiert aus der bookings-Tabelle berechnet
+      // (currently_booked = aktiver Buchung-Status). Der Flag trailers.is_available
+      // markiert nur noch "im Service / Wartung", nicht "gerade gebucht".
 
       const siteUrl     = process.env.SITE_URL || 'https://simpletrailer.de';
       const returnUrl   = `${siteUrl}/return.html?id=${booking.id}&token=${return_token}`;
