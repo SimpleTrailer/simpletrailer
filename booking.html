@@ -349,17 +349,17 @@
     <div class="step-line"></div>
     <div class="step-item">
       <div class="step-circle" id="sc2">2</div>
-      <span class="step-label" id="sl2">Konto</span>
+      <span class="step-label" id="sl2">Optionen</span>
     </div>
     <div class="step-line"></div>
     <div class="step-item">
       <div class="step-circle" id="sc3">3</div>
-      <span class="step-label" id="sl3">Führerschein</span>
+      <span class="step-label" id="sl3">Konto</span>
     </div>
     <div class="step-line"></div>
     <div class="step-item">
       <div class="step-circle" id="sc4">4</div>
-      <span class="step-label" id="sl4">Schutzpaket</span>
+      <span class="step-label" id="sl4">Führerschein</span>
     </div>
     <div class="step-line"></div>
     <div class="step-item">
@@ -541,9 +541,9 @@
         </div>
         <span style="color:#22c55e;font-size:1.2rem;">✓</span>
       </div>
-      <button class="btn btn-orange" onclick="goStep3()">Weiter →</button>
+      <button class="btn btn-orange" onclick="goStep4()">Weiter →</button>
       <div style="text-align:center;margin-top:12px;">
-        <a href="#" onclick="goToStep(1)" style="color:var(--gray);font-size:.85rem;text-decoration:none;">← Zurück</a>
+        <a href="#" onclick="goToStep(2)" style="color:var(--gray);font-size:.85rem;text-decoration:none;">← Zurück</a>
       </div>
     </div>
 
@@ -632,7 +632,7 @@
       </div>
 
       <div style="text-align:center;margin-top:12px;">
-        <a href="#" onclick="goToStep(1)" style="color:var(--gray);font-size:.85rem;text-decoration:none;">← Zurück</a>
+        <a href="#" onclick="goToStep(2)" style="color:var(--gray);font-size:.85rem;text-decoration:none;">← Zurück</a>
       </div>
     </div>
   </div>
@@ -680,7 +680,7 @@
     </div>
 
     <div style="text-align:center;margin-top:12px;">
-      <a href="#" onclick="goToStep(2)" style="color:var(--gray);font-size:.85rem;text-decoration:none;">← Zurück</a>
+      <a href="#" onclick="goToStep(3)" style="color:var(--gray);font-size:.85rem;text-decoration:none;">← Zurück</a>
     </div>
   </div>
 
@@ -794,9 +794,9 @@
       </div>
     </div>
 
-    <button class="btn btn-orange" onclick="goStep5()">Weiter zur Zahlung →</button>
+    <button class="btn btn-orange" onclick="goStep3()">Weiter zum Konto →</button>
     <div style="text-align:center;margin-top:12px;">
-      <a href="#" onclick="goToStep(3)" style="color:var(--gray);font-size:.85rem;text-decoration:none;">← Zurück</a>
+      <a href="#" onclick="goToStep(1)" style="color:var(--gray);font-size:.85rem;text-decoration:none;">← Zurück</a>
     </div>
   </div>
 
@@ -1761,6 +1761,8 @@
       bookingToken = data.access_token;
       localStorage.setItem('st_session', JSON.stringify({ access_token: data.access_token }));
       showBookingLoggedIn();
+      // Auto-weiter zum Führerschein-Step nach erfolgreichem Login
+      setTimeout(() => goStep4(), 400);
     } catch(e) {
       errEl.textContent = e.message === 'Invalid login credentials' ? 'E-Mail oder Passwort falsch.' : e.message;
       errEl.style.display = 'block';
@@ -1819,6 +1821,8 @@
         bookingToken = data.access_token;
         localStorage.setItem('st_session', JSON.stringify({ access_token: data.access_token }));
         showBookingLoggedIn();
+        // Auto-weiter zum Führerschein-Step nach erfolgreicher Registrierung
+        setTimeout(() => goStep4(), 400);
       } else {
         saveBookingState();
         okEl.innerHTML = '✅ Bestätigungs-E-Mail gesendet!<br><span style="font-size:.82rem;color:var(--gray);">Klick auf den Link in der Mail – du kommst automatisch zurück zu deiner Buchung.</span>';
@@ -1888,9 +1892,14 @@
     }
   });
 
+  // UX-Step → HTML-ID Mapping (neue Reihenfolge: Zeitraum, Optionen, Konto, Führerschein, Zahlung)
+  // HTML-IDs (step2/step3/step4) bleiben aus Legacy-Gründen, die UX-Reihenfolge ist hier definiert.
+  const UX_STEP_HTML = { 1: 'step1', 2: 'step4', 3: 'step2', 4: 'step3', 5: 'step5' };
+
   function goToStep(n) {
     document.querySelectorAll('.step-content').forEach(el => el.classList.remove('active'));
-    document.getElementById(`step${n}`).classList.add('active');
+    const targetId = UX_STEP_HTML[n] || ('step' + n);
+    document.getElementById(targetId).classList.add('active');
     for (let i = 1; i <= 5; i++) {
       const circle = document.getElementById(`sc${i}`);
       const label  = document.getElementById(`sl${i}`);
@@ -1903,6 +1912,7 @@
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
+  // UX-Step 1 → 2: Zeitraum validieren + zu Schutzpaket-/Stornoschutz-Auswahl
   function goStep2() {
     const errEl   = document.getElementById('dateError');
     const startMs = new Date(document.getElementById('startTime').value).getTime();
@@ -1914,24 +1924,6 @@
       errEl.textContent = 'Enddatum muss nach Startdatum liegen.'; errEl.style.display = 'block'; return;
     }
     goToStep(2);
-    if (bookingUser) showBookingLoggedIn();
-  }
-
-  async function goStep3() {
-    if (!bookingUser) return;
-    goToStep(3);
-    await refreshLicenseUI();
-  }
-
-  function goStep4() {
-    if (!bookingUser) return;
-    if (currentDlStatus !== 'verified') {
-      const err = document.getElementById('errDl');
-      err.textContent = 'Bitte zuerst Führerschein verifizieren.';
-      err.style.display = 'block';
-      return;
-    }
-    goToStep(4);
     updatePriceDisplay();
     // Zone-Karte initialisieren (Leaflet ggf. noch nicht ready → poll)
     if (typeof L !== 'undefined') {
@@ -1944,9 +1936,23 @@
     }
   }
 
+  // UX-Step 2 → 3: zu Konto (Login/Register)
+  function goStep3() {
+    goToStep(3);
+    if (bookingUser) showBookingLoggedIn();
+  }
+
+  // UX-Step 3 → 4: zu Führerschein-Verifikation
+  async function goStep4() {
+    if (!bookingUser) return;
+    goToStep(4);
+    await refreshLicenseUI();
+  }
+
   async function goStep5() {
     if (!trailerId) { alert('Anhänger konnte nicht geladen werden. Bitte Seite neu laden.'); return; }
-    if (currentDlStatus !== 'verified') { goToStep(3); return; }
+    if (!bookingUser) { goToStep(3); return; }
+    if (currentDlStatus !== 'verified') { goToStep(4); return; }
     goToStep(5);
     updateSummary();
     await initStripe();
@@ -1986,8 +1992,8 @@
       const klass   = (info.dl_classes || []).join(', ') || 'B';
       document.getElementById('dlVerifiedInfo').innerHTML =
         `Klasse <strong style="color:#fff;">${klass}</strong> · gültig bis <strong style="color:#fff;">${expires}</strong>`;
-      // Auto-weiter nach kurzer Bestätigung
-      setTimeout(() => { if (currentDlStatus === 'verified') goStep4(); }, 900);
+      // Auto-weiter zur Zahlung nach kurzer Bestätigung
+      setTimeout(() => { if (currentDlStatus === 'verified') goStep5(); }, 900);
       return;
     }
 
