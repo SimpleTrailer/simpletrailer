@@ -131,18 +131,51 @@ module.exports = async (req, res) => {
       const returnUrl   = `${siteUrl}/return.html?id=${booking.id}&token=${return_token}`;
       const precheckUrl = `${siteUrl}/precheck?id=${booking.id}&token=${precheck_token}`;
 
+      // Plain-Text-Fallback fuer bessere Spam-Score und Email-Clients ohne HTML
+      const plainText = `Hallo ${meta.customer_name},
+
+dein Anhänger ist reserviert.
+
+Buchungsnummer: #${booking.id.slice(0, 8).toUpperCase()}
+Anhänger: ${booking.trailers?.name || 'PKW-Anhänger'}
+Mietbeginn: ${fmt(meta.start_time)} Uhr
+Mietende: ${fmt(meta.end_time)} Uhr
+Gesamt: ${amount.toFixed(2).replace('.', ',')} € (inkl. 19 % USt)
+
+Schritt 1 — Vorab-Check (Foto vor Abholung):
+${precheckUrl}
+
+Schritt 2 — Rückgabe bestätigen:
+${returnUrl}
+
+Mit dem Vorab-Check-Foto wird dir der Schloss-Code freigeschaltet.
+Alle Details findest du in deinem Kundenbereich: ${siteUrl}/account
+
+Diese Mail dient gleichzeitig als Mietvertrag und Rechnung gem. § 14 UStG.
+
+—
+SimpleTrailer GbR · Lion Grone & Samuel Obodoefuna
+Waltjenstr. 96, 28237 Bremen
+Steuernummer: 60/176/10854 · USt-IdNr.: DE462214434
+info@simpletrailer.de · simpletrailer.de`;
+
       try { await resend.emails.send({
         from: 'SimpleTrailer <buchung@simpletrailer.de>',
         reply_to: 'info@simpletrailer.de',
         to: meta.customer_email,
-        subject: `Mietvertrag #${booking.id.slice(0, 8).toUpperCase()} bestätigt – SimpleTrailer`,
+        subject: `Mietvertrag #${booking.id.slice(0, 8).toUpperCase()} – SimpleTrailer`,
+        text: plainText,
+        headers: {
+          'List-Unsubscribe': '<mailto:info@simpletrailer.de?subject=Abmelden>',
+          'X-Entity-Ref-ID': booking.id
+        },
         html: `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0D0D0D;font-family:system-ui,sans-serif;color:#fff;">
           <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
             <div style="text-align:center;margin-bottom:32px;">
               <span style="font-size:1.5rem;font-weight:800;">Simple</span><span style="font-size:1.5rem;font-weight:800;color:#E85D00;">Trailer</span>
             </div>
             <div style="background:#1A1A1A;border-radius:16px;padding:32px;border:1px solid #383838;">
-              <h1 style="margin:0 0 8px;font-size:1.4rem;">Buchung bestätigt! 🎉</h1>
+              <h1 style="margin:0 0 8px;font-size:1.4rem;">Mietvertrag bestätigt</h1>
               <p style="color:#888;margin:0 0 28px;">Hallo ${meta.customer_name}, dein Anhänger ist reserviert.</p>
               <div style="background:#111;border-radius:10px;padding:16px 20px;margin-bottom:20px;">
                 <p style="color:#E85D00;font-size:0.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin:0 0 4px;">Buchungsnummer</p>
