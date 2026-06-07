@@ -625,25 +625,99 @@
     const precheckUrl  = b.precheck_token ? `/precheck?id=${b.id}&token=${b.precheck_token}` : null;
     const returnUrl    = b.return_token   ? `/return?id=${b.id}&token=${b.return_token}` : null;
 
+    const nowMs   = Date.now();
+    const startMs = new Date(b.start_time).getTime();
+    const endMs   = new Date(b.end_time).getTime();
+    const isBeforeStart = nowMs < startMs;
+    const isOverdue     = nowMs > endMs && b.status === 'active';
+    const canCancel     = !precheckDone && b.status === 'confirmed' && isBeforeStart;
+
+    // Storno-Info berechnen für den Button-Text
+    const hasCp = !!b.cancellation_protection;
+    const minutesUntilStart = Math.floor((startMs - nowMs) / 60000);
+    const cpStillActive = hasCp && minutesUntilStart >= 30;
+    const totalPaid = Number(b.total_amount || 0);
+    const cpFee = Number(b.cancellation_protection_fee || 0);
+    const refundIfCancelled = cpStillActive ? (totalPaid - cpFee) : totalPaid * 0.10;
+
+    // Status-Block oben
+    let statusBlock = '';
+    if (isBeforeStart) {
+      const h = Math.floor((startMs - nowMs) / 3600000);
+      const m = Math.floor(((startMs - nowMs) % 3600000) / 60000);
+      const untilStr = h > 0 ? `${h}h ${m}min` : `${m} Min`;
+      statusBlock = `<div style="background:#1a1606;border:1px solid rgba(245,158,11,0.4);border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:.88rem;color:#fbbf24;">⏳ Buchung beginnt in <strong>${untilStr}</strong></div>`;
+    } else if (b.status === 'confirmed' && !precheckDone) {
+      statusBlock = `<div style="background:#0a1f0a;border:1px solid #22c55e;border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:.88rem;color:#86efac;">✅ Buchungszeit erreicht — Vorab-Check kann starten</div>`;
+    } else if (isOverdue) {
+      statusBlock = `<div style="background:#1a0808;border:1px solid #dc2626;border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:.88rem;color:#fca5a5;">⚠ Rückgabe überfällig — 15 €/h Verspätungsgebühr läuft</div>`;
+    }
+
+    // Action-Buttons
     let actionHtml = '';
     if (b.status === 'confirmed' && !precheckDone && precheckUrl) {
-      actionHtml = `<a href="${precheckUrl}" class="action-btn action-btn-green">📷 Vorab-Check starten → Zugangscode erhalten</a>`;
-    } else if (b.status === 'confirmed' && precheckDone && precheckUrl) {
-      actionHtml = `<a href="${precheckUrl}" class="action-btn action-btn-green">🔑 Zugangscode anzeigen</a>`;
+      actionHtml = `<a href="${precheckUrl}" class="action-btn action-btn-green">📷 Vorab-Check starten → Schloss-Code erhalten</a>`;
+    } else if (b.status === 'active' && precheckDone && precheckUrl) {
+      actionHtml = `<a href="${precheckUrl}" class="action-btn action-btn-green">🔑 Schloss-Code anzeigen</a>`;
     }
-    if (returnUrl) {
+    if (returnUrl && (b.status === 'active' || isOverdue)) {
       actionHtml += `<a href="${returnUrl}" class="action-btn action-btn-orange">Rückgabe starten →</a>`;
     }
+    actionHtml += `<a href="/anleitung" class="action-btn" style="background:#1f1f1f;border:1px solid var(--border);color:#fff;">📖 Anleitung (Abholung &amp; Rückgabe)</a>`;
+
+    // Storno-Block
+    let cancelHtml = '';
+    if (canCancel) {
+      const refundText = refundIfCancelled.toFixed(2).replace('.', ',');
+      const cpLabel = cpStillActive
+        ? `<span style="color:#86efac;">✓ Kostenlose Stornierung aktiv</span> — Mietpreis voll erstattet (Add-On-Prämie ${cpFee.toFixed(2).replace('.',',')} € nicht erstattbar)`
+        : hasCp
+          ? `<span style="color:#fbbf24;">⚠ Add-On-Frist abgelaufen</span> — nur noch 10 % erstattbar (Storno bis 30 Min vor Mietbeginn war kostenlos)`
+          : `<span style="color:#fbbf24;">Kein Stornoschutz gebucht</span> — 90 % Storno-Gebühr (10 % refunded)`;
+      cancelHtml = `
+        <details style="margin-top:14px;background:#0a0a0a;border:1px solid var(--border);border-radius:10px;padding:14px 16px;">
+          <summary style="cursor:pointer;font-weight:700;font-size:.92rem;color:#fbbf24;">↩ Buchung stornieren</summary>
+          <div style="margin-top:12px;font-size:.84rem;color:#ccc;line-height:1.55;">
+            ${cpLabel}<br><br>
+            Bei Stornierung erstatten wir dir: <strong style="color:#22c55e;font-size:1.05rem;">${refundText} €</strong>
+          </div>
+          <button onclick="cancelBooking('${b.id}', ${refundIfCancelled.toFixed(2)})" style="margin-top:14px;background:#dc2626;color:#fff;border:none;padding:11px 22px;border-radius:8px;cursor:pointer;font-weight:700;font-size:.88rem;font-family:inherit;">Jetzt stornieren</button>
+        </details>`;
+    }
+
+    // PDF-Downloads (Mietvertrag + Rechnung) — werden serverseitig vorgehalten, hier Verweis auf die Mail
+    const pdfNote = `<p style="font-size:.78rem;color:var(--gray);margin-top:10px;text-align:center;">Mietvertrag + Rechnung als PDF: in deiner Buchungs-E-Mail im Anhang.</p>`;
 
     document.getElementById('activeBookingCard').innerHTML = `
       <div class="active-booking-badge">● Aktive Buchung</div>
       <div class="active-booking-ref">#${b.id.slice(0,8).toUpperCase()} · ${b.trailers?.name || 'Anhänger'}</div>
       <div class="active-booking-detail">
         ${pricingLabel[b.pricing_type] || b.pricing_type} · Von ${fmt(b.start_time)} bis ${fmt(b.end_time)}<br>
-        ${INS_LABEL[b.insurance_type || 'none']} · <strong style="color:var(--orange)">${(b.total_amount||0).toFixed(2).replace('.',',')} €</strong>
+        ${INS_LABEL[b.insurance_type || 'none']}${b.cancellation_protection ? ' · ✓ Kostenlose Stornierung' : ''} · <strong style="color:var(--orange)">${(b.total_amount||0).toFixed(2).replace('.',',')} €</strong>
       </div>
+      ${statusBlock}
       ${actionHtml}
+      ${cancelHtml}
+      ${pdfNote}
     `;
+  }
+
+  async function cancelBooking(bookingId, refundAmount) {
+    if (!confirm(`Buchung wirklich stornieren?\n\nErstattung: ${refundAmount.toFixed(2).replace('.', ',')} €\n\nDie Rückzahlung erfolgt automatisch über deine Zahlungsmethode (3-5 Werktage).`)) return;
+
+    try {
+      const res = await fetch('/api/cancel-booking', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${authToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ booking_id: bookingId })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Fehler');
+      alert(`✓ Storniert.\nErstattung: ${data.refund_amount.toFixed(2).replace('.', ',')} €\n\n${data.refund_reason}`);
+      location.reload();
+    } catch (e) {
+      alert('Stornierung fehlgeschlagen: ' + e.message);
+    }
   }
 
   function switchTab(tab) {
