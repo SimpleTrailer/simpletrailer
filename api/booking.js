@@ -2,6 +2,7 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { createClient } = require('@supabase/supabase-js');
 const { Resend } = require('resend');
 const crypto = require('crypto');
+const { generateMietvertrag, generateRechnung } = require('./_pdf-templates');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -77,7 +78,7 @@ module.exports = async (req, res) => {
       // Fallback: 6-stellig zufällig wenn kein fester Code hinterlegt (Migration noch ausstehend).
       const { data: trailerNow } = await supabase
         .from('trailers')
-        .select('last_lat,last_lng,lat,lng,access_code')
+        .select('last_lat,last_lng,lat,lng,access_code,license_plate')
         .eq('id', meta.trailer_id)
         .maybeSingle();
       const pickupLat = (trailerNow?.last_lat ?? trailerNow?.lat) || null;
@@ -159,6 +160,51 @@ Waltjenstr. 96, 28237 Bremen
 Steuernummer: 60/176/10854 · USt-IdNr.: DE462214434
 info@simpletrailer.de · simpletrailer.de`;
 
+      // ─── PDFs generieren (Mietvertrag + Rechnung) ─────────────
+      const insLabels = { none: 'Ohne Schutzpaket', basis: 'Basis-Schutz (500 € SB)', premium: 'Premium-Schutz (50 € SB)' };
+      const tariffLabels = { '3h': '3 Stunden', '6h': '6 Stunden', day: 'Ganzer Tag', weekend: 'Wochenende (Fr-So)', week: '1 Woche', flexible: 'Individuell' };
+      const freeFloatingFee = parseFloat(meta.free_floating_fee || '0') || 0;
+      const baseAmount = Math.max(0, amount - insAmount - cancellationProtectionFee - freeFloatingFee);
+      const items = [{ label: `Anhängermiete · ${tariffLabels[meta.pricing_type] || meta.pricing_type}`, gross: baseAmount }];
+      if (insAmount > 0) items.push({ label: insType === 'basis' ? 'Basis-Schutz (Selbstbeteiligung 500 €)' : 'Premium-Schutz (Selbstbeteiligung 50 €)', gross: insAmount });
+      if (cancellationProtectionFee > 0) items.push({ label: 'Kostenlose Stornierung (Storno bis 30 Min vor Mietbeginn)', gross: cancellationProtectionFee });
+      if (freeFloatingFee > 0) items.push({ label: 'Rückgabe egal-wo in Bremen (Flexrückgabe)', gross: freeFloatingFee });
+
+      const pdfPayload = {
+        bookingShort: booking.id.slice(0,8).toUpperCase(),
+        contractDate: new Date().toISOString(),
+        customerName:    meta.customer_name,
+        customerEmail:   meta.customer_email,
+        customerPhone:   meta.customer_phone,
+        customerAddress: meta.customer_address,
+        trailerName:     booking.trailers?.name || 'PKW-Anhänger',
+        licensePlate:    trailerNow?.license_plate || '–',
+        tariffLabel:     tariffLabels[meta.pricing_type] || meta.pricing_type,
+        startTime:       meta.start_time,
+        endTime:         meta.end_time,
+        insuranceLabel:  insLabels[insType],
+        cancellationLabel: cancellationProtection ? `Aktiv (${cancellationProtectionFee.toFixed(2).replace('.', ',')} €) — Storno bis 30 Min vor Mietbeginn` : 'Nicht gebucht — 90 % Storno-Gebühr (AGB § 6)',
+        accessCode:      access_code,
+        returnModeLabel: freeFloating ? 'Bremen-Stadtgebiet (Flexrückgabe)' : 'Zurück zum Heimat-Stellplatz',
+        agbVersion:      meta.agb_version || '2026-06-05',
+        paymentMethod:   (pi.payment_method_types && pi.payment_method_types[0]) || 'card',
+        items
+      };
+
+      let pdfMietvertrag = null, pdfRechnung = null;
+      try {
+        [pdfMietvertrag, pdfRechnung] = await Promise.all([
+          generateMietvertrag(pdfPayload),
+          generateRechnung(pdfPayload)
+        ]);
+      } catch (pdfErr) {
+        console.error('PDF-Generierung fehlgeschlagen — Mail wird ohne Anhänge versendet:', pdfErr.message);
+      }
+
+      const attachments = [];
+      if (pdfMietvertrag) attachments.push({ filename: `Mietvertrag-${pdfPayload.bookingShort}.pdf`, content: pdfMietvertrag });
+      if (pdfRechnung)    attachments.push({ filename: `Rechnung-${pdfPayload.bookingShort}.pdf`,    content: pdfRechnung });
+
       try { await resend.emails.send({
         from: 'SimpleTrailer <buchung@simpletrailer.de>',
         reply_to: 'info@simpletrailer.de',
@@ -169,6 +215,7 @@ info@simpletrailer.de · simpletrailer.de`;
           'List-Unsubscribe': '<mailto:info@simpletrailer.de?subject=Abmelden>',
           'X-Entity-Ref-ID': booking.id
         },
+        attachments,
         html: `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0D0D0D;font-family:system-ui,sans-serif;color:#fff;">
           <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
             <div style="text-align:center;margin-bottom:32px;">
@@ -203,73 +250,17 @@ info@simpletrailer.de · simpletrailer.de`;
                 <p style="font-size:.85rem;margin:0;">Buchungsdetails, Schutzpaket, Vorab-Check und Rückgabe findest du jederzeit in deinem <a href="${siteUrl}/account" style="color:#E85D00;text-decoration:none;font-weight:600;">Kundenbereich →</a></p>
               </div>
               <p style="color:#555;font-size:.75rem;text-align:center;margin:0;">Beide Links bitte aufbewahren.</p>
-            </div>
 
-            <!-- ===== MIETVERTRAG (rechtssichere Beweisdokumentation) ===== -->
-            <div style="background:#fff;color:#222;border-radius:16px;padding:32px;margin-top:24px;font-family:Georgia,serif;">
-              <div style="text-align:center;border-bottom:2px solid #E85D00;padding-bottom:16px;margin-bottom:20px;">
-                <p style="font-family:Arial,sans-serif;font-size:.65rem;letter-spacing:.15em;color:#888;text-transform:uppercase;margin:0 0 4px;">Mietvertrag</p>
-                <h2 style="margin:0;color:#0D0D0D;font-size:1.4rem;">SimpleTrailer GbR</h2>
-                <p style="margin:4px 0 0;color:#666;font-size:.8rem;font-family:Arial,sans-serif;">Vertrag-Nr.: <strong>#${booking.id.slice(0, 8).toUpperCase()}</strong> · ausgestellt ${fmt(new Date())} Uhr</p>
-              </div>
-
-              <h3 style="font-size:.95rem;color:#0D0D0D;margin:20px 0 8px;font-family:Arial,sans-serif;">Vertragsparteien</h3>
-              <p style="font-size:.85rem;line-height:1.6;margin:0 0 16px;font-family:Arial,sans-serif;">
-                <strong>Vermieter:</strong> SimpleTrailer GbR, vertreten durch Lion Grone und Samuel Obodoefuna, Waltjenstr. 96, 28237 Bremen, info@simpletrailer.de<br><br>
-                <strong>Mieter:</strong> ${meta.customer_name}<br>
-                ${meta.customer_address ? `Anschrift: ${meta.customer_address}<br>` : ''}
-                E-Mail: ${meta.customer_email}<br>
-                ${meta.customer_phone ? `Telefon: ${meta.customer_phone}` : ''}
-              </p>
-
-              <h3 style="font-size:.95rem;color:#0D0D0D;margin:20px 0 8px;font-family:Arial,sans-serif;">Mietgegenstand</h3>
-              <table style="width:100%;font-size:.85rem;font-family:Arial,sans-serif;border-collapse:collapse;">
-                <tr><td style="padding:6px 0;color:#666;width:40%;">Anhänger</td><td style="padding:6px 0;font-weight:600;">${booking.trailers?.name || 'PKW-Anhänger'}</td></tr>
-                <tr><td style="padding:6px 0;color:#666;">Tarif</td><td style="padding:6px 0;font-weight:600;">${meta.pricing_type || '–'}</td></tr>
-                <tr><td style="padding:6px 0;color:#666;">Mietbeginn</td><td style="padding:6px 0;font-weight:600;">${fmt(meta.start_time)} Uhr</td></tr>
-                <tr><td style="padding:6px 0;color:#666;">Mietende</td><td style="padding:6px 0;font-weight:600;">${fmt(meta.end_time)} Uhr</td></tr>
-                <tr><td style="padding:6px 0;color:#666;">Schutzpaket</td><td style="padding:6px 0;font-weight:600;">${insType === 'none' ? 'Ohne Schutzpaket – volle Mieterhaftung gem. AGB § 9' : insType === 'basis' ? 'Basis-Schutz · 500 € Selbstbeteiligung' : 'Premium-Schutz · 50 € Selbstbeteiligung'}</td></tr>
-                <tr><td style="padding:6px 0;color:#666;">Kostenlose Stornierung</td><td style="padding:6px 0;font-weight:600;">${cancellationProtection ? `Aktiv (${cancellationProtectionFee.toFixed(2).replace('.', ',')} €) · Storno bis 30 Min vor Mietbeginn ohne Verlust` : 'Nicht gebucht · 90 % Storno-Gebühr bei Stornierung/Nichtantritt (AGB § 6)'}</td></tr>
-              </table>
-
-              <h3 style="font-size:.95rem;color:#0D0D0D;margin:20px 0 8px;font-family:Arial,sans-serif;">Vergütung & Umsatzsteuer</h3>
-              <table style="width:100%;font-size:.85rem;font-family:Arial,sans-serif;border-collapse:collapse;">
-                <tr><td style="padding:6px 0;color:#666;width:60%;">Mietpreis netto (inkl. ggf. Schutzpaket${cancellationProtection ? ' + Kostenlose Stornierung' : ''})</td><td style="padding:6px 0;text-align:right;font-weight:600;">${(amount / 1.19).toFixed(2).replace('.',',')} €</td></tr>
-                ${cancellationProtection ? `<tr><td style="padding:6px 0;color:#666;font-size:.78rem;font-style:italic;">davon Kostenlose Stornierung (brutto)</td><td style="padding:6px 0;text-align:right;color:#666;font-size:.78rem;font-style:italic;">${cancellationProtectionFee.toFixed(2).replace('.',',')} €</td></tr>` : ''}
-                <tr><td style="padding:6px 0;color:#666;">zzgl. 19 % Umsatzsteuer</td><td style="padding:6px 0;text-align:right;font-weight:600;">${(amount - amount / 1.19).toFixed(2).replace('.',',')} €</td></tr>
-                <tr style="border-top:2px solid #ddd;"><td style="padding:8px 0 6px;color:#0D0D0D;font-weight:700;">Gesamtbetrag (brutto, gezahlt)</td><td style="padding:8px 0 6px;text-align:right;font-weight:700;color:#0D0D0D;">${amount.toFixed(2).replace('.',',')} €</td></tr>
-                <tr><td style="padding:14px 0 6px;color:#666;font-size:.78rem;" colspan="2"><em>Diese Buchungsbestätigung dient zugleich als Rechnung gemäß § 14 UStG.</em></td></tr>
-                <tr><td style="padding:6px 0;color:#666;">Verspätungsgebühr (bei verspäteter Rückgabe)</td><td style="padding:6px 0;text-align:right;">15,00 € / angefangene Stunde</td></tr>
-                <tr><td style="padding:6px 0;color:#666;">Reinigungspauschale bei nicht ordnungsgemäßer Rückgabe</td><td style="padding:6px 0;text-align:right;">30,00 €</td></tr>
-              </table>
-
-              <h3 style="font-size:.95rem;color:#0D0D0D;margin:20px 0 8px;font-family:Arial,sans-serif;">Wesentliche Pflichten des Mieters</h3>
-              <ul style="font-size:.82rem;line-height:1.6;font-family:Arial,sans-serif;padding-left:20px;margin:0;color:#333;">
-                <li>Pre-Check-Foto <strong>vor Abholung</strong> anfertigen — danach wird der Schloss-Code freigeschaltet</li>
-                <li>Rückgabe-Foto <strong>nach Mietende</strong> hochladen — als Beweissicherung des Zustands</li>
-                <li>Anhänger nur im zulässigen Gesamtgewicht und der zugelassenen Fahrerlaubnisklasse (B oder BE) nutzen</li>
-                <li>Auslandsfahrten innerhalb des Schengen-Raums vorab per E-Mail an info@simpletrailer.de anzeigen</li>
-                <li>Schäden, Unfälle oder technische Probleme unverzüglich (innerhalb 2 Stunden) per E-Mail melden</li>
-                <li>Pünktliche und gereinigte Rückgabe am vereinbarten Stellplatz (oder Bremen-Stadtgebiet bei Flexrückgabe)</li>
-              </ul>
-
-              <h3 style="font-size:.95rem;color:#0D0D0D;margin:20px 0 8px;font-family:Arial,sans-serif;">Einzugsermächtigung</h3>
-              <p style="font-size:.82rem;line-height:1.6;font-family:Arial,sans-serif;margin:0;color:#333;">
-                Der Mieter ermächtigt den Vermieter, etwaige Verspätungs-, Reinigungs- und Schadensgebühren automatisch über die bei der Buchung hinterlegte Zahlungsmethode (über Stripe Payments Europe Ltd.) einzuziehen.
-              </p>
-
-              <div style="background:#f9f9f9;border-left:3px solid #E85D00;padding:14px 18px;margin:24px 0 16px;font-family:Arial,sans-serif;">
-                <p style="font-size:.78rem;color:#333;margin:0 0 6px;line-height:1.55;font-weight:600;">
-                  Vertragsschluss
-                </p>
-                <p style="font-size:.78rem;color:#555;margin:0;line-height:1.55;">
-                  Dieser Mietvertrag ist mit Bezahlung am <strong>${fmt(new Date())} Uhr</strong> elektronisch zustande gekommen. Der Mieter hat die <a href="${siteUrl}/agb.html" style="color:#E85D00;text-decoration:none;font-weight:600;">AGB (Stand ${meta.agb_version || '2026-06-05'})</a> und die <a href="${siteUrl}/datenschutz.html" style="color:#E85D00;text-decoration:none;font-weight:600;">Datenschutzerklärung</a> akzeptiert und dem sofortigen Vertragsbeginn ausdrücklich zugestimmt (kein Widerrufsrecht gem. § 312g Abs. 2 Nr. 9 BGB).
+              <div style="background:#0a0a0a;border:1px solid #383838;border-radius:10px;padding:14px 18px;margin-top:18px;">
+                <p style="color:#E85D00;font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin:0 0 6px;">📎 Anhänge zu dieser Buchung</p>
+                <p style="font-size:.85rem;color:#ccc;margin:0;line-height:1.55;">
+                  Im Anhang findest du <strong style="color:#fff;">Mietvertrag</strong> und <strong style="color:#fff;">Rechnung</strong> als PDF — beide rechtssicher und druckbar.
                 </p>
               </div>
 
-              <p style="font-size:.7rem;color:#999;font-family:Arial,sans-serif;margin:20px 0 0;text-align:center;line-height:1.5;">
-                Diese E-Mail ist nach § 14 UStG eine vollwertige Rechnung sowie der elektronisch geschlossene Mietvertrag und ersetzt eine eigenhändige Unterschrift.<br>
-                SimpleTrailer GbR · Bremen
+              <p style="color:#666;font-size:.72rem;margin:14px 0 0;line-height:1.55;text-align:center;">
+                Mit Bezahlung wurde der Mietvertrag elektronisch geschlossen. Du hast die <a href="${siteUrl}/agb.html" style="color:#E85D00;text-decoration:none;">AGB (Stand ${meta.agb_version || '2026-06-05'})</a> und die <a href="${siteUrl}/datenschutz.html" style="color:#E85D00;text-decoration:none;">Datenschutzerklärung</a> akzeptiert.<br>
+                Es besteht kein Widerrufsrecht gem. § 312g Abs. 2 Nr. 9 BGB.
               </p>
             </div>
 
