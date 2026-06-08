@@ -2420,11 +2420,11 @@
 <section id="anhaenger">
   <div class="section-inner">
     <div class="reveal">
-      <p class="section-tag">Unsere Anhänger</p>
-      <h2 class="section-title">Für jeden Zweck der richtige.</h2>
+      <p class="section-tag" data-i18n="sec.trailers.tag">Unsere Anhänger</p>
+      <h2 class="section-title" data-i18n="sec.trailers.title">Für jeden Zweck der richtige.</h2>
       <div class="swipe-hint" id="swipeHint">
-        <span class="swipe-hint-arrow">Wischen →</span>
-        <span>um alle Anhänger zu sehen</span>
+        <span class="swipe-hint-arrow" data-i18n="trailers.swipe">Wischen →</span>
+        <span data-i18n="trailers.swipe.suffix">um alle Anhänger zu sehen</span>
       </div>
     </div>
 
@@ -2443,24 +2443,23 @@
           <div class="trailer-card-img-placeholder" style="display:none;">🚛</div>
         </div>
         <div class="trailer-card-body">
-          <span class="avail-badge">Verfügbar</span>
-          <div class="trailer-card-name">PKW-Anhänger mit Plane</div>
+          <span class="avail-badge" data-i18n="trailers.available">Verfügbar</span>
+          <div class="trailer-card-name" data-i18n="trailers.plane.name">PKW-Anhänger mit Plane</div>
           <div class="trailer-card-specs">
-            <div class="trailer-card-spec">⚖ <span><strong>Bis 750 kg</strong> zGG</span></div>
-            <div class="trailer-card-spec">🪪 <span><strong>Führerschein B</strong> reicht</span></div>
-            <div class="trailer-card-spec">🏕 <span><strong>Plane</strong> inklusive</span></div>
-            <div class="trailer-card-spec">🔑 <span><strong>Kontaktlose</strong> Abholung</span></div>
+            <div class="trailer-card-spec">⚖ <span data-i18n-html="trailers.plane.spec1"><strong>Bis 750 kg</strong> zGG</span></div>
+            <div class="trailer-card-spec">🪪 <span data-i18n-html="trailers.plane.spec2"><strong>Führerschein B</strong> reicht</span></div>
+            <div class="trailer-card-spec">🏕 <span data-i18n-html="trailers.plane.spec3"><strong>Plane</strong> inklusive</span></div>
+            <div class="trailer-card-spec">🔑 <span data-i18n-html="trailers.spec.contactless"><strong>Kontaktlose</strong> Abholung</span></div>
           </div>
           <div style="display:flex;gap:8px;margin-top:auto;">
             <button onclick="openInfoModalIndex()" style="background:none;border:1.5px solid var(--border);color:var(--gray);border-radius:8px;padding:11px 14px;font-size:.82rem;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s;flex-shrink:0;"
               onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--orange)'"
               onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--gray)'">ⓘ</button>
-            <a href="#" onclick="openTrailerModal('flexible');return false;" class="btn btn-orange" style="flex:1;">Jetzt buchen →</a>
+            <a href="#" onclick="openTrailerModal('flexible');return false;" class="btn btn-orange" style="flex:1;" data-i18n="trailers.book_now">Jetzt buchen →</a>
           </div>
         </div>
       </div>
 
-      <!-- Autotransporter -->
       <div class="trailer-card unavailable reveal">
         <div class="trailer-card-img contain-light">
           <picture>
@@ -2471,23 +2470,22 @@
           </picture>
           <div class="trailer-card-img-placeholder" style="display:none;">🚗</div>
           <div class="unavail-overlay">
-            <span style="color:#fff;font-size:.8rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;background:rgba(0,0,0,.6);padding:8px 16px;border-radius:20px;">Demnächst</span>
+            <span style="color:#fff;font-size:.8rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;background:rgba(0,0,0,.6);padding:8px 16px;border-radius:20px;" data-i18n="trailers.soon">Demnächst</span>
           </div>
         </div>
         <div class="trailer-card-body">
-          <span class="unavail-badge">Momentan nicht verfügbar</span>
-          <div class="trailer-card-name">Autotransporter</div>
+          <span class="unavail-badge" data-i18n="trailers.unavailable">Momentan nicht verfügbar</span>
+          <div class="trailer-card-name" data-i18n="trailers.auto.name">Autotransporter</div>
           <div class="trailer-card-specs">
-            <div class="trailer-card-spec">⚖ <span><strong>Bis 2.500 kg</strong> zGG</span></div>
-            <div class="trailer-card-spec">🪪 <span><strong>Führerschein BE</strong> erforderlich</span></div>
-            <div class="trailer-card-spec">🔧 <span><strong>Auffahrrampen</strong> inklusive</span></div>
-            <div class="trailer-card-spec">🔑 <span><strong>Kontaktlose</strong> Abholung</span></div>
+            <div class="trailer-card-spec">⚖ <span data-i18n-html="trailers.auto.spec1"><strong>Bis 2.500 kg</strong> zGG</span></div>
+            <div class="trailer-card-spec">🪪 <span data-i18n-html="trailers.auto.spec2"><strong>Führerschein BE</strong> erforderlich</span></div>
+            <div class="trailer-card-spec">🔧 <span data-i18n-html="trailers.auto.spec3"><strong>Auffahrrampen</strong> inklusive</span></div>
+            <div class="trailer-card-spec">🔑 <span data-i18n-html="trailers.spec.contactless"><strong>Kontaktlose</strong> Abholung</span></div>
           </div>
-          <button class="btn btn-outline" style="margin-top:auto;width:100%;border-color:var(--orange);color:var(--orange);" onclick="openNotifyModal('Autotransporter')">Benachrichtigen wenn verfügbar</button>
+          <button class="btn btn-outline" style="margin-top:auto;width:100%;border-color:var(--orange);color:var(--orange);" onclick="openNotifyModal('Autotransporter')" data-i18n="trailers.notify">Benachrichtigen wenn verfügbar</button>
         </div>
       </div>
 
-      <!-- Kofferanhänger -->
       <div class="trailer-card unavailable reveal">
         <div class="trailer-card-img contain-light">
           <img src="kofferanhaenger-mieten-bremen-simpletrailer.png?v=1" alt="Kofferanhänger mieten in Bremen — SimpleTrailer"
@@ -2495,19 +2493,19 @@
                onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
           <div class="trailer-card-img-placeholder" style="display:none;">📦</div>
           <div class="unavail-overlay">
-            <span style="color:#fff;font-size:.8rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;background:rgba(0,0,0,.6);padding:8px 16px;border-radius:20px;">Demnächst</span>
+            <span style="color:#fff;font-size:.8rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;background:rgba(0,0,0,.6);padding:8px 16px;border-radius:20px;" data-i18n="trailers.soon">Demnächst</span>
           </div>
         </div>
         <div class="trailer-card-body">
-          <span class="unavail-badge">Momentan nicht verfügbar</span>
-          <div class="trailer-card-name">Kofferanhänger</div>
+          <span class="unavail-badge" data-i18n="trailers.unavailable">Momentan nicht verfügbar</span>
+          <div class="trailer-card-name" data-i18n="trailers.koffer.name">Kofferanhänger</div>
           <div class="trailer-card-specs">
-            <div class="trailer-card-spec">⚖ <span><strong>Bis 1.200 kg</strong> zGG</span></div>
-            <div class="trailer-card-spec">🪪 <span><strong>Führerschein B</strong> reicht</span></div>
-            <div class="trailer-card-spec">🌧 <span><strong>Vollständig</strong> wetterfest</span></div>
-            <div class="trailer-card-spec">🔑 <span><strong>Kontaktlose</strong> Abholung</span></div>
+            <div class="trailer-card-spec">⚖ <span data-i18n-html="trailers.koffer.spec1"><strong>Bis 1.200 kg</strong> zGG</span></div>
+            <div class="trailer-card-spec">🪪 <span data-i18n-html="trailers.plane.spec2"><strong>Führerschein B</strong> reicht</span></div>
+            <div class="trailer-card-spec">🌧 <span data-i18n-html="trailers.koffer.spec3"><strong>Vollständig</strong> wetterfest</span></div>
+            <div class="trailer-card-spec">🔑 <span data-i18n-html="trailers.spec.contactless"><strong>Kontaktlose</strong> Abholung</span></div>
           </div>
-          <button class="btn btn-outline" style="margin-top:auto;width:100%;border-color:var(--orange);color:var(--orange);" onclick="openNotifyModal('Kofferanhaenger')">Benachrichtigen wenn verfügbar</button>
+          <button class="btn btn-outline" style="margin-top:auto;width:100%;border-color:var(--orange);color:var(--orange);" onclick="openNotifyModal('Kofferanhaenger')" data-i18n="trailers.notify">Benachrichtigen wenn verfügbar</button>
         </div>
       </div>
 
@@ -2520,77 +2518,73 @@
 <section id="preise">
   <div class="section-inner">
     <div class="reveal">
-      <p class="section-tag">Preise</p>
-      <h2 class="section-title">Dein Zeitraum. Dein Preis.</h2>
-      <p style="color:var(--text-muted);max-width:520px;margin:0 auto 12px;line-height:1.6;text-align:center;">Wähle einfach wann du den Anhänger brauchst – der Preis berechnet sich automatisch. Kurztrip, Wochenende oder Urlaub.</p>
-      <p style="color:var(--text-muted);max-width:520px;margin:0 auto 40px;font-size:.78rem;text-align:center;opacity:.7;">Alle Preise inkl. 19 % MwSt</p>
+      <p class="section-tag" data-i18n="sec.prices.tag">Preise</p>
+      <h2 class="section-title" data-i18n="sec.prices.title">Dein Zeitraum. Dein Preis.</h2>
+      <p style="color:var(--text-muted);max-width:520px;margin:0 auto 12px;line-height:1.6;text-align:center;" data-i18n="prices.sub">Wähle einfach wann du den Anhänger brauchst – der Preis berechnet sich automatisch. Kurztrip, Wochenende oder Urlaub.</p>
+      <p style="color:var(--text-muted);max-width:520px;margin:0 auto 40px;font-size:.78rem;text-align:center;opacity:.7;" data-i18n="prices.vat">Alle Preise inkl. 19 % MwSt</p>
     </div>
 
     <div class="pricing-grid">
 
-      <!-- INDIVIDUELL -->
       <div class="price-card reveal">
-        <div class="card-header"><p class="price-label">Individuell</p></div>
+        <div class="card-header"><p class="price-label" data-i18n="booking.mode.flex">Individuell</p></div>
         <div class="price-amount">
-          <span class="currency" style="font-size:.85rem;padding-bottom:5px;">ab</span>
+          <span class="currency" style="font-size:.85rem;padding-bottom:5px;" data-i18n="booking.from">ab</span>
           <span class="big" style="font-size:2.6rem;">9€</span>
         </div>
-        <p class="price-sub">Preis nach Dauer · frei wählbar</p>
+        <p class="price-sub" data-i18n="prices.flex.sub">Preis nach Dauer · frei wählbar</p>
         <ul class="price-features">
-          <li><span class="feat-label">Bis 3 Std.</span><strong style="color:var(--white)">9 €</strong></li>
-          <li><span class="feat-label">Bis 6 Std.</span><strong style="color:var(--white)">18 €</strong></li>
-          <li><span class="feat-label">Bis 24 Std.</span><strong style="color:var(--white)">29 €</strong></li>
-          <li><span class="feat-label">Extra-Tag</span><strong style="color:var(--white)">24 €</strong></li>
+          <li><span class="feat-label" data-i18n="prices.flex.f1">Bis 3 Std.</span><strong style="color:var(--white)">9 €</strong></li>
+          <li><span class="feat-label" data-i18n="prices.flex.f2">Bis 6 Std.</span><strong style="color:var(--white)">18 €</strong></li>
+          <li><span class="feat-label" data-i18n="prices.flex.f3">Bis 24 Std.</span><strong style="color:var(--white)">29 €</strong></li>
+          <li><span class="feat-label" data-i18n="prices.flex.f4">Extra-Tag</span><strong style="color:var(--white)">24 €</strong></li>
         </ul>
-        <a href="#" onclick="openTrailerModal('flexible');return false;" class="btn btn-outline">Buchen</a>
+        <a href="#" onclick="openTrailerModal('flexible');return false;" class="btn btn-outline" data-i18n="prices.book">Buchen</a>
       </div>
 
-      <!-- GANZER TAG -->
       <div class="price-card featured reveal">
-        <span class="card-badge orange">Meist gebucht</span>
-        <div class="card-header"><p class="price-label">Ganzer Tag</p></div>
+        <span class="card-badge orange" data-i18n="prices.most_booked">Meist gebucht</span>
+        <div class="card-header"><p class="price-label" data-i18n="booking.mode.day">Ganzer Tag</p></div>
         <div class="price-amount">
-          <span class="currency">€</span><span class="big">29</span><span class="period">/ 24 Std.</span>
+          <span class="currency">€</span><span class="big">29</span><span class="period" data-i18n="prices.day.period">/ 24 Std.</span>
         </div>
-        <p class="price-sub">≈ 1,21 €/Stunde</p>
+        <p class="price-sub" data-i18n="prices.day.sub">≈ 1,21 €/Stunde</p>
         <ul class="price-features">
-          <li>Volle 24 Stunden</li>
-          <li>Schloss per Zahlencode</li>
-          <li>Keine Kaution nötig</li>
+          <li data-i18n="prices.day.f1">Volle 24 Stunden</li>
+          <li data-i18n="prices.day.f2">Schloss per Zahlencode</li>
+          <li data-i18n="prices.no_deposit">Keine Kaution nötig</li>
         </ul>
-        <a href="#" onclick="openTrailerModal('day');return false;" class="btn btn-orange">Buchen</a>
+        <a href="#" onclick="openTrailerModal('day');return false;" class="btn btn-orange" data-i18n="prices.book">Buchen</a>
       </div>
 
-      <!-- WOCHENENDE -->
       <div class="price-card featured-green reveal">
-        <span class="card-badge" style="background:#0f2d0f;color:#4ade80;border:1px solid #22c55e;">Wochenend-Deal</span>
-        <div class="card-header"><p class="price-label">Wochenende</p></div>
+        <span class="card-badge" style="background:#0f2d0f;color:#4ade80;border:1px solid #22c55e;" data-i18n="prices.weekend_deal">Wochenend-Deal</span>
+        <div class="card-header"><p class="price-label" data-i18n="booking.mode.weekend">Wochenende</p></div>
         <div class="price-amount">
-          <span class="currency">€</span><span class="big">59</span><span class="period">/ Fr–So</span>
+          <span class="currency">€</span><span class="big">59</span><span class="period" data-i18n="prices.weekend.period">/ Fr–So</span>
         </div>
-        <p class="price-sub">≈ 19,67 €/Tag</p>
+        <p class="price-sub" data-i18n="prices.weekend.sub">≈ 19,67 €/Tag</p>
         <ul class="price-features">
-          <li>Freitag bis Sonntag</li>
-          <li>Ideal für Umzüge</li>
-          <li>Keine Kaution nötig</li>
+          <li data-i18n="prices.weekend.f1">Freitag bis Sonntag</li>
+          <li data-i18n="prices.weekend.f2">Ideal für Umzüge</li>
+          <li data-i18n="prices.no_deposit">Keine Kaution nötig</li>
         </ul>
-        <a href="#" onclick="openTrailerModal('weekend');return false;" class="btn btn-outline">Buchen</a>
+        <a href="#" onclick="openTrailerModal('weekend');return false;" class="btn btn-outline" data-i18n="prices.book">Buchen</a>
       </div>
 
-      <!-- WOCHE -->
       <div class="price-card week-card reveal" style="border-color:#d97706;background:#120d00;">
-        <span class="card-badge amber">🔥 Sparangebot</span>
-        <div class="card-header"><p class="price-label">1 Woche</p></div>
+        <span class="card-badge amber" data-i18n="prices.save_deal">🔥 Sparangebot</span>
+        <div class="card-header"><p class="price-label" data-i18n="booking.mode.week">1 Woche</p></div>
         <div class="price-amount">
-          <span class="currency">€</span><span class="big" style="color:#f59e0b;">119</span><span class="period">/ 7 Tage</span>
+          <span class="currency">€</span><span class="big" style="color:#f59e0b;">119</span><span class="period" data-i18n="prices.week.period">/ 7 Tage</span>
         </div>
-        <p class="price-sub">≈ 17 €/Tag · <span class="save">spare 54 €</span> <span class="price-old">173 €</span></p>
+        <p class="price-sub" data-i18n-html="prices.week.sub">≈ 17 €/Tag · <span class="save">spare 54 €</span> <span class="price-old">173 €</span></p>
         <ul class="price-features">
-          <li>7 Tage ab Startdatum</li>
-          <li>Perfekt für den Urlaub</li>
-          <li>Keine Kaution nötig</li>
+          <li data-i18n="prices.week.f1">7 Tage ab Startdatum</li>
+          <li data-i18n="prices.week.f2">Perfekt für den Urlaub</li>
+          <li data-i18n="prices.no_deposit">Keine Kaution nötig</li>
         </ul>
-        <a href="#" onclick="openTrailerModal('week');return false;" class="btn btn-outline" style="border-color:#d97706;color:#f59e0b;">Buchen</a>
+        <a href="#" onclick="openTrailerModal('week');return false;" class="btn btn-outline" style="border-color:#d97706;color:#f59e0b;" data-i18n="prices.book">Buchen</a>
       </div>
 
 
@@ -2602,9 +2596,9 @@
 <section id="anwendungen" style="padding:60px 5% 40px;">
   <div class="section-inner">
     <div class="reveal" style="text-align:center;margin-bottom:32px;">
-      <p class="section-tag">Wofür Anhänger?</p>
-      <h2 class="section-title">Für jede Tour der passende Tarif</h2>
-      <p style="color:var(--text-muted);max-width:520px;margin:0 auto;line-height:1.6;font-size:.95rem;">Vom Sperrmüll-Termin bis zum IKEA-Sonntag — wähle deinen Einsatz und buche direkt.</p>
+      <p class="section-tag" data-i18n="sec.usecases.tag">Wofür Anhänger?</p>
+      <h2 class="section-title" data-i18n="sec.usecases.title">Für jede Tour der passende Tarif</h2>
+      <p style="color:var(--text-muted);max-width:520px;margin:0 auto;line-height:1.6;font-size:.95rem;" data-i18n="usecases.sub">Vom Sperrmüll-Termin bis zum IKEA-Sonntag — wähle deinen Einsatz und buche direkt.</p>
     </div>
     <div class="usecase-grid">
       <button type="button" onclick="openTrailerModal('flexible')" class="usecase-card has-image reveal">
@@ -2616,9 +2610,9 @@
           </picture>
         </div>
         <div class="usecase-content">
-          <div class="usecase-title">Umzug &amp; Möbel</div>
-          <div class="usecase-meta">Sofa, Schrank, Kartons · ab <strong>29 €/Tag</strong></div>
-          <div class="usecase-cta">Jetzt buchen</div>
+          <div class="usecase-title" data-i18n="usecases.move.title">Umzug &amp; Möbel</div>
+          <div class="usecase-meta" data-i18n-html="usecases.move.meta">Sofa, Schrank, Kartons · ab <strong>29 €/Tag</strong></div>
+          <div class="usecase-cta" data-i18n="usecases.book_now">Jetzt buchen</div>
         </div>
       </button>
       <button type="button" onclick="openTrailerModal('flexible')" class="usecase-card has-image reveal">
@@ -2630,24 +2624,24 @@
           </picture>
         </div>
         <div class="usecase-content">
-          <div class="usecase-title">Sperrmüll &amp; Garten</div>
-          <div class="usecase-meta">Recyclinghof, Grünschnitt · ab <strong>9 €/3 h</strong></div>
-          <div class="usecase-cta">Jetzt buchen</div>
+          <div class="usecase-title" data-i18n="usecases.garden.title">Sperrmüll &amp; Garten</div>
+          <div class="usecase-meta" data-i18n-html="usecases.garden.meta">Recyclinghof, Grünschnitt · ab <strong>9 €/3 h</strong></div>
+          <div class="usecase-cta" data-i18n="usecases.book_now">Jetzt buchen</div>
         </div>
       </button>
       <button type="button" onclick="openNotifyModal('Autotransporter')" class="usecase-card has-image soon reveal">
         <div class="usecase-image">
           <span class="usecase-badge" aria-hidden="true">🚗</span>
-          <span class="usecase-soon-badge">Demnächst</span>
+          <span class="usecase-soon-badge" data-i18n="trailers.soon">Demnächst</span>
           <picture>
             <source srcset="/use-auto.webp?v=3" type="image/webp">
             <img src="/use-auto.jpg?v=3" alt="Auto abschleppen mit Autotransporter-Anhänger in Bremen — PKW transportieren" loading="lazy" decoding="async" width="1536" height="1024">
           </picture>
         </div>
         <div class="usecase-content">
-          <div class="usecase-title">Auto-Transport</div>
-          <div class="usecase-meta">Auto abschleppen, Pannenhilfe · <strong>bald verfügbar</strong></div>
-          <div class="usecase-cta">Benachrichtigen</div>
+          <div class="usecase-title" data-i18n="usecases.auto.title">Auto-Transport</div>
+          <div class="usecase-meta" data-i18n-html="usecases.auto.meta">Auto abschleppen, Pannenhilfe · <strong>bald verfügbar</strong></div>
+          <div class="usecase-cta" data-i18n="usecases.notify">Benachrichtigen</div>
         </div>
       </button>
       <button type="button" onclick="openTrailerModal('flexible')" class="usecase-card has-image reveal">
@@ -2659,9 +2653,9 @@
           </picture>
         </div>
         <div class="usecase-content">
-          <div class="usecase-title">Großeinkauf</div>
-          <div class="usecase-meta">IKEA, Baumarkt, Möbelhaus · ab <strong>9 €/3 h</strong></div>
-          <div class="usecase-cta">Jetzt buchen</div>
+          <div class="usecase-title" data-i18n="usecases.shop.title">Großeinkauf</div>
+          <div class="usecase-meta" data-i18n-html="usecases.shop.meta">IKEA, Baumarkt, Möbelhaus · ab <strong>9 €/3 h</strong></div>
+          <div class="usecase-cta" data-i18n="usecases.book_now">Jetzt buchen</div>
         </div>
       </button>
     </div>
@@ -2672,35 +2666,35 @@
 <section id="how">
   <div class="section-inner">
     <div class="reveal">
-      <p class="section-tag">So läuft's ab</p>
-      <h2 class="section-title">Buchen in 5 Schritten</h2>
+      <p class="section-tag" data-i18n="sec.how.tag">So läuft&#39;s ab</p>
+      <h2 class="section-title" data-i18n="sec.how.title">Buchen in 5 Schritten</h2>
     </div>
     <div class="steps">
       <div class="steps-line"></div>
       <div class="step reveal">
         <div class="step-num">01</div>
-        <h3>Auf Karte finden</h3>
-        <p>Sieh live, ob der Anhänger gerade frei ist. Kein Anruf, kein Warten – direkt auf der Karte.</p>
+        <h3 data-i18n="how.s1.title">Auf Karte finden</h3>
+        <p data-i18n="how.s1.desc">Sieh live, ob der Anhänger gerade frei ist. Kein Anruf, kein Warten – direkt auf der Karte.</p>
       </div>
       <div class="step reveal">
         <div class="step-num">02</div>
-        <h3>Zeit aussuchen</h3>
-        <p>3 Stunden, ein Tag oder das ganze Wochenende – du wählst, wir machen das möglich.</p>
+        <h3 data-i18n="how.s2.title">Zeit aussuchen</h3>
+        <p data-i18n="how.s2.desc">3 Stunden, ein Tag oder das ganze Wochenende – du wählst, wir machen das möglich.</p>
       </div>
       <div class="step reveal">
         <div class="step-num">03</div>
-        <h3>Direkt zahlen</h3>
-        <p>Karte, PayPal – fertig. Der Zugangscode kommt sofort per Mail. Keine Überraschungen.</p>
+        <h3 data-i18n="how.s3.title">Direkt zahlen</h3>
+        <p data-i18n="how.s3.desc">Karte, PayPal – fertig. Der Zugangscode kommt sofort per Mail. Keine Überraschungen.</p>
       </div>
       <div class="step reveal">
         <div class="step-num">04</div>
-        <h3>Abholen & losfahren</h3>
-        <p>Code eingeben, kurzes Foto vom Anhänger (Schutz für beide Seiten), ankuppeln, los. Keine Schlüsselübergabe.</p>
+        <h3 data-i18n="how.s4.title">Abholen & losfahren</h3>
+        <p data-i18n="how.s4.desc">Code eingeben, kurzes Foto vom Anhänger (Schutz für beide Seiten), ankuppeln, los. Keine Schlüsselübergabe.</p>
       </div>
       <div class="step reveal">
         <div class="step-num">05</div>
-        <h3>Zurück & abschließen</h3>
-        <p>Anhänger zurück an den Stellplatz, Foto in der Rückgabe-Maske hochladen, Schloss zu. Wir prüfen automatisch.</p>
+        <h3 data-i18n="how.s5.title">Zurück & abschließen</h3>
+        <p data-i18n="how.s5.desc">Anhänger zurück an den Stellplatz, Foto in der Rückgabe-Maske hochladen, Schloss zu. Wir prüfen automatisch.</p>
       </div>
     </div>
   </div>
@@ -2710,7 +2704,7 @@
 <section id="bewertungen">
   <div class="section-inner">
     <div class="reveal" style="text-align:center;">
-      <p class="section-tag">Bewertungen</p>
+      <p class="section-tag" data-i18n="sec.reviews.tag">Bewertungen</p>
       <h2 class="section-title" data-i18n="reviews.title">Was unsere Mieter sagen.</h2>
       <a href="https://g.page/r/Cd6jwKdwS_Y7EAE" target="_blank" rel="noopener" class="reviews-summary reveal" aria-label="5,0 Sterne aus 11 Google-Bewertungen — bei Google ansehen">
         <span class="rs-stars" aria-hidden="true">★★★★★</span>
@@ -2849,7 +2843,7 @@
 <section id="faq">
   <div class="section-inner">
     <div class="reveal" style="text-align:center;margin-bottom:32px;">
-      <p class="section-tag">FAQ</p>
+      <p class="section-tag" data-i18n="sec.faq.tag">FAQ</p>
       <h2 class="section-title" data-i18n="faq.title">Kurze Antworten auf echte Fragen</h2>
       <p style="color:var(--text-muted);max-width:560px;margin:8px auto 0;line-height:1.65;font-size:.95rem;" data-i18n="faq.sub">Alles was du vor deiner ersten Buchung wissen musst — von Führerschein bis Rückgabe. Noch unklar? Frag Simply oder lies im Ratgeber.</p>
     </div>
@@ -2959,9 +2953,9 @@
 <section id="ratgeber-section">
   <div class="section-inner">
     <div class="reveal" style="text-align:center;max-width:640px;margin:0 auto;">
-      <p class="section-tag">Ratgeber</p>
-      <h2 class="section-title">Anhänger-Wissen, kompakt erklärt</h2>
-      <p style="color:var(--text-muted);line-height:1.65;font-size:.95rem;margin-top:8px;">Praktische Anleitungen vor der ersten Fahrt — geschrieben für Anfänger, geprüft von Profis.</p>
+      <p class="section-tag" data-i18n="sec.guides.tag">Ratgeber</p>
+      <h2 class="section-title" data-i18n="sec.guides.title">Anhänger-Wissen, kompakt erklärt</h2>
+      <p style="color:var(--text-muted);line-height:1.65;font-size:.95rem;margin-top:8px;" data-i18n="ratgeber.sub">Praktische Anleitungen vor der ersten Fahrt — geschrieben für Anfänger, geprüft von Profis.</p>
     </div>
     <div class="ratgeber-grid">
       <a href="/ratgeber/welcher-anhaenger-mit-b-fuehrerschein" class="ratgeber-card reveal">
@@ -2973,10 +2967,10 @@
           </picture>
         </div>
         <div class="ratgeber-card-body">
-          <span class="ratgeber-card-tag">Führerschein</span>
-          <h3 class="ratgeber-card-title">Welcher Anhänger mit Führerschein B?</h3>
-          <p class="ratgeber-card-meta">Alles zu 750 kg, 3,5 t und der BE-Erweiterung — mit Rechenbeispielen für dein Auto.</p>
-          <span class="ratgeber-card-cta">Artikel lesen</span>
+          <span class="ratgeber-card-tag" data-i18n="ratgeber.tag.license">Führerschein</span>
+          <h3 class="ratgeber-card-title" data-i18n="ratgeber.c1.title">Welcher Anhänger mit Führerschein B?</h3>
+          <p class="ratgeber-card-meta" data-i18n="ratgeber.c1.meta">Alles zu 750 kg, 3,5 t und der BE-Erweiterung — mit Rechenbeispielen für dein Auto.</p>
+          <span class="ratgeber-card-cta" data-i18n="ratgeber.read">Artikel lesen</span>
         </div>
       </a>
       <a href="/ratgeber/anhaenger-richtig-beladen" class="ratgeber-card reveal">
@@ -2988,10 +2982,10 @@
           </picture>
         </div>
         <div class="ratgeber-card-body">
-          <span class="ratgeber-card-tag">Sicherheit</span>
-          <h3 class="ratgeber-card-title">Anhänger richtig beladen</h3>
-          <p class="ratgeber-card-meta">Schwerpunkt, Stützlast, Ladungssicherung — und warum eine falsche Beladung dich Punkte kostet.</p>
-          <span class="ratgeber-card-cta">Artikel lesen</span>
+          <span class="ratgeber-card-tag" data-i18n="ratgeber.tag.safety">Sicherheit</span>
+          <h3 class="ratgeber-card-title" data-i18n="ratgeber.c2.title">Anhänger richtig beladen</h3>
+          <p class="ratgeber-card-meta" data-i18n="ratgeber.c2.meta">Schwerpunkt, Stützlast, Ladungssicherung — und warum eine falsche Beladung dich Punkte kostet.</p>
+          <span class="ratgeber-card-cta" data-i18n="ratgeber.read">Artikel lesen</span>
         </div>
       </a>
       <a href="/ratgeber/anhaenger-ankuppeln-anleitung" class="ratgeber-card reveal">
@@ -3003,15 +2997,15 @@
           </picture>
         </div>
         <div class="ratgeber-card-body">
-          <span class="ratgeber-card-tag">Anleitung</span>
-          <h3 class="ratgeber-card-title">Anhänger ankuppeln Schritt für Schritt</h3>
-          <p class="ratgeber-card-meta">Vom Aufsetzen der Kupplung über Stecker bis Abreißseil — die 6 Schritte für dein erstes Mal.</p>
-          <span class="ratgeber-card-cta">Artikel lesen</span>
+          <span class="ratgeber-card-tag" data-i18n="ratgeber.tag.guide">Anleitung</span>
+          <h3 class="ratgeber-card-title" data-i18n="ratgeber.c3.title">Anhänger ankuppeln Schritt für Schritt</h3>
+          <p class="ratgeber-card-meta" data-i18n="ratgeber.c3.meta">Vom Aufsetzen der Kupplung über Stecker bis Abreißseil — die 6 Schritte für dein erstes Mal.</p>
+          <span class="ratgeber-card-cta" data-i18n="ratgeber.read">Artikel lesen</span>
         </div>
       </a>
     </div>
     <div style="text-align:center;margin-top:8px;" class="reveal">
-      <a href="/ratgeber" class="ratgeber-all-link">Alle Ratgeber ansehen →</a>
+      <a href="/ratgeber" class="ratgeber-all-link" data-i18n="ratgeber.all">Alle Ratgeber ansehen →</a>
     </div>
   </div>
 </section>
@@ -3021,39 +3015,39 @@
   <div class="section-inner">
     <div class="contact-grid reveal">
       <div class="contact-info">
-        <p class="section-tag">Kontakt</p>
-        <h2 class="section-title" style="margin-bottom: 16px;">Irgendwas unklar?<br>Schreib uns.</h2>
-        <p>Wir sind kein Callcenter. Wir antworten persönlich – meistens innerhalb von ein paar Stunden.</p>
+        <p class="section-tag" data-i18n="sec.contact.tag">Kontakt</p>
+        <h2 class="section-title" style="margin-bottom: 16px;" data-i18n-html="contact.title">Irgendwas unklar?<br>Schreib uns.</h2>
+        <p data-i18n="contact.sub">Wir sind kein Callcenter. Wir antworten persönlich – meistens innerhalb von ein paar Stunden.</p>
         <div class="contact-detail">
           <div class="contact-detail-icon">✉</div>
           <span>info@simpletrailer.de</span>
         </div>
         <div class="contact-detail">
           <div class="contact-detail-icon">📍</div>
-          <span>Bremen, Deutschland</span>
+          <span data-i18n="footer.bremen_de">Bremen, Deutschland</span>
         </div>
         <div class="contact-detail">
           <div class="contact-detail-icon">🕐</div>
-          <span>Mo–So, 8:00–20:00 Uhr</span>
+          <span data-i18n="contact.hours">Mo–So, 8:00–20:00 Uhr</span>
         </div>
       </div>
 
       <form class="contact-form" onsubmit="submitForm(event)">
         <div class="form-row">
           <div class="form-group">
-            <p class="field-label">Name</p>
-            <input type="text" class="field-input" placeholder="Dein Name" required />
+            <p class="field-label" data-i18n="contact.name">Name</p>
+            <input type="text" class="field-input" placeholder="Dein Name" required data-i18n-attr="placeholder:contact.name.ph" />
           </div>
           <div class="form-group">
-            <p class="field-label">E-Mail</p>
-            <input type="email" class="field-input" placeholder="deine@mail.de" required />
+            <p class="field-label" data-i18n="account.email">E-Mail</p>
+            <input type="email" class="field-input" placeholder="deine@mail.de" required data-i18n-attr="placeholder:account.email.placeholder" />
           </div>
         </div>
         <div class="form-group">
-          <p class="field-label">Nachricht</p>
-          <textarea class="field-input" placeholder="Was möchtest du wissen?" required></textarea>
+          <p class="field-label" data-i18n="contact.message">Nachricht</p>
+          <textarea class="field-input" placeholder="Was möchtest du wissen?" required data-i18n-attr="placeholder:contact.message.ph"></textarea>
         </div>
-        <button type="submit" class="btn btn-orange">Nachricht senden →</button>
+        <button type="submit" class="btn btn-orange" data-i18n="contact.send">Nachricht senden →</button>
       </form>
     </div>
   </div>
@@ -3063,15 +3057,15 @@
 <!-- Newsletter-Sektion vor Footer -->
 <section style="padding:60px 5% 40px;background:linear-gradient(135deg,#1a0f10,#0d0d0d);">
   <div style="max-width:680px;margin:0 auto;text-align:center;">
-    <p style="font-size:.65rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--orange);margin-bottom:8px;">Newsletter</p>
-    <h2 style="font-size:1.6rem;margin:0 0 8px;letter-spacing:-.02em;">Die besten Anhänger-Tipps direkt ins Postfach</h2>
-    <p style="color:var(--text-muted);margin-bottom:24px;line-height:1.6;font-size:.92rem;">Praktische Anleitungen, Saison-Aktionen, neue Anhänger-Typen — kein Spam, jederzeit kündbar.</p>
+    <p style="font-size:.65rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--orange);margin-bottom:8px;" data-i18n="newsletter.tag">Newsletter</p>
+    <h2 style="font-size:1.6rem;margin:0 0 8px;letter-spacing:-.02em;" data-i18n="newsletter.title">Die besten Anhänger-Tipps direkt ins Postfach</h2>
+    <p style="color:var(--text-muted);margin-bottom:24px;line-height:1.6;font-size:.92rem;" data-i18n="newsletter.sub">Praktische Anleitungen, Saison-Aktionen, neue Anhänger-Typen — kein Spam, jederzeit kündbar.</p>
     <form id="newsletterForm" onsubmit="submitNewsletter(event)" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:480px;margin:0 auto;">
       <input type="email" required name="email" id="newsletterEmail" placeholder="deine@email.de" style="flex:1;min-width:200px;padding:12px 16px;border-radius:10px;border:1px solid var(--border);background:#0a0a0a;color:#fff;font-size:.95rem;font-family:inherit;" />
-      <button type="submit" id="newsletterSubmit" class="btn btn-orange" style="padding:12px 24px;">Anmelden</button>
+      <button type="submit" id="newsletterSubmit" class="btn btn-orange" style="padding:12px 24px;" data-i18n="newsletter.signup">Anmelden</button>
     </form>
     <p id="newsletterMsg" style="margin-top:12px;font-size:.78rem;color:var(--text-muted);min-height:1.4em;"></p>
-    <p style="margin-top:8px;font-size:.7rem;color:#555;">Mit Anmeldung bestätigst du unsere <a href="/datenschutz" style="color:#888;">Datenschutzerklärung</a>. Double-Opt-In: du bekommst eine Bestätigungs-Mail.</p>
+    <p style="margin-top:8px;font-size:.7rem;color:#555;" data-i18n-html="newsletter.legal">Mit Anmeldung bestätigst du unsere <a href="/datenschutz" style="color:#888;">Datenschutzerklärung</a>. Double-Opt-In: du bekommst eine Bestätigungs-Mail.</p>
   </div>
 </section>
 
