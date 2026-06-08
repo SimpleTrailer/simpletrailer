@@ -32,7 +32,7 @@ module.exports = async (req, res) => {
 
   if (req.method === 'POST') {
     try {
-      const { booking_id, precheck_token, photo_url } = req.body;
+      const { booking_id, precheck_token, photo_url, photo_url_inside } = req.body;
       if (!booking_id || !precheck_token) {
         return res.status(400).json({ error: 'Fehlende Parameter' });
       }
@@ -65,11 +65,18 @@ module.exports = async (req, res) => {
         return res.status(200).json({ access_code: booking.access_code, already_done: true });
       }
 
-      await supabase.from('bookings').update({
+      // Update mit beiden Fotos — bei fehlender Spalte (Migration ausstehend) fallback auf nur outside-Foto
+      const updatePayload = {
         status: 'active',
         precheck_photo_url: photo_url || null,
+        precheck_photo_url_inside: photo_url_inside || null,
         precheck_completed_at: new Date().toISOString()
-      }).eq('id', booking_id);
+      };
+      let { error: updErr } = await supabase.from('bookings').update(updatePayload).eq('id', booking_id);
+      if (updErr && /column .* does not exist/i.test(updErr.message || '')) {
+        const { precheck_photo_url_inside, ...minimal } = updatePayload;
+        await supabase.from('bookings').update(minimal).eq('id', booking_id);
+      }
 
       return res.status(200).json({ access_code: booking.access_code });
     } catch (err) {

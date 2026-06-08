@@ -112,24 +112,41 @@
 
     <div class="step-badge">📋 Vorab-Check · Schritt 1 von 2</div>
     <h1>Vor der Abfahrt</h1>
-    <p class="sub">Mache ein Foto des Anhängers und bestätige den Zustand – danach erhältst du den Zugangscode.</p>
+    <p class="sub">Mache <strong>2 Fotos</strong> des Anhängers und bestätige den Zustand – danach erhältst du den Schloss-Code.</p>
 
     <!-- Buchungsinfo -->
     <div class="card">
       <div id="bookingInfo"></div>
     </div>
 
-    <!-- Foto-Upload -->
+    <!-- Foto 1: Außenansicht -->
     <div class="card">
-      <p style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gray);margin-bottom:12px;">📷 Foto des Anhängers</p>
-      <div class="upload-area" id="uploadArea" onclick="onPrecheckUploadClick(event)">
-        <input type="file" accept="image/*" capture="environment" id="photoInput" onchange="handlePhoto(this)" />
+      <p style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--orange);margin-bottom:6px;">📷 Foto 1 — Anhänger von außen (Seite)</p>
+      <p style="font-size:.82rem;color:var(--gray);margin-bottom:10px;line-height:1.5;">Stell dich an die Seite des Anhängers. Komplette Plane, Räder und Deichsel müssen drauf sein.</p>
+      <img src="/mockup-precheck-aussen.png" alt="So fotografieren — Beispiel-Skizze" style="width:100%;border-radius:10px;margin-bottom:14px;display:block;">
+      <div class="upload-area" onclick="document.getElementById('photoInput').click()">
+        <input type="file" accept="image/*" capture="environment" id="photoInput" onchange="handlePhoto(this, 'outside')" style="display:none;" />
         <div class="upload-icon">📸</div>
-        <div class="upload-label" id="precheckUploadLabel">Foto aufnehmen oder hochladen</div>
-        <div class="upload-sub">Zeige den gesamten Anhänger von vorne/hinten</div>
+        <div class="upload-label" id="precheckUploadLabel">Foto aufnehmen</div>
+        <div class="upload-sub">Tippen zum Aufnehmen</div>
       </div>
       <img id="photoPreview" class="photo-preview" alt="Vorschau" />
       <p class="photo-name" id="photoName"></p>
+    </div>
+
+    <!-- Foto 2: Ladefläche -->
+    <div class="card">
+      <p style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--orange);margin-bottom:6px;">📷 Foto 2 — Ladefläche von oben</p>
+      <p style="font-size:.82rem;color:var(--gray);margin-bottom:10px;line-height:1.5;">Steig auf den Anhänger oder schau von oben rein. Der gesamte Boden muss sichtbar sein.</p>
+      <img src="/mockup-precheck-ladeflaeche.png" alt="So fotografieren — Beispiel-Skizze Ladefläche" style="width:100%;border-radius:10px;margin-bottom:14px;display:block;">
+      <div class="upload-area" onclick="document.getElementById('photoInput2').click()">
+        <input type="file" accept="image/*" capture="environment" id="photoInput2" onchange="handlePhoto(this, 'inside')" style="display:none;" />
+        <div class="upload-icon">📸</div>
+        <div class="upload-label" id="precheckUploadLabel2">Foto aufnehmen</div>
+        <div class="upload-sub">Tippen zum Aufnehmen</div>
+      </div>
+      <img id="photoPreview2" class="photo-preview" alt="Vorschau" />
+      <p class="photo-name" id="photoName2"></p>
     </div>
 
     <!-- Checkliste -->
@@ -186,8 +203,9 @@
   const bookingId  = params.get('id');
   const precheckToken = params.get('token');
 
-  let photoFile = null;
-  let booking   = null;
+  let photoFileOutside = null;
+  let photoFileInside  = null;
+  let booking          = null;
 
   const fmtDate = iso => new Date(iso).toLocaleString('de-DE', {
     day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'
@@ -291,22 +309,25 @@
     document.getElementById(id).addEventListener('change', checkReady);
   });
 
-  function handlePhoto(input) {
+  function handlePhoto(input, kind) {
     if (!input.files || !input.files[0]) return;
-    setPrecheckPhoto(input.files[0]);
+    setPrecheckPhoto(input.files[0], kind || 'outside');
   }
 
-  function setPrecheckPhoto(file) {
-    photoFile = file;
-    document.getElementById('photoName').textContent = '✓ ' + (photoFile.name || 'Foto aufgenommen');
-    document.getElementById('photoName').style.display = 'block';
+  function setPrecheckPhoto(file, kind) {
+    const previewId = kind === 'inside' ? 'photoPreview2' : 'photoPreview';
+    const nameId    = kind === 'inside' ? 'photoName2'    : 'photoName';
+    if (kind === 'inside') photoFileInside = file;
+    else                   photoFileOutside = file;
+    document.getElementById(nameId).textContent = '✓ ' + (file.name || 'Foto aufgenommen');
+    document.getElementById(nameId).style.display = 'block';
     const reader = new FileReader();
     reader.onload = e => {
-      const img = document.getElementById('photoPreview');
+      const img = document.getElementById(previewId);
       img.src = e.target.result;
       img.style.display = 'block';
     };
-    reader.readAsDataURL(photoFile);
+    reader.readAsDataURL(file);
     checkReady();
     if (window.SimpleTrailerNative) window.SimpleTrailerNative.haptic('light');
   }
@@ -334,14 +355,34 @@
     }, 50);
   });
 
-  async function uploadPhoto() {
-    if (!photoFile) return null;
-    const ext  = photoFile.name.split('.').pop();
-    const path = `precheck/${bookingId}-${Date.now()}.${ext}`;
+  // KI-Validierung via /api/validate-photo (Claude Vision)
+  // Failt-open: bei API-Fehler oder Timeout → Foto wird durchgelassen damit Buchung nicht hängt.
+  async function validatePhoto(imageUrl, expected) {
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 12000);
+      const res = await fetch('/api/validate-photo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image_url: imageUrl, expected }),
+        signal: ctrl.signal
+      });
+      clearTimeout(t);
+      if (!res.ok) return { is_trailer: true, confidence: 'low' };
+      return await res.json();
+    } catch (e) {
+      return { is_trailer: true, confidence: 'low' };
+    }
+  }
+
+  async function uploadOne(file, suffix) {
+    if (!file) return null;
+    const ext  = file.name.split('.').pop() || 'jpg';
+    const path = `precheck/${bookingId}-${suffix}-${Date.now()}.${ext}`;
     const res  = await fetch(`${SUPABASE_URL}/storage/v1/object/precheck-photos/${path}`, {
       method: 'POST',
-      headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}`, 'Content-Type': photoFile.type },
-      body: photoFile
+      headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}`, 'Content-Type': file.type },
+      body: file
     });
     if (!res.ok) return null;
     return `${SUPABASE_URL}/storage/v1/object/public/precheck-photos/${path}`;
@@ -351,17 +392,55 @@
     const btn = document.getElementById('submitBtn');
     const err = document.getElementById('submitError');
     err.style.display = 'none';
+
+    // Beide Fotos sind Pflicht (außer skipUpload für bereits abgeschlossenen Pre-Check)
+    if (!skipUpload && (!photoFileOutside || !photoFileInside)) {
+      err.textContent = 'Bitte beide Fotos hochladen (Außen + Ladefläche).';
+      err.style.display = 'block';
+      return;
+    }
+
     btn.disabled = true;
     btn.textContent = 'Wird übermittelt…';
 
     try {
-      let photoUrl = null;
-      if (!skipUpload && photoFile) photoUrl = await uploadPhoto();
+      let photoUrlOutside = null, photoUrlInside = null;
+      if (!skipUpload) {
+        btn.textContent = 'Fotos werden hochgeladen…';
+        [photoUrlOutside, photoUrlInside] = await Promise.all([
+          uploadOne(photoFileOutside, 'outside'),
+          uploadOne(photoFileInside,  'inside')
+        ]);
+
+        // KI-Validierung: zeigt das Foto wirklich einen Anhänger?
+        btn.textContent = 'Fotos werden geprüft…';
+        const validations = await Promise.all([
+          photoUrlOutside ? validatePhoto(photoUrlOutside, 'outside') : Promise.resolve({ is_trailer: true }),
+          photoUrlInside  ? validatePhoto(photoUrlInside,  'inside')  : Promise.resolve({ is_trailer: true })
+        ]);
+
+        const failures = [];
+        if (!validations[0].is_trailer && validations[0].confidence !== 'low') failures.push('Foto 1 (Außen): ' + validations[0].reason);
+        if (!validations[1].is_trailer && validations[1].confidence !== 'low') failures.push('Foto 2 (Ladefläche): ' + validations[1].reason);
+
+        if (failures.length) {
+          err.innerHTML = `<strong>Eines der Fotos zeigt offenbar keinen Anhänger:</strong><br>` + failures.join('<br>') + `<br><br>Bitte richtig fotografieren und nochmal probieren.`;
+          err.style.display = 'block';
+          btn.disabled = false;
+          btn.textContent = '✓ Bestätigen & Zugangscode erhalten';
+          return;
+        }
+      }
 
       const res  = await fetch('/api/precheck', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ booking_id: bookingId, precheck_token: precheckToken, photo_url: photoUrl })
+        body: JSON.stringify({
+          booking_id: bookingId,
+          precheck_token: precheckToken,
+          photo_url: photoUrlOutside,
+          photo_url_inside: photoUrlInside
+        })
       });
       const data = await res.json();
       if (res.status === 403 && data.error === 'too_early') {

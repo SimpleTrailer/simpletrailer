@@ -332,11 +332,37 @@
 
     const btn = document.getElementById('returnBtn');
     btn.disabled = true;
-    btn.innerHTML = '<div class="spinner"></div> Wird verarbeitet...';
+    btn.innerHTML = '<div class="spinner"></div> Foto wird hochgeladen…';
 
     try {
       const photoUrl = await uploadPhoto();
 
+      // KI-Validierung: zeigt das Foto wirklich einen Anhänger?
+      btn.innerHTML = '<div class="spinner"></div> Foto wird geprüft…';
+      if (photoUrl) {
+        try {
+          const ctrl = new AbortController();
+          const t = setTimeout(() => ctrl.abort(), 12000);
+          const valRes = await fetch('/api/validate-photo', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image_url: photoUrl, expected: 'outside' }),
+            signal: ctrl.signal
+          });
+          clearTimeout(t);
+          if (valRes.ok) {
+            const val = await valRes.json();
+            if (!val.is_trailer && val.confidence !== 'low') {
+              btn.innerHTML = 'Rückgabe bestätigen';
+              btn.disabled = false;
+              alert('Das Foto zeigt offenbar keinen Anhänger.\n\nKI-Hinweis: ' + (val.reason || '') + '\n\nBitte den Anhänger fotografieren und nochmal probieren.');
+              return;
+            }
+          }
+        } catch (e) { /* fail-open */ }
+      }
+
+      btn.innerHTML = '<div class="spinner"></div> Wird verarbeitet…';
       const res  = await fetch('/api/process-return', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
