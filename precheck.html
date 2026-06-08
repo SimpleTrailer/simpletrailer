@@ -635,18 +635,25 @@
           uploadOne(photoFileInside,  'inside')
         ]);
 
+        // BUGFIX: Wenn Upload fehlschlägt, war der Pre-Check vorher trotzdem durch (mit photo_url=null).
+        // Damit liefen random Bilder + komplette Foto-Failure unbemerkt durch.
+        if (!photoUrlOutside || !photoUrlInside) {
+          throw new Error('Foto-Upload fehlgeschlagen — bitte erneut probieren.');
+        }
+
         // KI-Validierung: zeigt das Foto wirklich einen Anhänger?
         btn.textContent = 'Fotos werden geprüft…';
         const validations = await Promise.all([
-          photoUrlOutside ? validatePhoto(photoUrlOutside, 'outside') : Promise.resolve({ is_trailer: true }),
-          photoUrlInside  ? validatePhoto(photoUrlInside,  'inside')  : Promise.resolve({ is_trailer: true })
+          validatePhoto(photoUrlOutside, 'outside'),
+          validatePhoto(photoUrlInside,  'inside')
         ]);
+        console.log('KI-Validierung:', validations);
 
         // Blockieren bei medium ODER high confidence — nur "low" wird durchgelassen
         // (extrem schlechte Bildqualität → fair-play, Mieter könnte einen echten Anhänger schlecht fotografiert haben)
         const failures = [];
-        if (!validations[0].is_trailer && validations[0].confidence !== 'low') failures.push('Foto 1 (Außen): ' + esc(validations[0].reason));
-        if (!validations[1].is_trailer && validations[1].confidence !== 'low') failures.push('Foto 2 (Ladefläche): ' + esc(validations[1].reason));
+        if (!validations[0].is_trailer && validations[0].confidence !== 'low') failures.push('Foto 1 (Außen): ' + esc(validations[0].reason || 'kein Anhänger erkannt'));
+        if (!validations[1].is_trailer && validations[1].confidence !== 'low') failures.push('Foto 2 (Ladefläche): ' + esc(validations[1].reason || 'keine Anhänger-Ladefläche erkannt'));
 
         if (failures.length) {
           err.innerHTML = `<strong>Eines der Fotos zeigt offenbar keinen Anhänger:</strong><br>` + failures.join('<br>') + `<br><br>Bitte richtig fotografieren und nochmal probieren.`;
