@@ -4328,17 +4328,30 @@
       ? fmtDist(haversineKm(userLocation.lat, userLocation.lng, t.lat, t.lng))
       : null;
     const locStr = t._address || 'Bremen';
+    // 3 Zustände unterscheiden:
+    //   - is_available = true                          → "Sofort verfügbar" (grün)
+    //   - is_available = false + currently_booked      → "Aktuell belegt — Frei ab X" (orange) — buchbar für später
+    //   - is_available = false + !currently_booked     → "Aktuell nicht im Angebot" (grau) — Wartung etc., nicht buchbar
+    let statusHtml;
+    if (t.is_available) {
+      statusHtml = `<span class="modal-detail-status ok">✓ Sofort verfügbar</span>`;
+    } else if (t.currently_booked) {
+      const freiAbStr = t.available_from
+        ? new Date(t.available_from).toLocaleString('de-DE', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' }) + ' Uhr'
+        : null;
+      statusHtml = `
+        <span class="modal-detail-status busy" style="background:rgba(245,158,11,0.10);border-color:rgba(245,158,11,0.30);color:#fbbf24;">● Aktuell belegt</span>
+        ${freiAbStr ? `<span style="display:inline-block;margin-left:10px;font-size:.78rem;color:#a3a3a3;">Frei ab <strong style="color:#fff;">${freiAbStr}</strong></span>` : ''}`;
+    } else {
+      statusHtml = `<span class="modal-detail-status busy">⊘ Aktuell nicht im Angebot</span>`;
+    }
     document.getElementById('modalDetailHeader').innerHTML = `
       <div class="modal-detail-name">${t.name}</div>
       <div class="modal-detail-meta">
         <span>📍 ${locStr}</span>
         ${distStr ? `<span class="dist">· ${distStr} entfernt</span>` : ''}
       </div>
-      <div style="margin-bottom:14px;">
-        <span class="modal-detail-status ${t.is_available ? 'ok' : 'busy'}">
-          ${t.is_available ? '✓ Sofort verfügbar' : '✗ Aktuell belegt'}
-        </span>
-      </div>
+      <div style="margin-bottom:14px;">${statusHtml}</div>
     `;
 
     // Auto-Route Box: bei userLocation → Auto-Route, sonst Eingabe-Card für Standort
@@ -4399,13 +4412,28 @@
     // Buchen-Button
     const bookBtn = document.getElementById('modalDetailBookBtn');
     if (t.is_available) {
+      // Sofort verfügbar: normaler Buchungs-Flow
       const qs = new URLSearchParams({ trailer: t.id, mode: modalMode });
       if (pendingStart) qs.set('prefill_start', pendingStart);
       if (pendingEnd)   qs.set('prefill_end',   pendingEnd);
       bookBtn.href = `/booking?${qs.toString()}`;
       bookBtn.textContent = 'Jetzt buchen →';
       bookBtn.classList.remove('disabled');
+    } else if (t.currently_booked && t.available_from) {
+      // Belegt mit bekannter Frei-ab-Zeit: trotzdem buchbar, Start vor-ausgefüllt
+      const qs = new URLSearchParams({ trailer: t.id, mode: modalMode });
+      qs.set('prefill_start', t.available_from);
+      bookBtn.href = `/booking?${qs.toString()}`;
+      bookBtn.textContent = 'Für später buchen →';
+      bookBtn.classList.remove('disabled');
+    } else if (t.currently_booked) {
+      // Belegt aber Frei-ab-Zeit nicht bekannt — trotzdem buchbar (User wählt Datum selbst)
+      const qs = new URLSearchParams({ trailer: t.id, mode: modalMode });
+      bookBtn.href = `/booking?${qs.toString()}`;
+      bookBtn.textContent = 'Für später buchen →';
+      bookBtn.classList.remove('disabled');
     } else {
+      // Wirklich nicht verfügbar (Wartung, Service-Pause)
       bookBtn.href = '#';
       bookBtn.textContent = 'Aktuell nicht verfügbar';
       bookBtn.classList.add('disabled');
