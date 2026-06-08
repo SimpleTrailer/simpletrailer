@@ -611,6 +611,15 @@
     return `${SUPABASE_URL}/storage/v1/object/public/precheck-photos/${path}`;
   }
 
+  // Override-Mechanismus: wenn KI fälschlich blockt darf der Mieter "trotzdem absenden"
+  let precheckAiOverride = false;
+
+  window.bypassAiCheck = function() {
+    if (!confirm('Bist du sicher, dass das der Anhänger ist? Wir dokumentieren diese Bestätigung — bei Missbrauch können daraus Konsequenzen entstehen.')) return;
+    precheckAiOverride = true;
+    submitPrecheck(false);
+  };
+
   async function submitPrecheck(skipUpload = false) {
     const btn = document.getElementById('submitBtn');
     const err = document.getElementById('submitError');
@@ -629,38 +638,56 @@
     try {
       let photoUrlOutside = null, photoUrlInside = null;
       if (!skipUpload) {
-        btn.textContent = 'Fotos werden hochgeladen…';
-        [photoUrlOutside, photoUrlInside] = await Promise.all([
-          uploadOne(photoFileOutside, 'outside'),
-          uploadOne(photoFileInside,  'inside')
-        ]);
+        // Override-Pfad: URLs sind schon hochgeladen und KI-Check wurde bewusst übergangen
+        if (precheckAiOverride && window._precheckPhotoUrls) {
+          photoUrlOutside = window._precheckPhotoUrls.outside;
+          photoUrlInside  = window._precheckPhotoUrls.inside;
+        } else {
+          btn.textContent = 'Fotos werden hochgeladen…';
+          [photoUrlOutside, photoUrlInside] = await Promise.all([
+            uploadOne(photoFileOutside, 'outside'),
+            uploadOne(photoFileInside,  'inside')
+          ]);
 
-        // BUGFIX: Wenn Upload fehlschlägt, war der Pre-Check vorher trotzdem durch (mit photo_url=null).
-        // Damit liefen random Bilder + komplette Foto-Failure unbemerkt durch.
-        if (!photoUrlOutside || !photoUrlInside) {
-          throw new Error('Foto-Upload fehlgeschlagen — bitte erneut probieren.');
+          // BUGFIX: Wenn Upload fehlschlägt, war der Pre-Check vorher trotzdem durch (mit photo_url=null).
+          if (!photoUrlOutside || !photoUrlInside) {
+            throw new Error('Foto-Upload fehlgeschlagen — bitte erneut probieren.');
+          }
         }
 
-        // KI-Validierung: zeigt das Foto wirklich einen Anhänger?
-        btn.textContent = 'Fotos werden geprüft…';
-        const validations = await Promise.all([
-          validatePhoto(photoUrlOutside, 'outside'),
-          validatePhoto(photoUrlInside,  'inside')
-        ]);
-        console.log('KI-Validierung:', validations);
+        // KI-Validierung — nur wenn nicht bereits per Override bestätigt
+        if (!precheckAiOverride) {
+          btn.textContent = 'Fotos werden geprüft…';
+          const validations = await Promise.all([
+            validatePhoto(photoUrlOutside, 'outside'),
+            validatePhoto(photoUrlInside,  'inside')
+          ]);
+          console.log('KI-Validierung:', validations);
 
-        // Blockieren bei medium ODER high confidence — nur "low" wird durchgelassen
-        // (extrem schlechte Bildqualität → fair-play, Mieter könnte einen echten Anhänger schlecht fotografiert haben)
-        const failures = [];
-        if (!validations[0].is_trailer && validations[0].confidence !== 'low') failures.push('Foto 1 (Außen): ' + esc(validations[0].reason || 'kein Anhänger erkannt'));
-        if (!validations[1].is_trailer && validations[1].confidence !== 'low') failures.push('Foto 2 (Ladefläche): ' + esc(validations[1].reason || 'keine Anhänger-Ladefläche erkannt'));
+          const failures = [];
+          if (!validations[0].is_trailer && validations[0].confidence !== 'low') failures.push({ which: 'Foto 1 (Außen)', reason: validations[0].reason || 'kein Anhänger erkannt' });
+          if (!validations[1].is_trailer && validations[1].confidence !== 'low') failures.push({ which: 'Foto 2 (Ladefläche)', reason: validations[1].reason || 'keine Anhänger-Ladefläche erkannt' });
 
-        if (failures.length) {
-          err.innerHTML = `<strong>Eines der Fotos zeigt offenbar keinen Anhänger:</strong><br>` + failures.join('<br>') + `<br><br>Bitte richtig fotografieren und nochmal probieren.`;
-          err.style.display = 'block';
-          btn.disabled = false;
-          btn.textContent = '✓ Bestätigen & Zugangscode erhalten';
-          return;
+          if (failures.length) {
+            // Statt nur Fehler: Hinweis + "Trotzdem absenden"-Button
+            const failHtml = failures.map(f => `<li><strong>${f.which}:</strong> ${esc(f.reason)}</li>`).join('');
+            err.innerHTML = `
+              <div style="margin-bottom:14px;">
+                <strong style="color:#fca5a5;">Unsere KI ist sich nicht sicher dass das ein Anhänger ist:</strong>
+                <ul style="margin:8px 0 0 18px;padding:0;font-size:.88rem;color:#fecaca;">${failHtml}</ul>
+              </div>
+              <div style="background:#0a0a0a;border:1px solid var(--border);border-radius:10px;padding:14px;color:#ddd;font-size:.86rem;line-height:1.55;">
+                <strong style="color:#fff;">Das passiert manchmal</strong> — z.B. wenn die Plane den Anhänger verdeckt oder das Foto sehr nah dran ist. Falls du sicher bist dass es der Anhänger ist:
+                <button type="button" onclick="bypassAiCheck()" style="margin-top:12px;background:#E85D00;color:#fff;border:none;padding:11px 18px;border-radius:8px;font-family:inherit;font-weight:700;font-size:.88rem;cursor:pointer;width:100%;">Ich bestätige: das ist der Anhänger — trotzdem absenden</button>
+              </div>
+              <p style="margin-top:10px;font-size:.78rem;color:var(--gray);text-align:center;">Wenn du auf „trotzdem absenden" klickst, dokumentieren wir das. Bei missbräuchlicher Nutzung können daraus Konsequenzen entstehen.</p>`;
+            err.style.display = 'block';
+            btn.disabled = false;
+            btn.textContent = '✓ Bestätigen & Zugangscode erhalten';
+            // URLs cachen damit der Override-Button sie wiederverwenden kann
+            window._precheckPhotoUrls = { outside: photoUrlOutside, inside: photoUrlInside };
+            return;
+          }
         }
       }
 
@@ -671,7 +698,8 @@
           booking_id: bookingId,
           precheck_token: precheckToken,
           photo_url: photoUrlOutside,
-          photo_url_inside: photoUrlInside
+          photo_url_inside: photoUrlInside,
+          ai_override: precheckAiOverride
         })
       });
       const data = await res.json();

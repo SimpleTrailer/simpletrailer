@@ -1268,11 +1268,11 @@
     let minH = 0, maxH = 23;
 
     // Wenn das gewählte Datum HEUTE ist, vergangene Uhrzeiten ausschließen.
-    // +1h Puffer: User braucht Zeit zum Buchungsabschluss und zum Hinfahren.
+    // Aktuelle Stunde bleibt buchbar — Mieter kann sofort losfahren (10:18 → 10 Uhr waehlen ok).
     const now    = new Date();
     const today  = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
     if (dateStr === today && role === 'start') {
-      const earliestH = now.getHours() + 1 + (now.getMinutes() > 0 ? 1 : 0);
+      const earliestH = now.getHours();
       minH = Math.max(minH, earliestH);
     }
 
@@ -1317,11 +1317,11 @@
     // 24/7-Buchung: Anhänger ist kontaktlos (Code-Schloss + GPS), kein Personal nötig
     let minH = 0, maxH = 23;
 
-    // Heute: vergangene Stunden + 1h Puffer ausschließen
+    // Heute: vergangene Stunden ausschließen, aktuelle Stunde bleibt buchbar
     const now    = new Date();
     const today  = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
     if (dateStr === today) {
-      const earliestH = now.getHours() + 1 + (now.getMinutes() > 0 ? 1 : 0);
+      const earliestH = now.getHours();
       minH = Math.max(minH, earliestH);
     }
 

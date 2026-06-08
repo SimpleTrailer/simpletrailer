@@ -31,7 +31,7 @@ module.exports = async (req, res) => {
 
   if (req.method === 'POST') {
     try {
-      const { booking_id, precheck_token, photo_url, photo_url_inside } = req.body;
+      const { booking_id, precheck_token, photo_url, photo_url_inside, ai_override } = req.body;
       if (!booking_id || !precheck_token) {
         return res.status(400).json({ error: 'Fehlende Parameter' });
       }
@@ -70,18 +70,37 @@ module.exports = async (req, res) => {
         status: 'active',
         precheck_photo_url: photo_url || null,
         precheck_photo_url_inside: photo_url_inside || null,
+        precheck_ai_override: !!ai_override,
         precheck_completed_at: new Date().toISOString()
       };
       let { data: updated, error: updErr } = await supabase
         .from('bookings').update(updatePayload)
         .eq('id', booking_id).is('precheck_completed_at', null)
         .select('id').maybeSingle();
+      // Falls Migration (precheck_photo_url_inside oder precheck_ai_override) noch fehlt — graceful Fallback
       if (updErr && /column .* does not exist/i.test(updErr.message || '')) {
-        const { precheck_photo_url_inside, ...minimal } = updatePayload;
+        const { precheck_photo_url_inside, precheck_ai_override, ...minimal } = updatePayload;
         const r = await supabase.from('bookings').update(minimal)
           .eq('id', booking_id).is('precheck_completed_at', null)
           .select('id').maybeSingle();
         updated = r.data;
+      }
+
+      // Wenn AI-Override genutzt wurde: Admin-Alert per Mail damit Lion das prüfen kann
+      if (ai_override) {
+        try {
+          const { Resend } = require('resend');
+          const resend = new Resend(process.env.RESEND_API_KEY);
+          await resend.emails.send({
+            from: 'SimpleTrailer <buchung@simpletrailer.de>',
+            to: 'info@simpletrailer.de',
+            reply_to: 'info@simpletrailer.de',
+            subject: '⚠️ Pre-Check: KI-Override genutzt',
+            text: `Buchung ${booking_id} (${booking.customer_name})\n\nDer Mieter hat die KI-Foto-Prüfung manuell übergangen ("Trotzdem absenden"-Button).\n\nFotos prüfen:\n- Außen: ${photo_url}\n- Ladefläche: ${photo_url_inside}\n\nBitte kurz checken ob die Fotos echte Anhänger-Bilder sind.`
+          });
+        } catch (mailErr) {
+          console.error('Override-Alert-Mail fehlgeschlagen:', mailErr.message);
+        }
       }
 
       return res.status(200).json({ access_code: booking.access_code });
