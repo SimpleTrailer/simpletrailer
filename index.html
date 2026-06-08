@@ -1699,7 +1699,6 @@
       .trailer-modal-panel { max-width: 980px; }
 
       #modalDetailView {
-        display: grid !important;
         grid-template-columns: 1fr 1fr;
         grid-template-areas:
           "header header"
@@ -4360,7 +4359,8 @@
     currentDetailIdx = idx;
 
     document.getElementById('modalListView').style.display   = 'none';
-    document.getElementById('modalDetailView').style.display = 'block';
+    // Display je nach Viewport: Desktop=grid (Layout-Areas), Mobile=flex
+    document.getElementById('modalDetailView').style.display = window.innerWidth >= 769 ? 'grid' : 'flex';
     document.getElementById('modalBackBtn').style.display    = 'inline-flex';
     document.getElementById('modalTitle').textContent        = t.name;
 
