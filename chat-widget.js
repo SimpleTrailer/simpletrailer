@@ -725,12 +725,9 @@
         // Stärkere Pulse-Animation am FAB starten
         fab.classList.add('attention');
         setTimeout(() => fab.classList.remove('attention'), 5000);
-        // Tooltip einblenden
+        // Tooltip einblenden — bleibt sichtbar bis User aktiv schliesst (X klicken,
+        // Tooltip-Body anklicken oder Chat ueber den FAB oeffnet).
         tip.classList.add('show');
-        // Auto-hide nach 12 Sek
-        setTimeout(() => {
-          if (tip.classList.contains('show')) closeTip(true);
-        }, 12000);
       }, showDelay);
 
       // Wenn User Chat selbst öffnet bevor Tooltip kommt → Cancel

@@ -110,11 +110,18 @@
     .price-summary-amount { font-size: 1.5rem; font-weight: 800; letter-spacing: -.03em; color: var(--orange); }
 
     /* BUTTONS */
-    .btn { display: inline-flex; align-items: center; justify-content: center; padding: 13px 28px; border-radius: 8px; font-weight: 600; font-size: .95rem; cursor: pointer; border: none; text-decoration: none; transition: background .2s, transform .15s; font-family: var(--font); }
+    .btn { display: inline-flex; align-items: center; justify-content: center; padding: 13px 20px; border-radius: 8px; font-weight: 600; font-size: .95rem; cursor: pointer; border: none; text-decoration: none; transition: background .2s, transform .15s; font-family: var(--font); white-space: normal; line-height: 1.25; min-height: 48px; text-align: center; box-sizing: border-box; max-width: 100%; }
     .btn:active { transform: scale(.97); }
     .btn-orange { background: var(--orange); color: #fff; width: 100%; }
     .btn-orange:hover { background: var(--orange-h); }
     .btn-orange:disabled { background: #555; cursor: not-allowed; }
+    /* Mobile: enger Padding damit lange Texte ("Jetzt buchen & bezahlen") nicht abgeschnitten werden */
+    @media (max-width: 480px) {
+      .btn { padding: 12px 14px; font-size: .92rem; }
+    }
+    @media (max-width: 360px) {
+      .btn { padding: 12px 10px; font-size: .88rem; }
+    }
 
     /* STRIPE */
     #payment-element { margin-bottom: 20px; }
