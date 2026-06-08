@@ -100,9 +100,18 @@ function drawHeader(doc, title) {
 }
 
 function drawFooter(doc) {
-  const y = 770;
+  // Footer fließt ans Ende des Inhalts (vorher: fixed y=770 → erzwang neue Seite bei vollem PDF).
+  // Wenn Restplatz <60pt → ans Seitenende positionieren statt neue Seite zu starten.
+  const bottomMargin = 50;
+  const footerHeight = 32;
+  const remaining = doc.page.height - bottomMargin - doc.y;
+  if (remaining < footerHeight + 10) {
+    doc.y = doc.page.height - bottomMargin - footerHeight;
+  } else {
+    doc.moveDown(2);
+  }
   doc.fontSize(7).fillColor(GREY).font('Helvetica')
-    .text(`${COMPANY.name} · ${COMPANY.partners}`, 50, y, { align: 'center', width: 495 })
+    .text(`${COMPANY.name} · ${COMPANY.partners}`, 50, doc.y, { align: 'center', width: 495 })
     .text(`${COMPANY.street} · ${COMPANY.city} · ${COMPANY.email} · ${COMPANY.url}`, { align: 'center', width: 495 })
     .text(`Steuernummer: ${COMPANY.taxNumber} · USt-IdNr.: ${COMPANY.vatId}`, { align: 'center', width: 495 });
 }
