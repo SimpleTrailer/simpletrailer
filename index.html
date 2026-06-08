@@ -2007,7 +2007,7 @@
 
     /* TRAILER-MARKER – kleine transparente Anhänger-Bilder mit hartem Bodenschatten */
     .trailer-marker-icon {
-      width: 44px; height: 34px;
+      width: 44px; height: 50px;   /* +16px hoch fuer Badge oben */
       position: relative;
       pointer-events: auto;
     }
@@ -2028,10 +2028,11 @@
       pointer-events: none;
     }
     .trailer-marker-icon .tm-img {
-      position: relative;
+      position: absolute;
+      bottom: 0; left: 0;
       z-index: 1;
       width: 100%;
-      height: 100%;
+      height: 34px;   /* fix - Bild bleibt seine Originalgroesse, Platz darueber fuer Badge */
       object-fit: contain;
       object-position: center bottom;
       display: block;
@@ -2042,7 +2043,8 @@
       user-select: none;
     }
     .trailer-marker-icon:hover .tm-img {
-      transform: scale(1.15) translateY(-2px);
+      transform: translateY(-2px) scale(1.15);
+      transform-origin: bottom center;
       filter: drop-shadow(0 0 1px rgba(0,0,0,1)) drop-shadow(0 3px 5px rgba(0,0,0,0.7));
     }
     .trailer-marker-icon:hover::after {
@@ -2051,8 +2053,44 @@
     }
 
     @media (max-width: 768px) {
-      .trailer-marker-icon { width: 36px; height: 28px; }
+      .trailer-marker-icon { width: 36px; height: 36px; }
       .trailer-marker-icon::after { width: 28px; height: 5px; }
+      .trailer-marker-icon .tm-img { transform: scale(0.85); transform-origin: bottom center; }
+      .trailer-marker-icon .tm-badge { font-size: .58rem; padding: 1px 5px; }
+    }
+
+    /* STATUS-BUBBLE über dem Anhänger-Marker */
+    .trailer-marker-icon .tm-badge {
+      position: absolute;
+      top: -2px; left: 50%;
+      transform: translateX(-50%);
+      font-size: .62rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      padding: 2px 6px;
+      border-radius: 6px;
+      white-space: nowrap;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.55), 0 0 0 1.5px rgba(0,0,0,0.4);
+      z-index: 5;
+      pointer-events: none;
+      line-height: 1.2;
+    }
+    .trailer-marker-icon .tm-badge-free {
+      background: #22c55e;
+      color: #052e0e;
+      animation: tm-badge-pulse 2.4s ease-in-out infinite;
+    }
+    .trailer-marker-icon .tm-badge-soon {
+      background: #f59e0b;
+      color: #1f1300;
+    }
+    .trailer-marker-icon .tm-badge-off {
+      background: #6b7280;
+      color: #0a0a0a;
+    }
+    @keyframes tm-badge-pulse {
+      0%, 100% { box-shadow: 0 2px 6px rgba(0,0,0,0.55), 0 0 0 1.5px rgba(0,0,0,0.4), 0 0 0 0 rgba(34,197,94,0.5); }
+      50%      { box-shadow: 0 2px 6px rgba(0,0,0,0.55), 0 0 0 1.5px rgba(0,0,0,0.4), 0 0 8px 3px rgba(34,197,94,0.55); }
     }
 
     /* Hover-Tooltip auf den Trailer-Markern */
@@ -3327,17 +3365,31 @@
       return makeIconColored('#6b7280', '#9ca3af');
     }
 
-    // Label für Accessibility/Tooltip
+    // Label für Accessibility/Tooltip + Status-Bubble über dem Marker
     let label = 'Verfügbar';
-    if (trailer.currently_booked) label = 'Gerade gebucht';
-    else if (!trailer.is_available) label = 'Nicht im Angebot';
+    let badgeHtml = '';
+    if (trailer.is_available) {
+      label = 'Verfügbar';
+      badgeHtml = `<span class="tm-badge tm-badge-free">frei</span>`;
+    } else if (trailer.currently_booked) {
+      label = 'Gerade gebucht';
+      const freiAb = trailer.available_from
+        ? new Date(trailer.available_from).toLocaleString('de-DE', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' })
+        : null;
+      badgeHtml = freiAb
+        ? `<span class="tm-badge tm-badge-soon">ab ${freiAb}</span>`
+        : `<span class="tm-badge tm-badge-soon">belegt</span>`;
+    } else {
+      label = 'Nicht im Angebot';
+      badgeHtml = `<span class="tm-badge tm-badge-off">Pause</span>`;
+    }
 
     return L.divIcon({
       className: 'trailer-marker-icon',
-      html: `<img class="tm-img" src="${imgUrl}" alt="${label}" title="${label}" />`,
-      iconSize: [44, 34],
-      iconAnchor: [22, 30],
-      popupAnchor: [0, -28]
+      html: `${badgeHtml}<img class="tm-img" src="${imgUrl}" alt="${label}" title="${label}" />`,
+      iconSize: [44, 50],   // +16px hoch für Badge oben
+      iconAnchor: [22, 46],
+      popupAnchor: [0, -44]
     });
   }
   function makeIconColored(color, border) {
