@@ -46,7 +46,7 @@ module.exports = async (req, res) => {
       }
 
       const { data: existing } = await supabase
-        .from('bookings').select('id, access_code, return_token, precheck_token')
+        .from('bookings').select('id, access_code, return_token, precheck_token, start_time, end_time, total_amount, pickup_lat, pickup_lng')
         .eq('stripe_payment_intent_id', payment_intent_id).maybeSingle();
 
       if (existing) {
@@ -58,7 +58,9 @@ module.exports = async (req, res) => {
           booking_id: existing.id, already_confirmed: true,
           precheck_url: precheckUrlEx,
           return_token: existing.return_token,
-          start_time: null, end_time: null, amount: 0
+          start_time: existing.start_time, end_time: existing.end_time,
+          amount: existing.total_amount || 0,
+          pickup_lat: existing.pickup_lat, pickup_lng: existing.pickup_lng
         });
       }
 
@@ -276,7 +278,8 @@ info@simpletrailer.de · simpletrailer.de`;
       return res.status(200).json({
         booking_id: booking.id, return_token, precheck_url: precheckUrl,
         start_time: meta.start_time, end_time: meta.end_time,
-        amount, trailer_name: 'PKW-Anhänger mit Plane'
+        amount, trailer_name: 'PKW-Anhänger mit Plane',
+        pickup_lat: booking.pickup_lat, pickup_lng: booking.pickup_lng
       });
 
     } catch (err) {

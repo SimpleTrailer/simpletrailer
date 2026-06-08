@@ -652,6 +652,35 @@
   const INS_LABEL = { none: 'Kein Schutz', basis: 'Basis Schutz (500 € SB)', premium: 'Premium Schutz (50 € SB)' };
   const siteUrl = 'https://simpletrailer.de';
 
+  // Reverse-Geocoding via Nominatim (kostenlos, DSGVO-konform — OpenStreetMap).
+  // Cache pro Koordinate in localStorage damit nicht jeder Page-Refresh erneut anfragt.
+  async function resolveAddress(lat, lng, targetId) {
+    const key = `addr:${lat.toFixed(4)},${lng.toFixed(4)}`;
+    const cached = localStorage.getItem(key);
+    if (cached) {
+      const el = document.getElementById(targetId);
+      if (el) el.textContent = cached;
+      return;
+    }
+    try {
+      const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=18&addressdetails=1&accept-language=de`, {
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!r.ok) throw new Error('nominatim');
+      const data = await r.json();
+      const a = data.address || {};
+      const street = [a.road, a.house_number].filter(Boolean).join(' ');
+      const city = a.postcode ? `${a.postcode} ${a.city || a.town || a.village || 'Bremen'}` : (a.city || a.town || 'Bremen');
+      const text = street ? `${street}, ${city}` : (data.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+      localStorage.setItem(key, text);
+      const el = document.getElementById(targetId);
+      if (el) el.textContent = text;
+    } catch (e) {
+      const el = document.getElementById(targetId);
+      if (el) el.textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)} (Adresse nicht verfügbar)`;
+    }
+  }
+
   async function loadBookings() {
     const list = document.getElementById('bookingsList');
     try {
@@ -728,6 +757,32 @@
       statusBlock = `<div style="background:#1a0808;border:1px solid #dc2626;border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:.88rem;color:#fca5a5;">⚠ Rückgabe überfällig — 15 €/h Verspätungsgebühr läuft</div>`;
     }
 
+    // Standort-Block — Adresse + Route in Google Maps. Erscheint bei jeder
+    // confirmed/active Buchung damit Mieter weiss wo der Anhaenger steht.
+    const lat = b.pickup_lat;
+    const lng = b.pickup_lng;
+    let locationHtml = '';
+    if (lat && lng) {
+      const mapsRoute = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+      const mapsView  = `https://www.google.com/maps?q=${lat},${lng}`;
+      locationHtml = `
+        <div style="background:#0a0a0a;border:1.5px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:14px;">
+          <div style="display:flex;align-items:flex-start;gap:12px;">
+            <div style="font-size:1.4rem;flex-shrink:0;">📍</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-weight:700;font-size:.9rem;margin-bottom:2px;">Standort des Anhängers</div>
+              <div id="addr-${b.id}" style="color:#aaa;font-size:.82rem;line-height:1.45;">Adresse wird geladen…</div>
+              <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+                <a href="${mapsRoute}" target="_blank" rel="noopener" style="flex:1;min-width:140px;background:var(--orange);color:#fff;text-decoration:none;padding:9px 12px;border-radius:8px;font-weight:700;font-size:.84rem;text-align:center;">🚗 Route starten</a>
+                <a href="${mapsView}" target="_blank" rel="noopener" style="background:#1f1f1f;border:1px solid var(--border);color:#fff;text-decoration:none;padding:9px 12px;border-radius:8px;font-weight:700;font-size:.84rem;text-align:center;">🗺 Auf Karte</a>
+              </div>
+            </div>
+          </div>
+        </div>`;
+      // Adresse von Nominatim async laden + cachen
+      setTimeout(() => resolveAddress(lat, lng, `addr-${b.id}`), 100);
+    }
+
     // Zugangscode-Box — direkt sichtbar wenn Pre-Check abgeschlossen ist
     const escCode = (s) => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     let accessCodeHtml = '';
@@ -748,7 +803,33 @@
     if (returnUrl && (b.status === 'active' || isOverdue)) {
       actionHtml += `<a href="${returnUrl}" class="action-btn action-btn-orange">Rückgabe starten →</a>`;
     }
-    actionHtml += `<a href="/anleitung" class="action-btn" style="background:#1f1f1f;border:1px solid var(--border);color:#fff;">📖 Anleitung (Abholung &amp; Rückgabe)</a>`;
+    // Anleitung inline als Accordion (statt extra Seite — Lion: "direkt aufklappen")
+    const anleitungHtml = `
+      <details style="margin-top:14px;background:#0a0a0a;border:1px solid var(--border);border-radius:10px;padding:14px 16px;">
+        <summary style="cursor:pointer;font-weight:700;font-size:.92rem;color:#fff;list-style:none;">📖 Anleitung — Abholung &amp; Rückgabe</summary>
+        <div style="margin-top:14px;display:flex;flex-direction:column;gap:12px;">
+          ${[
+            ['1', 'Stellplatz finden', 'Stellplatz steht in der Bestätigungs-Mail + im Kundenkonto. Karte zeigt die genaue Position.'],
+            ['2', 'Vorab-Check + Foto', '15 Min vor Mietbeginn: 2 Fotos (außen + Ladefläche). Damit ist der Zustand dokumentiert.'],
+            ['3', 'Schloss-Code', 'Nach den Fotos bekommst du den 4-stelligen Zugangscode. Im Konto jederzeit sichtbar.'],
+            ['4', 'Ankuppeln', 'Anhänger an die Kugelkupplung, sichern. Stützrad hoch. Elektrokabel anschließen.'],
+            ['5', 'Lichttest', 'Brems-, Blinker- und Rücklicht prüfen. Wichtig — sonst Bußgeld bei Polizeikontrolle.'],
+            ['6', 'Sicher fahren', 'Max. 80 km/h auf der Autobahn. Beim Anfahren und Bremsen sanfter sein als sonst.'],
+            ['7', 'Zurück zum Stellplatz', 'Anhänger zurückbringen, abkuppeln, Stützrad runter, Unterlegkeile setzen.'],
+            ['8', 'Rückgabe-Foto', 'Auf simpletrailer.de/return Foto machen + Rückgabe bestätigen. Fertig.'],
+          ].map(([n, t, d]) => `
+            <div style="display:flex;gap:12px;align-items:flex-start;">
+              <div style="flex-shrink:0;width:26px;height:26px;border-radius:50%;background:var(--orange);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.82rem;">${n}</div>
+              <div>
+                <div style="font-weight:700;font-size:.88rem;line-height:1.4;">${t}</div>
+                <div style="color:#aaa;font-size:.8rem;line-height:1.5;margin-top:2px;">${d}</div>
+              </div>
+            </div>
+          `).join('')}
+          <a href="/anleitung" style="margin-top:6px;color:#60a5fa;font-size:.82rem;text-decoration:none;">Detaillierte Anleitung mit Skizzen →</a>
+        </div>
+      </details>`;
+    actionHtml += anleitungHtml;
 
     // Verlängern-Block (nur wenn Buchung läuft, also active + nicht überfällig)
     let extendHtml = '';
@@ -823,6 +904,7 @@
         ${INS_LABEL[b.insurance_type || 'none']}${b.cancellation_protection ? ' · ✓ Kostenlose Stornierung' : ''} · <strong style="color:var(--orange)">${(b.total_amount||0).toFixed(2).replace('.',',')} €</strong>
       </div>
       ${statusBlock}
+      ${locationHtml}
       ${accessCodeHtml}
       ${actionHtml}
       ${extendHtml}
