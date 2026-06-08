@@ -1283,9 +1283,21 @@
     // Aktuelle Stunde bleibt buchbar — Mieter kann sofort losfahren (10:18 → 10 Uhr waehlen ok).
     const now    = new Date();
     const today  = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
-    if (dateStr === today && role === 'start') {
-      const earliestH = now.getHours();
+    if (dateStr === today) {
+      // Vergangene Stunden raus — Rueckgabe braucht zumindest die naechste Stunde
+      // damit die Buchung mindestens 1h dauert.
+      const earliestH = role === 'end' ? now.getHours() + 1 : now.getHours();
       minH = Math.max(minH, earliestH);
+    }
+
+    // Bei Rueckgabe am gleichen Tag wie Abholung: Rueckgabe muss NACH Abholung sein.
+    if (role === 'end') {
+      const startDateStr = document.getElementById('startDateInput')?.value;
+      const startHourStr = document.getElementById('startHourInput')?.value;
+      if (startDateStr && startDateStr === dateStr && startHourStr) {
+        const startH = parseInt(startHourStr, 10);
+        if (Number.isFinite(startH)) minH = Math.max(minH, startH + 1);
+      }
     }
 
     for (const r of bookedRanges) {
