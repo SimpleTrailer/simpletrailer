@@ -109,25 +109,16 @@ module.exports = async (req, res) => {
       const lng = parseFloat(pos.longitude);
       const speedKmh = pos.speed ? Math.round(pos.speed * 1.852 * 100) / 100 : 0; // Knoten→km/h
 
-      // Battery: Teltonika TAT240 sendet je nach Firmware/Konfiguration:
-      //   - attributes.io25015 (Battery-Prozent direkt — TAT240 Hauptkanal, BESTAETIGT)
-      //   - attributes.batteryLevel (Prozent, Standard-Traccar-Feld)
-      //   - attributes.battery (Voltage 6.0-8.4V fuer 2-Cell Li-Ion, oder 3.0-4.2V fuer 1-Cell)
-      //   - attributes.power (Voltage, externe 12V-Versorgung)
+      // Battery: nur Standard-Traccar-Feld batteryLevel akzeptieren.
+      // io25015 sah aus wie Prozent (75/63) ist es bei TAT240 aber nicht —
+      // bei 2 Wochen altem Tracker waeren 63% unrealistisch. Wir lassen die
+      // Anzeige lieber leer als eine falsche Zahl zu zeigen.
+      // TAT240 zeigt Battery zuverlaessig im Traccar Web-UI an — wer die genaue
+      // Zahl will, schaut dort. Hier nur das Standard-Feld auswerten:
       const attr = pos.attributes || {};
       let battery = null;
-      if (typeof attr.io25015 === 'number' && attr.io25015 >= 0 && attr.io25015 <= 100) {
-        battery = Math.round(attr.io25015);
-      } else if (typeof attr.batteryLevel === 'number' && attr.batteryLevel >= 0 && attr.batteryLevel <= 100) {
+      if (typeof attr.batteryLevel === 'number' && attr.batteryLevel >= 0 && attr.batteryLevel <= 100) {
         battery = Math.round(attr.batteryLevel);
-      } else if (typeof attr.battery === 'number' && attr.battery > 6 && attr.battery < 8.5) {
-        // 2-Cell Li-Ion 6.0V (0%) bis 8.4V (100%) — TAT240 hat 2 Zellen
-        battery = Math.max(0, Math.min(100, Math.round((attr.battery - 6.0) / 2.4 * 100)));
-      } else if (typeof attr.battery === 'number' && attr.battery > 2 && attr.battery < 5) {
-        // 1-Cell Li-Ion 3.0V (0%) bis 4.2V (100%)
-        battery = Math.max(0, Math.min(100, Math.round((attr.battery - 3.0) / 1.2 * 100)));
-      } else if (typeof attr.power === 'number' && attr.power > 8 && attr.power < 16) {
-        battery = attr.power > 12.5 ? 100 : Math.round((attr.power - 10) / 4 * 100);
       }
 
       // Diagnostik: wenn Battery nicht erkannt, einmalig die verfuegbaren Attribute-Keys loggen

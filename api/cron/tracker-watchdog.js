@@ -16,7 +16,9 @@ const { pushLion } = require('../_lion-push.js');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
-const OFFLINE_THRESHOLD_HOURS  = 6;
+// TAT240 sendet im Stand alle 6h — wir brauchen Puffer (2 Sendezyklen miss).
+// Bei > 14h ohne Signal ist es wahrscheinlich kaputt / abgeklemmt / Batterie tot.
+const OFFLINE_THRESHOLD_HOURS  = 14;
 const BATTERY_THRESHOLD_PERCENT = 20;
 const ALERT_COOLDOWN_HOURS      = 12;
 
