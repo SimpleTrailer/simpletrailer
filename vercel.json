@@ -77,6 +77,10 @@
       "schedule": "*/30 * * * *"
     },
     {
+      "path": "/api/cron/confirm-pending-returns",
+      "schedule": "*/5 * * * *"
+    },
+    {
       "path": "/api/cron/review-request",
       "schedule": "0 10 * * *"
     },

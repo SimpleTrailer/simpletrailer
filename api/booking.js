@@ -24,7 +24,7 @@ module.exports = async (req, res) => {
 
     try {
       const { data: booking, error } = await supabase
-        .from('bookings').select('*, trailers(name, late_fee_per_hour)')
+        .from('bookings').select('*, trailers(name, late_fee_per_hour, last_lat, last_lng, last_seen_at)')
         .eq('id', id).eq('return_token', token).single();
 
       if (error || !booking) return res.status(404).json({ error: 'Buchung nicht gefunden' });

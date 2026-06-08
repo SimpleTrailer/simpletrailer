@@ -13,7 +13,10 @@ module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
   try {
-    const { booking_id, return_token, photo_url } = req.body;
+    const {
+      booking_id, return_token, photo_url,
+      mieter_confirmed_in_zone, mieter_geo_lat, mieter_geo_lng
+    } = req.body;
 
     const { data: booking, error } = await supabase
       .from('bookings').select('*, trailers(name, late_fee_per_hour)')
@@ -21,6 +24,7 @@ module.exports = async (req, res) => {
 
     if (error || !booking) return res.status(404).json({ error: 'Buchung nicht gefunden' });
     if (booking.status === 'returned') return res.status(400).json({ error: 'Buchung bereits abgeschlossen' });
+    if (booking.status === 'pending_position_check') return res.status(400).json({ error: 'Rueckgabe bereits vermerkt — Bestaetigung folgt sobald Tracker sich meldet' });
 
     const now = new Date();
     const expectedEnd = new Date(booking.end_time);
@@ -151,53 +155,52 @@ module.exports = async (req, res) => {
     let returnDistanceM = null;
     let returnStatus = null;
     let returnExtraFee = 0;
+    // NEUE LOGIK (Tier/Lime-Style):
+    // - Tracker frisch (<=15 Min) → Tracker entscheidet
+    // - Tracker stale (>15 Min) UND Mieter sagt "in Zone" → pending_position_check (Cron prueft spaeter)
+    // - Tracker stale UND Mieter sagt "ausserhalb" → sofort Fee chargen (Mieter hat selbst zugegeben)
+    // - Tracker fehlt komplett + Mieter "in Zone" → pending_position_check
+    // - Tracker fehlt + Mieter "ausserhalb" → sofort Fee chargen
+    const mieterSagtAusserhalb = (mieter_confirmed_in_zone === false);
+
     if (returnLat != null && booking.pickup_lat != null) {
       returnDistanceM = distMeters(booking.pickup_lat, booking.pickup_lng, returnLat, returnLng);
       const insideBremen = inBremen(returnLat, returnLng);
-      // Wenn free_floating-Spalte fehlt (Buchung vor Migration), niemals Strafe abbuchen — Safe Default.
       const ffKnown = booking.free_floating === true || booking.free_floating === false;
-      // Stellplatz-Radius: 500m — Tracker-Genauigkeit (~15m) + grosszuegiger Puffer,
-      // damit Mieter nicht wegen Parken 1-2 Strassen entfernt eine Fee bekommen.
-      if (returnDistanceM <= 500) {
-        returnStatus = 'heimat';
-      } else if (positionIsStale) {
-        // KRITISCH: Tracker-Position ist veraltet (> 15 Min). Mieter koennte am Stellplatz
-        // stehen waehrend der Tracker zuletzt waehrend der Fahrt gesendet hat. Wir charten
-        // hier KEINE Fee automatisch — der Admin pruef die Buchung manuell.
-        returnStatus = 'pending_review';
-        returnExtraFee = 0;
-      } else if (!insideBremen) {
-        if (ffKnown) {
-          returnStatus = 'outside_bremen';
-          returnExtraFee = 50.00; // AGB §13.6 — Rückführungspauschale
-        } else {
-          console.warn('free_floating-Spalte fehlt für booking', booking_id, '— keine Strafe trotz Out-of-Bremen.');
-          returnStatus = 'outside_bremen';
-        }
-      } else if (booking.free_floating === true) {
-        returnStatus = 'free_floating_ok';
-      } else if (booking.free_floating === false) {
-        returnStatus = 'wrong_spot_in_bremen';
-        returnExtraFee = 50.00; // AGB §13.6 — Falsch-Rückgabe-Pauschale
-      } else {
-        // Spalte fehlt: kein Fee, nur Status setzen für Statistik
-        console.warn('free_floating-Spalte fehlt für booking', booking_id, '— behandle als heimat.');
-        returnStatus = 'heimat';
-      }
-    }
 
-    // Bei pending_review: Admin-Alert-Mail damit Lion das pruefen kann
-    if (returnStatus === 'pending_review') {
-      try {
-        await resend.emails.send({
-          from: 'SimpleTrailer <buchung@simpletrailer.de>',
-          to: 'info@simpletrailer.de',
-          reply_to: 'info@simpletrailer.de',
-          subject: '⚠️ Rueckgabe: Position veraltet — manuelle Pruefung noetig',
-          text: `Buchung ${booking_id} (${booking.customer_name})\n\nDer Mieter hat die Rueckgabe bestaetigt, aber die Tracker-Position ist ${Math.round(positionAgeMinutes)} Minuten alt.\n\nLetzte bekannte Position: ${returnLat?.toFixed(6)}, ${returnLng?.toFixed(6)}\nDistanz zum Pickup: ${returnDistanceM} m\n\nKeine Auto-Fee abgebucht. Bitte vor Ort pruefen ob der Anhaenger am Stellplatz steht und ggf. manuell chargen.\n\nGoogle Maps: https://www.google.com/maps?q=${returnLat},${returnLng}`
-        });
-      } catch (mailErr) {
-        console.error('Pending-review-Mail fehlgeschlagen:', mailErr.message);
+      if (!positionIsStale) {
+        // === Tracker frisch — Tracker entscheidet ===
+        if (returnDistanceM <= 500) {
+          returnStatus = 'heimat';
+        } else if (!insideBremen) {
+          if (ffKnown) { returnStatus = 'outside_bremen'; returnExtraFee = 50.00; }
+          else { returnStatus = 'outside_bremen'; }
+        } else if (booking.free_floating === true) {
+          returnStatus = 'free_floating_ok';
+        } else if (booking.free_floating === false) {
+          returnStatus = 'wrong_spot_in_bremen';
+          returnExtraFee = 50.00;
+        } else {
+          returnStatus = 'heimat';
+        }
+      } else {
+        // === Tracker stale — Mieter-Bestaetigung greift ===
+        if (mieterSagtAusserhalb) {
+          // Mieter hat selbst zugegeben → sofort Fee
+          returnStatus = 'outside_confirmed_by_mieter';
+          returnExtraFee = 50.00;
+        } else {
+          // Mieter sagt in Zone — Cron prueft spaeter
+          returnStatus = 'pending_position_check';
+        }
+      }
+    } else if (booking.pickup_lat != null) {
+      // Tracker hat NIE Position geliefert (returnLat==null)
+      if (mieterSagtAusserhalb) {
+        returnStatus = 'outside_confirmed_by_mieter';
+        returnExtraFee = 50.00;
+      } else {
+        returnStatus = 'pending_position_check';
       }
     }
 
@@ -220,8 +223,11 @@ module.exports = async (req, res) => {
       }
     }
 
+    // Bei pending_position_check: Buchung bleibt offen, Cron schliesst ab sobald Tracker meldet.
+    const isPending = returnStatus === 'pending_position_check';
     const bookingUpdate = {
-      status: 'returned', actual_return_time: now.toISOString(),
+      status: isPending ? 'pending_position_check' : 'returned',
+      actual_return_time: now.toISOString(),
       return_photo_url: photo_url || null,
       late_fee_amount: lateFeeAmount,
       late_fee_payment_intent_id: lateFeePaymentIntentId,
@@ -232,10 +238,15 @@ module.exports = async (req, res) => {
       return_distance_m: returnDistanceM,
       return_status: returnStatus,
       return_extra_fee: returnExtraFee,
+      // Pending-Felder + Mieter-Bestaetigung speichern
+      position_check_started_at: isPending ? now.toISOString() : null,
+      mieter_confirmed_in_zone: (typeof mieter_confirmed_in_zone === 'boolean') ? mieter_confirmed_in_zone : null,
+      mieter_geo_lat: (typeof mieter_geo_lat === 'number') ? mieter_geo_lat : null,
+      mieter_geo_lng: (typeof mieter_geo_lng === 'number') ? mieter_geo_lng : null,
     };
     let { error: updErr } = await supabase.from('bookings').update(bookingUpdateWithZone).eq('id', booking_id);
     if (updErr && /column .* does not exist/i.test(updErr.message || '')) {
-      console.warn('Return-Zone-Spalten fehlen — fallback ohne Zone-Felder. supabase-migration-return-zones.sql ausführen.');
+      console.warn('Return-Zone-Spalten fehlen — fallback ohne Zone-Felder. Migration ausfuehren!');
       await supabase.from('bookings').update(bookingUpdate).eq('id', booking_id);
     }
 
@@ -267,6 +278,42 @@ module.exports = async (req, res) => {
           Auf Google bewerten →
         </a>
       </div>`;
+
+    // Bei pending_position_check: Mieter bekommt erstmal "wir warten auf Tracker"-Mail.
+    // Die finale Abrechnung schickt der Cron sobald die Position bestaetigt ist.
+    if (isPending) {
+      try {
+        await resend.emails.send({
+          from: 'SimpleTrailer <buchung@simpletrailer.de>',
+          reply_to: 'info@simpletrailer.de',
+          to: booking.customer_email,
+          subject: `Rückgabe vermerkt #${bookingRef} – wir bestätigen final per E-Mail`,
+          html: `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0D0D0D;font-family:system-ui,sans-serif;color:#fff;">
+            <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
+              <div style="text-align:center;margin-bottom:32px;">
+                <span style="font-size:1.5rem;font-weight:800;">Simple</span><span style="font-size:1.5rem;font-weight:800;color:#E85D00;">Trailer</span>
+              </div>
+              <div style="background:#1A1A1A;border-radius:16px;padding:32px;border:1px solid #383838;">
+                <h1 style="margin:0 0 8px;font-size:1.4rem;">⏳ Rückgabe vermerkt</h1>
+                <p style="color:#ccc;margin:0 0 16px;line-height:1.6;">Hallo ${booking.customer_name},<br><br>danke für die Rückgabe! Der GPS-Tracker am Anhänger meldet sich nicht immer sofort — manchmal dauert es bis zu einer Stunde bis die finale Position übermittelt wird.</p>
+                <p style="color:#ccc;margin:0 0 16px;line-height:1.6;">Sobald der Tracker sich gemeldet hat, prüfen wir automatisch ob der Anhänger im Zone-Bereich steht und schicken dir die finale Abrechnung per E-Mail. Du musst nichts weiter tun.</p>
+                <p style="color:#888;margin:0;font-size:.85rem;">Buchungsnummer: <strong>#${bookingRef}</strong></p>
+              </div>
+              <p style="color:#444;font-size:.72rem;text-align:center;margin-top:24px;">SimpleTrailer · Bremen · info@simpletrailer.de</p>
+            </div>
+          </body></html>`
+        });
+      } catch (mailErr) {
+        console.error('Pending-Mail fehlgeschlagen:', mailErr.message);
+      }
+      return res.status(200).json({
+        success: true,
+        return_status: 'pending_position_check',
+        late_hours: lateHours,
+        late_fee: lateFeeAmount,
+        late_fee_charged: lateFeeCharged
+      });
+    }
 
     await resend.emails.send({
       from: 'SimpleTrailer <buchung@simpletrailer.de>',

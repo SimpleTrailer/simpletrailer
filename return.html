@@ -8,6 +8,8 @@
   <title>Rückgabe – SimpleTrailer</title>
   <script src="/native-bridge.js?v=9" defer></script>
   <script src="/analytics.js?v=11" defer></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root { --bg:#0D0D0D; --s1:#161616; --s2:#1E1E1E; --orange:#E85D00; --white:#fff; --gray:#888; --border:#383838; --green:#22c55e; --font:'Inter',system-ui,sans-serif; }
@@ -65,6 +67,37 @@
 
     .loading { text-align:center; padding:60px 20px; color:var(--gray); }
     .spin-big { width:36px; height:36px; border:3px solid var(--border); border-top-color:var(--orange); border-radius:50%; animation:spin .8s linear infinite; margin:0 auto 16px; }
+
+    /* RUECKGABE-KARTE */
+    #returnMap { height:280px; border-radius:12px; overflow:hidden; background:#1a1a1a; }
+    .zone-status { display:flex; align-items:center; gap:10px; padding:12px 14px; border-radius:10px; font-size:.92rem; font-weight:600; margin-top:14px; }
+    .zone-status.in-zone   { background:#0a1f0a; border:1.5px solid #22c55e; color:#86efac; }
+    .zone-status.out-zone  { background:#1a0a0a; border:1.5px solid #f97316; color:#fdba74; }
+    .zone-status.unknown   { background:#1a1606; border:1.5px solid #fbbf24; color:#fcd34d; }
+    .zone-status .dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+    .zone-status.in-zone .dot  { background:#22c55e; box-shadow:0 0 0 3px rgba(34,197,94,.25); animation:pulse 2s ease-in-out infinite; }
+    .zone-status.out-zone .dot { background:#f97316; }
+    .zone-status.unknown .dot  { background:#fbbf24; }
+    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.5; } }
+
+    .position-meta { font-size:.78rem; color:var(--gray); margin-top:8px; line-height:1.5; }
+    .position-meta strong { color:#ccc; }
+    .geo-btn { background:#1f1f1f; border:1px solid var(--border); color:#fff; padding:10px 14px; border-radius:8px; font-family:var(--font); font-size:.86rem; cursor:pointer; margin-top:10px; width:100%; }
+    .geo-btn:hover { background:#2a2a2a; }
+
+    .confirm-box { background:#0a0a0a; border:1.5px solid var(--border); border-radius:12px; padding:16px; margin-top:14px; }
+    .confirm-box label { display:flex; gap:12px; align-items:flex-start; cursor:pointer; font-size:.9rem; line-height:1.55; }
+    .confirm-box input[type=checkbox] { width:20px; height:20px; flex-shrink:0; margin-top:1px; cursor:pointer; accent-color:var(--green); }
+    .confirm-box.warning { background:#1a0d00; border-color:#f97316; }
+    .confirm-box.warning label { color:#fed7aa; }
+
+    /* Leaflet dark tweaks */
+    .leaflet-container { background:#1a1a1a; font-family:var(--font); }
+    .leaflet-popup-content-wrapper { background:#1f1f1f; color:#fff; border-radius:8px; }
+    .leaflet-popup-tip { background:#1f1f1f; }
+    .marker-trailer { background:var(--orange); color:#fff; border-radius:50%; width:32px !important; height:32px !important; display:flex; align-items:center; justify-content:center; font-size:1.1rem; border:3px solid #fff; box-shadow:0 2px 8px rgba(0,0,0,.4); margin-left:-16px !important; margin-top:-16px !important; }
+    .marker-pickup { background:#22c55e; color:#fff; border-radius:50%; width:32px !important; height:32px !important; display:flex; align-items:center; justify-content:center; font-size:1.1rem; border:3px solid #fff; box-shadow:0 2px 8px rgba(0,0,0,.4); margin-left:-16px !important; margin-top:-16px !important; }
+    .marker-me { background:#60a5fa; color:#fff; border-radius:50%; width:24px !important; height:24px !important; border:3px solid #fff; box-shadow:0 0 0 4px rgba(96,165,250,.3); margin-left:-12px !important; margin-top:-12px !important; }
   </style>
 </head>
 <body>
@@ -119,6 +152,19 @@
       </div>
     </div>
 
+    <!-- Rueckgabe-Zone Karte -->
+    <div class="card">
+      <p class="section-tag">Rückgabe-Zone</p>
+      <p style="color:var(--gray);font-size:.85rem;margin-bottom:14px;">Bring den Anhänger zurück zum Stellplatz (grüner Kreis).</p>
+      <div id="returnMap"></div>
+      <div class="zone-status unknown" id="zoneStatus">
+        <span class="dot"></span>
+        <span id="zoneStatusText">Lade Anhänger-Position…</span>
+      </div>
+      <div class="position-meta" id="positionMeta">&nbsp;</div>
+      <button type="button" class="geo-btn" id="geoBtn" onclick="requestGeolocation()">📍 Meinen Standort zeigen</button>
+    </div>
+
     <!-- Foto Upload -->
     <div class="card">
       <p class="section-tag">Foto zur Bestätigung</p>
@@ -131,18 +177,30 @@
       </div>
     </div>
 
+    <!-- Bestaetigung -->
+    <div class="confirm-box" id="confirmBox">
+      <label>
+        <input type="checkbox" id="confirmInZone" onchange="updateSubmitState()" />
+        <span id="confirmLabel">Ich bestätige: Der Anhänger steht innerhalb der Rückgabe-Zone (grüner Kreis).</span>
+      </label>
+    </div>
+
     <!-- Submit -->
-    <button class="btn btn-green" id="returnBtn" onclick="submitReturn()" disabled>
+    <button class="btn btn-green" id="returnBtn" onclick="submitReturn()" disabled style="margin-top:14px;">
       Rückgabe bestätigen
     </button>
-    <p style="color:var(--gray);font-size:.78rem;text-align:center;margin-top:10px;">Mit dem Bestätigen gibst du den Anhänger offiziell zurück.</p>
+    <p style="color:var(--gray);font-size:.78rem;text-align:center;margin-top:10px;">Bei nicht ordnungsgemäßer Rückgabe (außerhalb der Zone) wird eine Rückführungspauschale von 50 € berechnet, sobald der Tracker die Position bestätigt.</p>
   </div>
 
   <!-- Erfolg -->
   <div id="successView">
-    <div class="big-icon">✅</div>
-    <h2>Rückgabe bestätigt!</h2>
+    <div class="big-icon" id="successIcon">✅</div>
+    <h2 id="successTitle">Rückgabe bestätigt!</h2>
     <p id="successMsg">Danke! Du bekommst gleich eine Abrechnung per E-Mail.</p>
+    <div id="pendingInfo" style="display:none;margin-top:20px;background:#1a1606;border:1.5px solid #fbbf24;border-radius:12px;padding:18px;text-align:left;">
+      <div style="font-weight:700;color:#fcd34d;margin-bottom:8px;">⏳ Standort wird bestätigt</div>
+      <div style="font-size:.88rem;color:#fcd34d;line-height:1.55;">Der Tracker meldet sich nicht immer sofort. Wir bestätigen die Rückgabe final sobald die Position eingegangen ist (i.d.R. innerhalb 1 Stunde) — du bekommst dann eine E-Mail. Bei Problem melden wir uns.</div>
+    </div>
 
     <div id="lateFeeInfo" style="display:none;margin-top:24px;">
       <div class="card" style="border-color:var(--orange);background:#1a0d00;text-align:center;">
@@ -175,6 +233,13 @@
   let photoFile  = null;
   let timer      = null;
 
+  // Karten- und Zone-State
+  const RETURN_RADIUS_M = 500;
+  let map = null, zoneCircle = null, pickupMarker = null, trailerMarker = null, meMarker = null;
+  let trailerLat = null, trailerLng = null, trailerSeenAt = null;
+  let meLat = null, meLng = null;
+  let positionRefreshTimer = null;
+
   const fmtDate = (iso) => new Date(iso).toLocaleString('de-DE', {
     day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
   });
@@ -194,6 +259,17 @@
         showError('Diese Buchung wurde bereits abgeschlossen.');
         return;
       }
+      if (booking.status === 'pending_position_check') {
+        // Mieter hat schon abgegeben — wir warten auf Tracker. Zeige pending-Info.
+        document.getElementById('loadingView').style.display = 'none';
+        document.getElementById('mainView').style.display    = 'none';
+        document.getElementById('successView').style.display = 'block';
+        document.getElementById('successIcon').textContent = '⏳';
+        document.getElementById('successTitle').textContent = 'Rückgabe vermerkt';
+        document.getElementById('successMsg').textContent = 'Wir warten auf die finale Bestätigung vom Tracker.';
+        document.getElementById('pendingInfo').style.display = 'block';
+        return;
+      }
 
       document.getElementById('infoId').textContent     = '#' + booking.id.slice(0, 8).toUpperCase();
       document.getElementById('infoEnd').textContent    = fmtDate(booking.end_time);
@@ -203,9 +279,147 @@
       document.getElementById('loadingView').style.display = 'none';
       document.getElementById('mainView').style.display    = 'block';
 
+      // Initialer Tracker-Stand aus dem booking-Response
+      const tr = booking.trailers || {};
+      trailerLat    = tr.last_lat;
+      trailerLng    = tr.last_lng;
+      trailerSeenAt = tr.last_seen_at;
+
+      initMap();
+      refreshTrailerPosition();        // direkt 1x nachladen (mit Traccar-Refresh)
+      positionRefreshTimer = setInterval(refreshTrailerPosition, 30000);
+
     } catch (err) {
       showError(err.message);
     }
+  }
+
+  function initMap() {
+    if (!booking.pickup_lat || !booking.pickup_lng) {
+      // Kein Pickup-Standort hinterlegt — Karte ausblenden, Zone-Status auf "unbekannt"
+      document.getElementById('returnMap').style.display = 'none';
+      setZoneStatus('unknown', 'Standort-Prüfung nicht verfügbar', 'Stellplatz-Koordinaten fehlen in dieser Buchung.');
+      return;
+    }
+    const pickup = [booking.pickup_lat, booking.pickup_lng];
+    map = L.map('returnMap', { zoomControl: true, attributionControl: false }).setView(pickup, 16);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', {
+      maxZoom: 19, subdomains: 'abcd'
+    }).addTo(map);
+
+    zoneCircle = L.circle(pickup, {
+      radius: RETURN_RADIUS_M, color:'#22c55e', weight:2, fillColor:'#22c55e', fillOpacity:.10
+    }).addTo(map);
+
+    pickupMarker = L.marker(pickup, {
+      icon: L.divIcon({ html:'🅿', className:'marker-pickup', iconSize:[32,32] })
+    }).addTo(map).bindPopup('Stellplatz');
+  }
+
+  async function refreshTrailerPosition() {
+    try {
+      const r = await fetch(`/api/trailer-position?id=${bookingId}&token=${returnToken}`);
+      if (!r.ok) return;
+      const data = await r.json();
+      if (data.last_lat && data.last_lng) {
+        trailerLat = data.last_lat;
+        trailerLng = data.last_lng;
+        trailerSeenAt = data.last_seen_at;
+      }
+      updateMapMarkers();
+      updateZoneStatus();
+    } catch (e) { /* fail-soft */ }
+  }
+
+  function updateMapMarkers() {
+    if (!map) return;
+    if (trailerLat && trailerLng) {
+      const pos = [trailerLat, trailerLng];
+      if (trailerMarker) trailerMarker.setLatLng(pos);
+      else trailerMarker = L.marker(pos, {
+        icon: L.divIcon({ html:'🚛', className:'marker-trailer', iconSize:[32,32] })
+      }).addTo(map).bindPopup('Anhänger');
+    }
+    if (meLat && meLng) {
+      const pos = [meLat, meLng];
+      if (meMarker) meMarker.setLatLng(pos);
+      else meMarker = L.marker(pos, {
+        icon: L.divIcon({ html:'', className:'marker-me', iconSize:[24,24] })
+      }).addTo(map).bindPopup('Du');
+    }
+  }
+
+  function distMeters(lat1, lng1, lat2, lng2) {
+    if (lat1 == null || lat2 == null) return null;
+    const R = 6371000, toRad = (d) => d * Math.PI / 180;
+    const dLat = toRad(lat2 - lat1), dLng = toRad(lng2 - lng1);
+    const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLng/2)**2;
+    return Math.round(2 * R * Math.asin(Math.sqrt(a)));
+  }
+
+  function updateZoneStatus() {
+    if (!booking.pickup_lat || !booking.pickup_lng) return;
+    if (trailerLat == null) {
+      setZoneStatus('unknown', 'Anhänger meldet sich nicht', 'Tracker hat noch keine Position gesendet. Du kannst trotzdem abgeben — wir prüfen sobald der Tracker sich meldet.');
+      return;
+    }
+    const dist = distMeters(booking.pickup_lat, booking.pickup_lng, trailerLat, trailerLng);
+    const ageMin = trailerSeenAt ? Math.round((Date.now() - new Date(trailerSeenAt).getTime()) / 60000) : null;
+    const ageText = ageMin == null ? '' : (ageMin < 1 ? 'gerade eben' : `vor ${ageMin} Min`);
+    const ageStale = ageMin != null && ageMin > 15;
+
+    if (dist <= RETURN_RADIUS_M) {
+      setZoneStatus('in-zone', '✓ Anhänger ist in der Zone',
+        `Distanz zum Stellplatz: <strong>${dist} m</strong>${ageText ? ` · Position ${ageText}` : ''}${ageStale ? ' · ⚠ veraltet' : ''}`);
+      // Confirm-Box: in-zone Variante
+      document.getElementById('confirmLabel').textContent = 'Ich bestätige: Der Anhänger steht innerhalb der Rückgabe-Zone (grüner Kreis).';
+      document.getElementById('confirmBox').classList.remove('warning');
+    } else {
+      setZoneStatus('out-zone', `⚠ Anhänger ${dist}m außerhalb der Zone`,
+        `Distanz zum Stellplatz: <strong>${dist} m</strong>${ageText ? ` · Position ${ageText}` : ''}${ageStale ? ' · ⚠ veraltet' : ''}<br>Bei Abgabe außerhalb: <strong>50 € Rückführungspauschale</strong>.`);
+      document.getElementById('confirmLabel').innerHTML = '<strong>Ich gebe außerhalb der Zone ab</strong> und akzeptiere die Rückführungspauschale von <strong>50 €</strong>.';
+      document.getElementById('confirmBox').classList.add('warning');
+    }
+  }
+
+  function setZoneStatus(kind, text, meta) {
+    const el = document.getElementById('zoneStatus');
+    el.className = 'zone-status ' + kind;
+    document.getElementById('zoneStatusText').textContent = text;
+    document.getElementById('positionMeta').innerHTML = meta || '&nbsp;';
+  }
+
+  function requestGeolocation() {
+    if (!navigator.geolocation) {
+      alert('Dein Browser unterstützt keine Standortabfrage.');
+      return;
+    }
+    const btn = document.getElementById('geoBtn');
+    btn.textContent = '📍 Lade Standort…';
+    btn.disabled = true;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        meLat = pos.coords.latitude;
+        meLng = pos.coords.longitude;
+        updateMapMarkers();
+        if (map) map.setView([meLat, meLng], 17);
+        btn.textContent = '✓ Standort geteilt';
+      },
+      (err) => {
+        btn.textContent = '📍 Meinen Standort zeigen';
+        btn.disabled = false;
+        if (err.code === 1) alert('Standort wurde abgelehnt. Du kannst die Rückgabe trotzdem durchführen.');
+        else alert('Standort konnte nicht ermittelt werden: ' + err.message);
+      },
+      { enableHighAccuracy:true, timeout:8000, maximumAge:0 }
+    );
+  }
+
+  function updateSubmitState() {
+    const btn = document.getElementById('returnBtn');
+    const hasPhoto = !!photoFile;
+    const confirmed = document.getElementById('confirmInZone').checked;
+    btn.disabled = !(hasPhoto && confirmed);
   }
 
   function startCountdown() {
@@ -270,7 +484,7 @@
       preview.style.display = 'block';
     };
     reader.readAsDataURL(file);
-    document.getElementById('returnBtn').disabled = false;
+    updateSubmitState();
     if (window.SimpleTrailerNative) window.SimpleTrailerNative.haptic('light');
   }
 
@@ -366,19 +580,37 @@
       }
 
       btn.innerHTML = '<div class="spinner"></div> Wird verarbeitet…';
+      // Mieter-Bestaetigung + Geolocation mitschicken — Backend nutzt das fuer pending-Logik
+      const mieterConfirmedInZone = !document.getElementById('confirmBox').classList.contains('warning');
       const res  = await fetch('/api/process-return', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ booking_id: bookingId, return_token: returnToken, photo_url: photoUrl })
+        body: JSON.stringify({
+          booking_id: bookingId,
+          return_token: returnToken,
+          photo_url: photoUrl,
+          mieter_confirmed_in_zone: mieterConfirmedInZone,
+          mieter_geo_lat: meLat,
+          mieter_geo_lng: meLng
+        })
       });
       const data = await res.json();
 
       if (!res.ok) throw new Error(data.error || 'Fehler bei der Rückgabe');
 
       if (timer) clearInterval(timer);
+      if (positionRefreshTimer) clearInterval(positionRefreshTimer);
 
       document.getElementById('mainView').style.display   = 'none';
       document.getElementById('successView').style.display = 'block';
+
+      // Pending-Variante: Tracker hat sich noch nicht gemeldet, Bestaetigung folgt per Mail
+      if (data.return_status === 'pending_position_check') {
+        document.getElementById('successIcon').textContent = '⏳';
+        document.getElementById('successTitle').textContent = 'Rückgabe vermerkt';
+        document.getElementById('successMsg').textContent = 'Wir warten auf die finale Bestätigung vom Tracker.';
+        document.getElementById('pendingInfo').style.display = 'block';
+      }
 
       if (data.late_fee > 0) {
         document.getElementById('lateFeeInfo').style.display = 'block';
