@@ -561,6 +561,11 @@
         </div>
         <span style="color:#22c55e;font-size:1.2rem;">✓</span>
       </div>
+      <!-- Warnhinweis: an WELCHE Email wird die Bestätigung geschickt? -->
+      <div style="background:#1a1606;border-left:3px solid #f59e0b;padding:11px 14px;border-radius:8px;margin-bottom:14px;font-size:.82rem;color:#fde68a;line-height:1.5;">
+        📧 <strong>Mietvertrag + Rechnung gehen an <span id="confirmEmailHint">–</span></strong><br>
+        <span style="color:#fcd34d;font-size:.78rem;">Falsche Adresse? Klick „Anderes Konto verwenden" und meld dich mit der richtigen E-Mail an.</span>
+      </div>
       <button class="btn btn-orange" onclick="goStep4()">Weiter →</button>
       <div style="text-align:center;margin-top:12px;">
         <a href="#" onclick="goToStep(2)" style="color:var(--gray);font-size:.85rem;text-decoration:none;">← Zurück</a>
@@ -1759,6 +1764,8 @@
     document.getElementById('bookingAvatar').textContent = name.charAt(0).toUpperCase();
     document.getElementById('bookingName').textContent   = name;
     document.getElementById('bookingEmail').textContent  = bookingUser.email;
+    const hintEl = document.getElementById('confirmEmailHint');
+    if (hintEl) hintEl.textContent = bookingUser.email;
     document.getElementById('bookingPhone').textContent  = meta.phone || '';
     document.getElementById('loggedInView').style.display  = 'block';
     document.getElementById('authFormView').style.display  = 'none';
