@@ -62,6 +62,11 @@
       // Booking-Datum
       'booking.find_trailer': 'Anhänger finden →',
       'booking.when_label': 'Wann brauchst du einen Anhänger?',
+      'booking.step1': 'Zeitraum',
+      'booking.step2': 'Optionen',
+      'booking.step3': 'Konto',
+      'booking.step4': 'Führerschein',
+      'booking.step5': 'Zahlung',
 
       // Trust-Badges (unter Hero)
       'trust.fully_online': '100 % online buchbar',
@@ -247,6 +252,11 @@
 
       'booking.find_trailer': 'Find Trailer →',
       'booking.when_label': 'When do you need a trailer?',
+      'booking.step1': 'Period',
+      'booking.step2': 'Options',
+      'booking.step3': 'Account',
+      'booking.step4': 'License',
+      'booking.step5': 'Payment',
 
       'trust.fully_online': '100% online booking',
       'trust.contactless': 'Contactless pickup',
@@ -390,11 +400,15 @@
   //  STATE
   // ============================================================
   const STORAGE_KEY = 'st_lang';
+  // WICHTIG: Default IMMER Deutsch fuer SEO.
+  // Google-Crawler sehen so immer den deutschen Inhalt (= verbindliche Indexierung).
+  // Auto-Detect der Browser-Sprache wuerde dazu fuehren dass Googlebot englischen
+  // Content auf der .de-Domain indexiert → Duplicate-Content / Confusion.
+  // Englisch greift NUR wenn User explizit den Switch klickt (in localStorage gespeichert).
   function detectLang() {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored === 'de' || stored === 'en') return stored;
-    const nav = (navigator.language || 'de').toLowerCase();
-    return nav.startsWith('en') ? 'en' : 'de';
+    return 'de'; // Default DE — Browser-Sprache wird absichtlich ignoriert
   }
   let currentLang = detectLang();
 
