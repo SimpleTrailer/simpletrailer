@@ -726,17 +726,40 @@
     // Verlängern-Block (nur wenn Buchung läuft, also active + nicht überfällig)
     let extendHtml = '';
     if (b.status === 'active' && precheckDone && !isOverdue) {
+      // Preise aus Trailer-Daten (fallback auf Defaults aus extend-booking.js)
+      const tp = b.trailers || {};
+      const pKurz = Number(tp.price_kurztrip) || 9;
+      const pHalb = Number(tp.price_halftag)  || 18;
+      const pDay  = Number(tp.price_day)      || 29;
+      const fmt€ = (n) => n.toFixed(2).replace('.', ',') + ' €';
+      // Logik wie in extend-booking.js: <=3h kurztrip, <=6h halftag, <=24h day
+      const price1h = pKurz; // 1h faellt in kurztrip-Bucket (<=3h)
+      const price3h = pKurz;
+      const price6h = pHalb;
+      const price24h = pDay;
       extendHtml = `
         <details style="margin-top:14px;background:#0a0a0a;border:1px solid var(--border);border-radius:10px;padding:14px 16px;">
           <summary style="cursor:pointer;font-weight:700;font-size:.92rem;color:#60a5fa;">⏱ Mietzeit verlängern</summary>
           <div style="margin-top:12px;font-size:.84rem;color:#ccc;line-height:1.55;">
-            Brauchst du länger? Verlängere bequem und zahl den Aufpreis automatisch über die hinterlegte Karte.
+            Brauchst du länger? Wähle eine Option — der Aufpreis wird sofort über die hinterlegte Karte abgebucht.
           </div>
-          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;">
-            <button onclick="extendBooking('${b.id}', 1)"  style="background:#1a1a1a;color:#fff;border:1px solid var(--border);padding:10px 16px;border-radius:8px;cursor:pointer;font-weight:700;font-size:.86rem;font-family:inherit;">+1 Stunde</button>
-            <button onclick="extendBooking('${b.id}', 3)"  style="background:#1a1a1a;color:#fff;border:1px solid var(--border);padding:10px 16px;border-radius:8px;cursor:pointer;font-weight:700;font-size:.86rem;font-family:inherit;">+3 Stunden</button>
-            <button onclick="extendBooking('${b.id}', 6)"  style="background:#1a1a1a;color:#fff;border:1px solid var(--border);padding:10px 16px;border-radius:8px;cursor:pointer;font-weight:700;font-size:.86rem;font-family:inherit;">+6 Stunden</button>
-            <button onclick="extendBooking('${b.id}', 24)" style="background:#1a1a1a;color:#fff;border:1px solid var(--border);padding:10px 16px;border-radius:8px;cursor:pointer;font-weight:700;font-size:.86rem;font-family:inherit;">+1 Tag</button>
+          <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:14px;">
+            <button onclick="extendBooking('${b.id}', 1)"  style="background:#1a1a1a;color:#fff;border:1px solid var(--border);padding:12px 14px;border-radius:10px;cursor:pointer;font-family:inherit;text-align:left;">
+              <div style="font-weight:700;font-size:.9rem;">+1 Stunde</div>
+              <div style="color:#60a5fa;font-weight:800;font-size:1rem;margin-top:2px;">${fmt€(price1h)}</div>
+            </button>
+            <button onclick="extendBooking('${b.id}', 3)"  style="background:#1a1a1a;color:#fff;border:1px solid var(--border);padding:12px 14px;border-radius:10px;cursor:pointer;font-family:inherit;text-align:left;">
+              <div style="font-weight:700;font-size:.9rem;">+3 Stunden</div>
+              <div style="color:#60a5fa;font-weight:800;font-size:1rem;margin-top:2px;">${fmt€(price3h)}</div>
+            </button>
+            <button onclick="extendBooking('${b.id}', 6)"  style="background:#1a1a1a;color:#fff;border:1px solid var(--border);padding:12px 14px;border-radius:10px;cursor:pointer;font-family:inherit;text-align:left;">
+              <div style="font-weight:700;font-size:.9rem;">+6 Stunden</div>
+              <div style="color:#60a5fa;font-weight:800;font-size:1rem;margin-top:2px;">${fmt€(price6h)}</div>
+            </button>
+            <button onclick="extendBooking('${b.id}', 24)" style="background:#1a1a1a;color:#fff;border:1px solid var(--border);padding:12px 14px;border-radius:10px;cursor:pointer;font-family:inherit;text-align:left;">
+              <div style="font-weight:700;font-size:.9rem;">+1 Tag</div>
+              <div style="color:#60a5fa;font-weight:800;font-size:1rem;margin-top:2px;">${fmt€(price24h)}</div>
+            </button>
           </div>
           <p style="font-size:.74rem;color:var(--gray);margin:10px 0 0;">Bei Engpass (Folge-Buchung): nicht möglich — bitte rechtzeitig zurückgeben.</p>
         </details>`;
@@ -786,7 +809,13 @@
 
   async function extendBooking(bookingId, hours) {
     if (_mutationInFlight) return;
-    if (!confirm(`Mietzeit um ${hours} Stunde${hours > 1 ? 'n' : ''} verlängern?\n\nDer Aufpreis wird sofort über deine hinterlegte Karte abgebucht.`)) return;
+    // Preis aus dem geklickten Button selbst auslesen (steht direkt drauf)
+    const btn = event && event.currentTarget;
+    const priceEl = btn ? btn.querySelector('div:nth-child(2)') : null;
+    const priceText = priceEl ? priceEl.textContent.trim() : '';
+    const lbl = hours === 24 ? '1 Tag' : (hours + (hours > 1 ? ' Stunden' : ' Stunde'));
+    const confirmMsg = `Mietzeit um ${lbl} verlängern?${priceText ? `\n\nAufpreis: ${priceText}` : ''}\n\nDer Aufpreis wird sofort über deine hinterlegte Karte abgebucht.`;
+    if (!confirm(confirmMsg)) return;
     _mutationInFlight = true;
     try {
       const res = await authedFetch('/api/extend-booking', {

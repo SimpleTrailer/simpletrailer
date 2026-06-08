@@ -6,12 +6,18 @@
 CREATE TABLE IF NOT EXISTS tracker_alerts (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   trailer_id  UUID NOT NULL REFERENCES trailers(id) ON DELETE CASCADE,
-  alert_type  TEXT NOT NULL CHECK (alert_type IN ('offline','battery_low')),
+  alert_type  TEXT NOT NULL,
   severity    TEXT NOT NULL CHECK (severity IN ('critical','red','yellow','info','green')),
   message     TEXT,
   created_at  TIMESTAMPTZ DEFAULT NOW(),
   resolved_at TIMESTAMPTZ
 );
+
+-- Constraint mit sync_drift ergaenzt (idempotent — bei Re-Run kein Fehler)
+ALTER TABLE tracker_alerts DROP CONSTRAINT IF EXISTS tracker_alerts_alert_type_check;
+ALTER TABLE tracker_alerts ADD CONSTRAINT tracker_alerts_alert_type_check
+  CHECK (alert_type IN ('offline','battery_low','sync_drift'));
+
 CREATE INDEX IF NOT EXISTS idx_tracker_alerts_trailer_recent
   ON tracker_alerts(trailer_id, alert_type, created_at DESC);
 
