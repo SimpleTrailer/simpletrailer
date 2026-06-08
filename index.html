@@ -2357,7 +2357,7 @@
       </div>
 
       <div class="booking-box">
-        <p class="field-label booking-box-label" style="margin-bottom:4px;font-size:.65rem;letter-spacing:.12em;color:var(--orange);">WANN BRAUCHST DU EINEN ANHÄNGER?</p>
+        <p class="field-label booking-box-label" style="margin-bottom:4px;font-size:.65rem;letter-spacing:.12em;color:var(--orange);" data-i18n="booking.when_label_upper">WANN BRAUCHST DU EINEN ANHÄNGER?</p>
         <div class="booking-fields">
           <div>
             <p class="field-label">Von</p>
@@ -2379,7 +2379,7 @@
           </button>
           <div id="mobileSuggestDrop"></div>
         </div>
-        <button class="btn btn-orange" onclick="findTrailer()">Anhänger finden →</button>
+        <button class="btn btn-orange" onclick="findTrailer()" data-i18n="booking.find_trailer">Anhänger finden →</button>
       </div>
     </div>
 
@@ -2393,20 +2393,21 @@
             </span>
             <input type="text" id="mapSearchInput" class="map-search-field"
               placeholder="Ort oder Adresse eingeben…"
+              data-i18n-attr="placeholder:map.placeholder"
               onkeydown="if(event.key==='Enter'){searchMapLocation();hideSuggestions();}"
               autocomplete="off" />
-            <button class="map-search-btn" id="mapSearchBtn" onclick="searchMapLocation();hideSuggestions();">Suchen</button>
+            <button class="map-search-btn" id="mapSearchBtn" onclick="searchMapLocation();hideSuggestions();" data-i18n="map.search">Suchen</button>
           </div>
           <div id="mapSuggestDrop"></div>
         </div>
         <button class="map-loc-btn" id="geoLocBtn" onclick="useMyLocation()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>
-          <span id="geoLocLabel">Mein Standort</span>
+          <span id="geoLocLabel" data-i18n="map.my_location">Mein Standort</span>
         </button>
       </div>
       <!-- Karte -->
       <div class="map-inner" id="mapInner">
-        <div class="map-badge">📍 <span id="mapBadgeText">Wird geladen…</span></div>
+        <div class="map-badge">📍 <span id="mapBadgeText" data-i18n="map.loading">Wird geladen…</span></div>
         <div id="map"></div>
         <div id="trailerFilters" style="position:absolute;bottom:14px;left:14px;z-index:600;display:flex;gap:6px;flex-wrap:wrap;"></div>
       </div>
@@ -3318,7 +3319,7 @@
       pointer-events:none; z-index:600; white-space:nowrap;
       transition:opacity .25s; opacity:1;
     `;
-    hint.textContent = '🖱 Klicken zum Zoomen aktivieren';
+    hint.textContent = '🖱 ' + ((window.t && window.t('map.click_to_zoom')) || 'Klicken zum Zoomen aktivieren');
     // Auf Touch-Geräten: Hint ausblenden + Dragging deaktivieren
     // → Seite scrollt normal, Pinch-Zoom + Buttons funktionieren noch
     if (window.matchMedia('(hover: none)').matches) {
@@ -3417,7 +3418,8 @@
   function buildAvailabilityBadge(trailers) {
     const total = trailers.length;
     const free  = trailers.filter(t => t.is_available).length;
-    if (free > 0) return `${free} verfügbar in Bremen`;
+    const tFn = window.t || ((k, fb) => fb);
+    if (free > 0) return `${free} ${tFn('map.available_in_bremen', 'verfügbar in Bremen')}`;
     // Niemand frei → schauen ob bald welcher zurückkommt
     const upcoming = trailers
       .map(t => t.available_from || t.current_booking_end)
@@ -3648,7 +3650,7 @@
     const btn   = document.getElementById('geoLocBtn');
     const label = document.getElementById('geoLocLabel');
     btn.classList.add('loading');
-    label.textContent = 'Wird ermittelt…';
+    label.textContent = (window.t && window.t('map.locating')) || 'Wird ermittelt…';
 
     // 1) Native-App: Capacitor-Geolocation (praezise, eigene Permission-UI)
     const N = window.SimpleTrailerNative;
@@ -3658,26 +3660,26 @@
         setUserLocation(loc.lat, loc.lng);
         N.haptic('success');
         btn.classList.remove('loading');
-        label.textContent = 'Mein Standort';
+        label.textContent = (window.t && window.t('map.my_location')) || 'Mein Standort';
         return;
       }
       btn.classList.remove('loading');
-      label.textContent = 'Mein Standort';
+      label.textContent = (window.t && window.t('map.my_location')) || 'Mein Standort';
       alert('Standort konnte nicht ermittelt werden. Bitte Standortzugriff in den App-Einstellungen erlauben.');
       return;
     }
 
     // 2) Browser-Fallback (bleibt unveraendert)
-    if (!navigator.geolocation) { alert('Geolocation wird nicht unterstützt.'); btn.classList.remove('loading'); label.textContent = 'Mein Standort'; return; }
+    if (!navigator.geolocation) { alert('Geolocation wird nicht unterstützt.'); btn.classList.remove('loading'); label.textContent = (window.t && window.t('map.my_location')) || 'Mein Standort'; return; }
     navigator.geolocation.getCurrentPosition(
       pos => {
         setUserLocation(pos.coords.latitude, pos.coords.longitude);
         btn.classList.remove('loading');
-        label.textContent = 'Mein Standort';
+        label.textContent = (window.t && window.t('map.my_location')) || 'Mein Standort';
       },
       () => {
         btn.classList.remove('loading');
-        label.textContent = 'Mein Standort';
+        label.textContent = (window.t && window.t('map.my_location')) || 'Mein Standort';
         alert('Standort konnte nicht ermittelt werden. Bitte Standortzugriff erlauben.');
       },
       { timeout: 10000, maximumAge: 60000 }
@@ -3711,21 +3713,42 @@
     });
   }
 
+  // Renderer fuer dynamische i18n-Strings: Badge + Filter-Buttons.
+  // Wird beim ersten Load + bei jedem Sprachwechsel aufgerufen.
+  function renderMapI18n() {
+    if (!allTrailers.length) return;
+    const badgeEl = document.getElementById('mapBadgeText');
+    if (badgeEl) badgeEl.textContent = buildAvailabilityBadge(allTrailers);
+    const types = [...new Set(allTrailers.map(t => t.type).filter(Boolean))];
+    const filterEl = document.getElementById('trailerFilters');
+    if (!filterEl) return;
+    const tFn = window.t || ((k, fb) => fb);
+    const TYPE_KEYS = { 'Planenanhänger': 'map.tarp_trailers', 'Autotransporter': 'map.car_transporters', 'Kofferanhänger': 'map.box_trailers' };
+    const btns = [`<button class="map-filter-btn ${activeFilter === 'all' ? 'active' : ''}" data-type="all" onclick="filterMarkers('all')">${tFn('map.all', 'Alle')}</button>`];
+    types.forEach(type => {
+      const label = TYPE_KEYS[type] ? tFn(TYPE_KEYS[type], type) : type;
+      btns.push(`<button class="map-filter-btn ${activeFilter === type ? 'active' : ''}" data-type="${type}" onclick="filterMarkers('${type}')">${label}</button>`);
+    });
+    filterEl.innerHTML = btns.join('');
+  }
+  // Bei Sprachwechsel die Karten-UI neu rendern (statische Strings macht i18n.js selbst)
+  document.addEventListener('st-lang-changed', renderMapI18n);
+
   async function loadMapTrailers() {
     try {
       const res  = await fetch('/api/get-trailers');
       const data = await res.json();
       allTrailers = data.trailers || [];
 
-      // Badge aktualisieren — bei 0 verfügbar Conversion-freundliche Botschaft statt "0 verfügbar"
-      document.getElementById('mapBadgeText').textContent = buildAvailabilityBadge(allTrailers);
-
-      // Filter-Buttons aufbauen
+      renderMapI18n();
       const types = [...new Set(allTrailers.map(t => t.type).filter(Boolean))];
       const filterEl = document.getElementById('trailerFilters');
-      const btns = [`<button class="map-filter-btn active" data-type="all" onclick="filterMarkers('all')">Alle</button>`];
+      const tFn = window.t || ((k, fb) => fb);
+      const TYPE_KEYS = { 'Planenanhänger': 'map.tarp_trailers', 'Autotransporter': 'map.car_transporters', 'Kofferanhänger': 'map.box_trailers' };
+      const btns = [`<button class="map-filter-btn active" data-type="all" onclick="filterMarkers('all')">${tFn('map.all', 'Alle')}</button>`];
       types.forEach(type => {
-        btns.push(`<button class="map-filter-btn" data-type="${type}" onclick="filterMarkers('${type}')">${type}</button>`);
+        const label = TYPE_KEYS[type] ? tFn(TYPE_KEYS[type], type) : type;
+        btns.push(`<button class="map-filter-btn" data-type="${type}" onclick="filterMarkers('${type}')">${label}</button>`);
       });
       filterEl.innerHTML = btns.join('');
 
