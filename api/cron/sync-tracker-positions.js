@@ -108,7 +108,30 @@ module.exports = async (req, res) => {
       const lat = parseFloat(pos.latitude);
       const lng = parseFloat(pos.longitude);
       const speedKmh = pos.speed ? Math.round(pos.speed * 1.852 * 100) / 100 : 0; // Knoten→km/h
-      const battery = pos.attributes?.batteryLevel || null;
+
+      // Battery: Teltonika TAT240 sendet je nach Firmware unterschiedlich:
+      //   - attributes.batteryLevel (Prozent, direkt 0-100)
+      //   - attributes.battery (Volt, z.B. 4.05 — interner Li-Ion-Akku)
+      //   - attributes.power (Volt, externe Versorgung — wenn verkabelt)
+      // Wir probieren in der Reihenfolge + rechnen Volt → Prozent um (Li-Ion 3.0V=0%, 4.2V=100%)
+      const attr = pos.attributes || {};
+      let battery = null;
+      if (typeof attr.batteryLevel === 'number' && attr.batteryLevel >= 0 && attr.batteryLevel <= 100) {
+        battery = Math.round(attr.batteryLevel);
+      } else if (typeof attr.battery === 'number' && attr.battery > 2 && attr.battery < 5) {
+        // Li-Ion-Voltage → Prozent
+        battery = Math.max(0, Math.min(100, Math.round((attr.battery - 3.0) / 1.2 * 100)));
+      } else if (typeof attr.power === 'number' && attr.power > 8 && attr.power < 16) {
+        // Externe 12V-Versorgung (LKW/PKW-Bordnetz) — wenn da > 12.5V, Batterie OK
+        battery = attr.power > 12.5 ? 100 : Math.round((attr.power - 10) / 4 * 100);
+      }
+
+      // Diagnostik: wenn Battery nicht erkannt, einmalig die verfuegbaren Attribute-Keys loggen
+      // damit Lion in Vercel-Logs sehen kann was sein Tracker tatsaechlich sendet.
+      if (battery === null && t.last_battery_percent === null) {
+        console.log(`[battery-debug] ${t.name}: keys=${Object.keys(attr).join(',')} sample=${JSON.stringify(attr).slice(0,250)}`);
+      }
+
       const isMoving = speedKmh > 3; // Threshold: 3 km/h
       const recordedAt = pos.fixTime || pos.deviceTime || nowIso;
 
