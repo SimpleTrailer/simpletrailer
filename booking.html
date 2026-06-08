@@ -1894,7 +1894,21 @@
         setTimeout(() => goStep4(), 400);
       } else {
         saveBookingState();
-        okEl.innerHTML = '✅ Bestätigungs-E-Mail gesendet!<br><span style="font-size:.82rem;color:var(--gray);">Klick auf den Link in der Mail – du kommst automatisch zurück zu deiner Buchung.</span>';
+        const enteredEmail = document.getElementById('authRegEmail').value.trim();
+        okEl.innerHTML = `
+          <div style="font-weight:700;font-size:1rem;margin-bottom:8px;color:#86efac;">✅ Bestätigungs-E-Mail gesendet!</div>
+          <div style="font-size:.86rem;color:#ddd;margin-bottom:14px;line-height:1.55;">
+            An <strong style="color:#fff;">${enteredEmail}</strong> haben wir eine Mail mit einem Bestätigungs-Link geschickt.
+            Klick auf den Link — du kommst automatisch zurück zu deiner Buchung und sie läuft weiter.
+          </div>
+          <div style="background:#0d0d0d;border:1px solid #383838;border-radius:10px;padding:14px 16px;font-size:.84rem;color:#bbb;line-height:1.6;">
+            <div style="font-weight:700;color:#fbbf24;margin-bottom:6px;">📭 Keine Mail bekommen?</div>
+            <ul style="padding-left:18px;margin:0;">
+              <li>Schau im <strong style="color:#fff;">Junk- / Spam-Ordner</strong> nach</li>
+              <li>Warte 1–2 Minuten — manchmal dauert es</li>
+              <li>Tippfehler in der Mail? <a href="#" onclick="document.getElementById('authRegOk').style.display='none';document.getElementById('authRegEmail').focus();return false;" style="color:#E85D00;font-weight:700;text-decoration:underline;">Mail-Adresse ändern</a></li>
+            </ul>
+          </div>`;
         okEl.style.display = 'block';
       }
     } catch(e) {

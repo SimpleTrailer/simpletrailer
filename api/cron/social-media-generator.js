@@ -208,13 +208,8 @@ Liefere das JSON.`;
       </div>
     </body></html>`;
 
-    await resend.emails.send({
-      from: 'SimpleTrailer Social <agents@simpletrailer.de>',
-      reply_to: 'info@simpletrailer.de',
-      to: getLionEmail('approval'),
-      subject: `[ST-Approval] 📱 Insta-Post ready: ${plan.type} fuer ${tomorrow.toLocaleDateString('de-DE',{weekday:'short'})}`,
-      html
-    });
+    // KEINE Mail mehr — Insta-Posts erscheinen nur noch im Admin-Cockpit (Tab "AI-Stab" → Inbox).
+    // Lion wollte das Postfach entlastet haben.
 
     return res.status(200).json({
       ok: true,
