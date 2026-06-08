@@ -169,7 +169,7 @@ info@simpletrailer.de · simpletrailer.de`;
       const baseAmount = Math.max(0, amount - insAmount - cancellationProtectionFee - freeFloatingFee);
       const items = [{ label: `Anhängermiete · ${tariffLabels[meta.pricing_type] || meta.pricing_type}`, gross: baseAmount }];
       if (insAmount > 0) items.push({ label: insType === 'basis' ? 'Basis-Schutz (Selbstbeteiligung 500 €)' : 'Premium-Schutz (Selbstbeteiligung 50 €)', gross: insAmount });
-      if (cancellationProtectionFee > 0) items.push({ label: 'Kostenlose Stornierung (Storno bis 30 Min vor Mietbeginn)', gross: cancellationProtectionFee });
+      if (cancellationProtectionFee > 0) items.push({ label: 'Kostenlose Stornierung (Storno bis zum Mietbeginn)', gross: cancellationProtectionFee });
       if (freeFloatingFee > 0) items.push({ label: 'Rückgabe egal-wo in Bremen (Flexrückgabe)', gross: freeFloatingFee });
 
       const pdfPayload = {
@@ -185,7 +185,7 @@ info@simpletrailer.de · simpletrailer.de`;
         startTime:       meta.start_time,
         endTime:         meta.end_time,
         insuranceLabel:  insLabels[insType],
-        cancellationLabel: cancellationProtection ? `Aktiv (${cancellationProtectionFee.toFixed(2).replace('.', ',')} €) — Storno bis 30 Min vor Mietbeginn` : 'Nicht gebucht — 90 % Storno-Gebühr (AGB § 6)',
+        cancellationLabel: cancellationProtection ? `Aktiv (${cancellationProtectionFee.toFixed(2).replace('.', ',')} €) — Storno bis zum Mietbeginn` : 'Nicht gebucht — 90 % Storno-Gebühr (AGB § 6)',
         accessCode:      access_code,
         returnModeLabel: freeFloating ? 'Bremen-Stadtgebiet (Flexrückgabe)' : 'Zurück zum Heimat-Stellplatz',
         agbVersion:      meta.agb_version || '2026-06-05',

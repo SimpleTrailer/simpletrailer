@@ -739,7 +739,8 @@
     // Storno-Info berechnen für den Button-Text
     const hasCp = !!b.cancellation_protection;
     const minutesUntilStart = Math.floor((startMs - nowMs) / 60000);
-    const cpStillActive = hasCp && minutesUntilStart >= 30;
+    // Stornoschutz greift bis zum Buchungsbeginn — der Mieter zahlt dafuer extra.
+    const cpStillActive = hasCp && minutesUntilStart >= 0;
     const totalPaid = Number(b.total_amount || 0);
     const cpFee = Number(b.cancellation_protection_fee || 0);
     const refundIfCancelled = cpStillActive ? (totalPaid - cpFee) : totalPaid * 0.10;
@@ -880,7 +881,7 @@
       const cpLabel = cpStillActive
         ? `<span style="color:#86efac;">✓ Kostenlose Stornierung aktiv</span> — Mietpreis voll erstattet (Add-On-Prämie ${cpFee.toFixed(2).replace('.',',')} € nicht erstattbar)`
         : hasCp
-          ? `<span style="color:#fbbf24;">⚠ Add-On-Frist abgelaufen</span> — nur noch 10 % erstattbar (Storno bis 30 Min vor Mietbeginn war kostenlos)`
+          ? `<span style="color:#fbbf24;">⚠ Mietbeginn bereits erreicht</span> — kostenlose Stornierung war bis Mietbeginn möglich, jetzt nur noch 10 % erstattbar`
           : `<span style="color:#fbbf24;">Kein Stornoschutz gebucht</span> — 90 % Storno-Gebühr (10 % refunded)`;
       cancelHtml = `
         <details style="margin-top:14px;background:#0a0a0a;border:1px solid var(--border);border-radius:10px;padding:14px 16px;">

@@ -2,7 +2,7 @@
  * Storno-Endpoint für Mieter (Self-Service im Kundenkonto)
  *
  * Logik:
- *   - Mit "Kostenlose Stornierung"-Add-On gebucht: 100 % Mietpreis-Refund bis 30 Min vor Mietbeginn
+ *   - Mit "Kostenlose Stornierung"-Add-On gebucht: 100 % Mietpreis-Refund bis ZUM Buchungsbeginn
  *     (Add-On-Prämie wird NICHT erstattet)
  *   - Ohne Add-On gebucht: 90 % Storno-Gebühr → 10 % refunded (sehr wenig, motiviert das Add-On)
  *   - Nach Mietbeginn: KEINE Stornierung mehr möglich
@@ -71,14 +71,10 @@ module.exports = async (req, res) => {
     let refundAmount = 0;
     let refundReason = '';
 
-    if (hasCp && minutesUntilStart >= 30) {
-      // Add-On greift: voller Mietpreis-Refund, Add-On-Prämie behalten wir
+    if (hasCp && minutesUntilStart > 0) {
+      // Add-On greift: voller Mietpreis-Refund bis zum Mietbeginn, Add-On-Pramie behalten wir
       refundAmount = baseAmount;
       refundReason = 'Kostenlose Stornierung — voller Mietpreis erstattet, Storno-Schutz-Prämie nicht erstattbar';
-    } else if (hasCp && minutesUntilStart < 30 && minutesUntilStart > 0) {
-      // Add-On Frist abgelaufen → regulärer Storno
-      refundAmount = totalPaid * 0.10;
-      refundReason = 'Storno innerhalb 30 Min vor Mietbeginn — 90 % Storno-Gebühr (Add-On-Frist abgelaufen)';
     } else if (!hasCp && minutesUntilStart > 0) {
       // Kein Schutz → 90 % Gebühr, 10 % zurück
       refundAmount = totalPaid * 0.10;

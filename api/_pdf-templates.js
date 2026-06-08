@@ -201,7 +201,7 @@ async function generateMietvertrag(p) {
     ['Reinigungspauschale',       '30,00 € bei nicht ordnungsgemäß gereinigter Rückgabe.'],
     ['Rückführungspauschale',     '50,00 € wenn der Anhänger außerhalb der Rückgabe-Zone abgestellt wird (Bremen-Stadtgebiet bei Flex / 100 m Toleranz beim Heimat-Stellplatz). Bei Entfernungen über 30 km werden zusätzlich die tatsächlichen Kosten (Kraftstoff, Arbeitszeit, Bergung) berechnet.'],
     ['Falsch-Rückgabe / Bußgeld', 'Verwarn- und Bußgelder, Abschlepp-, Standplatz- und Verwahrkosten bei Verstößen gegen die Rückgabe-Regeln (Halteverbot, Privatgrund, Anwohnerparkzone usw.) plus Bearbeitungspauschale 15,00 €.'],
-    ['Stornogebühr (ohne Add-On)', '90 % des Mietpreises bei Stornierung oder Nichtantritt. Mit Add-On "Kostenlose Stornierung" entfällt diese Gebühr bis 30 Min vor Mietbeginn.'],
+    ['Stornogebühr (ohne Add-On)', '90 % des Mietpreises bei Stornierung oder Nichtantritt. Mit Add-On "Kostenlose Stornierung" entfällt diese Gebühr bis zum Mietbeginn.'],
     ['Schäden ohne Schutzpaket',  'Volle Haftung des Mieters bis zur Schadenshöhe. Im Totalschaden- oder Diebstahlfall können dies bis zu mehrere tausend Euro sein (Wiederbeschaffungswert, Gutachter, Wertminderung, Mietausfall, Bergung).'],
     ['Schäden mit Basis-Schutz',  '500,00 € Selbstbeteiligung pro Schadensfall — bei grober Fahrlässigkeit, Alkohol/Drogen, Überladung oder Weitergabe an Dritte entfällt der Schutz.'],
     ['Schäden mit Premium-Schutz', '50,00 € Selbstbeteiligung pro Schadensfall — gleicher Ausschluss bei grober Fahrlässigkeit etc.'],
