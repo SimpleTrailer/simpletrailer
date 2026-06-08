@@ -14,7 +14,7 @@ module.exports = async (req, res) => {
     try {
       const { data: booking, error } = await supabase
         .from('bookings')
-        .select('id, customer_name, start_time, end_time, pricing_type, total_amount, insurance_type, precheck_completed_at, status, precheck_token, trailers(name)')
+        .select('id, customer_name, start_time, end_time, pricing_type, total_amount, insurance_type, precheck_completed_at, status, precheck_token, trailer_id, trailers(name)')
         .eq('id', id)
         .eq('precheck_token', token)
         .single();

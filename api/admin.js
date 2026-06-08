@@ -456,6 +456,88 @@ module.exports = async (req, res) => {
       return res.status(200).json({ ok: true, updated: Object.keys(updates) });
     }
 
+    // ─── DAMAGES: Schadenshistorie pro Trailer + Refund-Pending-Buchungen ───
+    if (section === 'damages') {
+      const trailerId = req.query.trailer_id;
+      let q = supabase.from('damages')
+        .select('id, trailer_id, booking_id, source, severity, description, photo_url, status, resolved_at, resolved_note, reported_by, created_at')
+        .order('created_at', { ascending: false }).limit(200);
+      if (trailerId) q = q.eq('trailer_id', trailerId);
+      const { data: damages } = await q;
+      return res.status(200).json({ damages: damages || [] });
+    }
+
+    // ─── REFUND-PENDING: Buchungen die nicht-fahrtauglich gemeldet wurden ───
+    if (section === 'refund-pending') {
+      const { data } = await supabase.from('bookings')
+        .select('id, customer_name, customer_email, trailer_id, total_amount, start_time, not_drivable_reported_at, not_drivable_photo_url, not_drivable_description, refund_status, stripe_payment_intent_id, trailers(name)')
+        .eq('refund_status', 'pending')
+        .order('not_drivable_reported_at', { ascending: false });
+      return res.status(200).json({ bookings: data || [] });
+    }
+
+    // ─── APPROVE-REFUND: Admin gibt den Refund frei ───
+    if (section === 'approve-refund' && req.method === 'POST') {
+      const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+      const { booking_id, action } = body;  // action: 'approve' | 'reject'
+      if (!booking_id) return res.status(400).json({ error: 'booking_id erforderlich' });
+      if (!['approve', 'reject'].includes(action)) return res.status(400).json({ error: 'action muss approve/reject sein' });
+
+      const { data: booking } = await supabase.from('bookings').select('*, trailers(name)').eq('id', booking_id).maybeSingle();
+      if (!booking) return res.status(404).json({ error: 'Buchung nicht gefunden' });
+
+      if (action === 'approve') {
+        // Stripe-Refund
+        const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+        let refundId = null;
+        if (booking.stripe_payment_intent_id) {
+          try {
+            const refund = await stripe.refunds.create({
+              payment_intent: booking.stripe_payment_intent_id,
+              reason: 'requested_by_customer',
+              metadata: { booking_id: booking.id, reason: 'not_drivable_approved' }
+            }, { idempotencyKey: `refund-${booking.id}` });
+            refundId = refund.id;
+          } catch (e) {
+            return res.status(500).json({ error: 'Stripe-Refund fehlgeschlagen: ' + e.message });
+          }
+        }
+        await supabase.from('bookings').update({
+          refund_status: 'approved',
+          status: 'cancelled',
+          cancelled_at: new Date().toISOString(),
+          cancellation_refund_amount: booking.total_amount,
+          cancellation_refund_id: refundId
+        }).eq('id', booking.id);
+
+        // Mieter informieren
+        const { Resend } = require('resend');
+        const resend = new Resend(process.env.RESEND_API_KEY);
+        try {
+          await resend.emails.send({
+            from: 'SimpleTrailer <buchung@simpletrailer.de>',
+            reply_to: 'info@simpletrailer.de',
+            to: booking.customer_email,
+            subject: `Erstattung freigegeben — Buchung #${booking.id.slice(0,8).toUpperCase()}`,
+            text: `Hi ${booking.customer_name},
+
+deine Schadens-Meldung wurde geprüft und bestätigt. Die volle Erstattung
+in Höhe von ${booking.total_amount.toFixed(2).replace('.', ',')} € wird auf
+deine Zahlungsmethode zurückgebucht (3-5 Werktage).
+
+Wir bitten den Ausfall zu entschuldigen.
+
+— SimpleTrailer GbR`
+          });
+        } catch (e) { console.error('Approve-Mail fail:', e.message); }
+        return res.status(200).json({ ok: true, refund_id: refundId });
+      } else {
+        // Ablehnen — Status auf rejected, Buchung bleibt
+        await supabase.from('bookings').update({ refund_status: 'rejected' }).eq('id', booking.id);
+        return res.status(200).json({ ok: true });
+      }
+    }
+
     // ─── TRAILERS: Vollständige Liste mit allen Flotten-Daten ───
     if (section === 'trailers') {
       // Versuche das ganze Set — bei fehlenden Spalten fallback auf Basis-Liste

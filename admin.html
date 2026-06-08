@@ -222,6 +222,9 @@
       </div>
       <div id="cockpitContent" style="display:none;">
 
+        <!-- REFUND-PENDING (nicht fahrtauglich Meldungen) — wird per JS gefüllt -->
+        <div id="refundPendingWrap" style="display:none;margin-bottom:18px;"></div>
+
         <!-- LIVE-STATUS -->
         <div style="background:linear-gradient(135deg,#1a1a1a,#0f0f0f);border:1px solid var(--border);border-radius:14px;padding:18px 22px;margin-bottom:18px;display:flex;flex-wrap:wrap;gap:24px;align-items:center;">
           <div style="display:flex;align-items:center;gap:10px;">
@@ -1442,8 +1445,69 @@
         </div>` : ''}
 
         ${t.internal_notes ? `<div style="background:#0a0a0a;border-left:3px solid var(--orange);padding:10px 14px;margin-top:10px;border-radius:6px;font-size:.82rem;color:#ccc;white-space:pre-wrap;">📝 ${t.internal_notes}</div>` : ''}
+
+        <!-- Schadenshistorie -->
+        <details style="margin-top:12px;background:#0a0a0a;border:1px solid var(--border);border-radius:8px;padding:10px 14px;">
+          <summary style="cursor:pointer;font-weight:700;font-size:.84rem;color:#fbbf24;">🛠 Schadenshistorie</summary>
+          <div id="damages-${t.id}" style="margin-top:10px;font-size:.84rem;color:var(--gray);">Lade…</div>
+          <button onclick="loadDamages('${t.id}')" style="margin-top:6px;background:transparent;border:1px solid var(--border);color:#fff;padding:6px 12px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:.78rem;">Neu laden</button>
+        </details>
       </div>`;
     }).join('');
+  }
+
+  async function loadDamages(trailerId) {
+    const el = document.getElementById('damages-' + trailerId);
+    if (!el) return;
+    el.innerHTML = 'Lade…';
+    try {
+      const r = await fetch('/api/admin?section=damages&trailer_id=' + trailerId, {
+        headers: { Authorization: `Bearer ${authToken}` }
+      });
+      const d = await r.json();
+      const dms = d.damages || [];
+      if (!dms.length) { el.innerHTML = '<em style="color:var(--gray);">Keine Schäden dokumentiert.</em>'; return; }
+      const sevLabel = { minor: 'Klein', major: 'Größer', not_drivable: 'NICHT FAHRTAUGLICH' };
+      const sevColor = { minor: '#fcd34d', major: '#fbbf24', not_drivable: '#f87171' };
+      const statLabel = { open: 'OFFEN', resolved: 'erledigt', wont_fix: 'akzeptiert' };
+      const statColor = { open: '#fbbf24', resolved: '#86efac', wont_fix: '#888' };
+      el.innerHTML = dms.map(dm => `
+        <div style="background:#0d0d0d;border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;">
+            <div style="display:flex;gap:6px;align-items:center;">
+              <span style="background:${sevColor[dm.severity]};color:#000;font-size:.66rem;font-weight:800;padding:2px 7px;border-radius:5px;">${sevLabel[dm.severity]}</span>
+              <span style="background:transparent;border:1px solid ${statColor[dm.status]};color:${statColor[dm.status]};font-size:.66rem;font-weight:700;padding:2px 7px;border-radius:5px;">${statLabel[dm.status]}</span>
+            </div>
+            <span style="font-size:.72rem;color:var(--gray);">${new Date(dm.created_at).toLocaleDateString('de-DE')}</span>
+          </div>
+          <div style="font-size:.82rem;color:#ddd;line-height:1.5;margin-bottom:6px;">${dm.description.replace(/</g,'&lt;')}</div>
+          <div style="display:flex;gap:8px;align-items:center;font-size:.76rem;flex-wrap:wrap;">
+            ${dm.photo_url ? `<a href="${dm.photo_url}" target="_blank" rel="noopener" style="color:var(--orange);text-decoration:none;">📷 Foto</a>` : ''}
+            <span style="color:var(--gray);">Quelle: ${dm.source}</span>
+            ${dm.reported_by ? `<span style="color:var(--gray);">· ${dm.reported_by}</span>` : ''}
+            ${dm.status === 'open' ? `
+              <button onclick="resolveDamage('${dm.id}','resolved','${trailerId}')" style="margin-left:auto;background:#22c55e;color:#fff;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;font-family:inherit;font-size:.74rem;font-weight:700;">✓ Erledigt</button>
+              <button onclick="resolveDamage('${dm.id}','wont_fix','${trailerId}')" style="background:#444;color:#fff;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;font-family:inherit;font-size:.74rem;font-weight:700;">akzeptiert</button>
+            ` : `<button onclick="resolveDamage('${dm.id}','open','${trailerId}')" style="margin-left:auto;background:transparent;border:1px solid var(--border);color:var(--gray);padding:5px 10px;border-radius:5px;cursor:pointer;font-family:inherit;font-size:.74rem;">wieder öffnen</button>`}
+          </div>
+          ${dm.resolved_note ? `<div style="margin-top:6px;font-size:.76rem;color:var(--gray);font-style:italic;">Notiz: ${dm.resolved_note.replace(/</g,'&lt;')}</div>` : ''}
+        </div>`).join('');
+    } catch (e) {
+      el.innerHTML = '<em style="color:#f87171;">Fehler beim Laden.</em>';
+    }
+  }
+
+  async function resolveDamage(damageId, status, trailerId) {
+    const note = status === 'open' ? null : prompt(status === 'resolved' ? 'Notiz zur Behebung (optional):' : 'Warum akzeptiert ihr den Schaden? (optional)');
+    try {
+      const r = await fetch('/api/damages', {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${authToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: damageId, status, resolved_note: note || undefined })
+      });
+      if (!r.ok) { alert('Fehler: ' + (await r.json()).error); return; }
+      loadDamages(trailerId);
+    } catch (e) { alert('Fehler: ' + e.message); }
   }
 
   function openFlotteEdit(trailer_id) {
@@ -1747,6 +1811,62 @@
     }
   }
 
+  /* ── REFUND-PENDING (nicht fahrtauglich) ──────────────── */
+  async function loadRefundPending() {
+    const wrap = document.getElementById('refundPendingWrap');
+    try {
+      const r = await fetch('/api/admin?section=refund-pending', { headers: { Authorization: `Bearer ${authToken}` } });
+      const d = await r.json();
+      const items = d.bookings || [];
+      if (!items.length) { wrap.style.display = 'none'; return; }
+      wrap.style.display = 'block';
+      wrap.innerHTML = `
+        <div style="background:#1a0808;border:2px solid #dc2626;border-radius:14px;padding:18px 22px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+            <span style="font-size:1.4rem;">🛑</span>
+            <h3 style="margin:0;font-size:1.05rem;color:#fca5a5;letter-spacing:-.015em;">${items.length} Anhänger als <span style="color:#fff;">"nicht fahrtauglich"</span> gemeldet — Refund-Freigabe erforderlich</h3>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            ${items.map(b => `
+              <div style="background:#0a0202;border:1px solid #7f1d1d;border-radius:10px;padding:14px 16px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;">
+                  <strong style="font-size:.92rem;">${b.trailers?.name || 'Anhänger'} · #${b.id.slice(0,8).toUpperCase()}</strong>
+                  <span style="color:#fca5a5;font-weight:700;">${(b.total_amount || 0).toFixed(2).replace('.', ',')} €</span>
+                </div>
+                <div style="font-size:.82rem;color:#ddd;margin-bottom:4px;">${b.customer_name} · <a href="mailto:${b.customer_email}" style="color:var(--orange);">${b.customer_email}</a></div>
+                <div style="font-size:.78rem;color:var(--gray);margin-bottom:10px;">Gemeldet: ${b.not_drivable_reported_at ? new Date(b.not_drivable_reported_at).toLocaleString('de-DE') : '–'}</div>
+                <div style="background:#1a0d0d;border-left:3px solid #dc2626;padding:10px 14px;border-radius:6px;font-size:.84rem;color:#fecaca;margin-bottom:10px;white-space:pre-wrap;">${(b.not_drivable_description || '(keine Beschreibung)').replace(/</g,'&lt;')}</div>
+                ${b.not_drivable_photo_url ? `<p style="margin:0 0 12px;"><a href="${b.not_drivable_photo_url}" target="_blank" rel="noopener" style="color:var(--orange);font-size:.84rem;">📷 Foto öffnen →</a></p>` : ''}
+                <div style="display:flex;gap:8px;">
+                  <button onclick="processRefund('${b.id}','approve')" style="background:#22c55e;color:#000;border:none;padding:10px 16px;border-radius:8px;font-weight:800;cursor:pointer;font-family:inherit;font-size:.86rem;">✓ Refund freigeben (${(b.total_amount || 0).toFixed(2).replace('.', ',')} €)</button>
+                  <button onclick="processRefund('${b.id}','reject')" style="background:transparent;color:#fca5a5;border:1px solid #7f1d1d;padding:10px 16px;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit;font-size:.86rem;">✗ Ablehnen</button>
+                </div>
+              </div>`).join('')}
+          </div>
+        </div>`;
+    } catch (e) {
+      wrap.style.display = 'none';
+    }
+  }
+
+  async function processRefund(bookingId, action) {
+    const confirmMsg = action === 'approve'
+      ? 'Refund vollständig freigeben? Geld geht sofort zurück an den Mieter.'
+      : 'Wirklich ablehnen? Mieter hat dann keinen Anspruch auf Erstattung — er sollte die Buchung normal nutzen.';
+    if (!confirm(confirmMsg)) return;
+    try {
+      const r = await fetch('/api/admin?section=approve-refund', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${authToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ booking_id: bookingId, action })
+      });
+      const d = await r.json();
+      if (!r.ok) { alert('Fehler: ' + d.error); return; }
+      alert(action === 'approve' ? '✓ Refund freigegeben + Mieter informiert.' : 'Abgelehnt — Status auf "rejected".');
+      loadRefundPending();
+    } catch (e) { alert('Fehler: ' + e.message); }
+  }
+
   /* ── COCKPIT ──────────────────────────────────────────── */
   let cockpitTimer = null;
   async function loadCockpit() {
@@ -1757,6 +1877,7 @@
       renderCockpit(d);
       document.getElementById('cockpitLoading').style.display = 'none';
       document.getElementById('cockpitContent').style.display = 'block';
+      loadRefundPending();  // separate, läuft parallel
     } catch (e) {
       document.getElementById('cockpitLoading').innerHTML = `<p style="color:var(--red)">Fehler: ${e.message}</p>`;
     }

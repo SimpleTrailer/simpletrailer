@@ -149,6 +149,55 @@
       <p class="photo-name" id="photoName2"></p>
     </div>
 
+    <!-- BEKANNTE SCHÄDEN — wird per JS gefüllt wenn API damages liefert -->
+    <div class="card" id="knownDamagesCard" style="display:none;">
+      <p style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#fbbf24;margin-bottom:8px;">⚠ Bereits bekannte Schäden</p>
+      <p style="font-size:.84rem;color:#ccc;line-height:1.55;margin-bottom:12px;">
+        Diese Schäden sind uns schon bekannt. <strong style="color:#fff;">Bitte NICHT erneut melden</strong> — wenn du NEUE Schäden siehst, melde sie unten.
+      </p>
+      <div id="knownDamagesList" style="display:flex;flex-direction:column;gap:8px;"></div>
+    </div>
+
+    <!-- NEUEN SCHADEN MELDEN — toggleable -->
+    <div class="card" style="background:#1a1606;border:1px solid rgba(245,158,11,0.30);">
+      <p style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#fbbf24;margin-bottom:6px;">🛠 NEUEN Schaden gefunden?</p>
+      <p style="font-size:.84rem;color:#ccc;line-height:1.55;margin-bottom:12px;">
+        Wenn dir ein Schaden auffällt, der oben NICHT aufgelistet ist — bitte hier kurz melden. Dauert 30 Sek, schützt dich vor falschen Vorwürfen.
+      </p>
+      <button onclick="toggleDamageReport()" id="damageReportToggle" type="button" style="background:transparent;border:1px solid rgba(245,158,11,0.50);color:#fbbf24;padding:11px 18px;border-radius:10px;font-family:inherit;font-weight:700;font-size:.88rem;cursor:pointer;width:100%;">
+        + Schaden melden
+      </button>
+
+      <div id="damageReportForm" style="display:none;margin-top:14px;">
+        <p style="font-size:.78rem;color:#fbbf24;font-weight:700;margin-bottom:8px;">Wie schwer ist der Schaden?</p>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
+          <label style="display:flex;align-items:flex-start;gap:10px;padding:12px;background:#0d0d0d;border:1px solid var(--border);border-radius:10px;cursor:pointer;" data-sev="minor">
+            <input type="radio" name="damageSev" value="minor" style="margin-top:3px;">
+            <span style="font-size:.86rem;color:#ddd;line-height:1.5;"><strong style="color:#fff;">Klein</strong> — Kratzer, kleine Beule, kosmetisch · <span style="color:#86efac;">fahrbereit</span></span>
+          </label>
+          <label style="display:flex;align-items:flex-start;gap:10px;padding:12px;background:#0d0d0d;border:1px solid var(--border);border-radius:10px;cursor:pointer;" data-sev="major">
+            <input type="radio" name="damageSev" value="major" style="margin-top:3px;">
+            <span style="font-size:.86rem;color:#ddd;line-height:1.5;"><strong style="color:#fff;">Größer</strong> — sichtbare Beule, gerissene Plane, kleinere Defekte · <span style="color:#fbbf24;">noch fahrbereit, aber dokumentieren!</span></span>
+          </label>
+          <label style="display:flex;align-items:flex-start;gap:10px;padding:12px;background:#1a0808;border:1px solid rgba(220,38,38,0.40);border-radius:10px;cursor:pointer;" data-sev="not_drivable">
+            <input type="radio" name="damageSev" value="not_drivable" style="margin-top:3px;">
+            <span style="font-size:.86rem;color:#fecaca;line-height:1.5;"><strong style="color:#fff;">🚫 NICHT FAHRTAUGLICH</strong> — Reifen platt, Beleuchtung kaputt, Bremse defekt · <span style="color:#fca5a5;">Du fährst nicht los, wir erstatten</span></span>
+          </label>
+        </div>
+
+        <textarea id="damageDesc" placeholder="Kurz beschreiben: wo ist der Schaden? was siehst du?" rows="3" style="width:100%;background:#0d0d0d;border:1px solid var(--border);border-radius:10px;padding:12px;color:#fff;font-family:inherit;font-size:.88rem;resize:vertical;margin-bottom:10px;"></textarea>
+
+        <p style="font-size:.78rem;color:var(--gray);margin-bottom:8px;">Foto vom Schaden (Pflicht):</p>
+        <input type="file" id="damagePhoto" accept="image/*" capture="environment" style="width:100%;margin-bottom:14px;font-size:.84rem;color:#ddd;">
+
+        <div id="damageError" style="color:#f87171;font-size:.84rem;margin-bottom:10px;display:none;"></div>
+
+        <button onclick="submitDamage()" id="submitDamageBtn" type="button" style="background:#dc2626;color:#fff;border:none;padding:12px 18px;border-radius:10px;font-family:inherit;font-weight:700;font-size:.9rem;cursor:pointer;width:100%;">
+          Schaden melden
+        </button>
+      </div>
+    </div>
+
     <!-- Checkliste -->
     <div class="card">
       <p style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gray);margin-bottom:4px;">Bestätigung</p>
@@ -297,6 +346,9 @@
       if (booking.precheck_completed_at) {
         // Bereits erledigt – Code direkt anzeigen
         submitPrecheck(true);
+      } else {
+        // Bekannte Schäden für DIESEN Trailer laden
+        loadKnownDamages(booking.trailer_id);
       }
     } catch(e) {
       showError('Fehler beim Laden der Buchung.');
@@ -369,6 +421,142 @@
       }
     }, 50);
   });
+
+  // ─── DAMAGE-SYSTEM ──────────────────────────────────────
+  let damageReportOpen = false;
+  let knownDamagesCache = [];
+
+  async function loadKnownDamages(trailerId) {
+    if (!trailerId) return;
+    try {
+      const r = await fetch(`/api/damages?trailer_id=${trailerId}&status=open`);
+      const d = await r.json();
+      knownDamagesCache = d.damages || [];
+      if (!knownDamagesCache.length) return;
+
+      const listEl = document.getElementById('knownDamagesList');
+      const sevLabel = { minor: 'Klein', major: 'Größer', not_drivable: 'Defekt' };
+      const sevColor = { minor: '#fcd34d', major: '#fbbf24', not_drivable: '#f87171' };
+      listEl.innerHTML = knownDamagesCache.map(dm => {
+        const date = new Date(dm.created_at).toLocaleDateString('de-DE');
+        return `<div style="display:flex;gap:10px;align-items:flex-start;background:#0d0d0d;border:1px solid var(--border);border-radius:10px;padding:12px;">
+          <span style="background:${sevColor[dm.severity] || '#888'};color:#000;font-size:.7rem;font-weight:800;padding:3px 8px;border-radius:6px;letter-spacing:.04em;flex-shrink:0;">${sevLabel[dm.severity] || dm.severity}</span>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:.86rem;color:#ddd;line-height:1.5;">${esc(dm.description)}</div>
+            <div style="font-size:.72rem;color:var(--gray);margin-top:3px;">Seit ${date}</div>
+          </div>
+          ${dm.photo_url ? `<a href="${esc(dm.photo_url)}" target="_blank" rel="noopener" style="font-size:.78rem;color:var(--orange);text-decoration:none;flex-shrink:0;">Foto →</a>` : ''}
+        </div>`;
+      }).join('');
+      document.getElementById('knownDamagesCard').style.display = 'block';
+    } catch (e) { /* silent — Liste leer lassen ist OK */ }
+  }
+
+  function toggleDamageReport() {
+    damageReportOpen = !damageReportOpen;
+    document.getElementById('damageReportForm').style.display = damageReportOpen ? 'block' : 'none';
+    document.getElementById('damageReportToggle').textContent = damageReportOpen ? '× Schließen' : '+ Schaden melden';
+  }
+
+  async function submitDamage() {
+    const sev = document.querySelector('input[name="damageSev"]:checked')?.value;
+    const desc = document.getElementById('damageDesc').value.trim();
+    const photoFile = document.getElementById('damagePhoto').files?.[0];
+    const errEl = document.getElementById('damageError');
+    errEl.style.display = 'none';
+
+    if (!sev)              { errEl.textContent = 'Bitte Schweregrad wählen.'; errEl.style.display = 'block'; return; }
+    if (desc.length < 5)   { errEl.textContent = 'Bitte kurze Beschreibung (mindestens 5 Zeichen).'; errEl.style.display = 'block'; return; }
+    if (!photoFile)        { errEl.textContent = 'Bitte Foto vom Schaden machen.'; errEl.style.display = 'block'; return; }
+
+    const btn = document.getElementById('submitDamageBtn');
+    btn.disabled = true;
+    btn.textContent = 'Foto wird hochgeladen…';
+
+    try {
+      // Foto in Supabase Storage hochladen
+      const ext = photoFile.name.split('.').pop() || 'jpg';
+      const path = `damages/${bookingId}-${Date.now()}.${ext}`;
+      const upRes = await fetch(`${SUPABASE_URL}/storage/v1/object/precheck-photos/${path}`, {
+        method: 'POST',
+        headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}`, 'Content-Type': photoFile.type },
+        body: photoFile
+      });
+      if (!upRes.ok) throw new Error('Foto-Upload fehlgeschlagen');
+      const photoUrl = `${SUPABASE_URL}/storage/v1/object/public/precheck-photos/${path}`;
+
+      btn.textContent = 'Schaden wird gemeldet…';
+
+      // Damage anlegen
+      const res = await fetch('/api/damages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          trailer_id: booking.trailer_id,
+          booking_id: bookingId,
+          severity: sev,
+          description: desc,
+          photo_url: photoUrl,
+          source: 'pre_check',
+          precheck_token: precheckToken
+        })
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.error || 'Fehler beim Melden');
+      }
+
+      // Bei "nicht fahrtauglich": Buchung als pending_refund flaggen + Mail an Admin
+      if (sev === 'not_drivable') {
+        await fetch('/api/report-not-drivable', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            booking_id: bookingId,
+            precheck_token: precheckToken,
+            photo_url: photoUrl,
+            description: desc
+          })
+        }).catch(() => {});
+
+        // UI-Wechsel: kein Code, sondern "Erstattung läuft an"
+        document.querySelectorAll('.card, #submitBtn, .step-badge, h1, .sub, .error-msg').forEach(el => el.style.display = 'none');
+        document.getElementById('mainView').innerHTML = `
+          <div style="background:#1a0808;border:2px solid #dc2626;border-radius:16px;padding:32px;text-align:center;">
+            <div style="font-size:2.5rem;margin-bottom:12px;">🛑</div>
+            <h2 style="font-size:1.4rem;color:#fff;margin-bottom:10px;">Danke für die Meldung!</h2>
+            <p style="color:#fecaca;font-size:.92rem;line-height:1.6;margin-bottom:16px;">
+              Wir haben deine Meldung bekommen. Der Anhänger ist <strong>nicht fahrtauglich</strong> — fahr bitte nicht los.
+            </p>
+            <div style="background:#0a0202;border:1px solid #7f1d1d;border-radius:10px;padding:16px;text-align:left;font-size:.86rem;color:#fff;line-height:1.6;">
+              <strong style="color:#86efac;">Was jetzt passiert:</strong>
+              <ol style="margin:8px 0 0;padding-left:20px;color:#ddd;">
+                <li>Wir prüfen deine Meldung manuell (meist innerhalb 24h)</li>
+                <li>Bei Bestätigung: <strong style="color:#86efac;">volle Erstattung</strong> automatisch über deine Karte</li>
+                <li>Wir melden uns per E-Mail mit dem Status</li>
+              </ol>
+            </div>
+            <p style="color:var(--gray);font-size:.78rem;margin-top:18px;">
+              Bei Rückfragen: <a href="mailto:info@simpletrailer.de" style="color:var(--orange);">info@simpletrailer.de</a>
+            </p>
+          </div>
+        `;
+        return;
+      }
+
+      // Bei minor/major: Erfolg im Form anzeigen + Form ausblenden
+      document.getElementById('damageReportForm').innerHTML = `
+        <div style="background:#0a1f0a;border:1px solid #22c55e;border-radius:10px;padding:14px;color:#86efac;font-size:.88rem;text-align:center;font-weight:600;">
+          ✓ Schaden gemeldet. Danke! Du bist abgesichert.
+        </div>`;
+      document.getElementById('damageReportToggle').style.display = 'none';
+    } catch (e) {
+      errEl.textContent = e.message;
+      errEl.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Schaden melden';
+    }
+  }
 
   // KI-Validierung via /api/validate-photo (Claude Vision)
   // Failt-open: bei API-Fehler oder Timeout → Foto wird durchgelassen damit Buchung nicht hängt.
