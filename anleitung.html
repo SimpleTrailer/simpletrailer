@@ -237,24 +237,24 @@
 <body>
 
 <nav>
-  <a href="/" class="nav-back">← Zurück</a>
+  <a href="/" class="nav-back" data-i18n="nav.back">← Zurück</a>
   <a href="/" class="logo" aria-label="SimpleTrailer Startseite"><img src="/logo.png?v=6" alt="SimpleTrailer" style="height:30px;width:auto;display:block;" /></a>
-  <a href="/account" class="nav-back">Konto</a>
+  <a href="/account" class="nav-back" data-i18n="guide.nav.account">Konto</a>
 </nav>
 
 <div class="hero">
-  <span class="badge">Schritt für Schritt</span>
-  <h1>So funktioniert es</h1>
-  <p>Abholen, ankuppeln, fahren, zurückgeben. Auch wenn du noch nie einen Anhänger gefahren hast — das schaffst du in wenigen Minuten.</p>
+  <span class="badge" data-i18n="guide.badge">Schritt für Schritt</span>
+  <h1 data-i18n="guide.title">So funktioniert es</h1>
+  <p data-i18n-html="guide.sub">Abholen, ankuppeln, fahren, zurückgeben. Auch wenn du noch nie einen Anhänger gefahren hast — das schaffst du in wenigen Minuten.</p>
 </div>
 
 <div class="page">
   <div class="tabs" role="tablist">
     <button class="tab active" id="tabAbholung" onclick="showTab('abholung')">
-      <span class="tab-icon">📦</span><span>Abholung</span><span class="tab-count">9</span>
+      <span class="tab-icon">📦</span><span data-i18n="guide.tab.pickup">Abholung</span><span class="tab-count">9</span>
     </button>
     <button class="tab" id="tabRueckgabe" onclick="showTab('rueckgabe')">
-      <span class="tab-icon">↩</span><span>Rückgabe</span><span class="tab-count">10</span>
+      <span class="tab-icon">↩</span><span data-i18n="guide.tab.return">Rückgabe</span><span class="tab-count">10</span>
     </button>
   </div>
 
@@ -263,17 +263,17 @@
     <div class="intro-card">
       <div class="intro-icon">🅿️</div>
       <div>
-        <h2>Du bist am Stellplatz. Was jetzt?</h2>
-        <p>Der Anhänger steht für dich bereit. Bis du losfährst dauert es <strong style="color:#fff;">5–7 Minuten</strong>. Halte dein Handy bereit — der Schloss-Code wird im Vorab-Check freigeschaltet.</p>
+        <h2 data-i18n="guide.pickup.intro.title">Du bist am Stellplatz. Was jetzt?</h2>
+        <p data-i18n-html="guide.pickup.intro.desc">Der Anhänger steht für dich bereit. Bis du losfährst dauert es <strong style="color:#fff;">5–7 Minuten</strong>. Halte dein Handy bereit — der Schloss-Code wird im Vorab-Check freigeschaltet.</p>
       </div>
     </div>
 
-    <button class="expand-all" onclick="toggleAll('abholung', this)">Alle 9 Schritte anzeigen ⌄</button>
+    <button class="expand-all" onclick="toggleAll('abholung', this)" data-i18n="guide.expand9">Alle 9 Schritte anzeigen ⌄</button>
 
     <details class="step" open>
       <summary>
         <div class="step-num">1</div>
-        <div class="step-title">Pre-Check-Foto machen</div>
+        <div class="step-title" data-i18n="guide.s1">Pre-Check-Foto machen</div>
         <span class="step-chevron">⌄</span>
       </summary>
       <div class="step-body">
@@ -287,7 +287,7 @@
     <details class="step">
       <summary>
         <div class="step-num">2</div>
-        <div class="step-title">Schloss-Code eingeben</div>
+        <div class="step-title" data-i18n="guide.s2">Schloss-Code eingeben</div>
         <span class="step-chevron">⌄</span>
       </summary>
       <div class="step-body">
@@ -299,7 +299,7 @@
     <details class="step">
       <summary>
         <div class="step-num">3</div>
-        <div class="step-title">Kurzcheck — alles dran?</div>
+        <div class="step-title" data-i18n="guide.s3">Kurzcheck — alles dran?</div>
         <span class="step-chevron">⌄</span>
       </summary>
       <div class="step-body">
@@ -313,7 +313,7 @@
     <details class="step">
       <summary>
         <div class="step-num">4</div>
-        <div class="step-title">An dein Auto rangieren</div>
+        <div class="step-title" data-i18n="guide.s4">An dein Auto rangieren</div>
         <span class="step-chevron">⌄</span>
       </summary>
       <div class="step-body">
@@ -326,7 +326,7 @@
     <details class="step">
       <summary>
         <div class="step-num">5</div>
-        <div class="step-title">Stützrad runter, ankuppeln</div>
+        <div class="step-title" data-i18n="guide.s5">Stützrad runter, ankuppeln</div>
         <span class="step-chevron">⌄</span>
       </summary>
       <div class="step-body">
@@ -338,7 +338,7 @@
     <details class="step">
       <summary>
         <div class="step-num">6</div>
-        <div class="step-title">Stützrad ganz hochkurbeln</div>
+        <div class="step-title" data-i18n="guide.s6">Stützrad ganz hochkurbeln</div>
         <span class="step-chevron">⌄</span>
       </summary>
       <div class="step-body">
@@ -351,7 +351,7 @@
     <details class="step">
       <summary>
         <div class="step-num">7</div>
-        <div class="step-title">Elektrik anschließen</div>
+        <div class="step-title" data-i18n="guide.s7">Elektrik anschließen</div>
         <span class="step-chevron">⌄</span>
       </summary>
       <div class="step-body">
@@ -363,7 +363,7 @@
     <details class="step">
       <summary>
         <div class="step-num">8</div>
-        <div class="step-title">Unterlegkeile lösen + verstauen</div>
+        <div class="step-title" data-i18n="guide.s8">Unterlegkeile lösen + verstauen</div>
         <span class="step-chevron">⌄</span>
       </summary>
       <div class="step-body">
@@ -375,7 +375,7 @@
     <details class="step">
       <summary>
         <div class="step-num">9</div>
-        <div class="step-title">Losfahren — vorsichtig</div>
+        <div class="step-title" data-i18n="guide.s9">Losfahren — vorsichtig</div>
         <span class="step-chevron">⌄</span>
       </summary>
       <div class="step-body">
@@ -398,17 +398,17 @@
     <div class="intro-card">
       <div class="intro-icon">⏱</div>
       <div>
-        <h2>Mietzeit endet — was tun?</h2>
-        <p>Anhänger zurück, Foto, Schloss zu. Dauer ca. <strong style="color:#fff;">3–5 Minuten</strong>. Wichtig: vor Mietende fertig sein, sonst werden <strong>15 € pro Stunde</strong> Verspätung automatisch nachgebucht.</p>
+        <h2 data-i18n="guide.return.intro.title">Mietzeit endet — was tun?</h2>
+        <p data-i18n-html="guide.return.intro.desc">Anhänger zurück, Foto, Schloss zu. Dauer ca. <strong style="color:#fff;">3–5 Minuten</strong>. Wichtig: vor Mietende fertig sein, sonst werden <strong>15 € pro Stunde</strong> Verspätung automatisch nachgebucht.</p>
       </div>
     </div>
 
-    <button class="expand-all" onclick="toggleAll('rueckgabe', this)">Alle 10 Schritte anzeigen ⌄</button>
+    <button class="expand-all" onclick="toggleAll('rueckgabe', this)" data-i18n="guide.expand10">Alle 10 Schritte anzeigen ⌄</button>
 
     <details class="step" open>
       <summary>
         <div class="step-num">1</div>
-        <div class="step-title">Zum Rückgabe-Stellplatz fahren</div>
+        <div class="step-title" data-i18n="guide.r1">Zum Rückgabe-Stellplatz fahren</div>
         <span class="step-chevron">⌄</span>
       </summary>
       <div class="step-body">
@@ -420,7 +420,7 @@
     <details class="step">
       <summary>
         <div class="step-num">2</div>
-        <div class="step-title">Anhänger absetzen</div>
+        <div class="step-title" data-i18n="guide.r2">Anhänger absetzen</div>
         <span class="step-chevron">⌄</span>
       </summary>
       <div class="step-body">
@@ -431,7 +431,7 @@
     <details class="step">
       <summary>
         <div class="step-num">3</div>
-        <div class="step-title">Unterlegkeile setzen</div>
+        <div class="step-title" data-i18n="guide.r3">Unterlegkeile setzen</div>
         <span class="step-chevron">⌄</span>
       </summary>
       <div class="step-body">
@@ -445,7 +445,7 @@
     <details class="step">
       <summary>
         <div class="step-num">4</div>
-        <div class="step-title">Stützrad runter</div>
+        <div class="step-title" data-i18n="guide.r4">Stützrad runter</div>
         <span class="step-chevron">⌄</span>
       </summary>
       <div class="step-body">
@@ -456,7 +456,7 @@
     <details class="step">
       <summary>
         <div class="step-num">5</div>
-        <div class="step-title">Elektrik trennen</div>
+        <div class="step-title" data-i18n="guide.r5">Elektrik trennen</div>
         <span class="step-chevron">⌄</span>
       </summary>
       <div class="step-body">
@@ -467,7 +467,7 @@
     <details class="step">
       <summary>
         <div class="step-num">6</div>
-        <div class="step-title">Abkuppeln</div>
+        <div class="step-title" data-i18n="guide.r6">Abkuppeln</div>
         <span class="step-chevron">⌄</span>
       </summary>
       <div class="step-body">
@@ -479,7 +479,7 @@
     <details class="step">
       <summary>
         <div class="step-num">7</div>
-        <div class="step-title">Auto wegfahren</div>
+        <div class="step-title" data-i18n="guide.r7">Auto wegfahren</div>
         <span class="step-chevron">⌄</span>
       </summary>
       <div class="step-body">
@@ -492,7 +492,7 @@
     <details class="step">
       <summary>
         <div class="step-num">8</div>
-        <div class="step-title">Schloss zumachen</div>
+        <div class="step-title" data-i18n="guide.r8">Schloss zumachen</div>
         <span class="step-chevron">⌄</span>
       </summary>
       <div class="step-body">
@@ -504,7 +504,7 @@
     <details class="step">
       <summary>
         <div class="step-num">9</div>
-        <div class="step-title">Aufräumen — wirklich sauber</div>
+        <div class="step-title" data-i18n="guide.r9">Aufräumen — wirklich sauber</div>
         <span class="step-chevron">⌄</span>
       </summary>
       <div class="step-body">
@@ -516,7 +516,7 @@
     <details class="step">
       <summary>
         <div class="step-num">10</div>
-        <div class="step-title">Rückgabe-Foto machen + Link öffnen</div>
+        <div class="step-title" data-i18n="guide.r10">Rückgabe-Foto machen + Link öffnen</div>
         <span class="step-chevron">⌄</span>
       </summary>
       <div class="step-body">
