@@ -339,11 +339,15 @@
       try { refresh_token = JSON.parse(saved).refresh_token; } catch { return false; }
       if (!refresh_token) return false;
       try {
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), 6000);
         const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
           method: 'POST',
           headers: { apikey: SUPABASE_ANON, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ refresh_token })
+          body: JSON.stringify({ refresh_token }),
+          signal: ctrl.signal
         });
+        clearTimeout(t);
         if (!res.ok) { localStorage.removeItem('st_session'); return false; }
         const data = await res.json();
         authToken = data.access_token;
@@ -413,15 +417,16 @@
     showAuth();
   }
 
-  // Letzte Notbremse: wenn nach 12 Sek immer noch viewLoading zu sehen ist,
+  // Notbremse: wenn nach 7 Sek immer noch viewLoading zu sehen ist,
   // zwangsweise Auth-View zeigen damit User nicht endlos starrt.
+  // 7s = 6s fetch-Timeout + 1s Puffer.
   setTimeout(() => {
     const loading = document.getElementById('viewLoading');
     if (loading && loading.style.display !== 'none') {
-      console.warn('init-fallback nach 12s ausgeloest');
+      console.warn('init-fallback nach 7s ausgeloest');
       showAuth();
     }
-  }, 12000);
+  }, 7000);
 
   function showAuth() {
     document.getElementById('viewLoading').style.display  = 'none';
