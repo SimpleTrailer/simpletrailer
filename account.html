@@ -701,12 +701,22 @@
       statusBlock = `<div style="background:#1a0808;border:1px solid #dc2626;border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:.88rem;color:#fca5a5;">⚠ Rückgabe überfällig — 15 €/h Verspätungsgebühr läuft</div>`;
     }
 
+    // Zugangscode-Box — direkt sichtbar wenn Pre-Check abgeschlossen ist
+    const escCode = (s) => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    let accessCodeHtml = '';
+    if (precheckDone && b.access_code && (b.status === 'active' || b.status === 'confirmed')) {
+      accessCodeHtml = `
+        <div style="background:linear-gradient(135deg,#0d2f0d,#0a1f0a);border:2px solid #22c55e;border-radius:14px;padding:18px 20px;margin-bottom:14px;text-align:center;">
+          <div style="color:#86efac;font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px;">🔑 Zugangscode Zahlenschloss</div>
+          <div style="font-size:2.4rem;font-weight:900;letter-spacing:.3em;color:#fff;font-variant-numeric:tabular-nums;margin:6px 0;">${escCode(b.access_code)}</div>
+          <div style="color:#86efac;font-size:.78rem;">Diesen Code am Schloss eingeben</div>
+        </div>`;
+    }
+
     // Action-Buttons
     let actionHtml = '';
     if (b.status === 'confirmed' && !precheckDone && precheckUrl) {
       actionHtml = `<a href="${precheckUrl}" class="action-btn action-btn-green">📷 Vorab-Check starten → Schloss-Code erhalten</a>`;
-    } else if (b.status === 'active' && precheckDone && precheckUrl) {
-      actionHtml = `<a href="${precheckUrl}" class="action-btn action-btn-green">🔑 Schloss-Code anzeigen</a>`;
     }
     if (returnUrl && (b.status === 'active' || isOverdue)) {
       actionHtml += `<a href="${returnUrl}" class="action-btn action-btn-orange">Rückgabe starten →</a>`;
@@ -763,6 +773,7 @@
         ${INS_LABEL[b.insurance_type || 'none']}${b.cancellation_protection ? ' · ✓ Kostenlose Stornierung' : ''} · <strong style="color:var(--orange)">${(b.total_amount||0).toFixed(2).replace('.',',')} €</strong>
       </div>
       ${statusBlock}
+      ${accessCodeHtml}
       ${actionHtml}
       ${extendHtml}
       ${cancelHtml}

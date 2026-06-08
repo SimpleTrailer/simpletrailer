@@ -54,12 +54,47 @@ module.exports = async (req, res) => {
     // Aktueller Tracker-Standort holen + Distanz zum Abholort + Status berechnen.
     const { data: trailerNow } = await supabase
       .from('trailers')
-      .select('last_lat,last_lng,is_moving')
+      .select('last_lat,last_lng,is_moving,tracker_traccar_id')
       .eq('id', booking.trailer_id)
       .maybeSingle();
 
-    const returnLat = trailerNow?.last_lat || null;
-    const returnLng = trailerNow?.last_lng || null;
+    // ON-DEMAND POSITION REFRESH: Tracker-Sync läuft "nur" jede Minute — beim Rückgabe-
+    // Klick holen wir noch eine FRISCHE Position direkt von Traccar, damit der Mieter
+    // nicht auf einer veralteten Position basiert geblockt wird.
+    let returnLat = trailerNow?.last_lat || null;
+    let returnLng = trailerNow?.last_lng || null;
+    if (trailerNow?.tracker_traccar_id && process.env.TRACCAR_URL && process.env.TRACCAR_USERNAME) {
+      try {
+        const auth = Buffer.from(`${process.env.TRACCAR_USERNAME}:${process.env.TRACCAR_PASSWORD}`).toString('base64');
+        const ctrl = new AbortController();
+        const timeoutId = setTimeout(() => ctrl.abort(), 4000); // max. 4 Sek warten
+        const r = await fetch(`${process.env.TRACCAR_URL}/api/positions?deviceId=${trailerNow.tracker_traccar_id}`, {
+          headers: { 'Authorization': `Basic ${auth}`, 'Accept': 'application/json' },
+          signal: ctrl.signal
+        });
+        clearTimeout(timeoutId);
+        if (r.ok) {
+          const positions = await r.json();
+          const pos = positions[0];
+          if (pos && pos.valid === true) {
+            const freshLat = parseFloat(pos.latitude);
+            const freshLng = parseFloat(pos.longitude);
+            if (Math.abs(freshLat) > 0.0001 && Math.abs(freshLng) > 0.0001) {
+              returnLat = freshLat;
+              returnLng = freshLng;
+              // Frische Position auch direkt in DB schreiben (für Admin-Map etc.)
+              await supabase.from('trailers').update({
+                last_lat: freshLat, last_lng: freshLng,
+                last_seen_at: pos.fixTime || pos.deviceTime || new Date().toISOString()
+              }).eq('id', booking.trailer_id);
+            }
+          }
+        }
+      } catch (refreshErr) {
+        // Fail-soft: bei Timeout/Fehler nehmen wir den DB-Wert (max. 60s alt)
+        console.warn('Traccar on-demand refresh fehlgeschlagen:', refreshErr.message);
+      }
+    }
 
     // Haversine-Distanz (Meter)
     function distMeters(lat1, lng1, lat2, lng2) {
@@ -103,7 +138,9 @@ module.exports = async (req, res) => {
       const insideBremen = inBremen(returnLat, returnLng);
       // Wenn free_floating-Spalte fehlt (Buchung vor Migration), niemals Strafe abbuchen — Safe Default.
       const ffKnown = booking.free_floating === true || booking.free_floating === false;
-      if (returnDistanceM <= 100) {
+      // Stellplatz-Radius: 500m — Tracker-Genauigkeit (~15m) + grosszuegiger Puffer,
+      // damit Mieter nicht wegen Parken 1-2 Strassen entfernt eine Fee bekommen.
+      if (returnDistanceM <= 500) {
         returnStatus = 'heimat';
       } else if (!insideBremen) {
         if (ffKnown) {
