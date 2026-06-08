@@ -121,35 +121,35 @@
 <div class="page">
 
   <!-- LOADING -->
-  <div id="viewLoading" class="loading">Wird geladen...</div>
+  <div id="viewLoading" class="loading" data-i18n="account.loading">Wird geladen...</div>
 
   <!-- AUTH VIEW (Login / Registrierung) -->
   <div id="viewAuth" style="display:none;">
-    <h1 class="page-title">Mein Konto</h1>
-    <p class="page-sub">Melde dich an um deine Buchungen zu sehen.</p>
+    <h1 class="page-title" data-i18n="account.title">Mein Konto</h1>
+    <p class="page-sub" data-i18n="account.auth.sub">Melde dich an um deine Buchungen zu sehen.</p>
 
     <div class="tabs">
-      <button class="tab active" onclick="switchTab('login')">Anmelden</button>
-      <button class="tab" onclick="switchTab('register')">Registrieren</button>
+      <button class="tab active" onclick="switchTab('login')" data-i18n="account.login">Anmelden</button>
+      <button class="tab" onclick="switchTab('register')" data-i18n="account.signup">Registrieren</button>
     </div>
 
     <!-- LOGIN -->
     <div id="tabLogin">
       <div class="card">
         <div class="field-group">
-          <label class="field-label">E-Mail</label>
-          <input type="email" class="field-input" id="loginEmail" placeholder="deine@email.de" />
+          <label class="field-label" data-i18n="account.email">E-Mail</label>
+          <input type="email" class="field-input" id="loginEmail" placeholder="deine@email.de" data-i18n-attr="placeholder:account.email.placeholder" />
         </div>
         <div class="field-group">
-          <label class="field-label">Passwort</label>
+          <label class="field-label" data-i18n="account.password">Passwort</label>
           <input type="password" class="field-input" id="loginPassword" placeholder="••••••••" />
         </div>
         <div class="error-msg" id="loginError"></div>
         <div style="margin-top:20px;">
-          <button class="btn btn-orange" onclick="login()">Anmelden</button>
+          <button class="btn btn-orange" onclick="login()" data-i18n="account.login">Anmelden</button>
         </div>
         <div style="text-align:center;margin-top:14px;">
-          <a href="#" onclick="showReset()" style="color:var(--gray);font-size:.82rem;text-decoration:none;">Passwort vergessen?</a>
+          <a href="#" onclick="showReset()" style="color:var(--gray);font-size:.82rem;text-decoration:none;" data-i18n="account.forgot">Passwort vergessen?</a>
         </div>
       </div>
     </div>
@@ -159,34 +159,34 @@
       <div class="card">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
           <div class="field-group">
-            <label class="field-label">Vorname *</label>
+            <label class="field-label" data-i18n="account.firstname">Vorname *</label>
             <input type="text" class="field-input" id="regFirstName" placeholder="Max" />
           </div>
           <div class="field-group">
-            <label class="field-label">Nachname *</label>
+            <label class="field-label" data-i18n="account.lastname">Nachname *</label>
             <input type="text" class="field-input" id="regLastName" placeholder="Mustermann" />
           </div>
         </div>
         <div class="field-group">
-          <label class="field-label">E-Mail *</label>
+          <label class="field-label" data-i18n="account.email_req">E-Mail *</label>
           <input type="email" class="field-input" id="regEmail" placeholder="deine@email.de" />
         </div>
         <div class="field-group">
-          <label class="field-label">Telefon *</label>
+          <label class="field-label" data-i18n="account.phone_req">Telefon *</label>
           <input type="tel" class="field-input" id="regPhone" placeholder="+49 151 12345678" />
         </div>
         <div class="field-group">
-          <label class="field-label">Adresse *</label>
+          <label class="field-label" data-i18n="account.address_req">Adresse *</label>
           <input type="text" class="field-input" id="regAddress" placeholder="Musterstraße 1, 28195 Bremen" />
         </div>
         <div class="field-group">
-          <label class="field-label">Passwort *</label>
-          <input type="password" class="field-input" id="regPassword" placeholder="Mindestens 6 Zeichen" />
+          <label class="field-label" data-i18n="account.password_req">Passwort *</label>
+          <input type="password" class="field-input" id="regPassword" placeholder="Mindestens 6 Zeichen" data-i18n-attr="placeholder:account.password.placeholder" />
         </div>
         <div class="error-msg" id="regError"></div>
         <div class="success-msg" id="regSuccess"></div>
         <div style="margin-top:20px;">
-          <button class="btn btn-orange" onclick="register()">Konto erstellen</button>
+          <button class="btn btn-orange" onclick="register()" data-i18n="account.create">Konto erstellen</button>
         </div>
       </div>
     </div>
@@ -194,18 +194,18 @@
     <!-- RESET -->
     <div id="tabReset" style="display:none;">
       <div class="card">
-        <p style="color:var(--gray);font-size:.88rem;margin-bottom:20px;">Gib deine E-Mail ein — wir schicken dir einen Link zum Zurücksetzen.</p>
+        <p style="color:var(--gray);font-size:.88rem;margin-bottom:20px;" data-i18n="account.reset.desc">Gib deine E-Mail ein — wir schicken dir einen Link zum Zurücksetzen.</p>
         <div class="field-group">
-          <label class="field-label">E-Mail</label>
+          <label class="field-label" data-i18n="account.email">E-Mail</label>
           <input type="email" class="field-input" id="resetEmail" placeholder="deine@email.de" />
         </div>
         <div class="error-msg" id="resetError"></div>
         <div class="success-msg" id="resetSuccess"></div>
         <div style="margin-top:20px;">
-          <button class="btn btn-orange" onclick="sendReset()">Link senden</button>
+          <button class="btn btn-orange" onclick="sendReset()" data-i18n="account.reset.send">Link senden</button>
         </div>
         <div style="text-align:center;margin-top:14px;">
-          <a href="#" onclick="switchTab('login')" style="color:var(--gray);font-size:.82rem;text-decoration:none;">← Zurück zum Login</a>
+          <a href="#" onclick="switchTab('login')" style="color:var(--gray);font-size:.82rem;text-decoration:none;" data-i18n="account.reset.back">← Zurück zum Login</a>
         </div>
       </div>
     </div>
@@ -221,24 +221,24 @@
           <div class="account-email" id="accountEmail">–</div>
         </div>
       </div>
-      <a href="/booking" class="btn btn-orange" style="margin-bottom:12px;">+ Neuen Anhänger buchen</a>
-      <button class="logout-btn" onclick="logout()">Abmelden</button>
-      <button class="logout-btn" onclick="openDeleteAccountModal()" style="margin-top:6px;color:#666;border-color:#2a2a2a;font-size:.78rem;">Konto löschen</button>
+      <a href="/booking" class="btn btn-orange" style="margin-bottom:12px;" data-i18n="account.book_new">+ Neuen Anhänger buchen</a>
+      <button class="logout-btn" onclick="logout()" data-i18n="account.logout">Abmelden</button>
+      <button class="logout-btn" onclick="openDeleteAccountModal()" style="margin-top:6px;color:#666;border-color:#2a2a2a;font-size:.78rem;" data-i18n="account.delete">Konto löschen</button>
     </div>
 
     <!-- PROFIL -->
     <div class="card" id="profileCard">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-        <div style="font-weight:700;letter-spacing:-.02em;">Profil</div>
-        <button id="profileEditBtn" onclick="toggleProfileEdit()" style="background:transparent;border:1px solid var(--border);color:var(--gray);padding:5px 12px;border-radius:6px;font-size:.78rem;cursor:pointer;font-family:var(--font);">Bearbeiten</button>
+        <div style="font-weight:700;letter-spacing:-.02em;" data-i18n="account.profile">Profil</div>
+        <button id="profileEditBtn" onclick="toggleProfileEdit()" style="background:transparent;border:1px solid var(--border);color:var(--gray);padding:5px 12px;border-radius:6px;font-size:.78rem;cursor:pointer;font-family:var(--font);" data-i18n="account.edit">Bearbeiten</button>
       </div>
 
       <!-- Anzeige-Modus -->
       <div id="profileView">
         <div style="display:grid;grid-template-columns:auto 1fr;gap:10px 16px;font-size:.88rem;align-items:center;">
-          <span style="color:var(--gray);">Telefon</span><span id="profPhone">–</span>
-          <span style="color:var(--gray);">Geburtsdatum</span><span id="profBirthdate">–</span>
-          <span style="color:var(--gray);">Adresse</span><span id="profAddress">–</span>
+          <span style="color:var(--gray);" data-i18n="account.phone">Telefon</span><span id="profPhone">–</span>
+          <span style="color:var(--gray);" data-i18n="account.birthdate">Geburtsdatum</span><span id="profBirthdate">–</span>
+          <span style="color:var(--gray);" data-i18n="account.address">Adresse</span><span id="profAddress">–</span>
         </div>
         <div id="profileMissingHint" style="display:none;background:#1a0d00;border:1.5px solid var(--orange);border-radius:10px;padding:12px 14px;margin-top:14px;font-size:.84rem;line-height:1.5;">
           ⚠ <strong>Geburtsdatum fehlt.</strong> Pflicht-Angabe für die Vermietung — bitte ergänzen über "Bearbeiten".
@@ -298,8 +298,8 @@
     </div>
 
     <div class="card">
-      <div class="bookings-title">Meine Buchungen</div>
-      <div id="bookingsList"><div class="loading">Buchungen werden geladen...</div></div>
+      <div class="bookings-title" data-i18n="account.my_bookings">Meine Buchungen</div>
+      <div id="bookingsList"><div class="loading" data-i18n="account.bookings.loading">Buchungen werden geladen...</div></div>
     </div>
   </div>
 

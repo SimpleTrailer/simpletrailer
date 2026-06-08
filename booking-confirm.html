@@ -56,26 +56,26 @@
   <!-- Ladeansicht -->
   <div id="loadingView" class="loading">
     <div class="spinner"></div>
-    <p>Buchung wird bestätigt...</p>
+    <p data-i18n="confirm.loading">Buchung wird bestätigt...</p>
   </div>
 
   <!-- Erfolg -->
   <div id="successView" style="display:none;">
     <div class="icon">✓</div>
-    <h1>Danke für deine Buchung!</h1>
-    <p class="sub">Dein Anhänger ist fest reserviert. Hier ist alles auf einen Blick.</p>
+    <h1 data-i18n="confirm.title">Danke für deine Buchung!</h1>
+    <p class="sub" data-i18n="confirm.sub">Dein Anhänger ist fest reserviert. Hier ist alles auf einen Blick.</p>
 
     <div class="card">
       <div class="booking-num">
-        <div class="label">Buchungsnummer</div>
+        <div class="label" data-i18n="confirm.booking_num">Buchungsnummer</div>
         <div class="num" id="bookingNum">–</div>
       </div>
 
       <table style="margin-bottom:20px;">
-        <tr><td>Anhänger</td><td>PKW-Anhänger mit Plane</td></tr>
-        <tr><td>Von</td><td id="fromDate">–</td></tr>
-        <tr><td>Bis</td><td id="toDate">–</td></tr>
-        <tr><td>Bezahlt</td><td style="color:var(--orange);font-weight:700;" id="paidAmount">–</td></tr>
+        <tr><td data-i18n="confirm.trailer">Anhänger</td><td>PKW-Anhänger mit Plane</td></tr>
+        <tr><td data-i18n="confirm.from">Von</td><td id="fromDate">–</td></tr>
+        <tr><td data-i18n="confirm.to">Bis</td><td id="toDate">–</td></tr>
+        <tr><td data-i18n="confirm.paid">Bezahlt</td><td style="color:var(--orange);font-weight:700;" id="paidAmount">–</td></tr>
       </table>
 
       <!-- Standort-Block: Adresse + Route in Maps -->
@@ -83,58 +83,58 @@
         <div style="display:flex;align-items:flex-start;gap:12px;">
           <div style="font-size:1.4rem;flex-shrink:0;">📍</div>
           <div style="flex:1;min-width:0;">
-            <div style="font-weight:700;font-size:.95rem;margin-bottom:2px;">Standort des Anhängers</div>
-            <div id="locationAddr" style="color:#aaa;font-size:.84rem;line-height:1.45;">Adresse wird geladen…</div>
+            <div style="font-weight:700;font-size:.95rem;margin-bottom:2px;" data-i18n="confirm.location.title">Standort des Anhängers</div>
+            <div id="locationAddr" style="color:#aaa;font-size:.84rem;line-height:1.45;" data-i18n="account.location.loading">Adresse wird geladen…</div>
             <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
-              <a id="locationRoute" href="#" target="_blank" rel="noopener" style="flex:1;min-width:140px;background:var(--orange);color:#fff;text-decoration:none;padding:10px 12px;border-radius:8px;font-weight:700;font-size:.86rem;text-align:center;">🚗 Route starten</a>
-              <a id="locationMap" href="#" target="_blank" rel="noopener" style="background:#1f1f1f;border:1px solid var(--border);color:#fff;text-decoration:none;padding:10px 12px;border-radius:8px;font-weight:700;font-size:.86rem;text-align:center;">🗺 Auf Karte</a>
+              <a id="locationRoute" href="#" target="_blank" rel="noopener" style="flex:1;min-width:140px;background:var(--orange);color:#fff;text-decoration:none;padding:10px 12px;border-radius:8px;font-weight:700;font-size:.86rem;text-align:center;" data-i18n="account.location.route">🚗 Route starten</a>
+              <a id="locationMap" href="#" target="_blank" rel="noopener" style="background:#1f1f1f;border:1px solid var(--border);color:#fff;text-decoration:none;padding:10px 12px;border-radius:8px;font-weight:700;font-size:.86rem;text-align:center;" data-i18n="account.location.map">🗺 Auf Karte</a>
             </div>
           </div>
         </div>
       </div>
 
       <div style="background:#0a1f0a;border:1.5px solid #22c55e;border-radius:12px;padding:20px;text-align:center;">
-        <p style="color:#4ade80;font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin:0 0 6px;">Schritt 1 — Vor Abholung</p>
-        <p style="font-size:.88rem;margin:0 0 14px;line-height:1.5;">Mache <strong>15 Minuten vor Mietbeginn</strong> ein Foto des Anhängers und bestätige den Zustand — erst dann wird der <strong>Schloss-Code</strong> freigeschaltet.</p>
-        <a id="precheckLink" href="#" class="btn btn-orange" style="background:#22c55e;color:#000;margin-bottom:0;">📷 Vorab-Check starten →</a>
+        <p style="color:#4ade80;font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin:0 0 6px;" data-i18n="confirm.step1.label">Schritt 1 — Vor Abholung</p>
+        <p style="font-size:.88rem;margin:0 0 14px;line-height:1.5;" data-i18n-html="confirm.step1.desc">Mache <strong>15 Minuten vor Mietbeginn</strong> ein Foto des Anhängers und bestätige den Zustand — erst dann wird der <strong>Schloss-Code</strong> freigeschaltet.</p>
+        <a id="precheckLink" href="#" class="btn btn-orange" style="background:#22c55e;color:#000;margin-bottom:0;" data-i18n="confirm.start_precheck">📷 Vorab-Check starten →</a>
       </div>
     </div>
 
     <!-- Anleitung: So funktioniert deine Buchung -->
     <div style="background:var(--s1);border:1.5px solid var(--border);border-radius:14px;padding:24px 22px;margin-top:18px;">
-      <h2 style="margin:0 0 4px;font-size:1.1rem;letter-spacing:-.01em;">📖 So funktioniert deine Buchung</h2>
-      <p style="font-size:.82rem;color:var(--gray);margin:0 0 18px;">Kurz erklärt — damit beim Abholen, Fahren und Zurückgeben alles glatt läuft.</p>
+      <h2 style="margin:0 0 4px;font-size:1.1rem;letter-spacing:-.01em;" data-i18n="confirm.howto.title">📖 So funktioniert deine Buchung</h2>
+      <p style="font-size:.82rem;color:var(--gray);margin:0 0 18px;" data-i18n="confirm.howto.sub">Kurz erklärt — damit beim Abholen, Fahren und Zurückgeben alles glatt läuft.</p>
 
       <div style="display:flex;flex-direction:column;gap:14px;">
         <div style="display:flex;gap:14px;align-items:flex-start;">
           <div style="flex-shrink:0;width:32px;height:32px;border-radius:50%;background:var(--orange);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;">1</div>
           <div>
-            <div style="font-weight:700;margin-bottom:2px;font-size:.95rem;">15 Minuten vor Mietbeginn zum Anhänger fahren</div>
-            <div style="color:var(--gray);font-size:.84rem;line-height:1.55;">Stellplatz steht in der Bestätigungs-Mail. GPS-Position siehst du auch in deinem Kundenkonto.</div>
+            <div style="font-weight:700;margin-bottom:2px;font-size:.95rem;" data-i18n="confirm.s1.title">15 Minuten vor Mietbeginn zum Anhänger fahren</div>
+            <div style="color:var(--gray);font-size:.84rem;line-height:1.55;" data-i18n="confirm.s1.desc">Stellplatz steht in der Bestätigungs-Mail. GPS-Position siehst du auch in deinem Kundenkonto.</div>
           </div>
         </div>
 
         <div style="display:flex;gap:14px;align-items:flex-start;">
           <div style="flex-shrink:0;width:32px;height:32px;border-radius:50%;background:var(--orange);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;">2</div>
           <div>
-            <div style="font-weight:700;margin-bottom:2px;font-size:.95rem;">Vorab-Check öffnen und Foto machen</div>
-            <div style="color:var(--gray);font-size:.84rem;line-height:1.55;">Foto von außen + Ladefläche. Damit ist der Zustand dokumentiert — schützt dich vor späteren falschen Schadens-Vorwürfen.</div>
+            <div style="font-weight:700;margin-bottom:2px;font-size:.95rem;" data-i18n="confirm.s2.title">Vorab-Check öffnen und Foto machen</div>
+            <div style="color:var(--gray);font-size:.84rem;line-height:1.55;" data-i18n="confirm.s2.desc">Foto von außen + Ladefläche. Damit ist der Zustand dokumentiert — schützt dich vor späteren falschen Schadens-Vorwürfen.</div>
           </div>
         </div>
 
         <div style="display:flex;gap:14px;align-items:flex-start;">
           <div style="flex-shrink:0;width:32px;height:32px;border-radius:50%;background:var(--orange);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;">3</div>
           <div>
-            <div style="font-weight:700;margin-bottom:2px;font-size:.95rem;">Schloss-Code eingeben + ankuppeln</div>
-            <div style="color:var(--gray);font-size:.84rem;line-height:1.55;">Der Code kommt nach dem Foto-Upload. Anleitung zum Ankuppeln + Unterlegkeile gibt's direkt nach dem Code.</div>
+            <div style="font-weight:700;margin-bottom:2px;font-size:.95rem;" data-i18n="confirm.s3.title">Schloss-Code eingeben + ankuppeln</div>
+            <div style="color:var(--gray);font-size:.84rem;line-height:1.55;" data-i18n="confirm.s3.desc">Der Code kommt nach dem Foto-Upload. Anleitung zum Ankuppeln + Unterlegkeile gibt's direkt nach dem Code.</div>
           </div>
         </div>
 
         <div style="display:flex;gap:14px;align-items:flex-start;">
           <div style="flex-shrink:0;width:32px;height:32px;border-radius:50%;background:var(--orange);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;">4</div>
           <div>
-            <div style="font-weight:700;margin-bottom:2px;font-size:.95rem;">Nach der Nutzung: Rückgabe-Foto + Schloss zu</div>
-            <div style="color:var(--gray);font-size:.84rem;line-height:1.55;">Anhänger sauber zurückstellen, Rückgabe-Link aus deiner Mail öffnen, Foto hochladen. Fertig.</div>
+            <div style="font-weight:700;margin-bottom:2px;font-size:.95rem;" data-i18n="confirm.s4.title">Nach der Nutzung: Rückgabe-Foto + Schloss zu</div>
+            <div style="color:var(--gray);font-size:.84rem;line-height:1.55;" data-i18n="confirm.s4.desc">Anhänger sauber zurückstellen, Rückgabe-Link aus deiner Mail öffnen, Foto hochladen. Fertig.</div>
           </div>
         </div>
       </div>
@@ -142,24 +142,24 @@
 
     <!-- Anleitung-Link prominent -->
     <div style="background:linear-gradient(135deg,rgba(232,93,0,.10),rgba(232,93,0,.03));border:1.5px solid rgba(232,93,0,.32);border-radius:14px;padding:20px 22px;margin-top:18px;">
-      <div style="font-size:1.02rem;font-weight:700;margin-bottom:4px;letter-spacing:-.01em;">📖 Vollständige Anleitung</div>
-      <div style="font-size:.85rem;color:#ccc;margin-bottom:14px;line-height:1.55;">Schloss öffnen, ankuppeln, Unterlegkeile lösen, Rückgabe — alles Schritt für Schritt erklärt. Auch wenn du noch nie einen Anhänger gefahren hast.</div>
-      <a href="/anleitung" class="btn btn-orange" style="display:inline-flex;width:auto;padding:11px 22px;">Anleitung lesen →</a>
+      <div style="font-size:1.02rem;font-weight:700;margin-bottom:4px;letter-spacing:-.01em;" data-i18n="confirm.guide_full.title">📖 Vollständige Anleitung</div>
+      <div style="font-size:.85rem;color:#ccc;margin-bottom:14px;line-height:1.55;" data-i18n="confirm.guide_full.desc">Schloss öffnen, ankuppeln, Unterlegkeile lösen, Rückgabe — alles Schritt für Schritt erklärt. Auch wenn du noch nie einen Anhänger gefahren hast.</div>
+      <a href="/anleitung" class="btn btn-orange" style="display:inline-flex;width:auto;padding:11px 22px;" data-i18n="confirm.guide_full.btn">Anleitung lesen →</a>
     </div>
 
     <!-- Kundenkonto: PROMINENT — User ist bereits eingeloggt, direkt eine Klick weiter -->
     <div style="background:linear-gradient(135deg,rgba(34,197,94,0.10),rgba(34,197,94,0.02));border:1.5px solid rgba(34,197,94,0.40);border-radius:14px;padding:24px 22px;margin-top:18px;text-align:center;">
       <div style="width:52px;height:52px;border-radius:14px;background:rgba(34,197,94,0.18);display:inline-flex;align-items:center;justify-content:center;font-size:1.6rem;margin-bottom:12px;">👤</div>
-      <div style="font-size:1.05rem;font-weight:700;margin-bottom:6px;letter-spacing:-.015em;">Du bist eingeloggt</div>
-      <div style="font-size:.86rem;color:var(--gray);line-height:1.55;margin-bottom:16px;max-width:380px;margin-left:auto;margin-right:auto;">
+      <div style="font-size:1.05rem;font-weight:700;margin-bottom:6px;letter-spacing:-.015em;" data-i18n="confirm.acc.title">Du bist eingeloggt</div>
+      <div style="font-size:.86rem;color:var(--gray);line-height:1.55;margin-bottom:16px;max-width:380px;margin-left:auto;margin-right:auto;" data-i18n="confirm.acc.desc">
         Im Kundenkonto siehst du alle Details, den Code (sobald freigeschaltet), Mietvertrag-PDF, Verlängern + Storno.
       </div>
-      <a href="/account" class="btn btn-orange" style="display:inline-flex;align-items:center;gap:8px;padding:13px 28px;font-weight:700;">Zum Kundenkonto →</a>
+      <a href="/account" class="btn btn-orange" style="display:inline-flex;align-items:center;gap:8px;padding:13px 28px;font-weight:700;" data-i18n="confirm.acc.btn">Zum Kundenkonto →</a>
     </div>
 
     <!-- Email-Hinweis -->
     <div style="background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-top:14px;">
-      <p style="font-size:.82rem;color:var(--gray);margin:0;line-height:1.55;">📧 <strong style="color:#ddd;">Bestätigung an deine E-Mail unterwegs</strong> — Mietvertrag und Rechnung als PDF im Anhang. Falls nicht im Posteingang, schau kurz im Junk-Ordner.</p>
+      <p style="font-size:.82rem;color:var(--gray);margin:0;line-height:1.55;" data-i18n-html="confirm.email.hint">📧 <strong style="color:#ddd;">Bestätigung an deine E-Mail unterwegs</strong> — Mietvertrag und Rechnung als PDF im Anhang. Falls nicht im Posteingang, schau kurz im Junk-Ordner.</p>
     </div>
   </div>
 

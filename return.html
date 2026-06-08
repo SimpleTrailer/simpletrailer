@@ -112,28 +112,28 @@
 
   <div id="loadingView" class="loading">
     <div class="spin-big"></div>
-    <p>Buchung wird geladen...</p>
+    <p data-i18n="return.loading">Buchung wird geladen...</p>
   </div>
 
   <div id="mainView" style="display:none;">
-    <h1>Anhänger zurückgeben</h1>
-    <p class="sub" id="returnSub">Foto machen und Rückgabe bestätigen.</p>
+    <h1 data-i18n="return.title">Anhänger zurückgeben</h1>
+    <p class="sub" id="returnSub" data-i18n="return.sub">Foto machen und Rückgabe bestätigen.</p>
 
     <!-- Buchungsinfo -->
     <div class="card">
-      <p class="section-tag">Deine Buchung</p>
+      <p class="section-tag" data-i18n="return.your_booking">Deine Buchung</p>
       <table>
-        <tr><td>Buchungsnummer</td><td id="infoId">–</td></tr>
-        <tr><td>Anhänger</td><td>PKW-Anhänger mit Plane</td></tr>
-        <tr><td>Gebuchte Rückgabe</td><td id="infoEnd">–</td></tr>
-        <tr><td>Mietbetrag</td><td id="infoAmount">–</td></tr>
+        <tr><td data-i18n="return.booking_num">Buchungsnummer</td><td id="infoId">–</td></tr>
+        <tr><td data-i18n="return.trailer">Anhänger</td><td>PKW-Anhänger mit Plane</td></tr>
+        <tr><td data-i18n="return.expected_return">Gebuchte Rückgabe</td><td id="infoEnd">–</td></tr>
+        <tr><td data-i18n="return.amount">Mietbetrag</td><td id="infoAmount">–</td></tr>
       </table>
     </div>
 
     <!-- Countdown -->
     <div class="card">
       <div class="countdown" id="countdown">
-        <div class="label">Zeit bis zur Rückgabe</div>
+        <div class="label" data-i18n="return.countdown.until_return">Zeit bis zur Rückgabe</div>
         <div class="time" id="countdownTime">–</div>
       </div>
     </div>
@@ -141,39 +141,39 @@
     <!-- Hinweis Verspätungsaufpreis -->
     <div class="info-box">
       <span class="icon">⚠</span>
-      <span>Bei verspäteter Rückgabe werden <strong>15 € pro angefangene Stunde</strong> automatisch nachgebucht.</span>
+      <span data-i18n-html="return.late_warning">Bei verspäteter Rückgabe werden <strong>15 € pro angefangene Stunde</strong> automatisch nachgebucht.</span>
     </div>
 
     <!-- Anleitung: prominent vor dem Foto-Upload -->
     <div style="background:linear-gradient(135deg,rgba(232,93,0,0.10),rgba(232,93,0,0.02));border:1px solid rgba(232,93,0,0.30);border-radius:14px;padding:18px 20px;margin-bottom:18px;display:flex;gap:14px;align-items:flex-start;">
       <div style="flex-shrink:0;width:44px;height:44px;border-radius:12px;background:rgba(232,93,0,0.20);display:flex;align-items:center;justify-content:center;font-size:1.4rem;">📖</div>
       <div style="flex:1;min-width:0;">
-        <div style="font-size:1rem;font-weight:700;margin-bottom:4px;letter-spacing:-.015em;">Rückgabe-Anleitung</div>
-        <div style="font-size:.86rem;color:#ccc;line-height:1.55;margin-bottom:12px;">Abkuppeln, Unterlegkeile setzen, Schloss zu — in 10 Schritten erklärt mit Skizzen.</div>
-        <a href="/anleitung#rueckgabe" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;background:var(--orange);color:#fff;text-decoration:none;padding:11px 22px;border-radius:10px;font-weight:700;font-size:.9rem;box-shadow:0 4px 12px rgba(232,93,0,0.22);">Anleitung öffnen →</a>
+        <div style="font-size:1rem;font-weight:700;margin-bottom:4px;letter-spacing:-.015em;" data-i18n="return.guide.title">Rückgabe-Anleitung</div>
+        <div style="font-size:.86rem;color:#ccc;line-height:1.55;margin-bottom:12px;" data-i18n="return.guide.desc">Abkuppeln, Unterlegkeile setzen, Schloss zu — in 10 Schritten erklärt mit Skizzen.</div>
+        <a href="/anleitung#rueckgabe" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;background:var(--orange);color:#fff;text-decoration:none;padding:11px 22px;border-radius:10px;font-weight:700;font-size:.9rem;box-shadow:0 4px 12px rgba(232,93,0,0.22);" data-i18n="return.guide.open">Anleitung öffnen →</a>
       </div>
     </div>
 
     <!-- Rueckgabe-Zone Karte -->
     <div class="card">
-      <p class="section-tag">Rückgabe-Zone</p>
-      <p style="color:var(--gray);font-size:.85rem;margin-bottom:14px;">Bring den Anhänger zurück zum Stellplatz (grüner Kreis).</p>
+      <p class="section-tag" data-i18n="return.zone.title">Rückgabe-Zone</p>
+      <p style="color:var(--gray);font-size:.85rem;margin-bottom:14px;" data-i18n="return.zone.desc">Bring den Anhänger zurück zum Stellplatz (grüner Kreis).</p>
       <div id="returnMap"></div>
       <div class="zone-status unknown" id="zoneStatus">
         <span class="dot"></span>
-        <span id="zoneStatusText">Lade Anhänger-Position…</span>
+        <span id="zoneStatusText" data-i18n="return.zone.loading">Lade Anhänger-Position…</span>
       </div>
       <div class="position-meta" id="positionMeta">&nbsp;</div>
-      <button type="button" class="geo-btn" id="geoBtn" onclick="requestGeolocation()">📍 Meinen Standort zeigen</button>
+      <button type="button" class="geo-btn" id="geoBtn" onclick="requestGeolocation()" data-i18n="return.geo.btn">📍 Meinen Standort zeigen</button>
     </div>
 
     <!-- Foto Upload -->
     <div class="card">
-      <p class="section-tag">Foto zur Bestätigung</p>
-      <p style="color:var(--gray);font-size:.85rem;margin-bottom:14px;">Mach ein Foto des Anhängers an seinem Stellplatz – damit bestätigen wir die ordnungsgemäße Rückgabe.</p>
+      <p class="section-tag" data-i18n="return.photo.title">Foto zur Bestätigung</p>
+      <p style="color:var(--gray);font-size:.85rem;margin-bottom:14px;" data-i18n="return.photo.desc">Mach ein Foto des Anhängers an seinem Stellplatz – damit bestätigen wir die ordnungsgemäße Rückgabe.</p>
       <div class="upload-area" id="uploadArea" onclick="onUploadAreaClick()">
         <div class="upload-icon">📷</div>
-        <div class="upload-text"><strong id="uploadCta">Foto auswählen</strong> oder hierher ziehen</div>
+        <div class="upload-text"><strong id="uploadCta" data-i18n="return.photo.choose">Foto auswählen</strong> <span data-i18n="return.photo.or_drop">oder hierher ziehen</span></div>
         <input type="file" id="photoInput" accept="image/*" capture="environment" onchange="handlePhoto(event)" />
         <img id="photoPreview" class="upload-preview" alt="Vorschau" />
       </div>
@@ -183,42 +183,42 @@
     <div class="confirm-box" id="confirmBox">
       <label>
         <input type="checkbox" id="confirmInZone" onchange="updateSubmitState()" />
-        <span id="confirmLabel">Ich bestätige: Der Anhänger steht innerhalb der Rückgabe-Zone (grüner Kreis).</span>
+        <span id="confirmLabel" data-i18n="return.confirm.in_zone">Ich bestätige: Der Anhänger steht innerhalb der Rückgabe-Zone (grüner Kreis).</span>
       </label>
     </div>
 
     <!-- Submit -->
-    <button class="btn btn-green" id="returnBtn" onclick="submitReturn()" disabled style="margin-top:14px;">
+    <button class="btn btn-green" id="returnBtn" onclick="submitReturn()" disabled style="margin-top:14px;" data-i18n="return.submit">
       Rückgabe bestätigen
     </button>
-    <p style="color:var(--gray);font-size:.78rem;text-align:center;margin-top:10px;">Bei nicht ordnungsgemäßer Rückgabe (außerhalb der Zone) wird eine Rückführungspauschale von 50 € berechnet, sobald der Tracker die Position bestätigt.</p>
+    <p style="color:var(--gray);font-size:.78rem;text-align:center;margin-top:10px;" data-i18n="return.submit.hint">Bei nicht ordnungsgemäßer Rückgabe (außerhalb der Zone) wird eine Rückführungspauschale von 50 € berechnet, sobald der Tracker die Position bestätigt.</p>
   </div>
 
   <!-- Erfolg -->
   <div id="successView">
     <div class="big-icon" id="successIcon">✅</div>
-    <h2 id="successTitle">Rückgabe bestätigt!</h2>
-    <p id="successMsg">Danke! Du bekommst gleich eine Abrechnung per E-Mail.</p>
+    <h2 id="successTitle" data-i18n="return.success.title">Rückgabe bestätigt!</h2>
+    <p id="successMsg" data-i18n="return.success.msg">Danke! Du bekommst gleich eine Abrechnung per E-Mail.</p>
     <div id="pendingInfo" style="display:none;margin-top:20px;background:#1a1606;border:1.5px solid #fbbf24;border-radius:12px;padding:18px;text-align:left;">
-      <div style="font-weight:700;color:#fcd34d;margin-bottom:8px;">⏳ Standort wird bestätigt</div>
-      <div style="font-size:.88rem;color:#fcd34d;line-height:1.55;">Der Tracker meldet sich nicht immer sofort. Wir bestätigen die Rückgabe final sobald die Position eingegangen ist (i.d.R. innerhalb 1 Stunde) — du bekommst dann eine E-Mail. Bei Problem melden wir uns.</div>
+      <div style="font-weight:700;color:#fcd34d;margin-bottom:8px;" data-i18n="return.pending.head">⏳ Standort wird bestätigt</div>
+      <div style="font-size:.88rem;color:#fcd34d;line-height:1.55;" data-i18n="return.pending.info">Der Tracker meldet sich nicht immer sofort. Wir bestätigen die Rückgabe final sobald die Position eingegangen ist (i.d.R. innerhalb 1 Stunde) — du bekommst dann eine E-Mail. Bei Problem melden wir uns.</div>
     </div>
 
     <div id="lateFeeInfo" style="display:none;margin-top:24px;">
       <div class="card" style="border-color:var(--orange);background:#1a0d00;text-align:center;">
-        <p style="color:var(--orange);font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;">Verspätungsaufpreis</p>
+        <p style="color:var(--orange);font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;" data-i18n="return.late_fee.label">Verspätungsaufpreis</p>
         <p style="font-size:1.6rem;font-weight:800;" id="lateFeeAmount">–</p>
         <p style="color:var(--gray);font-size:.82rem;margin-top:6px;" id="lateFeeText">–</p>
       </div>
     </div>
 
-    <a href="/" style="display:inline-flex;align-items:center;justify-content:center;margin-top:28px;padding:13px 28px;background:var(--orange);color:#fff;text-decoration:none;border-radius:8px;font-weight:700;">Zurück zur Startseite</a>
+    <a href="/" style="display:inline-flex;align-items:center;justify-content:center;margin-top:28px;padding:13px 28px;background:var(--orange);color:#fff;text-decoration:none;border-radius:8px;font-weight:700;" data-i18n="return.back_home">Zurück zur Startseite</a>
   </div>
 
   <div id="errorView" style="display:none;text-align:center;padding:40px 0;">
     <div style="font-size:2.5rem;margin-bottom:16px;">❌</div>
-    <h2 style="margin-bottom:10px;">Buchung nicht gefunden</h2>
-    <p style="color:var(--gray);" id="errorMsg">Dieser Rückgabe-Link ist ungültig oder abgelaufen.</p>
+    <h2 style="margin-bottom:10px;" data-i18n="return.error.title">Buchung nicht gefunden</h2>
+    <p style="color:var(--gray);" id="errorMsg" data-i18n="return.error.msg">Dieser Rückgabe-Link ist ungültig oder abgelaufen.</p>
   </div>
 
 </div>

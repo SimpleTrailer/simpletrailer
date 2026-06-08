@@ -82,29 +82,29 @@
 
   <div id="loadingView">
     <div class="spin"></div>
-    <p style="color:var(--gray)">Buchung wird geladen…</p>
+    <p style="color:var(--gray)" data-i18n="precheck.loading">Buchung wird geladen…</p>
   </div>
 
   <div id="errorView">
     <div style="font-size:2.5rem;margin-bottom:16px;">❌</div>
-    <h2 style="margin-bottom:8px;">Link ungültig</h2>
-    <p style="color:var(--gray)" id="errorMsg">Dieser Link ist nicht gültig oder bereits abgelaufen.</p>
+    <h2 style="margin-bottom:8px;" data-i18n="precheck.error.title">Link ungültig</h2>
+    <p style="color:var(--gray)" id="errorMsg" data-i18n="precheck.error.msg">Dieser Link ist nicht gültig oder bereits abgelaufen.</p>
   </div>
 
   <!-- Buchung läuft noch nicht -->
   <div id="pendingView" style="display:none">
     <div style="background:#1a1606;border:1px solid #f59e0b;border-radius:14px;padding:28px 24px;text-align:center;">
       <div style="font-size:2.4rem;margin-bottom:10px;">🔒</div>
-      <h2 style="margin:0 0 6px;color:#fbbf24;">Buchung beginnt in</h2>
+      <h2 style="margin:0 0 6px;color:#fbbf24;" data-i18n="precheck.pending.title">Buchung beginnt in</h2>
       <div id="pendingCountdown" style="font-size:2.4rem;font-weight:800;color:#fff;font-variant-numeric:tabular-nums;letter-spacing:-.02em;margin:8px 0;">–</div>
-      <p style="color:#fcd34d;font-size:.88rem;margin:0 0 18px;line-height:1.5;">
+      <p style="color:#fcd34d;font-size:.88rem;margin:0 0 18px;line-height:1.5;" data-i18n="precheck.pending.info">
         Der Schloss-Code wird ab 15 Min vor Mietbeginn freigeschaltet. Sobald die Zeit reif ist, kannst du den Pre-Check starten und bekommst den Code.
       </p>
       <div style="background:#0a0a0a;border-radius:10px;padding:14px 18px;text-align:left;font-size:.85rem;color:#aaa;">
-        <div style="margin-bottom:4px;"><strong style="color:#fff;">Buchungs-Beginn:</strong> <span id="pendingStartLabel">–</span></div>
-        <div><strong style="color:#fff;">Anhänger:</strong> <span id="pendingTrailerLabel">–</span></div>
+        <div style="margin-bottom:4px;"><strong style="color:#fff;" data-i18n="precheck.pending.start">Buchungs-Beginn:</strong> <span id="pendingStartLabel">–</span></div>
+        <div><strong style="color:#fff;" data-i18n="precheck.pending.trailer">Anhänger:</strong> <span id="pendingTrailerLabel">–</span></div>
       </div>
-      <p style="color:#888;font-size:.78rem;margin:18px 0 0;">
+      <p style="color:#888;font-size:.78rem;margin:18px 0 0;" data-i18n="precheck.pending.auto">
         Diese Seite aktualisiert sich automatisch. Du brauchst sie nicht offen lassen — komm einfach zur Buchungszeit wieder zurück.
       </p>
     </div>
@@ -112,9 +112,9 @@
 
   <div id="mainView" style="display:none">
 
-    <div class="step-badge">📋 Vorab-Check · Schritt 1 von 2</div>
-    <h1>Vor der Abfahrt</h1>
-    <p class="sub">Mache <strong>2 Fotos</strong> des Anhängers und bestätige den Zustand – danach erhältst du den Schloss-Code.</p>
+    <div class="step-badge" data-i18n="precheck.step_badge">📋 Vorab-Check · Schritt 1 von 2</div>
+    <h1 data-i18n="precheck.title">Vor der Abfahrt</h1>
+    <p class="sub" data-i18n-html="precheck.sub">Mache <strong>2 Fotos</strong> des Anhängers und bestätige den Zustand – danach erhältst du den Schloss-Code.</p>
 
     <!-- Buchungsinfo -->
     <div class="card">
@@ -123,14 +123,14 @@
 
     <!-- Foto 1: Außenansicht -->
     <div class="card">
-      <p style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--orange);margin-bottom:6px;">📷 Foto 1 — Anhänger von außen (Seite)</p>
-      <p style="font-size:.82rem;color:var(--gray);margin-bottom:10px;line-height:1.5;">Stell dich an die Seite des Anhängers. Komplette Plane, Räder und Deichsel müssen drauf sein.</p>
+      <p style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--orange);margin-bottom:6px;" data-i18n="precheck.photo1.title">📷 Foto 1 — Anhänger von außen (Seite)</p>
+      <p style="font-size:.82rem;color:var(--gray);margin-bottom:10px;line-height:1.5;" data-i18n="precheck.photo1.desc">Stell dich an die Seite des Anhängers. Komplette Plane, Räder und Deichsel müssen drauf sein.</p>
       <img src="/mockup-precheck-aussen.png" alt="So fotografieren — Beispiel-Skizze" style="width:100%;border-radius:10px;margin-bottom:14px;display:block;">
       <div class="upload-area" onclick="document.getElementById('photoInput').click()">
         <input type="file" accept="image/*" capture="environment" id="photoInput" onchange="handlePhoto(this, 'outside')" style="display:none;" />
         <div class="upload-icon">📸</div>
-        <div class="upload-label" id="precheckUploadLabel">Foto aufnehmen</div>
-        <div class="upload-sub">Tippen zum Aufnehmen</div>
+        <div class="upload-label" id="precheckUploadLabel" data-i18n="precheck.photo.take">Foto aufnehmen</div>
+        <div class="upload-sub" data-i18n="precheck.photo.tap">Tippen zum Aufnehmen</div>
       </div>
       <img id="photoPreview" class="photo-preview" alt="Vorschau" />
       <p class="photo-name" id="photoName"></p>
@@ -138,14 +138,14 @@
 
     <!-- Foto 2: Ladefläche -->
     <div class="card">
-      <p style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--orange);margin-bottom:6px;">📷 Foto 2 — Ladefläche von oben</p>
-      <p style="font-size:.82rem;color:var(--gray);margin-bottom:10px;line-height:1.5;">Steig auf den Anhänger oder schau von oben rein. Der gesamte Boden muss sichtbar sein.</p>
+      <p style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--orange);margin-bottom:6px;" data-i18n="precheck.photo2.title">📷 Foto 2 — Ladefläche von oben</p>
+      <p style="font-size:.82rem;color:var(--gray);margin-bottom:10px;line-height:1.5;" data-i18n="precheck.photo2.desc">Steig auf den Anhänger oder schau von oben rein. Der gesamte Boden muss sichtbar sein.</p>
       <img src="/mockup-precheck-ladeflaeche.png" alt="So fotografieren — Beispiel-Skizze Ladefläche" style="width:100%;border-radius:10px;margin-bottom:14px;display:block;">
       <div class="upload-area" onclick="document.getElementById('photoInput2').click()">
         <input type="file" accept="image/*" capture="environment" id="photoInput2" onchange="handlePhoto(this, 'inside')" style="display:none;" />
         <div class="upload-icon">📸</div>
-        <div class="upload-label" id="precheckUploadLabel2">Foto aufnehmen</div>
-        <div class="upload-sub">Tippen zum Aufnehmen</div>
+        <div class="upload-label" id="precheckUploadLabel2" data-i18n="precheck.photo.take">Foto aufnehmen</div>
+        <div class="upload-sub" data-i18n="precheck.photo.tap">Tippen zum Aufnehmen</div>
       </div>
       <img id="photoPreview2" class="photo-preview" alt="Vorschau" />
       <p class="photo-name" id="photoName2"></p>
@@ -206,22 +206,22 @@
 
     <!-- Checkliste -->
     <div class="card">
-      <p style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gray);margin-bottom:4px;">Bestätigung</p>
+      <p style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gray);margin-bottom:4px;" data-i18n="precheck.confirm.title">Bestätigung</p>
       <label class="check-item">
         <input type="checkbox" id="checkCondition" onchange="checkReady()" />
-        <span class="ctext">Ich bestätige, dass der Anhänger beim Abholen <strong>unbeschädigt und in ordnungsgemäßem Zustand</strong> ist. Sichtbare Vorschäden habe ich im Foto dokumentiert.</span>
+        <span class="ctext" data-i18n-html="precheck.confirm.condition">Ich bestätige, dass der Anhänger beim Abholen <strong>unbeschädigt und in ordnungsgemäßem Zustand</strong> ist. Sichtbare Vorschäden habe ich im Foto dokumentiert.</span>
       </label>
       <label class="check-item">
         <input type="checkbox" id="checkLicense" onchange="checkReady()" />
-        <span class="ctext">Ich besitze einen gültigen <strong>Führerschein Klasse B</strong> und mein Fahrzeug ist für den Anhängerbetrieb versichert.</span>
+        <span class="ctext" data-i18n-html="precheck.confirm.license">Ich besitze einen gültigen <strong>Führerschein Klasse B</strong> und mein Fahrzeug ist für den Anhängerbetrieb versichert.</span>
       </label>
       <label class="check-item">
         <input type="checkbox" id="checkAgb" onchange="checkReady()" />
-        <span class="ctext">Ich habe die <strong>Allgemeinen Geschäftsbedingungen</strong> von SimpleTrailer gelesen und akzeptiere diese. Bei Schäden hafte ich entsprechend dem gewählten Schutzpaket.</span>
+        <span class="ctext" data-i18n-html="precheck.confirm.agb">Ich habe die <strong>Allgemeinen Geschäftsbedingungen</strong> von SimpleTrailer gelesen und akzeptiere diese. Bei Schäden hafte ich entsprechend dem gewählten Schutzpaket.</span>
       </label>
     </div>
 
-    <button class="btn btn-green" id="submitBtn" onclick="submitPrecheck()" disabled>
+    <button class="btn btn-green" id="submitBtn" onclick="submitPrecheck()" disabled data-i18n="precheck.submit">
       ✓ Bestätigen &amp; Zugangscode erhalten
     </button>
     <p class="error-msg" id="submitError"></p>
@@ -229,35 +229,33 @@
     <!-- SUCCESS -->
     <div id="successView">
       <div class="success-icon">🎉</div>
-      <h2 style="font-size:1.5rem;font-weight:800;margin-bottom:8px;">Alles bestätigt!</h2>
-      <p style="color:var(--gray);margin-bottom:4px;">Hier ist dein Zugangscode für das Zahlenschloss:</p>
+      <h2 style="font-size:1.5rem;font-weight:800;margin-bottom:8px;" data-i18n="precheck.success.title">Alles bestätigt!</h2>
+      <p style="color:var(--gray);margin-bottom:4px;" data-i18n="precheck.success.code_intro">Hier ist dein Zugangscode für das Zahlenschloss:</p>
       <div class="access-code-box">
-        <div class="access-code-label">Zugangscode</div>
+        <div class="access-code-label" data-i18n="precheck.success.code_label">Zugangscode</div>
         <div class="access-code" id="accessCodeDisplay">––––––</div>
-        <div class="access-code-hint">Diesen Code am Zahlenschloss eingeben</div>
+        <div class="access-code-hint" data-i18n="precheck.success.code_hint">Diesen Code am Zahlenschloss eingeben</div>
       </div>
 
-      <!-- Direkt-Link zur Anleitung — NICHT versteckt, prominent unter dem Code -->
       <div style="background:linear-gradient(135deg,rgba(232,93,0,0.12),rgba(232,93,0,0.02));border:1px solid rgba(232,93,0,0.32);border-radius:14px;padding:20px 22px;margin:18px 0;display:flex;gap:14px;align-items:flex-start;text-align:left;">
         <div style="flex-shrink:0;width:44px;height:44px;border-radius:12px;background:rgba(232,93,0,0.22);display:flex;align-items:center;justify-content:center;font-size:1.4rem;">📖</div>
         <div style="flex:1;min-width:0;">
-          <div style="font-size:1rem;font-weight:700;margin-bottom:4px;letter-spacing:-.015em;">So geht's weiter</div>
-          <div style="font-size:.86rem;color:#ccc;line-height:1.55;margin-bottom:14px;">Schloss öffnen, ankuppeln, Unterlegkeile lösen, sicher fahren — in 9 Schritten mit Skizzen erklärt.</div>
-          <a href="/anleitung#abholung" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;background:var(--orange);color:#fff;text-decoration:none;padding:11px 22px;border-radius:10px;font-weight:700;font-size:.9rem;box-shadow:0 4px 12px rgba(232,93,0,0.22);">Anleitung öffnen →</a>
+          <div style="font-size:1rem;font-weight:700;margin-bottom:4px;letter-spacing:-.015em;" data-i18n="precheck.success.guide.title">So geht's weiter</div>
+          <div style="font-size:.86rem;color:#ccc;line-height:1.55;margin-bottom:14px;" data-i18n="precheck.success.guide.desc">Schloss öffnen, ankuppeln, Unterlegkeile lösen, sicher fahren — in 9 Schritten mit Skizzen erklärt.</div>
+          <a href="/anleitung#abholung" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;background:var(--orange);color:#fff;text-decoration:none;padding:11px 22px;border-radius:10px;font-weight:700;font-size:.9rem;box-shadow:0 4px 12px rgba(232,93,0,0.22);" data-i18n="precheck.success.open_guide">Anleitung öffnen →</a>
         </div>
       </div>
 
-      <!-- Kundenkonto-Block — Buchung verwalten, Rückgabe starten, Code jederzeit nachschauen -->
       <div style="background:linear-gradient(135deg,rgba(96,165,250,0.10),rgba(96,165,250,0.02));border:1px solid rgba(96,165,250,0.32);border-radius:14px;padding:20px 22px;margin:18px 0;display:flex;gap:14px;align-items:flex-start;text-align:left;">
         <div style="flex-shrink:0;width:44px;height:44px;border-radius:12px;background:rgba(96,165,250,0.18);display:flex;align-items:center;justify-content:center;font-size:1.4rem;">👤</div>
         <div style="flex:1;min-width:0;">
-          <div style="font-size:1rem;font-weight:700;margin-bottom:4px;letter-spacing:-.015em;">Buchung verwalten</div>
-          <div style="font-size:.86rem;color:#ccc;line-height:1.55;margin-bottom:14px;">Im Kundenkonto siehst du <strong style="color:#fff;">deinen Zugangscode jederzeit</strong>, startest die Rückgabe und kannst die Mietzeit verlängern.</div>
-          <a href="/account" style="display:inline-flex;align-items:center;gap:8px;background:#1f1f1f;color:#fff;text-decoration:none;padding:11px 22px;border-radius:10px;font-weight:700;font-size:.9rem;border:1px solid var(--border);">Zum Kundenkonto →</a>
+          <div style="font-size:1rem;font-weight:700;margin-bottom:4px;letter-spacing:-.015em;" data-i18n="precheck.success.account.title">Buchung verwalten</div>
+          <div style="font-size:.86rem;color:#ccc;line-height:1.55;margin-bottom:14px;" data-i18n-html="precheck.success.account.desc">Im Kundenkonto siehst du <strong style="color:#fff;">deinen Zugangscode jederzeit</strong>, startest die Rückgabe und kannst die Mietzeit verlängern.</div>
+          <a href="/account" style="display:inline-flex;align-items:center;gap:8px;background:#1f1f1f;color:#fff;text-decoration:none;padding:11px 22px;border-radius:10px;font-weight:700;font-size:.9rem;border:1px solid var(--border);" data-i18n="precheck.success.account.btn">Zum Kundenkonto →</a>
         </div>
       </div>
 
-      <p style="color:var(--gray);font-size:.82rem;">Gute Fahrt! Denk daran, den Anhänger rechtzeitig zurückzugeben — bei Verspätung 15 €/h.</p>
+      <p style="color:var(--gray);font-size:.82rem;" data-i18n="precheck.success.farewell">Gute Fahrt! Denk daran, den Anhänger rechtzeitig zurückzugeben — bei Verspätung 15 €/h.</p>
     </div>
 
   </div>
