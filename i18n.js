@@ -759,14 +759,19 @@
   // ============================================================
   //  LANG-SWITCH UI
   // ============================================================
+  // SVG-Flaggen statt Emoji — Windows rendert Emoji-Flaggen nicht zuverlaessig
+  // (Segoe UI Emoji unterstuetzt sie nicht, Result waere "DE"/"GB"-Text).
+  const FLAG_DE = '<svg viewBox="0 0 5 3" width="18" height="12" aria-hidden="true" style="display:block;border-radius:2px;"><rect width="5" height="1" y="0" fill="#000"/><rect width="5" height="1" y="1" fill="#D00"/><rect width="5" height="1" y="2" fill="#FFCE00"/></svg>';
+  const FLAG_EN = '<svg viewBox="0 0 60 30" width="18" height="12" aria-hidden="true" style="display:block;border-radius:2px;"><clipPath id="stft"><path d="M0,0 v30 h60 v-30 z"/></clipPath><clipPath id="stfs"><path d="M30,15 h30 v15 z v15 h-30 z h-30 v-15 z v-15 h30 z"/></clipPath><g clip-path="url(#stft)"><path d="M0,0 v30 h60 v-30 z" fill="#012169"/><path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" stroke-width="6"/><path d="M0,0 L60,30 M60,0 L0,30" clip-path="url(#stfs)" stroke="#C8102E" stroke-width="4"/><path d="M30,0 v30 M0,15 h60" stroke="#fff" stroke-width="10"/><path d="M30,0 v30 M0,15 h60" stroke="#C8102E" stroke-width="6"/></g></svg>';
+
   function buildSwitchHtml() {
     return `
       <div class="st-lang-switch" role="group" aria-label="${t('lang.switch.title')}">
         <button type="button" class="st-lang-btn ${currentLang === 'de' ? 'active' : ''}" data-lang="de" aria-label="Deutsch">
-          <span class="st-lang-flag">🇩🇪</span><span class="st-lang-code">DE</span>
+          <span class="st-lang-flag">${FLAG_DE}</span><span class="st-lang-code">DE</span>
         </button>
         <button type="button" class="st-lang-btn ${currentLang === 'en' ? 'active' : ''}" data-lang="en" aria-label="English">
-          <span class="st-lang-flag">🇬🇧</span><span class="st-lang-code">EN</span>
+          <span class="st-lang-flag">${FLAG_EN}</span><span class="st-lang-code">EN</span>
         </button>
       </div>`;
   }
@@ -774,14 +779,23 @@
   function injectStyles() {
     if (document.getElementById('st-lang-switch-styles')) return;
     const css = `
-      .st-lang-switch { display:inline-flex; gap:2px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.10); border-radius:8px; padding:2px; }
+      .st-lang-switch { display:inline-flex; gap:2px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12); border-radius:8px; padding:2px; flex-shrink:0; }
       .st-lang-btn { background:transparent; border:none; color:#aaa; padding:5px 9px; border-radius:6px; cursor:pointer; font-family:inherit; font-size:.78rem; font-weight:700; display:inline-flex; align-items:center; gap:5px; line-height:1; transition:background .15s, color .15s; }
       .st-lang-btn:hover { color:#fff; background:rgba(255,255,255,0.05); }
       .st-lang-btn.active { background:rgba(232,93,0,0.18); color:#fff; }
-      .st-lang-flag { font-size:.9rem; line-height:1; }
-      @media (max-width:520px) {
-        .st-lang-btn { padding:5px 7px; font-size:.74rem; }
+      .st-lang-flag { display:inline-flex; line-height:0; }
+      .st-lang-wrapper { display:inline-flex; align-items:center; }
+      /* Mobile: kompakter, nur Flaggen ohne Text */
+      @media (max-width:768px) {
+        .st-lang-btn { padding:4px 5px; font-size:.72rem; gap:0; }
         .st-lang-code { display:none; }
+        .st-lang-switch { gap:1px; padding:1px; }
+        .st-lang-wrapper { margin-left:0; margin-right:6px; }
+      }
+      @media (max-width:380px) {
+        /* Sehr schmale Phones: noch kleiner */
+        .st-lang-btn { padding:3px 4px; }
+        .st-lang-flag svg { width:14px; height:10px; }
       }
     `;
     const style = document.createElement('style');
@@ -791,19 +805,35 @@
   }
 
   function injectSwitch() {
-    // Wenn explizit ein Container existiert, dort einfuegen
+    // 1) Explizite Container (data-lang-switch-here) haben Vorrang
     const explicit = document.querySelector('[data-lang-switch-here]');
     if (explicit && !explicit.querySelector('.st-lang-switch')) {
       explicit.innerHTML = buildSwitchHtml();
       attachSwitchHandlers();
       return;
     }
-    // Sonst: in die erste <nav> einfuegen
+    // 2) Nav-inner Layout (index.html / nutzt zentralen Wrapper)
+    let target = document.querySelector('nav .nav-inner');
+    if (target && !target.querySelector('.st-lang-switch')) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'st-lang-wrapper';
+      wrapper.innerHTML = buildSwitchHtml();
+      // Position: vor nav-account-icon (oder vor hamburger als Fallback)
+      // damit auf Mobile noch genug Platz bleibt
+      const accountIcon = target.querySelector('.nav-account-icon');
+      const hamburger = target.querySelector('.hamburger');
+      if (accountIcon) target.insertBefore(wrapper, accountIcon);
+      else if (hamburger) target.insertBefore(wrapper, hamburger);
+      else target.appendChild(wrapper);
+      attachSwitchHandlers();
+      return;
+    }
+    // 3) Fallback: einfache nav ohne nav-inner — direkt in <nav>
     const nav = document.querySelector('nav');
     if (nav && !nav.querySelector('.st-lang-switch')) {
       const wrapper = document.createElement('div');
       wrapper.className = 'st-lang-wrapper';
-      wrapper.style.cssText = 'margin-left:auto; display:inline-flex; align-items:center;';
+      wrapper.style.cssText = 'margin-left:auto;';
       wrapper.innerHTML = buildSwitchHtml();
       nav.appendChild(wrapper);
       attachSwitchHandlers();
