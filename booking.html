@@ -1260,12 +1260,22 @@
       : `⚠️ <strong>Führerschein Klasse BE erforderlich</strong><br><span style="color:var(--gray);font-size:.77rem;">Fahrzeug ${car.toLocaleString()} kg + Anhänger ${trailer} kg = ${total.toLocaleString()} kg (über 3.500 kg)</span>`;
   }
 
-  /* ── TIME CONSTRAINTS (verhindert Doppelbuchungen) ─ */
+  /* ── TIME CONSTRAINTS (verhindert Doppelbuchungen + vergangene Uhrzeiten) ─ */
   function getHourRange(dateStr, role) {
     const d0 = new Date(`${dateStr}T00:00:00`);
     const d1 = new Date(`${dateStr}T23:59:59`);
     // 24/7-Buchung: Anhänger ist kontaktlos (Code-Schloss + GPS), kein Personal nötig
     let minH = 0, maxH = 23;
+
+    // Wenn das gewählte Datum HEUTE ist, vergangene Uhrzeiten ausschließen.
+    // +1h Puffer: User braucht Zeit zum Buchungsabschluss und zum Hinfahren.
+    const now    = new Date();
+    const today  = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+    if (dateStr === today && role === 'start') {
+      const earliestH = now.getHours() + 1 + (now.getMinutes() > 0 ? 1 : 0);
+      minH = Math.max(minH, earliestH);
+    }
+
     for (const r of bookedRanges) {
       const rS = new Date(r.start_time);
       const rE = new Date(r.end_time);
@@ -1306,6 +1316,15 @@
     const d0ms = new Date(`${dateStr}T00:00:00`).getTime();
     // 24/7-Buchung: Anhänger ist kontaktlos (Code-Schloss + GPS), kein Personal nötig
     let minH = 0, maxH = 23;
+
+    // Heute: vergangene Stunden + 1h Puffer ausschließen
+    const now    = new Date();
+    const today  = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+    if (dateStr === today) {
+      const earliestH = now.getHours() + 1 + (now.getMinutes() > 0 ? 1 : 0);
+      minH = Math.max(minH, earliestH);
+    }
+
     for (const r of bookedRanges) {
       const rS = new Date(r.start_time).getTime();
       const rE = new Date(r.end_time).getTime();

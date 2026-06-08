@@ -149,13 +149,17 @@
       <p class="photo-name" id="photoName2"></p>
     </div>
 
-    <!-- BEKANNTE SCHÄDEN — wird per JS gefüllt wenn API damages liefert -->
-    <div class="card" id="knownDamagesCard" style="display:none;">
-      <p style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#fbbf24;margin-bottom:8px;">⚠ Bereits bekannte Schäden</p>
-      <p style="font-size:.84rem;color:#ccc;line-height:1.55;margin-bottom:12px;">
+    <!-- BEKANNTE SCHÄDEN — wird per JS gefüllt, zeigt "Keine vorhanden" wenn API leer ist -->
+    <div class="card" id="knownDamagesCard">
+      <p style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gray);margin-bottom:8px;" id="knownDamagesHeader">📋 Bekannte Schäden an diesem Anhänger</p>
+      <div id="knownDamagesIntro" style="font-size:.84rem;color:#ccc;line-height:1.55;margin-bottom:12px;display:none;">
         Diese Schäden sind uns schon bekannt. <strong style="color:#fff;">Bitte NICHT erneut melden</strong> — wenn du NEUE Schäden siehst, melde sie unten.
-      </p>
-      <div id="knownDamagesList" style="display:flex;flex-direction:column;gap:8px;"></div>
+      </div>
+      <div id="knownDamagesList" style="display:flex;flex-direction:column;gap:8px;">
+        <div style="background:#0d0d0d;border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;font-size:.86rem;color:#86efac;">
+          ✓ Lade…
+        </div>
+      </div>
     </div>
 
     <!-- NEUEN SCHADEN MELDEN — toggleable -->
@@ -427,14 +431,29 @@
   let knownDamagesCache = [];
 
   async function loadKnownDamages(trailerId) {
-    if (!trailerId) return;
+    const listEl = document.getElementById('knownDamagesList');
+    const introEl = document.getElementById('knownDamagesIntro');
+    const headerEl = document.getElementById('knownDamagesHeader');
+    if (!trailerId) {
+      listEl.innerHTML = '<div style="background:#0d0d0d;border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;font-size:.86rem;color:#86efac;">✓ Keine Schäden vorhanden — der Anhänger ist in Ordnung</div>';
+      return;
+    }
     try {
       const r = await fetch(`/api/damages?trailer_id=${trailerId}&status=open`);
       const d = await r.json();
       knownDamagesCache = d.damages || [];
-      if (!knownDamagesCache.length) return;
 
-      const listEl = document.getElementById('knownDamagesList');
+      if (!knownDamagesCache.length) {
+        // Keine Schäden — positive Meldung
+        listEl.innerHTML = '<div style="background:#0a1f0a;border:1px solid rgba(34,197,94,0.30);border-radius:10px;padding:14px;text-align:center;font-size:.88rem;color:#86efac;font-weight:600;">✓ Keine bekannten Schäden — der Anhänger ist in Ordnung</div>';
+        return;
+      }
+
+      // Schäden vorhanden — Header + Intro umfärben
+      headerEl.style.color = '#fbbf24';
+      headerEl.textContent = '⚠ Bereits bekannte Schäden an diesem Anhänger';
+      introEl.style.display = 'block';
+
       const sevLabel = { minor: 'Klein', major: 'Größer', not_drivable: 'Defekt' };
       const sevColor = { minor: '#fcd34d', major: '#fbbf24', not_drivable: '#f87171' };
       listEl.innerHTML = knownDamagesCache.map(dm => {
@@ -448,8 +467,9 @@
           ${dm.photo_url ? `<a href="${esc(dm.photo_url)}" target="_blank" rel="noopener" style="font-size:.78rem;color:var(--orange);text-decoration:none;flex-shrink:0;">Foto →</a>` : ''}
         </div>`;
       }).join('');
-      document.getElementById('knownDamagesCard').style.display = 'block';
-    } catch (e) { /* silent — Liste leer lassen ist OK */ }
+    } catch (e) {
+      listEl.innerHTML = '<div style="background:#0d0d0d;border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;font-size:.84rem;color:var(--gray);">Schadens-Liste konnte nicht geladen werden.</div>';
+    }
   }
 
   function toggleDamageReport() {
@@ -622,6 +642,8 @@
           photoUrlInside  ? validatePhoto(photoUrlInside,  'inside')  : Promise.resolve({ is_trailer: true })
         ]);
 
+        // Blockieren bei medium ODER high confidence — nur "low" wird durchgelassen
+        // (extrem schlechte Bildqualität → fair-play, Mieter könnte einen echten Anhänger schlecht fotografiert haben)
         const failures = [];
         if (!validations[0].is_trailer && validations[0].confidence !== 'low') failures.push('Foto 1 (Außen): ' + esc(validations[0].reason));
         if (!validations[1].is_trailer && validations[1].confidence !== 'low') failures.push('Foto 2 (Ladefläche): ' + esc(validations[1].reason));

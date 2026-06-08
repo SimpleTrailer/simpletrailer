@@ -27,6 +27,12 @@ module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
   try {
+    // Wenn API-Key fehlt: explizit melden statt silent fail-open
+    if (!process.env.ANTHROPIC_API_KEY) {
+      console.error('ANTHROPIC_API_KEY fehlt — KI-Validierung uebersprungen');
+      return res.status(200).json({ ok: true, is_trailer: true, confidence: 'low', reason: 'KI-Key nicht konfiguriert' });
+    }
+
     const { image_url, expected } = req.body || {};
     if (!image_url) return res.status(400).json({ error: 'image_url fehlt' });
 
@@ -38,23 +44,48 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'image_url muss aus Supabase-Storage stammen.' });
     }
 
-    const promptOutside = `Du prüfst ein Foto bei einer Anhängervermietung. Auf dem Foto sollte ein PKW-Anhänger (Planenanhänger oder Autotransporter) VON AUSSEN (Seitenansicht) zu sehen sein.
+    const promptOutside = `Du bist ein strenger Foto-Prüfer bei einer Anhängervermietung. Auf dem Foto MUSS ein PKW-Anhänger (Planenanhänger, Kastenanhänger oder Autotransporter) klar erkennbar sein — typischerweise von der Seite mit Rädern, Deichsel, ggf. Plane.
 
-Antworte AUSSCHLIESSLICH mit gültigem JSON in folgendem Format:
+Antworte AUSSCHLIESSLICH mit gültigem JSON:
 {"is_trailer": true/false, "confidence": "high"/"medium"/"low", "reason": "kurze Begründung auf Deutsch"}
 
-Akzeptiere als Anhänger: PKW-Anhänger (klein, mit oder ohne Plane), Autotransporter, Kastenanhänger, Planenanhänger. Nicht akzeptieren: Selfies, Innenräume, Tiere, Essen, andere Fahrzeuge ohne Anhänger, leere Wände.
+is_trailer: true NUR wenn ein PKW-Anhänger eindeutig zu sehen ist (Räder + Deichsel/Zugholm UND Ladefläche/Plane).
+is_trailer: false bei:
+- Selfies / Personen-Porträts
+- Innenräume von Wohnungen / Büros
+- Tiere, Essen, Pflanzen, Landschaften ohne Anhänger
+- PKWs / LKWs / Anhängerkupplungen am Auto ohne Anhänger
+- Spielzeug, Bilder, Cartoons, Memes
+- leere Wände, Boden-Nahaufnahmen, Himmel
+- andere Anhänger-Typen ohne klare PKW-Anhänger-Charakteristik
 
-Bei sehr schlechter Bildqualität (unscharf, dunkel): confidence "low", aber wenn ein Anhänger erkennbar ist trotzdem is_trailer: true.`;
+Confidence:
+- "high" wenn du dir sehr sicher bist (klar PKW-Anhänger oder klar nicht)
+- "medium" bei mehrdeutigen Aufnahmen aber identifizierbar
+- "low" NUR bei extrem schlechter Bildqualität (komplett dunkel, verwackelt)
 
-    const promptInside = `Du prüfst ein Foto bei einer Anhängervermietung. Auf dem Foto sollte die LADEFLÄCHE eines Anhängers von oben zu sehen sein (der Boden des Anhängers, oft mit niedriger Bordwand drumherum).
+Sei konservativ: im Zweifel is_trailer: false mit confidence: medium.`;
 
-Antworte AUSSCHLIESSLICH mit gültigem JSON in folgendem Format:
+    const promptInside = `Du bist ein strenger Foto-Prüfer bei einer Anhängervermietung. Auf dem Foto MUSS die LADEFLÄCHE eines PKW-Anhängers von oben/innen zu sehen sein — also der Boden + Innenseiten der Bordwände.
+
+Antworte AUSSCHLIESSLICH mit gültigem JSON:
 {"is_trailer": true/false, "confidence": "high"/"medium"/"low", "reason": "kurze Begründung auf Deutsch"}
 
-Akzeptiere: leere oder leicht verschmutzte Ladefläche (Metall, Riffelblech, Holzboden), Bordwände sichtbar. Nicht akzeptieren: Selfies, fremde Fahrzeuge, Privat-Innenräume.
+is_trailer: true NUR wenn klar Anhänger-Ladefläche (Riffelblech/Holzboden/Metallboden + Bordwände sichtbar).
+is_trailer: false bei:
+- Selfies / Personen
+- Innenräume von Wohnungen / Autos / LKW-Ladeflächen
+- Tiere, Essen, Pflanzen
+- Strasse, Boden, Beton ohne Bordwände
+- Kofferraum vom Auto
+- Spielzeug, Bilder, Memes
 
-Bei sehr schlechter Bildqualität: confidence "low".`;
+Confidence:
+- "high" wenn klare Anhänger-Ladefläche oder klar etwas anderes
+- "medium" bei mehrdeutig identifizierbar
+- "low" NUR bei extrem schlechter Bildqualität
+
+Sei konservativ: im Zweifel is_trailer: false mit confidence: medium.`;
 
     const prompt = expected === 'inside' ? promptInside : promptOutside;
 
