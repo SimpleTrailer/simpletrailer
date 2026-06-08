@@ -73,6 +73,10 @@
       "schedule": "* * * * *"
     },
     {
+      "path": "/api/cron/tracker-watchdog",
+      "schedule": "*/30 * * * *"
+    },
+    {
       "path": "/api/cron/review-request",
       "schedule": "0 10 * * *"
     },

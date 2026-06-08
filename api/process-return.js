@@ -54,15 +54,23 @@ module.exports = async (req, res) => {
     // Aktueller Tracker-Standort holen + Distanz zum Abholort + Status berechnen.
     const { data: trailerNow } = await supabase
       .from('trailers')
-      .select('last_lat,last_lng,is_moving,tracker_traccar_id')
+      .select('last_lat,last_lng,last_seen_at,is_moving,tracker_traccar_id')
       .eq('id', booking.trailer_id)
       .maybeSingle();
+
+    // Wenn Traccar nicht antwortet, ermitteln wir Frische aus der DB-Spalte
+    if (trailerNow?.last_seen_at) {
+      const dbAge = (Date.now() - new Date(trailerNow.last_seen_at).getTime()) / 60000;
+      // Nur als initial-Frische nehmen — Traccar-Refresh kann sie gleich ueberschreiben
+      var dbPositionAgeMinutes = dbAge;
+    }
 
     // ON-DEMAND POSITION REFRESH: Tracker-Sync läuft "nur" jede Minute — beim Rückgabe-
     // Klick holen wir noch eine FRISCHE Position direkt von Traccar, damit der Mieter
     // nicht auf einer veralteten Position basiert geblockt wird.
     let returnLat = trailerNow?.last_lat || null;
     let returnLng = trailerNow?.last_lng || null;
+    let positionAgeMinutes = null; // Wie alt ist die Position die wir gleich pruefen?
     if (trailerNow?.tracker_traccar_id && process.env.TRACCAR_URL && process.env.TRACCAR_USERNAME) {
       try {
         const auth = Buffer.from(`${process.env.TRACCAR_USERNAME}:${process.env.TRACCAR_PASSWORD}`).toString('base64');
@@ -82,10 +90,13 @@ module.exports = async (req, res) => {
             if (Math.abs(freshLat) > 0.0001 && Math.abs(freshLng) > 0.0001) {
               returnLat = freshLat;
               returnLng = freshLng;
-              // Frische Position auch direkt in DB schreiben (für Admin-Map etc.)
+              // fixTime = wann der Tracker die Position GEMESSEN hat (nicht wann wir sie holen).
+              // Bei Sleep-Mode kann das deutlich aelter sein als jetzt.
+              const fixTime = pos.fixTime || pos.deviceTime;
+              if (fixTime) positionAgeMinutes = (Date.now() - new Date(fixTime).getTime()) / 60000;
               await supabase.from('trailers').update({
                 last_lat: freshLat, last_lng: freshLng,
-                last_seen_at: pos.fixTime || pos.deviceTime || new Date().toISOString()
+                last_seen_at: fixTime || new Date().toISOString()
               }).eq('id', booking.trailer_id);
             }
           }
@@ -95,6 +106,13 @@ module.exports = async (req, res) => {
         console.warn('Traccar on-demand refresh fehlgeschlagen:', refreshErr.message);
       }
     }
+    // Fallback: wenn Traccar nicht erreichbar war, Frische ueber DB-Spalte
+    if (positionAgeMinutes === null) {
+      positionAgeMinutes = (typeof dbPositionAgeMinutes === 'number') ? dbPositionAgeMinutes : 999;
+    }
+    // STALE-POSITION-SCHWELLE: laenger als 15 Min ohne Position-Update = nicht vertrauenswuerdig
+    const POSITION_STALE_MIN = 15;
+    const positionIsStale = positionAgeMinutes > POSITION_STALE_MIN;
 
     // Haversine-Distanz (Meter)
     function distMeters(lat1, lng1, lat2, lng2) {
@@ -142,6 +160,12 @@ module.exports = async (req, res) => {
       // damit Mieter nicht wegen Parken 1-2 Strassen entfernt eine Fee bekommen.
       if (returnDistanceM <= 500) {
         returnStatus = 'heimat';
+      } else if (positionIsStale) {
+        // KRITISCH: Tracker-Position ist veraltet (> 15 Min). Mieter koennte am Stellplatz
+        // stehen waehrend der Tracker zuletzt waehrend der Fahrt gesendet hat. Wir charten
+        // hier KEINE Fee automatisch — der Admin pruef die Buchung manuell.
+        returnStatus = 'pending_review';
+        returnExtraFee = 0;
       } else if (!insideBremen) {
         if (ffKnown) {
           returnStatus = 'outside_bremen';
@@ -159,6 +183,21 @@ module.exports = async (req, res) => {
         // Spalte fehlt: kein Fee, nur Status setzen für Statistik
         console.warn('free_floating-Spalte fehlt für booking', booking_id, '— behandle als heimat.');
         returnStatus = 'heimat';
+      }
+    }
+
+    // Bei pending_review: Admin-Alert-Mail damit Lion das pruefen kann
+    if (returnStatus === 'pending_review') {
+      try {
+        await resend.emails.send({
+          from: 'SimpleTrailer <buchung@simpletrailer.de>',
+          to: 'info@simpletrailer.de',
+          reply_to: 'info@simpletrailer.de',
+          subject: '⚠️ Rueckgabe: Position veraltet — manuelle Pruefung noetig',
+          text: `Buchung ${booking_id} (${booking.customer_name})\n\nDer Mieter hat die Rueckgabe bestaetigt, aber die Tracker-Position ist ${Math.round(positionAgeMinutes)} Minuten alt.\n\nLetzte bekannte Position: ${returnLat?.toFixed(6)}, ${returnLng?.toFixed(6)}\nDistanz zum Pickup: ${returnDistanceM} m\n\nKeine Auto-Fee abgebucht. Bitte vor Ort pruefen ob der Anhaenger am Stellplatz steht und ggf. manuell chargen.\n\nGoogle Maps: https://www.google.com/maps?q=${returnLat},${returnLng}`
+        });
+      } catch (mailErr) {
+        console.error('Pending-review-Mail fehlgeschlagen:', mailErr.message);
       }
     }
 
