@@ -67,30 +67,70 @@
     .intro-card h2{font-size:1.1rem;letter-spacing:-.02em;margin-bottom:4px;}
     .intro-card p{color:#ddd;font-size:.9rem;line-height:1.6;}
 
-    /* STEP-CARDS */
+    /* STEP-CARDS — auf Mobile collapsible per <details>, auf Desktop immer offen */
     .step{
       position:relative;
-      display:flex;gap:18px;
       background:var(--s1);border:1px solid var(--border);
-      border-radius:16px;padding:22px 24px;margin-bottom:14px;
+      border-radius:16px;padding:0;margin-bottom:12px;
       transition:border-color .25s, transform .25s, box-shadow .25s;
+      overflow:hidden;
     }
     .step:hover{
       border-color:rgba(232,93,0,0.35);
-      transform:translateY(-2px);
-      box-shadow:0 10px 24px rgba(0,0,0,0.30);
+      box-shadow:0 6px 18px rgba(0,0,0,0.25);
     }
+    .step > summary{
+      display:flex;gap:14px;align-items:center;
+      padding:18px 20px;cursor:pointer;list-style:none;
+      transition:background .15s;
+    }
+    .step > summary::-webkit-details-marker{display:none;}
+    .step > summary:hover{background:rgba(255,255,255,0.02);}
     .step-num{
-      flex-shrink:0;width:48px;height:48px;border-radius:14px;
+      flex-shrink:0;width:44px;height:44px;border-radius:12px;
       background:linear-gradient(135deg,var(--orange),#d54e00);
       color:#fff;display:flex;align-items:center;justify-content:center;
-      font-weight:800;font-size:1.25rem;letter-spacing:-.02em;
-      box-shadow:0 4px 14px rgba(232,93,0,0.35);
+      font-weight:800;font-size:1.15rem;letter-spacing:-.02em;
+      box-shadow:0 4px 12px rgba(232,93,0,0.30);
     }
-    .step-body{flex:1;min-width:0;}
-    .step-title{font-size:1.1rem;font-weight:700;letter-spacing:-.018em;margin-bottom:8px;line-height:1.3;}
+    .step-title{flex:1;font-size:1.02rem;font-weight:700;letter-spacing:-.018em;line-height:1.3;}
+    .step-chevron{
+      flex-shrink:0;color:var(--gray);font-size:1.2rem;line-height:1;
+      transition:transform .25s;display:inline-block;
+    }
+    .step[open] > summary .step-chevron{transform:rotate(180deg);}
+    .step-body{
+      padding:0 20px 20px 78px;  /* linker Einzug = step-num width + gap */
+      animation:slideOpen .25s ease-out;
+    }
+    @keyframes slideOpen{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
     .step-desc{color:#ccc;font-size:.92rem;line-height:1.65;}
     .step-desc strong{color:#fff;font-weight:600;}
+
+    /* "Alle anzeigen"-Toggle auf Mobile */
+    .expand-all{
+      display:none;
+      width:100%;background:transparent;border:1px solid var(--border);
+      color:var(--gray);padding:11px;border-radius:10px;font-family:inherit;
+      font-size:.85rem;cursor:pointer;margin-bottom:14px;font-weight:600;
+      transition:color .15s, border-color .15s;
+    }
+    .expand-all:hover{color:#fff;border-color:#555;}
+    @media(max-width:600px){
+      .expand-all{display:block;}
+      /* Hint dass Steps aufklappbar sind */
+      .step > summary{padding:16px 18px;}
+      .step-body{padding:0 18px 18px 70px;}
+    }
+
+    /* Desktop: alle Steps automatisch offen, Klick auf Header ohne Effekt */
+    @media(min-width:601px){
+      .step > summary{cursor:default;pointer-events:none;}
+      .step > summary:hover{background:transparent;}
+      .step-chevron{display:none;}
+      .step-body{display:block !important;padding-top:0;animation:none;}
+      .step:not([open]) .step-body{display:block !important;}
+    }
 
     .step-tip,.step-warn{
       margin-top:12px;padding:12px 14px 12px 40px;border-radius:10px;
@@ -209,92 +249,121 @@
       </div>
     </div>
 
-    <div class="step">
-      <div class="step-num">1</div>
-      <div class="step-body">
+    <button class="expand-all" onclick="toggleAll('abholung', this)">Alle 9 Schritte anzeigen ⌄</button>
+
+    <details class="step" open>
+      <summary>
+        <div class="step-num">1</div>
         <div class="step-title">Pre-Check-Foto machen</div>
+        <span class="step-chevron">⌄</span>
+      </summary>
+      <div class="step-body">
         <div class="step-desc">Öffne den Link aus der Bestätigungs-Mail (oder über dein Kundenkonto). Mache <strong>2 Fotos</strong>: eines von außen (Seite), eines von der Ladefläche von oben.</div>
         <div class="step-tip">Wenn du Vorschäden siehst (Beulen, Kratzer, kaputte Lampen): unbedingt fotografieren und melden — sonst hast du sie hinterher am Hals.</div>
         <img src="/mockup-precheck-aussen.png" alt="Anhänger von der Seite fotografieren" style="width:100%;border-radius:10px;margin-top:12px;border:1px solid var(--border);">
         <img src="/mockup-precheck-ladeflaeche.png" alt="Ladefläche von oben fotografieren" style="width:100%;border-radius:10px;margin-top:10px;border:1px solid var(--border);">
       </div>
-    </div>
+    </details>
 
-    <div class="step">
-      <div class="step-num">2</div>
-      <div class="step-body">
+    <details class="step">
+      <summary>
+        <div class="step-num">2</div>
         <div class="step-title">Schloss-Code eingeben</div>
+        <span class="step-chevron">⌄</span>
+      </summary>
+      <div class="step-body">
         <div class="step-desc">Nach dem Foto erscheint dein <strong>4-stelliger Code</strong>. Drehe die Räder am Schloss auf den Code, dann den Bügel nach oben drücken — fertig.</div>
         <div class="step-tip">Falls der Bügel hakt: vorher fest auf das Schloss drücken, dann wieder loslassen. Die Räder rutschen dann leichter.</div>
       </div>
-    </div>
+    </details>
 
-    <div class="step">
-      <div class="step-num">3</div>
-      <div class="step-body">
+    <details class="step">
+      <summary>
+        <div class="step-num">3</div>
         <div class="step-title">Kurzcheck — alles dran?</div>
+        <span class="step-chevron">⌄</span>
+      </summary>
+      <div class="step-body">
         <div class="step-desc">Schau dir kurz an: <strong>Reifen</strong> (sichtbarer Druck, keine Risse), <strong>Beleuchtung</strong> (Brems-, Blink- und Rücklicht), <strong>Auflaufbremse</strong> (das Teil vorne, das beim Bremsen einklappt). Alles intakt? Weiter.</div>
         <div class="step-warn">Wenn etwas kaputt aussieht: NICHT losfahren. Foto machen, an info@simpletrailer.de schreiben.</div>
       </div>
-    </div>
+    </details>
 
     <div class="phase-divider"><span>Ankuppeln</span></div>
 
-    <div class="step">
-      <div class="step-num">4</div>
-      <div class="step-body">
+    <details class="step">
+      <summary>
+        <div class="step-num">4</div>
         <div class="step-title">An dein Auto rangieren</div>
+        <span class="step-chevron">⌄</span>
+      </summary>
+      <div class="step-body">
         <div class="step-desc">Setze dein Auto langsam rückwärts so an den Anhänger, dass die <strong>Anhänger-Kupplung direkt über deiner Anhängerkupplung (Kugel)</strong> steht. Lass jemanden einweisen, wenn möglich.</div>
         <div class="step-tip">Lieber 2x neu anfahren als verkratztes Kennzeichen. Heckklappe öffnen kann beim Sehen helfen.</div>
         <img src="/mockup-ankuppeln.png" alt="Ankuppeln an das Auto" style="width:100%;border-radius:10px;margin-top:12px;border:1px solid var(--border);">
       </div>
-    </div>
+    </details>
 
-    <div class="step">
-      <div class="step-num">5</div>
-      <div class="step-body">
+    <details class="step">
+      <summary>
+        <div class="step-num">5</div>
         <div class="step-title">Stützrad runter, ankuppeln</div>
+        <span class="step-chevron">⌄</span>
+      </summary>
+      <div class="step-body">
         <div class="step-desc">Drehe das <strong>Stützrad</strong> am Anhänger so, dass die Kupplungs-Schale auf die Kugel deines Autos absinkt. Drücke fest nach unten — du hörst/spürst ein <strong>Klick</strong>. Sicherungsstift einrasten lassen.</div>
         <div class="step-tip">Kupplungs-Hebel muss <strong>flach unten</strong> stehen (parallel zum Boden). Steht er hoch, sitzt sie nicht richtig — nochmal anheben.</div>
       </div>
-    </div>
+    </details>
 
-    <div class="step">
-      <div class="step-num">6</div>
-      <div class="step-body">
+    <details class="step">
+      <summary>
+        <div class="step-num">6</div>
         <div class="step-title">Stützrad ganz hochkurbeln</div>
+        <span class="step-chevron">⌄</span>
+      </summary>
+      <div class="step-body">
         <div class="step-desc">Das Stützrad muss <strong>komplett oben</strong> sein, sonst schleift es beim Fahren auf der Straße. Dann den Klemmhebel festziehen.</div>
       </div>
-    </div>
+    </details>
 
     <div class="phase-divider"><span>Sicherheitscheck</span></div>
 
-    <div class="step">
-      <div class="step-num">7</div>
-      <div class="step-body">
+    <details class="step">
+      <summary>
+        <div class="step-num">7</div>
         <div class="step-title">Elektrik anschließen</div>
+        <span class="step-chevron">⌄</span>
+      </summary>
+      <div class="step-body">
         <div class="step-desc">Steck den Anhänger-Stecker (7- oder 13-polig) in die Buchse an deinem Auto. Schalt im Auto die Beleuchtung ein und kontrolliere am Anhänger: Brems-, Blink-, Rücklicht — alles?</div>
         <div class="step-warn">Falls Lampen nicht gehen: NICHT auf die Autobahn. Bei Polizei-Kontrolle gibt's Punkte und Bußgeld.</div>
       </div>
-    </div>
+    </details>
 
-    <div class="step">
-      <div class="step-num">8</div>
-      <div class="step-body">
+    <details class="step">
+      <summary>
+        <div class="step-num">8</div>
         <div class="step-title">Unterlegkeile lösen + verstauen</div>
+        <span class="step-chevron">⌄</span>
+      </summary>
+      <div class="step-body">
         <div class="step-desc">Wenn der Anhänger mit <strong>Unterlegkeilen</strong> (gelbe oder schwarze Keile vor/hinter dem Reifen) gesichert war: rausziehen, in die Halterung am Anhänger einrasten. Bei Rückgabe wieder rein.</div>
         <img src="/mockup-unterlegkeile.png" alt="Unterlegkeile vor und hinter dem Reifen" style="width:100%;border-radius:10px;margin-top:12px;border:1px solid var(--border);">
       </div>
-    </div>
+    </details>
 
-    <div class="step">
-      <div class="step-num">9</div>
-      <div class="step-body">
+    <details class="step">
+      <summary>
+        <div class="step-num">9</div>
         <div class="step-title">Losfahren — vorsichtig</div>
+        <span class="step-chevron">⌄</span>
+      </summary>
+      <div class="step-body">
         <div class="step-desc">Erste Minuten: <strong>doppelter Bremsweg</strong>, breiter wenden, sanft anfahren. Auf Autobahn nur bis erlaubte Höchstgeschwindigkeit (meist 80, mit „Tempo 100"-Zulassung 100 km/h).</div>
         <div class="step-tip">Beim Bremsen drückt der Anhänger nach. Das ist normal (Auflaufbremse). Niemals voll auf die Bremse — der Anhänger könnte ausschwenken.</div>
       </div>
-    </div>
+    </details>
 
     <div class="end-card">
       <h3>Du bist startklar 🎉</h3>
@@ -315,95 +384,127 @@
       </div>
     </div>
 
-    <div class="step">
-      <div class="step-num">1</div>
-      <div class="step-body">
+    <button class="expand-all" onclick="toggleAll('rueckgabe', this)">Alle 10 Schritte anzeigen ⌄</button>
+
+    <details class="step" open>
+      <summary>
+        <div class="step-num">1</div>
         <div class="step-title">Zum Rückgabe-Stellplatz fahren</div>
+        <span class="step-chevron">⌄</span>
+      </summary>
+      <div class="step-body">
         <div class="step-desc">Standard: <strong>gleicher Ort wie Abholung</strong> (Toleranz ca. 100 m). Bei „Egal-wo in Bremen"-Buchung: legaler öffentlicher Parkplatz im Stadtgebiet — kein Halteverbot, kein Privatgrund, keine Anwohnerparkzone.</div>
         <div class="step-warn">Bei falscher Rückgabe: 50 € Rückführungspauschale + ggf. Abschleppkosten + Bußgelder.</div>
       </div>
-    </div>
+    </details>
 
-    <div class="step">
-      <div class="step-num">2</div>
-      <div class="step-body">
+    <details class="step">
+      <summary>
+        <div class="step-num">2</div>
         <div class="step-title">Anhänger absetzen</div>
+        <span class="step-chevron">⌄</span>
+      </summary>
+      <div class="step-body">
         <div class="step-desc">Auto in Position bringen, Handbremse ziehen. Anhänger soll gerade stehen, nicht in Schräge — sonst rollt er ggf.</div>
       </div>
-    </div>
+    </details>
 
-    <div class="step">
-      <div class="step-num">3</div>
-      <div class="step-body">
+    <details class="step">
+      <summary>
+        <div class="step-num">3</div>
         <div class="step-title">Unterlegkeile setzen</div>
+        <span class="step-chevron">⌄</span>
+      </summary>
+      <div class="step-body">
         <div class="step-desc">Keile <strong>vor und hinter</strong> einen der Reifen klemmen, damit der Anhänger nicht wegrollt. Erst dann abkuppeln.</div>
         <div class="step-warn">Ohne Keile kann der Anhänger beim Abkuppeln wegrollen — Sachschaden + Haftung trägst du.</div>
       </div>
-    </div>
+    </details>
 
     <div class="phase-divider"><span>Abkuppeln</span></div>
 
-    <div class="step">
-      <div class="step-num">4</div>
-      <div class="step-body">
+    <details class="step">
+      <summary>
+        <div class="step-num">4</div>
         <div class="step-title">Stützrad runter</div>
+        <span class="step-chevron">⌄</span>
+      </summary>
+      <div class="step-body">
         <div class="step-desc">Kurbel das Stützrad nach unten, bis es festen Boden hat und etwas Last vom Auto nimmt.</div>
       </div>
-    </div>
+    </details>
 
-    <div class="step">
-      <div class="step-num">5</div>
-      <div class="step-body">
+    <details class="step">
+      <summary>
+        <div class="step-num">5</div>
         <div class="step-title">Elektrik trennen</div>
+        <span class="step-chevron">⌄</span>
+      </summary>
+      <div class="step-body">
         <div class="step-desc">Stecker aus der Buchse ziehen, in die Halterung am Anhänger oder Auto einrasten — damit er nicht über den Boden schleift.</div>
       </div>
-    </div>
+    </details>
 
-    <div class="step">
-      <div class="step-num">6</div>
-      <div class="step-body">
+    <details class="step">
+      <summary>
+        <div class="step-num">6</div>
         <div class="step-title">Abkuppeln</div>
+        <span class="step-chevron">⌄</span>
+      </summary>
+      <div class="step-body">
         <div class="step-desc">Sicherungsstift ziehen, Kupplungshebel <strong>nach oben</strong> klappen, dann Stützrad weiter kurbeln, bis sich die Schale von der Kugel hebt.</div>
         <div class="step-tip">Geht's nicht? Auto leicht 10 cm vorrollen — manchmal klemmt's. Dann erneut versuchen.</div>
       </div>
-    </div>
+    </details>
 
-    <div class="step">
-      <div class="step-num">7</div>
-      <div class="step-body">
+    <details class="step">
+      <summary>
+        <div class="step-num">7</div>
         <div class="step-title">Auto wegfahren</div>
+        <span class="step-chevron">⌄</span>
+      </summary>
+      <div class="step-body">
         <div class="step-desc">Langsam wegfahren. Anhänger steht alleine auf Stützrad + Unterlegkeilen.</div>
       </div>
-    </div>
+    </details>
 
     <div class="phase-divider"><span>Abschließen &amp; Bestätigen</span></div>
 
-    <div class="step">
-      <div class="step-num">8</div>
-      <div class="step-body">
+    <details class="step">
+      <summary>
+        <div class="step-num">8</div>
         <div class="step-title">Schloss zumachen</div>
+        <span class="step-chevron">⌄</span>
+      </summary>
+      <div class="step-body">
         <div class="step-desc">Bügel nach unten drücken — Schloss rastet ein. <strong>Räder verdrehen</strong>, damit niemand den Code sieht.</div>
         <div class="step-warn">Vergiss nicht das Schloss! Ohne Schloss-Versperrung gilt es als unberechtigte Übergabe — Versicherung kann verweigern.</div>
       </div>
-    </div>
+    </details>
 
-    <div class="step">
-      <div class="step-num">9</div>
-      <div class="step-body">
+    <details class="step">
+      <summary>
+        <div class="step-num">9</div>
         <div class="step-title">Aufräumen — wirklich sauber</div>
+        <span class="step-chevron">⌄</span>
+      </summary>
+      <div class="step-body">
         <div class="step-desc">Müll, Erde, Schutt, Werkzeug — alles raus. Bei Bedarf kurz mit dem Besen drüber.</div>
         <div class="step-warn">Bei nicht ordentlich gereinigter Rückgabe: 30 € Reinigungspauschale.</div>
       </div>
-    </div>
+    </details>
 
-    <div class="step">
-      <div class="step-num">10</div>
-      <div class="step-body">
+    <details class="step">
+      <summary>
+        <div class="step-num">10</div>
         <div class="step-title">Rückgabe-Foto machen + Link öffnen</div>
+        <span class="step-chevron">⌄</span>
+      </summary>
+      <div class="step-body">
         <div class="step-desc">Öffne den Rückgabe-Link aus deiner Buchungs-Mail (oder Kundenkonto). Mache <strong>1 Foto</strong> vom abgestellten Anhänger (außen). Foto hochladen → Rückgabe bestätigen.</div>
         <div class="step-tip">Mache das Foto so, dass das Schloss + die Umgebung mit drauf sind. Ist deine Beweissicherung dass alles ordentlich war.</div>
       </div>
-    </div>
+    </details>
 
     <div class="end-card">
       <h3>Geschafft 👍</h3>
@@ -423,6 +524,19 @@
     document.getElementById(name).classList.add('active');
     // Bei Tab-Wechsel ggf. nach oben scrollen
     window.scrollTo({ top: document.querySelector('.tabs').offsetTop - 70, behavior: 'smooth' });
+  }
+
+  // Alle Step-Details einer Sektion auf/zuklappen — Button wechselt seinen Text
+  function toggleAll(sectionId, btn) {
+    const steps = document.querySelectorAll('#' + sectionId + ' details.step');
+    const anyClosed = Array.from(steps).some(s => !s.open);
+    steps.forEach(s => { s.open = anyClosed; });
+    if (anyClosed) {
+      btn.innerHTML = 'Alle Schritte zuklappen ⌃';
+    } else {
+      const count = steps.length;
+      btn.innerHTML = `Alle ${count} Schritte anzeigen ⌄`;
+    }
   }
 
   // Direkt-Sprung per URL-Hash (z.B. /anleitung#rueckgabe)
