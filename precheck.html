@@ -10,6 +10,7 @@
   <script src="/analytics.js?v=11" defer></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    @media (max-width:768px) { input, textarea, select { font-size:16px !important; } }
     :root {
       --bg:#0D0D0D; --s1:#161616; --s2:#1E1E1E;
       --orange:#E85D00; --white:#fff; --gray:#888; --border:#383838;
@@ -40,12 +41,12 @@
     .photo-preview { width:100%; border-radius:10px; margin-top:16px; display:none; }
     .photo-name { font-size:.78rem; color:var(--green); margin-top:8px; display:none; }
 
-    /* CHECKLIST */
-    .check-item { display:flex; align-items:flex-start; gap:14px; padding:14px 0; border-bottom:1px solid var(--border); cursor:pointer; }
-    .check-item:last-child { border-bottom:none; }
-    .check-item input[type=checkbox] { width:20px; height:20px; margin-top:1px; accent-color:var(--orange); flex-shrink:0; cursor:pointer; }
-    .check-item label { font-size:.88rem; line-height:1.5; cursor:pointer; }
-    .check-item label strong { color:var(--white); }
+    /* CHECKLIST — komplettes Label ist klickbar (grosses Touch-Target) */
+    label.check-item { display:flex; align-items:flex-start; gap:14px; padding:16px 4px; border-bottom:1px solid var(--border); cursor:pointer; min-height:48px; -webkit-tap-highlight-color:rgba(232,93,0,.15); }
+    label.check-item:last-child { border-bottom:none; }
+    label.check-item input[type=checkbox] { width:24px; height:24px; margin-top:1px; accent-color:var(--orange); flex-shrink:0; cursor:pointer; }
+    label.check-item .ctext { font-size:.92rem; line-height:1.5; }
+    label.check-item .ctext strong { color:var(--white); }
 
     /* BUTTON */
     .btn { display:flex; align-items:center; justify-content:center; width:100%; padding:14px; border-radius:10px; font-size:1rem; font-weight:700; border:none; cursor:pointer; font-family:var(--font); transition:background .2s, transform .15s; }
@@ -205,18 +206,18 @@
     <!-- Checkliste -->
     <div class="card">
       <p style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gray);margin-bottom:4px;">Bestätigung</p>
-      <div class="check-item" onclick="toggle('checkCondition')">
-        <input type="checkbox" id="checkCondition" />
-        <label for="checkCondition">Ich bestätige, dass der Anhänger beim Abholen <strong>unbeschädigt und in ordnungsgemäßem Zustand</strong> ist. Sichtbare Vorschäden habe ich im Foto dokumentiert.</label>
-      </div>
-      <div class="check-item" onclick="toggle('checkLicense')">
-        <input type="checkbox" id="checkLicense" />
-        <label for="checkLicense">Ich besitze einen gültigen <strong>Führerschein Klasse B</strong> und mein Fahrzeug ist für den Anhängerbetrieb versichert.</label>
-      </div>
-      <div class="check-item" onclick="toggle('checkAgb')">
-        <input type="checkbox" id="checkAgb" />
-        <label for="checkAgb">Ich habe die <strong>Allgemeinen Geschäftsbedingungen</strong> von SimpleTrailer gelesen und akzeptiere diese. Bei Schäden hafte ich entsprechend dem gewählten Schutzpaket.</label>
-      </div>
+      <label class="check-item">
+        <input type="checkbox" id="checkCondition" onchange="checkReady()" />
+        <span class="ctext">Ich bestätige, dass der Anhänger beim Abholen <strong>unbeschädigt und in ordnungsgemäßem Zustand</strong> ist. Sichtbare Vorschäden habe ich im Foto dokumentiert.</span>
+      </label>
+      <label class="check-item">
+        <input type="checkbox" id="checkLicense" onchange="checkReady()" />
+        <span class="ctext">Ich besitze einen gültigen <strong>Führerschein Klasse B</strong> und mein Fahrzeug ist für den Anhängerbetrieb versichert.</span>
+      </label>
+      <label class="check-item">
+        <input type="checkbox" id="checkAgb" onchange="checkReady()" />
+        <span class="ctext">Ich habe die <strong>Allgemeinen Geschäftsbedingungen</strong> von SimpleTrailer gelesen und akzeptiere diese. Bei Schäden hafte ich entsprechend dem gewählten Schutzpaket.</span>
+      </label>
     </div>
 
     <button class="btn btn-green" id="submitBtn" onclick="submitPrecheck()" disabled>

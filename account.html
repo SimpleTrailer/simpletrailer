@@ -12,6 +12,10 @@
   <style>
     @keyframes spin { to { transform: rotate(360deg); } }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    /* iOS Zoom-Schutz: ohne 16px+ font-size zoomt Safari beim Tippen rein */
+    @media (max-width:768px) {
+      input, textarea, select { font-size:16px !important; }
+    }
     :root {
       --bg: #0D0D0D; --s1: #161616; --s2: #1E1E1E;
       --orange: #E85D00; --orange-h: #FF6A00;
@@ -366,13 +370,22 @@
   async function init() {
     document.getElementById('viewLoading').style.display = 'block';
 
+    // Helper: fetch mit Timeout — verhindert dass die ganze Seite haengt
+    // wenn das Mobilnetz haengt oder Supabase nicht antwortet.
+    async function fetchWithTimeout(url, opts = {}, timeoutMs = 6000) {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), timeoutMs);
+      try { return await fetch(url, { ...opts, signal: ctrl.signal }); }
+      finally { clearTimeout(t); }
+    }
+
     // Session aus localStorage wiederherstellen
     const saved = localStorage.getItem('st_session');
     if (saved) {
       try {
         const session = JSON.parse(saved);
-        // Token validieren
-        const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+        // Token validieren (mit Timeout)
+        const res = await fetchWithTimeout(`${SUPABASE_URL}/auth/v1/user`, {
           headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${session.access_token}` }
         });
         if (res.ok) {
@@ -384,17 +397,30 @@
         }
         // Token abgelaufen → mit Refresh-Token erneuern
         if (await refreshAccessToken()) {
-          const r2 = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+          const r2 = await fetchWithTimeout(`${SUPABASE_URL}/auth/v1/user`, {
             headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${authToken}` }
           });
           if (r2.ok) { currentUser = await r2.json(); showAccount(); return; }
         }
-      } catch(e) {}
+      } catch(e) {
+        // Bei Timeout/Netzwerk-Fehler: lieber Auth-View zeigen statt ewig zu laden
+        console.warn('init failed:', e.message);
+      }
       localStorage.removeItem('st_session');
     }
 
     showAuth();
   }
+
+  // Letzte Notbremse: wenn nach 12 Sek immer noch viewLoading zu sehen ist,
+  // zwangsweise Auth-View zeigen damit User nicht endlos starrt.
+  setTimeout(() => {
+    const loading = document.getElementById('viewLoading');
+    if (loading && loading.style.display !== 'none') {
+      console.warn('init-fallback nach 12s ausgeloest');
+      showAuth();
+    }
+  }, 12000);
 
   function showAuth() {
     document.getElementById('viewLoading').style.display  = 'none';

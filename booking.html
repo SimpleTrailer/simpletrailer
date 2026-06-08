@@ -17,6 +17,10 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    /* iOS Zoom-Schutz: ohne 16px+ font-size zoomt Safari beim Tippen rein */
+    @media (max-width:768px) {
+      input, textarea, select { font-size:16px !important; }
+    }
     :root {
       --bg: #0D0D0D; --s1: #161616; --s2: #1E1E1E;
       --orange: #E85D00; --orange-h: #FF6A00;
@@ -792,7 +796,7 @@
           <div class="ins-radio"></div>
           <div class="ins-body">
             <div class="ins-name">Zurück zum Stellplatz</div>
-            <div class="ins-desc">Du bringst den Anhänger zurück, wo du ihn abgeholt hast (Toleranz ca. 100 m).</div>
+            <div class="ins-desc">Du bringst den Anhänger zurück, wo du ihn abgeholt hast (Toleranz ca. 500 m).</div>
           </div>
           <div class="ins-price free">0,00 €</div>
         </div>
@@ -1085,12 +1089,12 @@
     if (zoneBremenPoly) { zoneBremenPoly.remove(); zoneBremenPoly = null; }
 
     if (!selectedFreeFloating) {
-      // 100m-Heimat-Kreis
+      // 500m-Heimat-Kreis (Stellplatz-Toleranz, identisch zu process-return.js)
       if (trailerPickup.lat && trailerPickup.lng) {
         zoneHomeCircle = L.circle([trailerPickup.lat, trailerPickup.lng], {
-          radius: 100, color: '#22c55e', fillColor: '#22c55e', fillOpacity: 0.18, weight: 2
+          radius: 500, color: '#22c55e', fillColor: '#22c55e', fillOpacity: 0.18, weight: 2
         }).addTo(zoneMap);
-        zoneMap.setView([trailerPickup.lat, trailerPickup.lng], 16);
+        zoneMap.setView([trailerPickup.lat, trailerPickup.lng], 15);
       }
     } else {
       // Bremen-Polygon
