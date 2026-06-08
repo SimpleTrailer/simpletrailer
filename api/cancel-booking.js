@@ -87,20 +87,32 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'Mietbeginn ist erreicht — Stornierung nicht mehr möglich.' });
     }
 
-    // Status-Lock vor Stripe-Call — atomic Update mit Optimistic Concurrency.
-    // Wenn 2 parallele Storno-Klicks beide hier ankommen, gewinnt nur einer.
+    // Atomic Concurrency-Lock OHNE Schema-Erweiterung:
+    // Wir setzen cancelled_at NUR wenn es noch NULL ist. Bei parallelen Klicks
+    // gewinnt nur einer (rowcount=1), der andere bekommt rowcount=0 + 409.
+    // Status bleibt vorerst confirmed/active — erst nach Refund-Erfolg auf 'cancelled'.
+    const lockTs = new Date().toISOString();
     const { data: locked, error: lockErr } = await supabase
       .from('bookings')
-      .update({ status: 'cancelling' })
+      .update({ cancelled_at: lockTs })
       .eq('id', booking.id)
-      .eq('status', booking.status)   // Optimistic — gibt 0 Rows zurück wenn schon cancelling
+      .is('cancelled_at', null)
       .select('id')
       .maybeSingle();
     if (lockErr || !locked) {
-      return res.status(409).json({ error: 'Stornierung läuft bereits oder Buchung wurde inzwischen geändert.' });
+      return res.status(409).json({ error: 'Stornierung läuft bereits oder ist bereits abgeschlossen.' });
     }
 
-    // Refund via Stripe — mit Idempotency-Key gegen Doppel-Refund
+    // Wenn Refund fällig wäre aber kein PaymentIntent vorhanden ist (z.B. Legacy/Test-Buchungen):
+    // explizit fehlerschlagen + Lock zurücksetzen, statt stillem Skip → User würde sonst denken
+    // er hätte Storno bekommen ohne dass Geld zurück fließt.
+    if (refundAmount > 0 && !booking.stripe_payment_intent_id) {
+      await supabase.from('bookings').update({ cancelled_at: null }).eq('id', booking.id);
+      console.error('Cancel ohne PaymentIntent', { booking_id: booking.id, refund_amount: refundAmount });
+      return res.status(500).json({ error: 'Buchung ohne hinterlegte Zahlung — Storno bitte bei info@simpletrailer.de anfragen.' });
+    }
+
+    // Refund via Stripe — Idempotency-Key gegen Doppel-Refund auch bei Stripe-Retries
     let refundId = null;
     if (refundAmount > 0 && booking.stripe_payment_intent_id) {
       try {
@@ -112,8 +124,8 @@ module.exports = async (req, res) => {
         }, { idempotencyKey: `refund-${booking.id}` });
         refundId = refund.id;
       } catch (refundErr) {
-        // Lock zurücksetzen — sonst hängt die Buchung in cancelling
-        await supabase.from('bookings').update({ status: booking.status }).eq('id', booking.id);
+        // Lock zurücksetzen damit der User retryen kann
+        await supabase.from('bookings').update({ cancelled_at: null }).eq('id', booking.id);
         console.error('Stripe-Refund-Fehler', {
           code: refundErr.code, type: refundErr.type, booking_id: booking.id
         });
@@ -121,13 +133,19 @@ module.exports = async (req, res) => {
       }
     }
 
-    // Finaler Status-Update inkl. Refund-Tracking
-    await supabase.from('bookings').update({
+    // Finaler Status-Update — Fehler MUSS gefangen werden sonst hängt Buchung im Limbo
+    const { error: finalErr } = await supabase.from('bookings').update({
       status: 'cancelled',
-      cancelled_at: new Date().toISOString(),
       cancellation_refund_amount: refundAmount,
       cancellation_refund_id: refundId
     }).eq('id', booking.id);
+    if (finalErr) {
+      // Refund ist schon gemacht — wir loggen CRITICAL aber lassen den User-Flow durch,
+      // weil das Geld ist zurück. Status wird per Hand nachgepflegt.
+      console.error('CRITICAL: cancel final status update failed', {
+        booking_id: booking.id, refund_id: refundId, err: finalErr.message
+      });
+    }
 
     // Bestätigungs-Mail an Mieter
     try {

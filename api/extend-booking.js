@@ -99,9 +99,10 @@ module.exports = async (req, res) => {
     else                extraAmount = prices.day + Math.ceil((hrs - 24) / 24) * prices.extra_day;
 
     // Off-Session-Charge mit Idempotency-Key — schützt vor Doppel-Abbuchung bei Doppelklick.
-    // Key basiert auf Booking-ID + Stunden + Minutenauflösung Zeit → identische Klicks
-    // innerhalb 1 Min teilen denselben Key (Stripe gibt dann denselben PaymentIntent zurück).
-    const idemKey = `ext-${booking.id}-${hrs}h-${Math.floor(Date.now() / 60000)}`;
+    // Key basiert auf Booking-ID + bisheriges end_time + Stunden.
+    // Erst nach erfolgreicher Verlängerung ändert sich end_time → neuer Key für nächsten Klick.
+    // Doppelklick / Retry / paralleler Tab → identischer Key → Stripe gibt denselben PI zurück.
+    const idemKey = `ext-${booking.id}-${oldEnd}-${hrs}h`;
     let pi;
     try {
       pi = await stripe.paymentIntents.create({

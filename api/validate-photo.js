@@ -30,8 +30,10 @@ module.exports = async (req, res) => {
     const { image_url, expected } = req.body || {};
     if (!image_url) return res.status(400).json({ error: 'image_url fehlt' });
 
-    // URL-Whitelist: nur unsere eigenen Supabase-Storage-URLs erlauben (kein SSRF/Cost-Drain)
-    const ALLOWED_PREFIX = `${process.env.SUPABASE_URL}/storage/v1/object/public/`;
+    // URL-Whitelist: nur unsere eigenen Supabase-Storage-URLs erlauben (kein SSRF/Cost-Drain).
+    // Trailing-Slash in SUPABASE_URL wird normalisiert — sonst harmloser 400 + Sentry-Noise.
+    const baseUrl = (process.env.SUPABASE_URL || '').replace(/\/$/, '');
+    const ALLOWED_PREFIX = `${baseUrl}/storage/v1/object/public/`;
     if (!image_url.startsWith(ALLOWED_PREFIX)) {
       return res.status(400).json({ error: 'image_url muss aus Supabase-Storage stammen.' });
     }

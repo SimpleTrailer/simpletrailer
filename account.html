@@ -785,7 +785,8 @@
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Fehler');
-      alert(`✓ Verlängert um ${hours}h\nAufpreis: ${data.extra_amount.toFixed(2).replace('.', ',')} €\nNeues Mietende: ${new Date(data.new_end_time).toLocaleString('de-DE')}`);
+      const extraAmount = Number(data.extra_amount || 0).toFixed(2).replace('.', ',');
+      alert(`✓ Verlängert um ${hours}h\nAufpreis: ${extraAmount} €\nNeues Mietende: ${new Date(data.new_end_time).toLocaleString('de-DE')}`);
       location.reload();
     } catch (e) {
       alert('Verlängerung fehlgeschlagen: ' + e.message);
@@ -807,8 +808,9 @@
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Fehler');
-      const msg = data.refund_amount > 0
-        ? `✓ Storniert.\nErstattung: ${data.refund_amount.toFixed(2).replace('.', ',')} €\n\n${data.refund_reason}`
+      const refundAmt = Number(data.refund_amount || 0);
+      const msg = refundAmt > 0
+        ? `✓ Storniert.\nErstattung: ${refundAmt.toFixed(2).replace('.', ',')} €\n\n${data.refund_reason || ''}`
         : `✓ Storniert.\n\n${data.refund_reason || 'Keine Erstattung möglich.'}`;
       alert(msg);
       location.reload();

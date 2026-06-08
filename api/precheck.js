@@ -64,17 +64,24 @@ module.exports = async (req, res) => {
         return res.status(200).json({ access_code: booking.access_code, already_done: true });
       }
 
-      // Update mit beiden Fotos — bei fehlender Spalte (Migration ausstehend) fallback auf nur outside-Foto
+      // Atomic Update: nur wenn precheck_completed_at noch NULL — schützt vor Race bei Doppelklick.
+      // Bei fehlender precheck_photo_url_inside-Spalte (Migration ausstehend) fallback auf minimal.
       const updatePayload = {
         status: 'active',
         precheck_photo_url: photo_url || null,
         precheck_photo_url_inside: photo_url_inside || null,
         precheck_completed_at: new Date().toISOString()
       };
-      let { error: updErr } = await supabase.from('bookings').update(updatePayload).eq('id', booking_id);
+      let { data: updated, error: updErr } = await supabase
+        .from('bookings').update(updatePayload)
+        .eq('id', booking_id).is('precheck_completed_at', null)
+        .select('id').maybeSingle();
       if (updErr && /column .* does not exist/i.test(updErr.message || '')) {
         const { precheck_photo_url_inside, ...minimal } = updatePayload;
-        await supabase.from('bookings').update(minimal).eq('id', booking_id);
+        const r = await supabase.from('bookings').update(minimal)
+          .eq('id', booking_id).is('precheck_completed_at', null)
+          .select('id').maybeSingle();
+        updated = r.data;
       }
 
       return res.status(200).json({ access_code: booking.access_code });
