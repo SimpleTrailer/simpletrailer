@@ -16,6 +16,7 @@
 const { createClient } = require('@supabase/supabase-js');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { Resend } = require('resend');
+const { setCors } = require('./_cors');
 
 const supabase     = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 const supabaseAuth = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
@@ -27,8 +28,7 @@ const fmt = d => new Date(d).toLocaleString('de-DE', {
 });
 
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
@@ -66,13 +66,14 @@ module.exports = async (req, res) => {
     const oldEnd = new Date(booking.end_time).getTime();
     const newEnd = oldEnd + hrs * 3600000;
 
-    // Overlap-Check mit Folge-Buchungen (1h Pufferzeit)
+    // Overlap-Check mit Folge-Buchungen (1h Pufferzeit). Whitelist umgedreht:
+    // alles außer returned/cancelled blockt (sicher gegen neue Status-Werte).
     const BUFFER_MS = 60 * 60 * 1000;
     const { data: nextBookings } = await supabase
       .from('bookings')
-      .select('start_time, end_time')
+      .select('start_time, end_time, status')
       .eq('trailer_id', booking.trailer_id)
-      .in('status', ['confirmed', 'active'])
+      .not('status', 'in', '("returned","cancelled")')
       .neq('id', booking.id)
       .gte('end_time', new Date().toISOString());
     const conflict = (nextBookings || []).some(b => {
@@ -97,7 +98,10 @@ module.exports = async (req, res) => {
     else if (hrs <= 24) extraAmount = prices.day;
     else                extraAmount = prices.day + Math.ceil((hrs - 24) / 24) * prices.extra_day;
 
-    // Off-Session-Charge
+    // Off-Session-Charge mit Idempotency-Key — schützt vor Doppel-Abbuchung bei Doppelklick.
+    // Key basiert auf Booking-ID + Stunden + Minutenauflösung Zeit → identische Klicks
+    // innerhalb 1 Min teilen denselben Key (Stripe gibt dann denselben PaymentIntent zurück).
+    const idemKey = `ext-${booking.id}-${hrs}h-${Math.floor(Date.now() / 60000)}`;
     let pi;
     try {
       pi = await stripe.paymentIntents.create({
@@ -113,21 +117,45 @@ module.exports = async (req, res) => {
           extension_hours: String(hrs),
           extension_type: 'self_service'
         }
-      });
+      }, { idempotencyKey: idemKey });
     } catch (chargeErr) {
-      console.error('Stripe off-session charge:', chargeErr.message);
+      // Anonymisiertes Logging — kein PII in Vercel-Logs
+      console.error('Stripe extend-charge fehlgeschlagen', {
+        code: chargeErr.code, type: chargeErr.type, decline_code: chargeErr.decline_code,
+        booking_id: booking.id
+      });
       return res.status(402).json({
-        error: 'Zahlung fehlgeschlagen — bitte Karte prüfen und über Stripe-Dashboard erneut versuchen.',
-        detail: chargeErr.message
+        error: 'Zahlung fehlgeschlagen — bitte Karte prüfen oder info@simpletrailer.de kontaktieren.',
+        decline_code: chargeErr.decline_code || null
       });
     }
 
-    // DB aktualisieren — end_time + Tracking
+    // DB aktualisieren — bei Fehler MUSS automatisch refunded werden,
+    // sonst hat der Kunde bezahlt ohne dass die Mietzeit verlängert ist.
     const totalNew = Number(booking.total_amount || 0) + extraAmount;
-    await supabase.from('bookings').update({
+    const { error: updErr } = await supabase.from('bookings').update({
       end_time: new Date(newEnd).toISOString(),
       total_amount: totalNew
     }).eq('id', booking.id);
+
+    if (updErr) {
+      console.error('CRITICAL: extend charge succeeded but DB update failed', {
+        booking_id: booking.id, pi: pi.id, err: updErr.message
+      });
+      // Compensation: Refund
+      try {
+        await stripe.refunds.create({
+          payment_intent: pi.id,
+          reason: 'duplicate',
+          metadata: { reason_internal: 'db_update_failed', booking_id: booking.id }
+        }, { idempotencyKey: `ext-refund-${pi.id}` });
+      } catch (refErr) {
+        console.error('CRITICAL: compensation-refund failed too', { pi: pi.id, err: refErr.message });
+      }
+      return res.status(500).json({
+        error: 'Verlängerung konnte nicht abgeschlossen werden — Zahlung wurde zurückerstattet.'
+      });
+    }
 
     // Bestätigungs-Mail
     try {

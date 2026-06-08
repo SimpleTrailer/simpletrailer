@@ -1673,30 +1673,33 @@
 
   // Supabase Access-Tokens leben nur 1h. Wenn 401 kommt → mit dem Refresh-Token
   // einen frischen Access-Token holen. Wenn auch das fehlschlägt → Session weg.
+  // Promise-Lock: parallele 401-Calls teilen einen Refresh statt zwei zu starten —
+  // Supabase rotiert den Refresh-Token bei jeder Nutzung, parallele Aufrufe
+  // würden sonst einen davon mit "invalid refresh_token" abwerfen.
+  let _bookingRefreshPromise = null;
   async function refreshAccessToken() {
-    const saved = localStorage.getItem('st_session');
-    if (!saved) return false;
-    let refresh_token;
-    try { refresh_token = JSON.parse(saved).refresh_token; } catch { return false; }
-    if (!refresh_token) return false;
-    try {
-      const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
-        method: 'POST',
-        headers: { apikey: SUPABASE_ANON, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refresh_token })
-      });
-      if (!res.ok) {
-        localStorage.removeItem('st_session');
-        return false;
-      }
-      const data = await res.json();
-      bookingToken = data.access_token;
-      bookingUser  = data.user || bookingUser;
-      localStorage.setItem('st_session', JSON.stringify({ access_token: data.access_token, refresh_token: data.refresh_token }));
-      return true;
-    } catch {
-      return false;
-    }
+    if (_bookingRefreshPromise) return _bookingRefreshPromise;
+    _bookingRefreshPromise = (async () => {
+      const saved = localStorage.getItem('st_session');
+      if (!saved) return false;
+      let refresh_token;
+      try { refresh_token = JSON.parse(saved).refresh_token; } catch { return false; }
+      if (!refresh_token) return false;
+      try {
+        const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+          method: 'POST',
+          headers: { apikey: SUPABASE_ANON, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh_token })
+        });
+        if (!res.ok) { localStorage.removeItem('st_session'); return false; }
+        const data = await res.json();
+        bookingToken = data.access_token;
+        bookingUser  = data.user || bookingUser;
+        localStorage.setItem('st_session', JSON.stringify({ access_token: data.access_token, refresh_token: data.refresh_token }));
+        return true;
+      } catch { return false; }
+    })();
+    try { return await _bookingRefreshPromise; } finally { _bookingRefreshPromise = null; }
   }
 
   // Session aus localStorage laden — bei abgelaufenem Token versucht refreshAccessToken den Token zu erneuern.

@@ -17,18 +17,24 @@
  * Bei API-Fehler oder Timeout: nicht blockieren (fail-open) damit Buchung nicht hängt.
  */
 const Anthropic = require('@anthropic-ai/sdk');
+const { setCors } = require('./_cors');
 
-const anthropic = new Anthropic.default({ apiKey: process.env.ANTHROPIC_API_KEY });
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
   try {
     const { image_url, expected } = req.body || {};
     if (!image_url) return res.status(400).json({ error: 'image_url fehlt' });
+
+    // URL-Whitelist: nur unsere eigenen Supabase-Storage-URLs erlauben (kein SSRF/Cost-Drain)
+    const ALLOWED_PREFIX = `${process.env.SUPABASE_URL}/storage/v1/object/public/`;
+    if (!image_url.startsWith(ALLOWED_PREFIX)) {
+      return res.status(400).json({ error: 'image_url muss aus Supabase-Storage stammen.' });
+    }
 
     const promptOutside = `Du prüfst ein Foto bei einer Anhängervermietung. Auf dem Foto sollte ein PKW-Anhänger (Planenanhänger oder Autotransporter) VON AUSSEN (Seitenansicht) zu sehen sein.
 

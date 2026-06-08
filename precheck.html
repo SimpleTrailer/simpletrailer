@@ -219,7 +219,9 @@
 
   function isPrecheckUnlocked() {
     if (!booking) return false;
-    return Date.now() >= new Date(booking.start_time).getTime() - PRECHECK_WINDOW_MS;
+    // 2s Sicherheits-Puffer gegen Server/Client-Clock-Skew — sonst akzeptiert das Frontend
+    // den Klick und der Server lehnt ihn ab (sieht in den Logs aus wie Bug, ist aber Drift).
+    return Date.now() >= new Date(booking.start_time).getTime() - PRECHECK_WINDOW_MS + 2000;
   }
 
   function showPendingCountdown() {

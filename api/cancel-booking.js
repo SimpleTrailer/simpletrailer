@@ -13,6 +13,7 @@
 const { createClient } = require('@supabase/supabase-js');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { Resend } = require('resend');
+const { setCors } = require('./_cors');
 
 const supabase     = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 const supabaseAuth = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
@@ -24,8 +25,7 @@ const fmt = d => new Date(d).toLocaleString('de-DE', {
 });
 
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
@@ -87,7 +87,20 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'Mietbeginn ist erreicht — Stornierung nicht mehr möglich.' });
     }
 
-    // Refund via Stripe ausführen
+    // Status-Lock vor Stripe-Call — atomic Update mit Optimistic Concurrency.
+    // Wenn 2 parallele Storno-Klicks beide hier ankommen, gewinnt nur einer.
+    const { data: locked, error: lockErr } = await supabase
+      .from('bookings')
+      .update({ status: 'cancelling' })
+      .eq('id', booking.id)
+      .eq('status', booking.status)   // Optimistic — gibt 0 Rows zurück wenn schon cancelling
+      .select('id')
+      .maybeSingle();
+    if (lockErr || !locked) {
+      return res.status(409).json({ error: 'Stornierung läuft bereits oder Buchung wurde inzwischen geändert.' });
+    }
+
+    // Refund via Stripe — mit Idempotency-Key gegen Doppel-Refund
     let refundId = null;
     if (refundAmount > 0 && booking.stripe_payment_intent_id) {
       try {
@@ -96,15 +109,19 @@ module.exports = async (req, res) => {
           amount: Math.round(refundAmount * 100),
           reason: 'requested_by_customer',
           metadata: { booking_id: booking.id }
-        });
+        }, { idempotencyKey: `refund-${booking.id}` });
         refundId = refund.id;
       } catch (refundErr) {
-        console.error('Stripe-Refund-Fehler:', refundErr.message);
+        // Lock zurücksetzen — sonst hängt die Buchung in cancelling
+        await supabase.from('bookings').update({ status: booking.status }).eq('id', booking.id);
+        console.error('Stripe-Refund-Fehler', {
+          code: refundErr.code, type: refundErr.type, booking_id: booking.id
+        });
         return res.status(500).json({ error: 'Rückerstattung fehlgeschlagen — bitte info@simpletrailer.de kontaktieren.' });
       }
     }
 
-    // Buchung in DB als cancelled markieren
+    // Finaler Status-Update inkl. Refund-Tracking
     await supabase.from('bookings').update({
       status: 'cancelled',
       cancelled_at: new Date().toISOString(),
@@ -143,7 +160,7 @@ info@simpletrailer.de`,
               <table style="width:100%;border-collapse:collapse;margin-bottom:16px;">
                 <tr><td style="color:#888;padding:7px 0;border-bottom:1px solid #2a2a2a;font-size:.86rem;">Mietbeginn (geplant)</td><td style="text-align:right;padding:7px 0;border-bottom:1px solid #2a2a2a;font-size:.86rem;">${fmt(booking.start_time)}</td></tr>
                 <tr><td style="color:#888;padding:7px 0;border-bottom:1px solid #2a2a2a;font-size:.86rem;">Gezahlt</td><td style="text-align:right;padding:7px 0;border-bottom:1px solid #2a2a2a;font-size:.86rem;">${totalPaid.toFixed(2).replace('.',',')} €</td></tr>
-                <tr><td style="color:#888;padding:7px 0;font-size:.86rem;">Erstattung</td><td style="text-align:right;padding:7px 0;color:#22c55e;font-weight:700;font-size:1rem;">${refundAmount.toFixed(2).replace('.',',')} €</td></tr>
+                <tr><td style="color:#888;padding:7px 0;font-size:.86rem;">Erstattung</td><td style="text-align:right;padding:7px 0;color:${refundAmount > 0 ? '#22c55e' : '#888'};font-weight:700;font-size:1rem;">${refundAmount > 0 ? refundAmount.toFixed(2).replace('.',',') + ' €' : 'Keine Erstattung'}</td></tr>
               </table>
               <div style="background:#0a1f0a;border:1px solid #22c55e;border-radius:10px;padding:14px 18px;color:#86efac;font-size:.84rem;">
                 ${refundReason}<br><br>

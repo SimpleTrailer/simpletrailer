@@ -322,6 +322,47 @@
     return res;
   }
 
+  // Supabase Access-Tokens leben nur 1h. Mit Refresh-Token können wir sie erneuern.
+  // Promise-Shared damit parallele 401-Aufrufe nicht beide refreshen (Token-Rotation-Konflikt).
+  let _refreshPromise = null;
+  async function refreshAccessToken() {
+    if (_refreshPromise) return _refreshPromise;
+    _refreshPromise = (async () => {
+      const saved = localStorage.getItem('st_session');
+      if (!saved) return false;
+      let refresh_token;
+      try { refresh_token = JSON.parse(saved).refresh_token; } catch { return false; }
+      if (!refresh_token) return false;
+      try {
+        const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+          method: 'POST',
+          headers: { apikey: SUPABASE_ANON, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh_token })
+        });
+        if (!res.ok) { localStorage.removeItem('st_session'); return false; }
+        const data = await res.json();
+        authToken = data.access_token;
+        if (data.user) currentUser = data.user;
+        localStorage.setItem('st_session', JSON.stringify({ access_token: data.access_token, refresh_token: data.refresh_token }));
+        return true;
+      } catch { return false; }
+    })();
+    try { return await _refreshPromise; } finally { _refreshPromise = null; }
+  }
+
+  // Wrapper: bei 401 transparent refresh + retry.
+  async function authedFetch(url, opts = {}) {
+    const baseHeaders = { ...(opts.headers || {}), 'Authorization': `Bearer ${authToken}` };
+    let res = await fetch(url, { ...opts, headers: baseHeaders });
+    if (res.status === 401) {
+      const ok = await refreshAccessToken();
+      if (!ok) return res;
+      const retryHeaders = { ...(opts.headers || {}), 'Authorization': `Bearer ${authToken}` };
+      res = await fetch(url, { ...opts, headers: retryHeaders });
+    }
+    return res;
+  }
+
   async function init() {
     document.getElementById('viewLoading').style.display = 'block';
 
@@ -340,6 +381,13 @@
           currentUser = user;
           showAccount();
           return;
+        }
+        // Token abgelaufen → mit Refresh-Token erneuern
+        if (await refreshAccessToken()) {
+          const r2 = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+            headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${authToken}` }
+          });
+          if (r2.ok) { currentUser = await r2.json(); showAccount(); return; }
         }
       } catch(e) {}
       localStorage.removeItem('st_session');
@@ -722,12 +770,17 @@
     `;
   }
 
+  // Verhindert Doppel-Klicks auf Storno/Extend während ein Request läuft
+  let _mutationInFlight = false;
+
   async function extendBooking(bookingId, hours) {
+    if (_mutationInFlight) return;
     if (!confirm(`Mietzeit um ${hours} Stunde${hours > 1 ? 'n' : ''} verlängern?\n\nDer Aufpreis wird sofort über deine hinterlegte Karte abgebucht.`)) return;
+    _mutationInFlight = true;
     try {
-      const res = await fetch('/api/extend-booking', {
+      const res = await authedFetch('/api/extend-booking', {
         method: 'POST',
-        headers: { Authorization: `Bearer ${authToken}`, 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ booking_id: bookingId, extra_hours: hours })
       });
       const data = await res.json();
@@ -736,24 +789,33 @@
       location.reload();
     } catch (e) {
       alert('Verlängerung fehlgeschlagen: ' + e.message);
+    } finally {
+      _mutationInFlight = false;
     }
   }
 
   async function cancelBooking(bookingId, refundAmount) {
+    if (_mutationInFlight) return;
     if (!confirm(`Buchung wirklich stornieren?\n\nErstattung: ${refundAmount.toFixed(2).replace('.', ',')} €\n\nDie Rückzahlung erfolgt automatisch über deine Zahlungsmethode (3-5 Werktage).`)) return;
+    _mutationInFlight = true;
 
     try {
-      const res = await fetch('/api/cancel-booking', {
+      const res = await authedFetch('/api/cancel-booking', {
         method: 'POST',
-        headers: { Authorization: `Bearer ${authToken}`, 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ booking_id: bookingId })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Fehler');
-      alert(`✓ Storniert.\nErstattung: ${data.refund_amount.toFixed(2).replace('.', ',')} €\n\n${data.refund_reason}`);
+      const msg = data.refund_amount > 0
+        ? `✓ Storniert.\nErstattung: ${data.refund_amount.toFixed(2).replace('.', ',')} €\n\n${data.refund_reason}`
+        : `✓ Storniert.\n\n${data.refund_reason || 'Keine Erstattung möglich.'}`;
+      alert(msg);
       location.reload();
     } catch (e) {
       alert('Stornierung fehlgeschlagen: ' + e.message);
+    } finally {
+      _mutationInFlight = false;
     }
   }
 
@@ -792,7 +854,7 @@
 
       authToken   = data.access_token;
       currentUser = data.user;
-      localStorage.setItem('st_session', JSON.stringify({ access_token: data.access_token }));
+      localStorage.setItem('st_session', JSON.stringify({ access_token: data.access_token, refresh_token: data.refresh_token }));
       showAccount();
     } catch(e) {
       errEl.textContent = e.message === 'Invalid login credentials' ? 'E-Mail oder Passwort falsch.' : e.message;
@@ -835,7 +897,7 @@
       if (data.access_token) {
         authToken   = data.access_token;
         currentUser = data.user;
-        localStorage.setItem('st_session', JSON.stringify({ access_token: data.access_token }));
+        localStorage.setItem('st_session', JSON.stringify({ access_token: data.access_token, refresh_token: data.refresh_token }));
         showAccount();
       } else {
         okEl.textContent = 'Konto erstellt! Bitte bestätige deine E-Mail und melde dich an.';
