@@ -209,7 +209,7 @@ info@simpletrailer.de · simpletrailer.de`;
         from: 'SimpleTrailer <buchung@simpletrailer.de>',
         reply_to: 'info@simpletrailer.de',
         to: meta.customer_email,
-        subject: `Mietvertrag #${booking.id.slice(0, 8).toUpperCase()} – SimpleTrailer`,
+        subject: `Mietvertrag #${booking.id.slice(0, 8).toUpperCase()} – ${booking.trailers?.name || 'Anhänger'} · ab ${new Date(meta.start_time).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' })}`,
         text: plainText,
         headers: {
           'List-Unsubscribe': '<mailto:info@simpletrailer.de?subject=Abmelden>',

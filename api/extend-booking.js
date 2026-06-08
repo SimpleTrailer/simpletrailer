@@ -1,0 +1,182 @@
+/**
+ * Buchung verlängern — Mieter klickt im Kundenkonto "+1h" oder "+3h" etc.
+ * Lädt Off-Session-Charge über die gespeicherte Stripe-PaymentMethod und
+ * verlängert die end_time der Buchung.
+ *
+ * Body: { booking_id: string, extra_hours: number }
+ *
+ * Logik:
+ *  - Auth + Ownership-Check
+ *  - Status muss active sein (Pre-Check abgeschlossen)
+ *  - Overlap-Check: keine Folge-Buchung im Verlängerungs-Zeitfenster
+ *  - Preis aus Trailer-Daten (kurztrip <=3h, halftag <=6h, day <=24h+2 grace)
+ *  - Off-Session-Charge mit hinterlegtem PaymentMethod
+ *  - end_time updaten, Hinweis-Mail an Mieter
+ */
+const { createClient } = require('@supabase/supabase-js');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const { Resend } = require('resend');
+
+const supabase     = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+const supabaseAuth = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+const fmt = d => new Date(d).toLocaleString('de-DE', {
+  day: '2-digit', month: '2-digit', year: 'numeric',
+  hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Berlin'
+});
+
+module.exports = async (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
+
+  // Auth
+  const auth = req.headers.authorization || '';
+  if (!auth.startsWith('Bearer ')) return res.status(401).json({ error: 'Nicht autorisiert' });
+  const { data: { user }, error: authErr } = await supabaseAuth.auth.getUser(auth.replace('Bearer ', ''));
+  if (authErr || !user) return res.status(401).json({ error: 'Ungültiger Token' });
+
+  try {
+    const { booking_id, extra_hours } = req.body || {};
+    if (!booking_id || !extra_hours) return res.status(400).json({ error: 'booking_id + extra_hours erforderlich' });
+    const hrs = Number(extra_hours);
+    if (!Number.isFinite(hrs) || hrs < 1 || hrs > 48) {
+      return res.status(400).json({ error: 'Verlängerung muss zwischen 1 und 48 Stunden liegen.' });
+    }
+
+    // Buchung laden
+    const { data: booking, error: bErr } = await supabase
+      .from('bookings')
+      .select('*, trailers(*)')
+      .eq('id', booking_id)
+      .single();
+    if (bErr || !booking) return res.status(404).json({ error: 'Buchung nicht gefunden' });
+    if (booking.user_id !== user.id && booking.customer_email !== user.email) {
+      return res.status(403).json({ error: 'Diese Buchung gehört nicht zu deinem Konto.' });
+    }
+    if (booking.status !== 'active') {
+      return res.status(400).json({ error: 'Buchung ist nicht aktiv — Verlängerung nur während laufender Miete möglich.' });
+    }
+    if (!booking.stripe_customer_id || !booking.stripe_payment_method_id) {
+      return res.status(400).json({ error: 'Keine hinterlegte Zahlungsmethode — bitte info@simpletrailer.de kontaktieren.' });
+    }
+
+    const oldEnd = new Date(booking.end_time).getTime();
+    const newEnd = oldEnd + hrs * 3600000;
+
+    // Overlap-Check mit Folge-Buchungen (1h Pufferzeit)
+    const BUFFER_MS = 60 * 60 * 1000;
+    const { data: nextBookings } = await supabase
+      .from('bookings')
+      .select('start_time, end_time')
+      .eq('trailer_id', booking.trailer_id)
+      .in('status', ['confirmed', 'active'])
+      .neq('id', booking.id)
+      .gte('end_time', new Date().toISOString());
+    const conflict = (nextBookings || []).some(b => {
+      const bStart = new Date(b.start_time).getTime();
+      return bStart < newEnd + BUFFER_MS && bStart > oldEnd;
+    });
+    if (conflict) {
+      return res.status(400).json({ error: 'Nächste Buchung blockiert die Verlängerung — bitte kürzer wählen oder rechtzeitig zurückgeben.' });
+    }
+
+    // Preis ermitteln
+    const t = booking.trailers || {};
+    const prices = {
+      kurztrip:  Number(t.price_kurztrip)  || 9,
+      halftag:   Number(t.price_halftag)   || 18,
+      day:       Number(t.price_day)       || 29,
+      extra_day: Number(t.price_extra_day) || 24,
+    };
+    let extraAmount;
+    if (hrs <= 3)       extraAmount = prices.kurztrip;
+    else if (hrs <= 6)  extraAmount = prices.halftag;
+    else if (hrs <= 24) extraAmount = prices.day;
+    else                extraAmount = prices.day + Math.ceil((hrs - 24) / 24) * prices.extra_day;
+
+    // Off-Session-Charge
+    let pi;
+    try {
+      pi = await stripe.paymentIntents.create({
+        amount: Math.round(extraAmount * 100),
+        currency: 'eur',
+        customer: booking.stripe_customer_id,
+        payment_method: booking.stripe_payment_method_id,
+        off_session: true,
+        confirm: true,
+        description: `Verlängerung Buchung #${booking.id.slice(0,8).toUpperCase()} — +${hrs}h`,
+        metadata: {
+          booking_id: booking.id,
+          extension_hours: String(hrs),
+          extension_type: 'self_service'
+        }
+      });
+    } catch (chargeErr) {
+      console.error('Stripe off-session charge:', chargeErr.message);
+      return res.status(402).json({
+        error: 'Zahlung fehlgeschlagen — bitte Karte prüfen und über Stripe-Dashboard erneut versuchen.',
+        detail: chargeErr.message
+      });
+    }
+
+    // DB aktualisieren — end_time + Tracking
+    const totalNew = Number(booking.total_amount || 0) + extraAmount;
+    await supabase.from('bookings').update({
+      end_time: new Date(newEnd).toISOString(),
+      total_amount: totalNew
+    }).eq('id', booking.id);
+
+    // Bestätigungs-Mail
+    try {
+      await resend.emails.send({
+        from: 'SimpleTrailer <buchung@simpletrailer.de>',
+        reply_to: 'info@simpletrailer.de',
+        to: booking.customer_email,
+        subject: `Verlängerung +${hrs}h bestätigt — Buchung #${booking.id.slice(0,8).toUpperCase()}`,
+        text: `Hi ${booking.customer_name || ''},
+
+deine Mietzeit wurde um ${hrs} Stunde${hrs > 1 ? 'n' : ''} verlängert.
+
+Buchungsnummer: #${booking.id.slice(0,8).toUpperCase()}
+Anhänger: ${booking.trailers?.name || 'Anhänger'}
+Neues Mietende: ${fmt(new Date(newEnd))} Uhr
+Aufpreis: ${extraAmount.toFixed(2).replace('.', ',')} € (bereits abgebucht)
+
+— SimpleTrailer GbR`,
+        html: `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0D0D0D;font-family:system-ui,sans-serif;color:#fff;">
+          <div style="max-width:560px;margin:0 auto;padding:32px 20px;">
+            <div style="text-align:center;margin-bottom:24px;">
+              <span style="font-size:1.5rem;font-weight:800;">Simple</span><span style="font-size:1.5rem;font-weight:800;color:#E85D00;">Trailer</span>
+            </div>
+            <div style="background:#1A1A1A;border-radius:14px;padding:28px;border:1px solid #383838;">
+              <h1 style="margin:0 0 6px;font-size:1.2rem;">Verlängerung bestätigt ✓</h1>
+              <p style="color:#888;margin:0 0 18px;">Buchung #${booking.id.slice(0,8).toUpperCase()}</p>
+              <table style="width:100%;border-collapse:collapse;font-size:.88rem;">
+                <tr><td style="color:#888;padding:7px 0;border-bottom:1px solid #2a2a2a;">Anhänger</td><td style="text-align:right;padding:7px 0;border-bottom:1px solid #2a2a2a;">${booking.trailers?.name || '—'}</td></tr>
+                <tr><td style="color:#888;padding:7px 0;border-bottom:1px solid #2a2a2a;">Verlängerung</td><td style="text-align:right;padding:7px 0;border-bottom:1px solid #2a2a2a;"><strong>+${hrs}h</strong></td></tr>
+                <tr><td style="color:#888;padding:7px 0;border-bottom:1px solid #2a2a2a;">Neues Mietende</td><td style="text-align:right;padding:7px 0;border-bottom:1px solid #2a2a2a;">${fmt(new Date(newEnd))} Uhr</td></tr>
+                <tr><td style="color:#888;padding:7px 0;">Aufpreis (abgebucht)</td><td style="text-align:right;padding:7px 0;color:#E85D00;font-weight:700;">${extraAmount.toFixed(2).replace('.', ',')} €</td></tr>
+              </table>
+            </div>
+          </div>
+        </body></html>`
+      });
+    } catch (mailErr) {
+      console.error('Extend-Mail fehlgeschlagen:', mailErr.message);
+    }
+
+    return res.status(200).json({
+      ok: true,
+      new_end_time: new Date(newEnd).toISOString(),
+      extra_amount: extraAmount,
+      payment_intent: pi.id
+    });
+
+  } catch (err) {
+    console.error('extend-booking:', err);
+    return res.status(500).json({ error: err.message });
+  }
+};

@@ -665,6 +665,25 @@
     }
     actionHtml += `<a href="/anleitung" class="action-btn" style="background:#1f1f1f;border:1px solid var(--border);color:#fff;">📖 Anleitung (Abholung &amp; Rückgabe)</a>`;
 
+    // Verlängern-Block (nur wenn Buchung läuft, also active + nicht überfällig)
+    let extendHtml = '';
+    if (b.status === 'active' && precheckDone && !isOverdue) {
+      extendHtml = `
+        <details style="margin-top:14px;background:#0a0a0a;border:1px solid var(--border);border-radius:10px;padding:14px 16px;">
+          <summary style="cursor:pointer;font-weight:700;font-size:.92rem;color:#60a5fa;">⏱ Mietzeit verlängern</summary>
+          <div style="margin-top:12px;font-size:.84rem;color:#ccc;line-height:1.55;">
+            Brauchst du länger? Verlängere bequem und zahl den Aufpreis automatisch über die hinterlegte Karte.
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;">
+            <button onclick="extendBooking('${b.id}', 1)"  style="background:#1a1a1a;color:#fff;border:1px solid var(--border);padding:10px 16px;border-radius:8px;cursor:pointer;font-weight:700;font-size:.86rem;font-family:inherit;">+1 Stunde</button>
+            <button onclick="extendBooking('${b.id}', 3)"  style="background:#1a1a1a;color:#fff;border:1px solid var(--border);padding:10px 16px;border-radius:8px;cursor:pointer;font-weight:700;font-size:.86rem;font-family:inherit;">+3 Stunden</button>
+            <button onclick="extendBooking('${b.id}', 6)"  style="background:#1a1a1a;color:#fff;border:1px solid var(--border);padding:10px 16px;border-radius:8px;cursor:pointer;font-weight:700;font-size:.86rem;font-family:inherit;">+6 Stunden</button>
+            <button onclick="extendBooking('${b.id}', 24)" style="background:#1a1a1a;color:#fff;border:1px solid var(--border);padding:10px 16px;border-radius:8px;cursor:pointer;font-weight:700;font-size:.86rem;font-family:inherit;">+1 Tag</button>
+          </div>
+          <p style="font-size:.74rem;color:var(--gray);margin:10px 0 0;">Bei Engpass (Folge-Buchung): nicht möglich — bitte rechtzeitig zurückgeben.</p>
+        </details>`;
+    }
+
     // Storno-Block
     let cancelHtml = '';
     if (canCancel) {
@@ -697,9 +716,27 @@
       </div>
       ${statusBlock}
       ${actionHtml}
+      ${extendHtml}
       ${cancelHtml}
       ${pdfNote}
     `;
+  }
+
+  async function extendBooking(bookingId, hours) {
+    if (!confirm(`Mietzeit um ${hours} Stunde${hours > 1 ? 'n' : ''} verlängern?\n\nDer Aufpreis wird sofort über deine hinterlegte Karte abgebucht.`)) return;
+    try {
+      const res = await fetch('/api/extend-booking', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${authToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ booking_id: bookingId, extra_hours: hours })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Fehler');
+      alert(`✓ Verlängert um ${hours}h\nAufpreis: ${data.extra_amount.toFixed(2).replace('.', ',')} €\nNeues Mietende: ${new Date(data.new_end_time).toLocaleString('de-DE')}`);
+      location.reload();
+    } catch (e) {
+      alert('Verlängerung fehlgeschlagen: ' + e.message);
+    }
   }
 
   async function cancelBooking(bookingId, refundAmount) {
