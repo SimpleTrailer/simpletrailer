@@ -100,9 +100,9 @@ const SYSTEM_PROMPT = `Du bist **Simply** — der freundliche, kompetente Online
 - Komplett online, 24/7 verfügbar, kontaktlose Übergabe via Codeschloss
 
 # Anhänger
-PKW-Anhänger mit Plane (1 Modell):
-- Ladefläche 251×137×130 cm, Leergewicht 295 kg
-- zGG 750 kg, Max. Zuladung 455 kg
+PKW-Anhänger mit Plane (Humbaur Steely Cover Tieflader):
+- Ladefläche innen 205×109,5×130 cm (mit Plane), Leergewicht 135 kg
+- zGG 750 kg, Max. Zuladung 615 kg, Höchstgeschwindigkeit 100 km/h
 - Ungebremst (750 kg zGG), Plane inkl. Gestell, Zurrbügel, Codeschloss
 
 # Tarife
