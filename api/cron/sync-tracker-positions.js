@@ -89,12 +89,23 @@ module.exports = async (req, res) => {
       }
     }
 
-    // 3) Aktuelle Positionen abrufen (für alle device-IDs gleichzeitig)
+    // 3) Aktuelle Positionen abrufen — pro Device einzeln.
+    // BUGFIX: Traccar gibt bei "?deviceId=1&deviceId=2" nur EINE Position zurueck
+    // (nimmt nur den ersten Parameter). Damit blieb Trailer #2 immer veraltet.
+    // Einzelne Calls sind sicher: bei 2-10 Trailern kein Performance-Problem.
     const deviceIds = withImei.map(t => t.tracker_traccar_id).filter(Boolean);
     if (!deviceIds.length) {
       return res.status(200).json({ ok: true, msg: 'Trailer-IMEIs noch nicht in Traccar registriert' });
     }
-    const positions = await traccarApi(`/api/positions?deviceId=${deviceIds.join('&deviceId=')}`);
+    const positions = [];
+    for (const id of deviceIds) {
+      try {
+        const arr = await traccarApi(`/api/positions?deviceId=${id}`);
+        if (Array.isArray(arr) && arr[0]) positions.push(arr[0]);
+      } catch (e) {
+        console.warn(`Traccar positions for deviceId=${id} failed:`, e.message);
+      }
+    }
 
     // 4) Updates pro Trailer
     let positionsStored = 0;
