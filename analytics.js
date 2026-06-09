@@ -173,9 +173,9 @@
   //     → Liefert Mess-ID (Format: G-XXXXXXXXXX)
   //  4) Drei IDs unten eintragen, deployen, fertig.
   //  5) Conversion-Event wird auf booking-confirm.html automatisch gefeuert.
-  const GOOGLE_ADS_CONVERSION_ID    = 'AW-18225533391'; // Google Ads Konto 686-850-9760
-  const GOOGLE_ADS_CONVERSION_LABEL = ''; // wird ergaenzt sobald Event-Snippet erstellt — fuer Conversion-Event "Buchung abgeschlossen"
-  const GA4_MEASUREMENT_ID          = ''; // z.B. 'G-XXXXXXXXXX'
+  const GOOGLE_ADS_CONVERSION_ID    = 'AW-18225533391';        // Google Ads Konto 686-850-9760
+  const GOOGLE_ADS_CONVERSION_LABEL = 'o1IgCLKE87scEM-jzvJD';   // Conversion-Aktion "Buchung abgeschlossen"
+  const GA4_MEASUREMENT_ID          = '';                       // z.B. 'G-XXXXXXXXXX' (kommt sobald GA4 angelegt)
 
   window.ST_ADS_CONFIG = {
     adsId:      GOOGLE_ADS_CONVERSION_ID,
