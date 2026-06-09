@@ -191,19 +191,25 @@
       console.info('[analytics] Google-Ads-/GA4-IDs noch nicht gesetzt — Conversion-Tracking inaktiv. Siehe analytics.js Section 7.');
     }
     if (anyId && onProd) {
-      // gtag.js Stub
+      // Google-Ads-Tag wird seit 2026-06-09 STATISCH im <head> jeder HTML-Seite eingebunden
+      // (sonst findet Google's Tag-Verifizierer ihn nicht, weil defer-Loading zu spaet ist).
+      // Hier nur noch GA4 nachziehen falls Mess-ID gesetzt — und doppelte Initialisierung vermeiden.
       window.dataLayer = window.dataLayer || [];
-      window.gtag = function () { window.dataLayer.push(arguments); };
-      window.gtag('js', new Date());
-      // Beide IDs konfigurieren wenn gesetzt
-      if (GOOGLE_ADS_CONVERSION_ID) window.gtag('config', GOOGLE_ADS_CONVERSION_ID);
-      if (GA4_MEASUREMENT_ID)       window.gtag('config', GA4_MEASUREMENT_ID, { anonymize_ip: true });
-      // gtag.js Script async laden (eine ID reicht zum Initialisieren)
-      const initId = GOOGLE_ADS_CONVERSION_ID || GA4_MEASUREMENT_ID;
-      const g = document.createElement('script');
-      g.async = true;
-      g.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(initId);
-      document.head.appendChild(g);
+      if (!window.gtag) {
+        window.gtag = function () { window.dataLayer.push(arguments); };
+        window.gtag('js', new Date());
+      }
+      // GA4 zusaetzlich initialisieren wenn Mess-ID hinterlegt (Google Ads ist schon via statischem Tag aktiv)
+      if (GA4_MEASUREMENT_ID) {
+        window.gtag('config', GA4_MEASUREMENT_ID, { anonymize_ip: true });
+        // gtag.js wird vom statischen Tag schon geladen — nur noch laden wenn NUR GA4 (keine Ads-ID) gesetzt ist
+        if (!GOOGLE_ADS_CONVERSION_ID) {
+          const g = document.createElement('script');
+          g.async = true;
+          g.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(GA4_MEASUREMENT_ID);
+          document.head.appendChild(g);
+        }
+      }
     }
   } catch (e) { /* ignore */ }
 
