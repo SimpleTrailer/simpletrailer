@@ -348,7 +348,17 @@
       document.getElementById('loadingView').style.display = 'none';
       document.getElementById('mainView').style.display = 'block';
 
+      // "So findest du den Anhaenger" — Foto + Kennzeichen, nur sichtbar fuer Mieter
+      const appearanceBlock = (booking.appearance_photo_url || booking.license_plate) ? `
+        <div style="background:#0a1a0a;border:1.5px solid #22c55e;border-radius:12px;padding:14px 16px;margin-bottom:14px;">
+          <div style="font-weight:700;font-size:.9rem;margin-bottom:10px;color:#86efac;">🔍 So findest du den Anhänger</div>
+          ${booking.appearance_photo_url ? `<img src="${esc(booking.appearance_photo_url)}" alt="Anhänger" style="width:100%;max-width:320px;border-radius:8px;display:block;margin-bottom:10px;" />` : ''}
+          ${booking.license_plate ? `<div style="display:flex;justify-content:space-between;font-size:.86rem;"><span style="color:#aaa;">Kennzeichen</span><strong style="color:#fff;font-family:monospace;letter-spacing:.05em;">${esc(booking.license_plate)}</strong></div>` : ''}
+          <div style="font-size:.76rem;color:#86efac;margin-top:6px;">Aktuell grau (Branding folgt).</div>
+        </div>` : '';
+
       document.getElementById('bookingInfo').innerHTML = `
+        ${appearanceBlock}
         <div class="info-row"><span class="key">Name</span><span class="val">${esc(booking.customer_name)}</span></div>
         <div class="info-row"><span class="key">Tarif</span><span class="val">${esc(PRICING[booking.pricing_type] || booking.pricing_type)}</span></div>
         <div class="info-row"><span class="key">Von</span><span class="val">${fmtDate(booking.start_time)}</span></div>

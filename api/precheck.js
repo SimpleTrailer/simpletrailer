@@ -14,14 +14,16 @@ module.exports = async (req, res) => {
     try {
       const { data: booking, error } = await supabase
         .from('bookings')
-        .select('id, customer_name, start_time, end_time, pricing_type, total_amount, insurance_type, precheck_completed_at, status, precheck_token, trailer_id, trailers(name)')
+        .select('id, customer_name, start_time, end_time, pricing_type, total_amount, insurance_type, precheck_completed_at, status, precheck_token, trailer_id, trailers(name, license_plate, appearance_photo_url)')
         .eq('id', id)
         .eq('precheck_token', token)
         .single();
 
       if (error || !booking) return res.status(404).json({ error: 'Buchung nicht gefunden' });
-      // Trailer-Name flach in Response damit Frontend einfach drauf zugreifen kann
-      booking.trailer_name = booking.trailers?.name || null;
+      // Trailer-Daten flach in Response damit Frontend einfach drauf zugreifen kann
+      booking.trailer_name           = booking.trailers?.name || null;
+      booking.license_plate          = booking.trailers?.license_plate || null;
+      booking.appearance_photo_url   = booking.trailers?.appearance_photo_url || null;
       delete booking.trailers;
       return res.status(200).json({ booking });
     } catch (err) {

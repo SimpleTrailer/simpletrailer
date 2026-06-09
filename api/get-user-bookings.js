@@ -20,7 +20,7 @@ module.exports = async (req, res) => {
   try {
     const { data: bookings, error } = await supabase
       .from('bookings')
-      .select('*, trailers(name, price_kurztrip, price_halftag, price_day, price_extra_day)')
+      .select('*, trailers(name, price_kurztrip, price_halftag, price_day, price_extra_day, license_plate, appearance_photo_url)')
       .eq('customer_email', user.email)
       .order('created_at', { ascending: false });
 

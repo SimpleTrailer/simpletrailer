@@ -24,7 +24,7 @@ module.exports = async (req, res) => {
 
     try {
       const { data: booking, error } = await supabase
-        .from('bookings').select('*, trailers(name, late_fee_per_hour, last_lat, last_lng, last_seen_at)')
+        .from('bookings').select('*, trailers(name, late_fee_per_hour, last_lat, last_lng, last_seen_at, license_plate, appearance_photo_url)')
         .eq('id', id).eq('return_token', token).single();
 
       if (error || !booking) return res.status(404).json({ error: 'Buchung nicht gefunden' });
@@ -80,7 +80,7 @@ module.exports = async (req, res) => {
       // Fallback: 6-stellig zufällig wenn kein fester Code hinterlegt (Migration noch ausstehend).
       const { data: trailerNow } = await supabase
         .from('trailers')
-        .select('last_lat,last_lng,lat,lng,access_code,license_plate')
+        .select('last_lat,last_lng,lat,lng,access_code,license_plate,appearance_photo_url')
         .eq('id', meta.trailer_id)
         .maybeSingle();
       const pickupLat = (trailerNow?.last_lat ?? trailerNow?.lat) || null;
@@ -225,7 +225,19 @@ info@simpletrailer.de · simpletrailer.de`;
             </div>
             <div style="background:#1A1A1A;border-radius:16px;padding:32px;border:1px solid #383838;">
               <h1 style="margin:0 0 8px;font-size:1.4rem;">Mietvertrag bestätigt</h1>
-              <p style="color:#888;margin:0 0 28px;">Hallo ${meta.customer_name}, dein Anhänger ist reserviert.</p>
+              <p style="color:#888;margin:0 0 24px;">Hallo ${meta.customer_name}, dein Anhänger ist reserviert.</p>
+
+              <!-- "So findest du den Anhaenger" — nur sichtbar nach Buchung -->
+              <div style="background:#0a1a0a;border:1.5px solid #22c55e;border-radius:12px;padding:18px 20px;margin:0 0 22px;">
+                <p style="color:#4ade80;font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin:0 0 12px;">🔍 So findest du deinen Anhänger</p>
+                ${trailerNow?.appearance_photo_url ? `<img src="${trailerNow.appearance_photo_url}" alt="So sieht dein Anhänger aus" style="width:100%;max-width:400px;border-radius:8px;display:block;margin:0 auto 14px;" />` : ''}
+                <table style="width:100%;font-size:.9rem;border-collapse:collapse;">
+                  <tr><td style="color:#888;padding:5px 0;">Kennzeichen</td><td style="text-align:right;padding:5px 0;"><strong style="color:#fff;font-family:monospace;letter-spacing:.05em;">${trailerNow?.license_plate || '–'}</strong></td></tr>
+                  <tr><td style="color:#888;padding:5px 0;">Farbe</td><td style="text-align:right;padding:5px 0;color:#ddd;">Grau (Branding folgt)</td></tr>
+                </table>
+                <p style="color:#86efac;font-size:.78rem;margin:12px 0 0;line-height:1.5;">Im Kundenkonto findest du auch GPS-Position + Route in Google Maps.</p>
+              </div>
+
               <div style="background:#111;border-radius:10px;padding:16px 20px;margin-bottom:20px;">
                 <p style="color:#E85D00;font-size:0.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin:0 0 4px;">Buchungsnummer</p>
                 <p style="font-weight:800;font-size:1.1rem;margin:0;">#${booking.id.slice(0, 8).toUpperCase()}</p>

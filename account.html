@@ -763,6 +763,21 @@
       statusBlock = `<div style="background:#1a0808;border:1px solid #dc2626;border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:.88rem;color:#fca5a5;">⚠ Rückgabe überfällig — 15 €/h Verspätungsgebühr läuft</div>`;
     }
 
+    // "So findest du den Anhaenger"-Block — Foto + Kennzeichen.
+    // Nur Mieter mit aktiver Buchung sieht das (kein Public-Foto).
+    let appearanceHtml = '';
+    const plate = b.trailers?.license_plate;
+    const photo = b.trailers?.appearance_photo_url;
+    if (plate || photo) {
+      appearanceHtml = `
+        <div style="background:#0a1a0a;border:1.5px solid #22c55e;border-radius:12px;padding:14px 16px;margin-bottom:14px;">
+          <div style="font-weight:700;font-size:.92rem;margin-bottom:10px;color:#86efac;">🔍 So findest du deinen Anhänger</div>
+          ${photo ? `<img src="${photo}" alt="Anhänger-Vorschau" style="width:100%;border-radius:8px;display:block;margin-bottom:10px;" />` : ''}
+          ${plate ? `<div style="display:flex;justify-content:space-between;font-size:.86rem;"><span style="color:#aaa;">Kennzeichen</span><strong style="color:#fff;font-family:monospace;letter-spacing:.05em;">${plate}</strong></div>` : ''}
+          <div style="font-size:.78rem;color:#86efac;margin-top:6px;">Aktuell grau (Branding folgt).</div>
+        </div>`;
+    }
+
     // Standort-Block — Adresse + Route in Google Maps. Erscheint bei jeder
     // confirmed/active Buchung damit Mieter weiss wo der Anhaenger steht.
     const lat = b.pickup_lat;
@@ -910,6 +925,7 @@
         ${INS_LABEL[b.insurance_type || 'none']}${b.cancellation_protection ? ' · ✓ Kostenlose Stornierung' : ''} · <strong style="color:var(--orange)">${(b.total_amount||0).toFixed(2).replace('.',',')} €</strong>
       </div>
       ${statusBlock}
+      ${appearanceHtml}
       ${locationHtml}
       ${accessCodeHtml}
       ${actionHtml}
