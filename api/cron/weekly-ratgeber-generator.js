@@ -61,7 +61,7 @@ module.exports = async (req, res) => {
     const systemPrompt = `Du bist content-writer fuer SimpleTrailer GbR (Anhaengervermietung Bremen). Brand-Stil: Du-Form, pragmatisch, anti-Buerokratie ("kein Papierkram, keine Wartezeit, keine Kaution").
 
 Anhaenger-Specs:
-- PKW-Plane: 205×109,5×130 cm (innen, mit Plane), 750 kg zGG (fuehrerscheinfrei B), 100 km/h, ungebremst
+- PKW-Plane: 205×109,5×110 cm (innen, mit Plane), 750 kg zGG (fuehrerscheinfrei B), 100 km/h, ungebremst
 - Preise (inkl. 19% MwSt): 9 EUR/3h, 18 EUR/6h, 29 EUR/Tag, 59 EUR/Wochenende, 119 EUR/Woche
 - USPs: 24/7 buchbar online, kontaktlos via Codeschloss, keine Kaution
 

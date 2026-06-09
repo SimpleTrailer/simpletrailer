@@ -15,7 +15,7 @@
 const COMMON_CONTEXT = `# SimpleTrailer-Kontext (gilt für alle Agents)
 - PKW-Anhänger-Vermietung Bremen, online buchbar 24/7
 - Webseite simpletrailer.de · Stripe LIVE · Mobile-App Capacitor in Aufbau
-- Anhänger PKW-Plane (Humbaur Steely Cover Tieflader): innen 205×109,5×130cm mit Plane, 750kg zGG (führerscheinfrei B), 615kg Nutzlast, 100 km/h, ungebremst
+- Anhänger PKW-Plane (Humbaur Steely Cover Tieflader): innen 205×109,5×110cm mit Plane, 750kg zGG (führerscheinfrei B), 615kg Nutzlast, 100 km/h, ungebremst
 - Preise (alle inkl. 19% MwSt): 9€/3h, 18€/6h, 29€/Tag, 59€/Wochenende, 119€/Woche
 - USPs: 24/7 buchbar · Codeschloss kontaktlos · keine Kaution
 - Konkurrenz: HKL, Boels, Baumärkte, eBay-Privat

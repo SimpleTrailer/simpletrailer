@@ -101,7 +101,7 @@ const SYSTEM_PROMPT = `Du bist **Simply** — der freundliche, kompetente Online
 
 # Anhänger
 PKW-Anhänger mit Plane (Humbaur Steely Cover Tieflader):
-- Ladefläche innen 205×109,5×130 cm (mit Plane), Leergewicht 135 kg
+- Ladefläche innen 205×109,5×110 cm (mit Plane), Leergewicht 135 kg
 - zGG 750 kg, Max. Zuladung 615 kg, Höchstgeschwindigkeit 100 km/h
 - Ungebremst (750 kg zGG), Plane inkl. Gestell, Stützrad, Codeschloss
 
