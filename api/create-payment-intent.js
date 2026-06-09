@@ -123,11 +123,20 @@ module.exports = async (req, res) => {
       });
     }
 
+    // setup_future_usage NUR fuer Karten setzen (PayPal/Klarna/Amazon Pay
+    // unterstuetzen das nur teilweise und werden sonst KOMPLETT ausgeblendet).
+    // Konsequenz: bei Karte ist Auto-Charge bei Verspaetung/Schaden moeglich,
+    // bei anderen Methoden faellt Auto-Charge auf manuelle E-Mail mit
+    // Zahlungslink zurueck (process-return.js loggt + Lion-Mail).
+    // Im Tausch: Mieter sehen PayPal, Apple Pay, Google Pay, Link als Option.
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amountInCents, currency: 'eur',
       customer: customer.id,
-      setup_future_usage: 'off_session',
       automatic_payment_methods: { enabled: true },
+      payment_method_options: {
+        card: { setup_future_usage: 'off_session' },
+        link: { setup_future_usage: 'off_session' }
+      },
       receipt_email: customer_email,
       description: `SimpleTrailer – ${trailer.name} – ${pricing_type}`,
       metadata: { trailer_id, pricing_type, start_time, end_time, customer_name, customer_email, customer_phone: customer_phone || '', customer_address: customer_address || '', insurance_type: insType, insurance_amount: String(insAmount), user_id: user_id || '', agb_version: agb_version || '2026-06-05', agb_accepted_at: agbAcceptedAt, agb_accepted_ip: agbAcceptedIp, free_floating: freeFloating ? '1' : '0', free_floating_fee: String(freeFloatingFee), cancellation_protection: cancellationProtection ? '1' : '0', cancellation_protection_fee: String(cancellationProtectionFee) }
