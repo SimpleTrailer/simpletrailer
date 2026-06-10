@@ -140,6 +140,41 @@
     .user-name { font-weight:600; font-size:.85rem; }
     .user-email { font-size:.75rem; color:var(--gray); }
 
+    /* ── PANELS — einheitliche Dashboard-Boxen ───────────────── */
+    .panel { background:#0f0f0f; border:1px solid var(--border); border-radius:14px; padding:18px 22px; min-width:0; }
+    .panel--live   { background:linear-gradient(135deg,#1a1a1a,#0f0f0f); }
+    .panel--accent { background:linear-gradient(135deg,#1a1410,#0d0d0d); border-color:var(--orange); }
+    .panel--ai     { background:linear-gradient(135deg,#1a0f29,#0d0d0d); border-color:#3a1a5f; }
+    .panel-head { display:flex; align-items:center; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
+    .panel-icon { font-size:1.05rem; line-height:1; }
+    .panel-title { font-size:.78rem; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--gray); }
+    .panel--accent .panel-title { color:var(--orange); }
+    .panel--ai .panel-title { color:#a78bfa; }
+    .panel-meta { margin-left:auto; font-size:.72rem; color:var(--gray); display:flex; gap:8px; align-items:center; }
+
+    /* ── PAGE-HEAD — einheitlicher Tab-Kopf ──────────────────── */
+    .page-head { display:flex; justify-content:space-between; align-items:flex-end; gap:14px; flex-wrap:wrap; margin-bottom:18px; }
+    .page-title { font-size:1.35rem; font-weight:800; letter-spacing:-.02em; margin:0; line-height:1.15; }
+    .page-sub { color:var(--gray); font-size:.85rem; margin:4px 0 0; }
+
+    /* ── SEC-LABEL — graue Zwischen-Überschrift ──────────────── */
+    .sec-label { font-size:.65rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--gray); margin:0 0 8px; }
+
+    /* ── TABS: sticky + Gruppen-Trenner ──────────────────────── */
+    .tabs { position:sticky; top:60px; z-index:90; box-shadow:0 8px 24px rgba(0,0,0,.45); }
+    .tab-sep { width:1px; align-self:stretch; margin:4px 2px; background:var(--border); flex-shrink:0; }
+
+    /* Leaflet-Karten unter die sticky Tabs sperren */
+    #cpTrackerMap, #cpReturnMap { position:relative; z-index:0; }
+
+    /* ── COCKPIT: 2-Spalten-Dashboard auf Desktop ────────────── */
+    #cockpitContent { display:grid; grid-template-columns:1fr; gap:16px; grid-auto-flow:dense; }
+    #cockpitContent > * { grid-column:1 / -1; min-width:0; }
+    @media (min-width:1100px) {
+      #cockpitContent { grid-template-columns:1fr 1fr; }
+      #cockpitContent > .span-half { grid-column:auto / span 1; }
+    }
+
     @media(max-width:700px) {
       .container { padding:16px 14px 60px; }
       .stats-grid { grid-template-columns:repeat(2,1fr); gap:8px; }
@@ -147,6 +182,9 @@
       .toolbar { gap:8px; }
       .search-wrap { max-width:none; }
       .filter-row { margin-left:0; }
+      .panel { padding:14px 16px; }
+      .login-card { padding:28px 22px; }
+      .page-title { font-size:1.2rem; }
     }
   </style>
 </head>
@@ -218,6 +256,7 @@
       <button class="tab-btn" id="tabBuchungen" onclick="switchTab('buchungen')">📋 Buchungen</button>
       <button class="tab-btn" id="tabNutzer" onclick="switchTab('nutzer')">👤 Nutzer</button>
       <button class="tab-btn" id="tabFlotte" onclick="switchTab('flotte')">🚛 Flotte</button>
+      <span class="tab-sep" aria-hidden="true"></span>
       <button class="tab-btn" id="tabAistab" onclick="switchTab('aistab')">🤖 AI-Stab</button>
       <button class="tab-btn" id="tabStatistiken" onclick="switchTab('statistiken')">📊 Statistiken</button>
       <button class="tab-btn" id="tabRechner" onclick="switchTab('rechner')">🧮 Rechner</button>
@@ -232,10 +271,10 @@
       <div id="cockpitContent" style="display:none;">
 
         <!-- REFUND-PENDING (nicht fahrtauglich Meldungen) — wird per JS gefüllt -->
-        <div id="refundPendingWrap" style="display:none;margin-bottom:18px;"></div>
+        <div id="refundPendingWrap" style="display:none;"></div>
 
         <!-- LIVE-STATUS -->
-        <div style="background:linear-gradient(135deg,#1a1a1a,#0f0f0f);border:1px solid var(--border);border-radius:14px;padding:18px 22px;margin-bottom:18px;display:flex;flex-wrap:wrap;gap:24px;align-items:center;">
+        <div class="panel panel--live" style="display:flex;flex-wrap:wrap;gap:24px;align-items:center;">
           <div style="display:flex;align-items:center;gap:10px;">
             <span style="position:relative;display:inline-block;width:10px;height:10px;background:#4ade80;border-radius:50%;"><span style="position:absolute;inset:-4px;border:2px solid #4ade80;border-radius:50%;animation:livePulse 2s infinite;"></span></span>
             <strong style="color:#4ade80;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;">Live</strong>
@@ -247,17 +286,17 @@
         </div>
 
         <!-- HEUTE ZU TUN -->
-        <div style="background:linear-gradient(135deg,#1a1410,#0d0d0d);border:1px solid var(--orange);border-radius:14px;padding:18px 22px;margin-bottom:18px;">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
-            <span style="font-size:1.1rem;">☀️</span>
-            <strong style="font-size:.85rem;letter-spacing:.05em;text-transform:uppercase;color:var(--orange);">Heute zu tun</strong>
-            <span id="cpBriefingCount" style="margin-left:auto;font-size:.72rem;color:var(--gray);">–</span>
+        <div class="panel panel--accent span-half">
+          <div class="panel-head">
+            <span class="panel-icon">☀️</span>
+            <strong class="panel-title">Heute zu tun</strong>
+            <span id="cpBriefingCount" class="panel-meta">–</span>
           </div>
           <div id="cpBriefingItems" style="font-size:.88rem;color:#bbb;">Lade…</div>
         </div>
 
         <!-- KPI-CARDS -->
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:18px;">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;">
           <div class="stat-card" style="background:#0f1f0f;border-color:#1a3a1a;">
             <div class="stat-label" style="color:#4ade80;">Heute</div>
             <div class="stat-val" id="cpTodayCount">–</div>
@@ -281,10 +320,10 @@
         </div>
 
         <!-- ANOMALIEN -->
-        <div style="background:#0f0f0f;border:1px solid var(--border);border-radius:14px;padding:18px 22px;margin-bottom:18px;">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
-            <span style="font-size:1.1rem;">⚠️</span>
-            <strong style="font-size:.85rem;letter-spacing:.05em;text-transform:uppercase;color:var(--gray);">Anomalien & Alerts</strong>
+        <div class="panel span-half">
+          <div class="panel-head">
+            <span class="panel-icon">⚠️</span>
+            <strong class="panel-title">Anomalien & Alerts</strong>
           </div>
           <div id="cpAnomalies"></div>
         </div>
@@ -303,21 +342,21 @@
           #cpAiInsight > *:first-child { margin-top:0; }
           #cpAiInsight > *:last-child  { margin-bottom:0; }
         </style>
-        <div style="background:linear-gradient(135deg,#1a0f29,#0d0d0d);border:1px solid #3a1a5f;border-radius:14px;padding:22px 26px;margin-bottom:18px;">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
-            <span style="font-size:1.1rem;">💡</span>
-            <strong style="font-size:.85rem;letter-spacing:.05em;text-transform:uppercase;color:#a78bfa;">Empfehlung der Woche</strong>
-            <span style="font-size:.7rem;color:#666;margin-left:auto;">consultant-Agent</span>
+        <div class="panel panel--ai span-half">
+          <div class="panel-head">
+            <span class="panel-icon">💡</span>
+            <strong class="panel-title">Empfehlung der Woche</strong>
+            <span class="panel-meta">consultant-Agent</span>
           </div>
           <div id="cpAiInsight" style="font-size:.93rem;line-height:1.65;color:#ddd;">Noch keine Empfehlung — der consultant analysiert Sonntag-Abend zum ersten Mal.</div>
         </div>
 
         <!-- 📍 LIVE-TRACKER (Teltonika TAT240 via Traccar) -->
-        <div id="cpTrackerBox" style="background:#0f0f0f;border:1px solid var(--border);border-radius:14px;padding:18px 22px;margin-bottom:18px;">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
-            <span style="font-size:1.1rem;">📍</span>
-            <strong style="font-size:.85rem;letter-spacing:.05em;text-transform:uppercase;color:var(--gray);">Live-Anhänger-Standorte</strong>
-            <span id="cpTrackerSyncState" style="margin-left:auto;font-size:.72rem;color:var(--gray);">–</span>
+        <div id="cpTrackerBox" class="panel">
+          <div class="panel-head">
+            <span class="panel-icon">📍</span>
+            <strong class="panel-title">Live-Anhänger-Standorte</strong>
+            <span id="cpTrackerSyncState" class="panel-meta">–</span>
           </div>
           <div id="cpTheftAlertsBar" style="display:none;background:linear-gradient(135deg,#1f0a0a,#1a1a1a);border:1.5px solid #ef4444;border-radius:10px;padding:12px 16px;margin-bottom:12px;"></div>
           <div id="cpTrackerMap" style="height:340px;border-radius:10px;background:#0d0d0d;border:1px solid var(--border);"></div>
@@ -346,10 +385,10 @@
           .ainbox-modal-inner h1, .ainbox-modal-inner h2, .ainbox-modal-inner h3 { color:#fff; }
           .ainbox-modal-inner table { width:100%; }
         </style>
-        <div id="cpAgentInboxBox" style="background:#0f0f0f;border:1px solid var(--border);border-radius:14px;padding:18px 22px;margin-bottom:18px;">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
-            <span style="font-size:1.1rem;">📥</span>
-            <strong style="font-size:.85rem;letter-spacing:.05em;text-transform:uppercase;color:var(--gray);">Agent-Inbox</strong>
+        <div id="cpAgentInboxBox" class="panel span-half">
+          <div class="panel-head">
+            <span class="panel-icon">📥</span>
+            <strong class="panel-title">Agent-Inbox</strong>
             <span id="cpAgentInboxBadge" style="background:#a78bfa;color:#0d0d0d;font-size:.68rem;font-weight:800;padding:2px 8px;border-radius:10px;display:none;">0 ungelesen</span>
             <span style="margin-left:auto;display:flex;gap:8px;align-items:center;">
               <label style="font-size:.7rem;color:var(--gray);display:flex;align-items:center;gap:5px;cursor:pointer;">
@@ -369,11 +408,11 @@
         </div>
 
         <!-- 🧭 RÜCKGABE-STATISTIK (Falsch-Rückgaben, Distanzen, Heatmap) -->
-        <div id="cpReturnStatsBox" style="background:#0f0f0f;border:1px solid var(--border);border-radius:14px;padding:18px 22px;margin-bottom:18px;display:none;">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
-            <span style="font-size:1.1rem;">🧭</span>
-            <strong style="font-size:.85rem;letter-spacing:.05em;text-transform:uppercase;color:var(--gray);">Rückgabe-Statistik (30 Tage)</strong>
-            <span id="cpReturnStatsTotal" style="margin-left:auto;font-size:.72rem;color:var(--gray);">–</span>
+        <div id="cpReturnStatsBox" class="panel" style="display:none;">
+          <div class="panel-head">
+            <span class="panel-icon">🧭</span>
+            <strong class="panel-title">Rückgabe-Statistik (30 Tage)</strong>
+            <span id="cpReturnStatsTotal" class="panel-meta">–</span>
           </div>
           <!-- KPI-Reihe -->
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px;">
@@ -409,7 +448,7 @@
         </div>
 
         <!-- LINK ZU AI-STAB + STATISTIKEN -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
           <button onclick="switchTab('aistab')" style="background:#0f0f0f;border:1px solid var(--border);border-radius:12px;padding:14px 18px;text-align:left;cursor:pointer;color:var(--white);font-family:var(--font);transition:all .2s;" onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='var(--border)'">
             <div style="font-size:.7rem;color:var(--gray);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;">🤖 AI-Stab</div>
             <div style="font-size:.95rem;font-weight:600;">10 Mitarbeiter · 11 Routinen autonom</div>
@@ -513,14 +552,14 @@
     <div id="tabContentAistab" style="display:none">
 
       <!-- INTRO -->
-      <div style="background:linear-gradient(135deg,#1a0f29,#0d0d0d);border:1px solid #3a1a5f;border-radius:14px;padding:24px;margin-bottom:18px;">
-        <h2 style="margin:0 0 8px;font-size:1.3rem;">🤖 SimpleTrailer AI-Stab</h2>
+      <div class="panel panel--ai" style="padding:24px;margin-bottom:18px;">
+        <h2 class="page-title" style="margin-bottom:8px;">🤖 SimpleTrailer AI-Stab</h2>
         <p style="margin:0;color:#bbb;font-size:.9rem;line-height:1.6;">Dein Team aus spezialisierten KI-Mitarbeitern. Jeder hat eine klare Aufgabe, eigene Werkzeuge und ist auf SimpleTrailer trainiert. Manche arbeiten <strong style="color:#4ade80;">autonom</strong> (laufen automatisch), andere <strong style="color:#60a5fa;">on-demand</strong> (rufst Du auf), und einige <strong style="color:#f59e0b;">halb-autonom</strong> (entwerfen für Dich, Du genehmigst).</p>
       </div>
 
       <!-- AGENT-GRID -->
       <h3 style="font-size:.78rem;color:var(--gray);text-transform:uppercase;letter-spacing:.1em;margin:0 0 12px;">📝 Marketing & Kommunikation</h3>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;margin-bottom:24px;">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr));gap:14px;margin-bottom:24px;">
 
         <div style="background:#0f0f0f;border:1px solid var(--border);border-radius:12px;padding:18px;">
           <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10px;">
@@ -560,7 +599,7 @@
       </div>
 
       <h3 style="font-size:.78rem;color:var(--gray);text-transform:uppercase;letter-spacing:.1em;margin:0 0 12px;">🛡️ Code & Recht</h3>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;margin-bottom:24px;">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr));gap:14px;margin-bottom:24px;">
 
         <div style="background:#0f0f0f;border:1px solid var(--border);border-radius:12px;padding:18px;">
           <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10px;">
@@ -600,7 +639,7 @@
       </div>
 
       <h3 style="font-size:.78rem;color:var(--gray);text-transform:uppercase;letter-spacing:.1em;margin:0 0 12px;">🎯 Strategie & Mobile</h3>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;margin-bottom:24px;">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr));gap:14px;margin-bottom:24px;">
 
         <div style="background:#0f0f0f;border:1px solid var(--border);border-radius:12px;padding:18px;">
           <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10px;">
@@ -765,10 +804,10 @@
 
     <!-- ═══════════════════════════════════════════════ FLOTTE TAB -->
     <div id="tabContentFlotte" style="display:none">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;gap:14px;flex-wrap:wrap;">
+      <div class="page-head">
         <div>
-          <h2 style="margin:0 0 4px;font-size:1.4rem;letter-spacing:-.02em;">🚛 Anhänger-Flotte</h2>
-          <p style="color:var(--gray);font-size:.85rem;margin:0;">Codes, TÜV, Kennzeichen — alles auf einen Blick.</p>
+          <h2 class="page-title">🚛 Anhänger-Flotte</h2>
+          <p class="page-sub">Codes, TÜV, Kennzeichen — alles auf einen Blick.</p>
         </div>
         <button onclick="loadFlotte()" style="background:#1a1a1a;border:1px solid var(--border);color:#fff;padding:8px 14px;border-radius:8px;cursor:pointer;font-family:var(--font);font-size:.85rem;">🔄 Neu laden</button>
       </div>
@@ -856,7 +895,7 @@
     <!-- ═══════════════════════════════════════════════ STATISTIKEN TAB -->
     <div id="tabContentStatistiken" style="display:none">
       <!-- AKTUELL (was du heute brauchst) -->
-      <p style="font-size:.65rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gray);margin-bottom:8px">Aktuell</p>
+      <p class="sec-label">Aktuell</p>
       <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); margin-bottom:18px">
         <div class="stat-card green">
           <div class="stat-label">Umsatz Monat</div>
@@ -876,7 +915,7 @@
       </div>
 
       <!-- ALL-TIME (Lifetime-Stats) -->
-      <p style="font-size:.65rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gray);margin-bottom:8px">All-Time</p>
+      <p class="sec-label">All-Time</p>
       <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); margin-bottom:24px">
         <div class="stat-card orange">
           <div class="stat-label">Umsatz gesamt</div>
@@ -896,8 +935,8 @@
       </div>
 
       <!-- ── Externe Tools: Direkt-Links zu Vercel + Clarity ── -->
-      <div style="background:var(--s1); border:1.5px solid var(--border); border-radius:14px; padding:20px 24px; margin-bottom:20px">
-        <p class="section-tag" style="margin-top:0">Externe Tools — direkt zur richtigen Seite</p>
+      <div class="panel" style="margin-bottom:20px">
+        <p class="section-tag" style="margin-top:0;">Externe Tools — direkt zur richtigen Seite</p>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px">
           <a href="https://vercel.com/simpletrailers-projects/simpletrailer/analytics" target="_blank" rel="noopener" style="text-decoration:none;background:var(--s2);border-radius:10px;padding:14px;display:block;border:1px solid var(--border);transition:border-color .2s" onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='var(--border)'">
             <div style="font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gray);margin-bottom:4px">📊 Vercel</div>
@@ -943,8 +982,8 @@
       </div>
 
       <!-- ── Charts: Wochentag + Tageszeit nebeneinander auf Desktop ── -->
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:16px;margin-bottom:20px">
-        <div style="background:var(--s1); border:1.5px solid var(--border); border-radius:14px; padding:20px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(380px,100%),1fr));gap:16px;margin-bottom:20px">
+        <div class="panel">
           <p class="section-tag" style="margin-top:0">Buchungen nach Wochentag</p>
           <div id="weekdayChart" style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px;align-items:end;height:160px;margin:14px 0 4px">–</div>
           <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px;text-align:center;color:var(--gray);font-size:.7rem;font-weight:600;letter-spacing:.05em">
@@ -952,7 +991,7 @@
           </div>
         </div>
 
-        <div style="background:var(--s1); border:1.5px solid var(--border); border-radius:14px; padding:20px">
+        <div class="panel">
           <p class="section-tag" style="margin-top:0">Buchungen nach Tageszeit</p>
           <div id="hourChart" style="display:grid;grid-template-columns:repeat(24,1fr);gap:3px;align-items:end;height:160px;margin:14px 0 4px">–</div>
           <div style="display:flex;justify-content:space-between;color:var(--gray);font-size:.7rem;font-weight:600;margin-top:6px">
@@ -962,7 +1001,7 @@
       </div>
 
       <!-- ── Umsatz-Trend volle Breite (Hauptchart) ── -->
-      <div style="background:var(--s1); border:1.5px solid var(--border); border-radius:14px; padding:20px; margin-bottom:20px">
+      <div class="panel" style="margin-bottom:20px">
         <p class="section-tag" style="margin-top:0">Umsatz letzte 30 Tage</p>
         <div id="revenueChart" style="display:grid;grid-template-columns:repeat(30,1fr);gap:2px;align-items:end;height:140px;margin:14px 0 4px">–</div>
         <div style="display:flex;justify-content:space-between;color:var(--gray);font-size:.7rem;font-weight:600;margin-top:6px">
@@ -973,26 +1012,26 @@
       </div>
 
       <!-- ── Anhänger-Auslastung + Schutzpakete nebeneinander ── -->
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:16px;margin-bottom:20px">
-        <div style="background:var(--s1); border:1.5px solid var(--border); border-radius:14px; padding:20px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(380px,100%),1fr));gap:16px;margin-bottom:20px">
+        <div class="panel">
           <p class="section-tag" style="margin-top:0">Anhänger-Auslastung</p>
           <div id="trailerStats">–</div>
         </div>
 
-        <div style="background:var(--s1); border:1.5px solid var(--border); border-radius:14px; padding:20px">
+        <div class="panel">
           <p class="section-tag" style="margin-top:0">Schutzpakete</p>
           <div id="insuranceStats">–</div>
         </div>
       </div>
 
       <!-- ── Letzte Buchungen ── -->
-      <div style="background:var(--s1); border:1.5px solid var(--border); border-radius:14px; padding:20px; margin-bottom:20px">
+      <div class="panel" style="margin-bottom:20px">
         <p class="section-tag" style="margin-top:0">Letzten 5 Buchungen</p>
         <div id="recentBookingsList">–</div>
       </div>
 
       <!-- ── TÜV & Wartung pro Anhänger ── -->
-      <div style="background:var(--s1); border:1.5px solid var(--border); border-radius:14px; padding:20px; margin-bottom:20px">
+      <div class="panel" style="margin-bottom:20px">
         <p class="section-tag" style="margin-top:0">🔧 TÜV & Wartungs-Termine</p>
         <p style="font-size:.8rem;color:var(--gray);margin:0 0 14px;">Cron prüft täglich 9:00 Berlin. Mail bei 30/14/7/1 Tagen vor Fälligkeit. Bei ≤ 7 Tagen → 🚨 Urgent-Mail.</p>
         <div id="tuevTable" style="overflow-x:auto;">–</div>
@@ -1007,11 +1046,10 @@
 
     <!-- ═══════════════════════════════════════════════ RECHNER TAB -->
     <div id="tabContentRechner" style="display:none">
-      <div style="border-bottom:2px solid var(--white);padding-bottom:16px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:end;flex-wrap:wrap;gap:14px;">
+      <div class="page-head" style="border-bottom:1px solid var(--border);padding-bottom:16px;">
         <div>
-          <div style="font-size:.7rem;color:var(--orange);text-transform:uppercase;letter-spacing:.3em;font-weight:700;margin-bottom:6px;">SimpleTrailer GbR</div>
-          <h1 style="font-size:2.3rem;font-weight:900;line-height:1;margin:0;">Business-Rechner</h1>
-          <p style="font-size:.82rem;color:var(--gray);margin:8px 0 0;">Eingaben werden automatisch gespeichert. <span id="rechnerSavedHint"></span></p>
+          <h1 class="page-title">🧮 Business-Rechner</h1>
+          <p class="page-sub">Was-wäre-wenn-Planung · Eingaben werden automatisch gespeichert. <span id="rechnerSavedHint"></span></p>
         </div>
         <div style="display:flex;gap:10px;align-items:center;">
           <span id="rechnerRealUsage" style="font-size:.78rem;color:var(--gray);"></span>
@@ -1842,7 +1880,7 @@
                   <strong style="font-size:.92rem;">${b.trailers?.name || 'Anhänger'} · #${b.id.slice(0,8).toUpperCase()}</strong>
                   <span style="color:#fca5a5;font-weight:700;">${(b.total_amount || 0).toFixed(2).replace('.', ',')} €</span>
                 </div>
-                <div style="font-size:.82rem;color:#ddd;margin-bottom:4px;">${b.customer_name} · <a href="mailto:${b.customer_email}" style="color:var(--orange);">${b.customer_email}</a></div>
+                <div style="font-size:.82rem;color:#ddd;margin-bottom:4px;">${escapeHtml(b.customer_name)} · <a href="mailto:${escapeHtml(b.customer_email)}" style="color:var(--orange);">${escapeHtml(b.customer_email)}</a></div>
                 <div style="font-size:.78rem;color:var(--gray);margin-bottom:10px;">Gemeldet: ${b.not_drivable_reported_at ? new Date(b.not_drivable_reported_at).toLocaleString('de-DE') : '–'}</div>
                 <div style="background:#1a0d0d;border-left:3px solid #dc2626;padding:10px 14px;border-radius:6px;font-size:.84rem;color:#fecaca;margin-bottom:10px;white-space:pre-wrap;">${(b.not_drivable_description || '(keine Beschreibung)').replace(/</g,'&lt;')}</div>
                 ${b.not_drivable_photo_url ? `<p style="margin:0 0 12px;"><a href="${b.not_drivable_photo_url}" target="_blank" rel="noopener" style="color:var(--orange);font-size:.84rem;">📷 Foto öffnen →</a></p>` : ''}
@@ -1885,10 +1923,11 @@
       if (!res.ok) throw new Error(d.error || 'Fehler');
       renderCockpit(d);
       document.getElementById('cockpitLoading').style.display = 'none';
-      document.getElementById('cockpitContent').style.display = 'block';
+      document.getElementById('cockpitContent').style.display = 'grid';
       loadRefundPending();  // separate, läuft parallel
     } catch (e) {
-      document.getElementById('cockpitLoading').innerHTML = `<p style="color:var(--red)">Fehler: ${e.message}</p>`;
+      document.getElementById('cockpitLoading').innerHTML = `<p style="color:var(--red)">Fehler: ${escapeHtml(e.message)}</p>` +
+        (location.hostname === 'simpletrailer.de' ? '' : `<p style="color:var(--gray);font-size:.8rem;margin-top:8px;">Hinweis: Lokal geöffnet gibt es keine Daten — das Dashboard lädt nur auf <strong>simpletrailer.de/admin</strong>.</p>`);
     }
     // Auto-Refresh alle 30s wenn auf Cockpit-Tab
     if (cockpitTimer) clearTimeout(cockpitTimer);
@@ -2388,7 +2427,7 @@
     document.getElementById('recentBookingsList').innerHTML = recent.map(b => `
       <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:.84rem;gap:12px;flex-wrap:wrap">
         <span style="font-family:monospace;color:var(--gray);font-size:.75rem">#${b.id.slice(0,8).toUpperCase()}</span>
-        <span style="font-weight:600;flex:1;min-width:100px">${b.customer_name || '–'}</span>
+        <span style="font-weight:600;flex:1;min-width:100px">${escapeHtml(b.customer_name) || '–'}</span>
         <span style="color:var(--gray);font-size:.78rem">${fmtDate(b.created_at)}</span>
         <span style="font-weight:700;color:var(--orange)">${fmtEur(b.total_amount)}</span>
         <span class="badge badge-${b.status}">${statusLabel[b.status] || b.status}</span>
@@ -2673,8 +2712,8 @@
       return `
         <tr style="cursor:pointer" onclick="openBookingModal(${i}, getFilteredBookings())">
           <td class="mono">#${b.id.slice(0,8).toUpperCase()}</td>
-          <td style="font-weight:600">${b.customer_name || '–'}</td>
-          <td style="color:var(--gray);font-size:.78rem">${b.customer_email || '–'}</td>
+          <td style="font-weight:600">${escapeHtml(b.customer_name) || '–'}</td>
+          <td style="color:var(--gray);font-size:.78rem">${escapeHtml(b.customer_email) || '–'}</td>
           <td>${fmtDate(b.start_time)}</td>
           <td>${fmtDate(b.end_time)}</td>
           <td>${b.pricing_type === '3h' ? '3 Std.' : b.pricing_type === 'day' ? 'Tag' : 'Wochenende'}</td>
@@ -2730,8 +2769,8 @@
       return;
     }
 
-    const initials = u => ((u.first_name?.[0] || '') + (u.last_name?.[0] || '') || u.email?.[0] || '?').toUpperCase();
-    const fullName = u => [u.first_name, u.last_name].filter(Boolean).join(' ') || '–';
+    const initials = u => escapeHtml(((u.first_name?.[0] || '') + (u.last_name?.[0] || '') || u.email?.[0] || '?').toUpperCase());
+    const fullName = u => [u.first_name, u.last_name].filter(Boolean).map(escapeHtml).join(' ') || '–';
 
     const rows = list.map(u => `
       <tr onclick="openUserModal(${JSON.stringify(u).replace(/"/g,'&quot;')})" style="cursor:pointer">
@@ -2740,11 +2779,11 @@
             <div class="user-avatar">${initials(u)}</div>
             <div>
               <div class="user-name">${fullName(u)}</div>
-              <div class="user-email">${u.email}</div>
+              <div class="user-email">${escapeHtml(u.email)}</div>
             </div>
           </div>
         </td>
-        <td style="color:var(--gray);font-size:.78rem">${u.phone || '–'}</td>
+        <td style="color:var(--gray);font-size:.78rem">${escapeHtml(u.phone) || '–'}</td>
         <td><span class="badge ${u.confirmed ? 'badge-ok' : 'badge-no'}">${u.confirmed ? 'Bestätigt' : 'Ausstehend'}</span></td>
         <td>${dlBadge(u.dl_status)}</td>
         <td style="text-align:center;font-weight:600">${u.bookings_count}</td>
@@ -2801,10 +2840,10 @@
       ${b.insurance_amount > 0 ? row('Schutzpaket-Preis', fmtEur(b.insurance_amount)) : ''}
 
       <p class="section-tag">Kunde</p>
-      ${row('Name', b.customer_name)}
-      ${row('E-Mail', b.customer_email)}
-      ${row('Telefon', b.customer_phone)}
-      ${b.customer_address ? row('Adresse', b.customer_address) : ''}
+      ${row('Name', escapeHtml(b.customer_name))}
+      ${row('E-Mail', escapeHtml(b.customer_email))}
+      ${row('Telefon', escapeHtml(b.customer_phone))}
+      ${b.customer_address ? row('Adresse', escapeHtml(b.customer_address)) : ''}
 
       <p class="section-tag">Zahlung</p>
       ${row('Stripe PI', b.stripe_payment_intent_id ? `<span class="mono">${b.stripe_payment_intent_id.slice(0,24)}…</span>` : '–')}
@@ -2819,14 +2858,14 @@
     if (typeof u === 'string') u = JSON.parse(u.replace(/&quot;/g, '"'));
     const row = (label, val) =>
       `<div class="modal-row"><span class="key">${label}</span><span class="val">${val || '–'}</span></div>`;
-    const fullName = [u.first_name, u.last_name].filter(Boolean).join(' ') || '–';
+    const fullName = [u.first_name, u.last_name].filter(Boolean).map(escapeHtml).join(' ') || '–';
 
     document.getElementById('modalTitle').textContent = 'Nutzerprofil';
     document.getElementById('modalBody').innerHTML = `
       <p class="section-tag" style="margin-top:0">Kontodaten</p>
       ${row('Name', fullName)}
-      ${row('E-Mail', u.email)}
-      ${row('Telefon', u.phone)}
+      ${row('E-Mail', escapeHtml(u.email))}
+      ${row('Telefon', escapeHtml(u.phone))}
       ${row('Status', `<span class="badge ${u.confirmed ? 'badge-ok' : 'badge-no'}">${u.confirmed ? 'E-Mail bestätigt' : 'Nicht bestätigt'}</span>`)}
       ${row('Registriert', fmtDate(u.created_at))}
       ${row('Letzter Login', fmtDate(u.last_sign_in_at))}
