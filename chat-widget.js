@@ -22,29 +22,33 @@
   // ===== Styles ====================================================
   const css = `
   .stc-fab {
-    position: fixed; bottom: 20px; right: 20px;
-    width: 64px; height: 64px;
-    background: linear-gradient(135deg, #E85D00, #FF8C42);
-    color: #fff; border: none; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
+    position: fixed; bottom: 14px; right: 14px;
+    width: 128px; height: auto;
+    background: transparent; border: none; padding: 0;
     cursor: pointer;
-    box-shadow: 0 6px 24px rgba(232,93,0,0.5), 0 0 0 0 rgba(232,93,0,0.4);
     z-index: 99998;
     transition: transform .2s;
-    animation: stc-pulse 2.4s ease-in-out infinite;
+    transform-origin: 50% 100%;
     font-family: 'Inter', system-ui, sans-serif;
   }
-  .stc-fab:hover { transform: scale(1.08); }
-  .stc-fab:active { transform: scale(0.96); }
+  .stc-fab img {
+    width: 100%; height: auto; display: block;
+    filter: drop-shadow(0 12px 20px rgba(0,0,0,0.55)) drop-shadow(0 0 20px rgba(232,93,0,0.22));
+    pointer-events: none;
+    animation: stc-bob 3.8s ease-in-out infinite;
+  }
+  .stc-fab:hover { transform: scale(1.06); }
+  .stc-fab:active { transform: scale(0.97); }
+  .stc-fab:focus-visible { outline: 2px solid #FF8C42; outline-offset: 6px; border-radius: 14px; }
   .stc-fab.hidden { display: none; }
-  .stc-fab svg { width: 30px; height: 30px; }
-  @keyframes stc-pulse {
-    0%, 100% { box-shadow: 0 6px 24px rgba(232,93,0,0.5), 0 0 0 0 rgba(232,93,0,0); }
-    50%      { box-shadow: 0 6px 24px rgba(232,93,0,0.5), 0 0 0 14px rgba(232,93,0,0); }
+  /* Simply wippt sanft auf seiner Federung */
+  @keyframes stc-bob {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-4px); }
   }
   .stc-fab-badge {
-    position: absolute; top: 0; right: 0;
-    width: 18px; height: 18px; border-radius: 50%;
+    position: absolute; top: 0; right: 12px;
+    width: 16px; height: 16px; border-radius: 50%;
     background: #22c55e; border: 2.5px solid #0D0D0D;
     box-shadow: 0 0 0 0 rgba(34,197,94,0.5);
     animation: stc-badge-pulse 2s ease-in-out infinite;
@@ -54,10 +58,10 @@
     50%      { box-shadow: 0 0 0 6px rgba(34,197,94,0); }
   }
 
-  /* Attention-Tooltip nach 10s — soll Simply bemerkbar machen ohne nervig zu sein */
+  /* Sprechblase nach 10s — kommt aus Simplys Mund */
   .stc-tooltip {
     position: fixed;
-    bottom: 96px; right: 20px;
+    bottom: 124px; right: 40px;
     max-width: 280px;
     background: #fff;
     color: #0D0D0D;
@@ -92,7 +96,7 @@
   .stc-tooltip .stc-tooltip-close:hover { color: #0D0D0D; }
   .stc-tooltip-arrow {
     position: absolute;
-    bottom: -8px; right: 28px;
+    bottom: -8px; right: 20px;
     width: 16px; height: 16px;
     background: #fff;
     transform: rotate(45deg);
@@ -100,18 +104,29 @@
     box-shadow: 4px 4px 8px rgba(0,0,0,0.06);
   }
 
-  /* Stärkere Pulse-Animation für FAB während Attention-Phase */
-  .stc-fab.attention {
-    animation: stc-pulse-strong 1.6s ease-in-out 3;
+  /* Aufgeregter Hüpfer während der Attention-Phase — Simply will was sagen */
+  .stc-fab.attention img {
+    animation: stc-wiggle 1.2s ease-in-out 3;
+    transform-origin: 50% 100%;
   }
-  @keyframes stc-pulse-strong {
-    0%, 100% { box-shadow: 0 6px 24px rgba(232,93,0,0.5), 0 0 0 0 rgba(232,93,0,0.55); transform: scale(1); }
-    50%      { box-shadow: 0 6px 24px rgba(232,93,0,0.5), 0 0 0 22px rgba(232,93,0,0); transform: scale(1.06); }
+  @keyframes stc-wiggle {
+    0%, 100% { transform: rotate(0deg) translateY(0); }
+    15%      { transform: rotate(-3deg) translateY(-7px); }
+    30%      { transform: rotate(2.5deg) translateY(-2px); }
+    45%      { transform: rotate(-2deg) translateY(-6px); }
+    65%      { transform: rotate(1.5deg) translateY(0); }
+    82%      { transform: rotate(-1deg) translateY(-2px); }
+  }
+
+  /* Barrierefreiheit: keine Dauer-Bewegung wenn der User das so eingestellt hat */
+  @media (prefers-reduced-motion: reduce) {
+    .stc-fab img, .stc-fab.attention img, .stc-fab-badge { animation: none !important; }
   }
 
   /* Mobile: Tooltip etwas kompakter */
   @media (max-width: 600px) {
-    .stc-tooltip { max-width: calc(100vw - 80px); font-size: 0.85rem; padding: 12px 14px; bottom: 88px; }
+    .stc-tooltip { max-width: calc(100vw - 110px); font-size: 0.85rem; padding: 12px 14px; bottom: 102px; right: 32px; }
+    .stc-tooltip-arrow { right: 16px; }
   }
 
   .stc-window {
@@ -157,8 +172,7 @@
       from { transform: translateY(100%); }
       to { transform: translateY(0); }
     }
-    .stc-fab { bottom: 16px; right: 16px; width: 58px; height: 58px; }
-    .stc-fab svg { width: 28px; height: 28px; }
+    .stc-fab { bottom: 12px; right: 12px; width: 104px; }
     /* Drag-Handle oben — prominenter als Popup-Hinweis */
     .stc-window::before {
       content: ''; position: absolute; top: 10px; left: 50%;
@@ -200,13 +214,12 @@
   }
   .stc-avatar {
     width: 38px; height: 38px; border-radius: 50%;
-    background: #fff; color: #E85D00;
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 800; font-size: 1rem;
+    background: #fff;
     box-shadow: 0 2px 8px rgba(0,0,0,0.2);
     flex-shrink: 0;
-    letter-spacing: -0.02em;
+    overflow: hidden;
   }
+  .stc-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .stc-header-text { flex: 1; min-width: 0; }
   .stc-header-text strong { display: block; font-size: .98rem; font-weight: 700; letter-spacing: -.01em; }
   .stc-header-text small { display: flex; align-items: center; font-size: .72rem; opacity: 0.92; margin-top: 2px; }
@@ -240,11 +253,11 @@
   .stc-msg-row.user { justify-content: flex-end; }
   .stc-msg-avatar {
     width: 26px; height: 26px; border-radius: 50%;
-    background: linear-gradient(135deg, #E85D00, #FF8C42);
-    color: #fff; flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center;
-    font-size: .68rem; font-weight: 800; letter-spacing: -.02em;
+    background: #fff; flex-shrink: 0;
+    overflow: hidden;
+    border: 1px solid #2A2A2C;
   }
+  .stc-msg-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
   .stc-msg {
     max-width: 78%;
@@ -394,14 +407,12 @@
   root.innerHTML = `
     <div class="stc-backdrop" id="stcBackdrop"></div>
     <button class="stc-fab" id="stcFab" aria-label="Chat öffnen" title="Frag Simply – dein Anhänger-Assistent">
-      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 0 1-3.6-.66L3 21l1.39-4.45A7.93 7.93 0 0 1 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
+      <img src="/simply-mascot.webp" alt="" width="640" height="485" loading="lazy" decoding="async">
       <span class="stc-fab-badge"></span>
     </button>
     <div class="stc-window" id="stcWin" role="dialog" aria-label="Simply Chat">
       <div class="stc-header">
-        <div class="stc-avatar">S</div>
+        <div class="stc-avatar"><img src="/simply-face.webp" alt="" loading="lazy" decoding="async"></div>
         <div class="stc-header-text">
           <strong>Simply</strong>
           <small><span class="stc-status-dot"></span>Online · meist sofortige Antwort</small>
@@ -515,7 +526,7 @@
     if (role === 'bot') {
       const av = document.createElement('div');
       av.className = 'stc-msg-avatar';
-      av.textContent = 'S';
+      av.innerHTML = '<img src="/simply-face.webp" alt="" loading="lazy" decoding="async">';
       row.appendChild(av);
     }
 
@@ -685,7 +696,7 @@
       tip.setAttribute('aria-label', 'Hinweis vom Chat-Assistenten');
       tip.innerHTML = `
         <button class="stc-tooltip-close" aria-label="Schließen">×</button>
-        <div>👋 Hi! Ich bin <strong>Simply</strong> — kann ich dir bei deiner Buchung helfen?</div>
+        <div>Moin! 👋 Ich bin <strong>Simply</strong> — kann ich dir bei deiner Buchung helfen?</div>
         <div class="stc-tooltip-arrow"></div>
       `;
       document.body.appendChild(tip);
