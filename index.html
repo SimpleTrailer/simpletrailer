@@ -487,14 +487,37 @@
 
     /* FAQ-CTA "Frag Simply" am Ende der FAQ */
     .faq-cta {
-      margin-top: 40px;
+      position: relative;
+      margin-top: 88px;
       padding: 32px 28px;
       background: linear-gradient(135deg, rgba(232,93,0,0.08), rgba(255,140,66,0.04));
       border: 1.5px solid rgba(232,93,0,0.3);
       border-radius: 18px;
       text-align: center;
     }
-    .faq-cta-icon { font-size: 2.2rem; margin-bottom: 8px; }
+    /* Simply guckt oben ueber die Box-Kante (Fenster clippt die untere Haelfte) */
+    .faq-cta-mascot {
+      position: absolute;
+      bottom: 100%; right: 30px;
+      width: 150px; height: 112px;
+      overflow: hidden;
+      pointer-events: none;
+      display: flex; justify-content: center;
+      margin-bottom: -2px;
+    }
+    .faq-cta-mascot img {
+      width: 132px; height: auto;
+      transform: translateY(44px) rotate(-4deg);
+      transition: transform .4s cubic-bezier(.34, 1.56, .64, 1);
+      filter: drop-shadow(0 10px 18px rgba(0,0,0,.5)) drop-shadow(0 2px 4px rgba(0,0,0,.3));
+    }
+    .faq-cta:hover .faq-cta-mascot img { transform: translateY(34px) rotate(-2deg); }
+    @media (max-width: 640px) {
+      .faq-cta { margin-top: 72px; }
+      .faq-cta-mascot { right: 14px; width: 122px; height: 92px; }
+      .faq-cta-mascot img { width: 106px; transform: translateY(36px) rotate(-4deg); }
+      .faq-cta:hover .faq-cta-mascot img { transform: translateY(36px) rotate(-4deg); }
+    }
     .faq-cta-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 6px; letter-spacing: -.01em; }
     .faq-cta-sub { color: var(--gray); font-size: .92rem; line-height: 1.55; margin-bottom: 18px; max-width: 480px; margin-left: auto; margin-right: auto; }
     .faq-cta-sub strong { color: #FF8C42; }
@@ -3106,7 +3129,7 @@
     </div>
 
     <div class="reveal faq-cta">
-      <div class="faq-cta-icon">💬</div>
+      <div class="faq-cta-mascot" aria-hidden="true"><img src="/simply-mascot.webp" alt="" loading="lazy" decoding="async" width="640" height="485"></div>
       <p class="faq-cta-title" data-i18n="faq.cta.title">Deine Frage ist nicht dabei?</p>
       <p class="faq-cta-sub" data-i18n-html="faq.cta.sub">Frag <strong>Simply</strong> – unseren KI-Assistenten. Oder lies dich tiefer ein in unserem <a href="/ratgeber" style="color:var(--orange);font-weight:600;text-decoration:underline;">Ratgeber</a> (Führerschein, Ankuppeln, Beladen).</p>
       <button type="button" class="btn btn-orange faq-cta-btn" onclick="openSimplyChat()" data-i18n="faq.cta.btn">
