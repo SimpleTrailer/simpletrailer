@@ -225,7 +225,13 @@
       });
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data.error || 'Bestätigung fehlgeschlagen');
+      if (!res.ok) {
+        if (data && data.refunded) {
+          showError(data.error || 'Der Zeitraum wurde leider vergeben. Deine Zahlung wurde vollständig erstattet.', { refunded: true });
+          return;
+        }
+        throw new Error(data.error || 'Bestätigung fehlgeschlagen');
+      }
 
       document.getElementById('bookingNum').textContent  = '#' + data.booking_id.slice(0, 8).toUpperCase();
       document.getElementById('fromDate').textContent    = fmtDate(data.start_time);
@@ -266,10 +272,26 @@
     }
   }
 
-  function showError(msg) {
+  function showError(msg, opts) {
     document.getElementById('loadingView').style.display = 'none';
     document.getElementById('errorView').style.display   = 'block';
     document.getElementById('errorMsg').textContent      = msg;
+    // Standard-Fehler nach Zahlung: NICHT zu erneuter Zahlung einladen —
+    // der Endpoint ist idempotent, Neu-laden bestaetigt die bestehende Zahlung.
+    const cta = document.querySelector('#errorView a.btn');
+    if (cta) {
+      if (opts && opts.refunded) {
+        cta.textContent = 'Neuen Zeitraum wählen →';
+        cta.href = '/booking';
+      } else {
+        cta.textContent = 'Seite neu laden';
+        cta.href = window.location.href;
+        const hint = document.createElement('p');
+        hint.style.cssText = 'color:#888;font-size:.82rem;margin-top:10px;';
+        hint.textContent = 'Falls deine Zahlung durchgegangen ist, wird sie beim Neuladen automatisch deiner Buchung zugeordnet — es wird nichts doppelt abgebucht.';
+        cta.parentNode.appendChild(hint);
+      }
+    }
   }
 
   confirm();

@@ -114,7 +114,7 @@ async function sendFinalMail(booking, returnStatus, extraFee, extraFeeCharged) {
 module.exports = async (req, res) => {
   const auth = req.headers.authorization || '';
   const bearerMatch = auth.match(/^Bearer\s+(.+)$/i);
-  const token = (bearerMatch && bearerMatch[1]) || req.headers['x-cron-token'] || req.query.token;
+  const token = (bearerMatch && bearerMatch[1]) || req.headers['x-cron-token'] ;
   if (!process.env.CRON_SECRET || token !== process.env.CRON_SECRET) {
     return res.status(401).json({ error: 'Unauthorized' });
   }

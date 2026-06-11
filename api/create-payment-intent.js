@@ -1,11 +1,22 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const crypto = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
+const rateLimit = new Map();
+function isRateLimited(ip) {
+  const now = Date.now();
+  const arr = (rateLimit.get(ip) || []).filter(t => now - t < 60_000);
+  if (arr.length >= 8) return true;
+  arr.push(now);
+  rateLimit.set(ip, arr);
+  return false;
+}
+
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
@@ -20,11 +31,25 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'Fehlende Pflichtfelder' });
     }
 
-    // Führerschein-Gate: nur verifizierte User dürfen Zahlung starten
-    if (!user_id) {
-      return res.status(403).json({ error: 'Anmeldung erforderlich' });
+    // AUTH: Identitaet kommt aus der Session, NICHT aus dem Body —
+    // sonst koennte jeder beliebige user_ids einsetzen oder anonym
+    // Stripe-Customers/PaymentIntents erzeugen.
+    const ipForLimit = agbAcceptedIp || 'unknown';
+    if (isRateLimited(ipForLimit)) {
+      return res.status(429).json({ error: 'Zu viele Versuche — bitte kurz warten.' });
     }
-    const { data: { user: licUser } } = await supabase.auth.admin.getUserById(user_id);
+    const authHeader = req.headers.authorization || '';
+    const bearer = (authHeader.match(/^Bearer\s+(.+)$/i) || [])[1];
+    if (!bearer) return res.status(403).json({ error: 'Anmeldung erforderlich' });
+    const { data: { user: sessionUser }, error: authError } = await supabase.auth.getUser(bearer);
+    if (authError || !sessionUser) return res.status(401).json({ error: 'Anmeldung abgelaufen — bitte neu einloggen.' });
+    if (user_id && user_id !== sessionUser.id) {
+      return res.status(403).json({ error: 'Sitzung passt nicht zum Nutzer.' });
+    }
+    const effectiveUserId = sessionUser.id;
+
+    // Führerschein-Gate: nur verifizierte User dürfen Zahlung starten
+    const { data: { user: licUser } } = await supabase.auth.admin.getUserById(effectiveUserId);
     const dl = licUser?.user_metadata || {};
     if (dl.dl_status !== 'verified') {
       return res.status(403).json({ error: 'Führerschein nicht verifiziert', dl_status: dl.dl_status || 'unverified' });
@@ -129,6 +154,9 @@ module.exports = async (req, res) => {
     // bei anderen Methoden faellt Auto-Charge auf manuelle E-Mail mit
     // Zahlungslink zurueck (process-return.js loggt + Lion-Mail).
     // Im Tausch: Mieter sehen PayPal, Apple Pay, Google Pay, Link als Option.
+    const idemBasis = [effectiveUserId, trailer_id, start_time, end_time, insType, booking_mode || '', pricing_type || '', freeFloating ? 1 : 0, cancellationProtection ? 1 : 0, amountInCents, customer_name || '', customer_email || '', customer_phone || '', customer_address || '', agb_version || ''].join('|');
+    const idempotencyKey = 'pi-' + crypto.createHash('sha256').update(idemBasis).digest('hex').slice(0, 40);
+
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amountInCents, currency: 'eur',
       customer: customer.id,
@@ -139,8 +167,18 @@ module.exports = async (req, res) => {
       },
       receipt_email: customer_email,
       description: `SimpleTrailer – ${trailer.name} – ${pricing_type}`,
-      metadata: { trailer_id, pricing_type, start_time, end_time, customer_name, customer_email, customer_phone: customer_phone || '', customer_address: customer_address || '', insurance_type: insType, insurance_amount: String(insAmount), user_id: user_id || '', agb_version: agb_version || '2026-06-05', agb_accepted_at: agbAcceptedAt, agb_accepted_ip: agbAcceptedIp, free_floating: freeFloating ? '1' : '0', free_floating_fee: String(freeFloatingFee), cancellation_protection: cancellationProtection ? '1' : '0', cancellation_protection_fee: String(cancellationProtectionFee) }
-    });
+      metadata: { trailer_id, pricing_type, start_time, end_time, customer_name, customer_email, customer_phone: customer_phone || '', customer_address: customer_address || '', insurance_type: insType, insurance_amount: String(insAmount), user_id: effectiveUserId, agb_version: agb_version || '2026-06-05', free_floating: freeFloating ? '1' : '0', free_floating_fee: String(freeFloatingFee), cancellation_protection: cancellationProtection ? '1' : '0', cancellation_protection_fee: String(cancellationProtectionFee) }
+    }, { idempotencyKey });
+
+    // AGB-Zeitstempel/IP NACH dem Create setzen — Updates sind nicht
+    // idempotenz-geprueft, so bleibt der Create-Payload fuer denselben Key stabil.
+    try {
+      await stripe.paymentIntents.update(paymentIntent.id, {
+        metadata: { agb_accepted_at: agbAcceptedAt, agb_accepted_ip: agbAcceptedIp }
+      });
+    } catch (updErr) {
+      console.error('PI-Metadata-Update (AGB) fehlgeschlagen:', updErr.message);
+    }
 
     return res.status(200).json({
       client_secret: paymentIntent.client_secret,
@@ -152,6 +190,9 @@ module.exports = async (req, res) => {
 
   } catch (err) {
     console.error('create-payment-intent:', err);
+    if (err && (err.type === 'StripeIdempotencyError' || /idempot/i.test(err.message || ''))) {
+      return res.status(409).json({ error: 'Bitte Seite neu laden und erneut versuchen.' });
+    }
     return res.status(500).json({ error: err.message });
   }
 };

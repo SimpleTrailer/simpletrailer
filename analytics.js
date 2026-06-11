@@ -251,7 +251,11 @@
       window.stcTrack('booking_funnel_start');
     }
     if (path.includes('booking-confirm') || path === '/booking-confirm') {
-      window.stcTrack('booking_funnel_completed');
+      // Nur als abgeschlossen zaehlen, wenn Stripe-Redirect Erfolg meldet —
+      // sonst zaehlt jeder Fehler-/Abbruch-Load der Confirm-Seite als Conversion.
+      if ((window.location.search || '').includes('redirect_status=succeeded')) {
+        window.stcTrack('booking_funnel_completed');
+      }
     }
     if (path.includes('return.html') || path === '/return') {
       window.stcTrack('return_page_open');

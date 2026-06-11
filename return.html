@@ -563,6 +563,9 @@
 
     try {
       const photoUrl = await uploadPhoto();
+      if (!photoUrl) {
+        throw new Error('Foto-Upload fehlgeschlagen — bitte erneut versuchen. Ohne Foto können wir die Rückgabe nicht bestätigen.');
+      }
 
       // KI-Validierung: zeigt das Foto wirklich einen Anhänger?
       btn.innerHTML = '<div class="spinner"></div> Foto wird geprüft…';

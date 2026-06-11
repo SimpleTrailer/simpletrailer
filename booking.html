@@ -439,6 +439,14 @@
     @media (max-width: 640px) {
       .mode-option { flex-direction: column; align-items: center; text-align: center; }
     }
+
+    /* Anhaenger-Thumb: weisser Foto-Hintergrund verschmilzt (wie auf der Startseite) */
+    .trailer-img { background: #fff; object-fit: contain; padding: 4px; mix-blend-mode: normal; }
+    .trailer-preview .trailer-img { mix-blend-mode: normal; }
+    /* Spar-Badges nicht von Nachbarkarten ueberdecken lassen */
+    .mode-option { overflow: visible; }
+    .mode-save { z-index: 2; }
+    .mode-grid { row-gap: 16px; }
   </style>
 </head>
 <body>
@@ -664,7 +672,7 @@
       </div>
 
       <div style="background:rgba(232,93,0,0.07);border:1px solid rgba(232,93,0,0.25);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:.82rem;color:#ccc;line-height:1.5;">
-        ℹ️ <strong style="color:#fff;">Nur bei deiner ersten Buchung:</strong> kurzer Führerschein-Check (ca. 30 Sek., sicher über Stripe). Bei allen weiteren Buchungen entfällt er — du buchst dann in unter einer Minute.
+        ℹ️ <strong style="color:#fff;">Nur bei deiner ersten Buchung:</strong> kurzer Führerschein-Check — Foto von Vorder- und Rückseite plus ein kurzes Selfie (ca. 30 Sek., sicher über Stripe). Das ersetzt den Schaltertermin mit Ausweis, den du bei klassischen Vermietern hättest. Bei allen weiteren Buchungen entfällt er komplett.
       </div>
 
       <!-- LOGIN -->
@@ -1130,6 +1138,7 @@
     updateZoneMap();
   }
 
+  let zoneMapRetries = 0;
   function initZoneMap() {
     if (zoneMap) return; // bereits initialisiert
     if (typeof L === 'undefined') return; // Leaflet noch nicht geladen
@@ -1137,7 +1146,7 @@
     if (!el) return;
     // Trailer-Daten noch nicht geladen → spaeter retry (sonst Karte ohne Heimat-Kreis).
     if (!trailerPickup.lat || !trailerPickup.lng) {
-      setTimeout(initZoneMap, 250);
+      (++zoneMapRetries <= 40 && setTimeout(initZoneMap, 250));
       return;
     }
 
@@ -1948,6 +1957,7 @@
       bookingToken = data.access_token;
       // Refresh-Token mitspeichern — Access-Token lebt nur 1h, mit Refresh-Token können wir ihn erneuern
       localStorage.setItem('st_session', JSON.stringify({ access_token: data.access_token, refresh_token: data.refresh_token }));
+      try { window.stcTrack && stcTrack('booking_login_success'); } catch (e) {}
       showBookingLoggedIn();
       // Auto-weiter zum Führerschein-Step nach erfolgreichem Login
       setTimeout(() => goStep4(), 400);
@@ -2008,6 +2018,7 @@
         bookingUser  = data.user;
         bookingToken = data.access_token;
         localStorage.setItem('st_session', JSON.stringify({ access_token: data.access_token, refresh_token: data.refresh_token }));
+        try { window.stcTrack && stcTrack('booking_register_success'); } catch (e) {}
         showBookingLoggedIn();
         // Auto-weiter zum Führerschein-Step nach erfolgreicher Registrierung
         setTimeout(() => goStep4(), 400);
@@ -2055,9 +2066,10 @@
     const hash = window.location.hash;
     if (hash.includes('access_token')) {
       const params = new URLSearchParams(hash.slice(1));
-      const token  = params.get('access_token');
+      const token   = params.get('access_token');
+      const refresh = params.get('refresh_token');
       if (token) {
-        localStorage.setItem('st_session', JSON.stringify({ access_token: token }));
+        localStorage.setItem('st_session', JSON.stringify({ access_token: token, refresh_token: refresh || undefined }));
         history.replaceState(null, '', window.location.pathname + window.location.search);
       }
     }
@@ -2067,11 +2079,14 @@
     // Modus aus URL-Parameter (z.B. ?mode=weekend), nur wenn kein Buchungsstand wartet
     const pending = localStorage.getItem('st_booking_pending');
     if (pending && bookingUser) {
-      const state = JSON.parse(pending);
+      let state = null;
+      try { state = JSON.parse(pending); } catch (e) { localStorage.removeItem('st_booking_pending'); }
+      if (state) {
       localStorage.removeItem('st_booking_pending');
       restoreBookingState(state);
       goToStep(2);
       showBookingLoggedIn();
+      }
     } else {
       const urlParams = new URLSearchParams(window.location.search);
       const urlMode   = urlParams.get('mode');
@@ -2099,6 +2114,7 @@
   const UX_STEP_HTML = { 1: 'step1', 2: 'step4', 3: 'step2', 4: 'step3', 5: 'step5' };
 
   function goToStep(n) {
+    try { window.stcTrack && stcTrack('booking_step_' + n); } catch (e) {}
     document.querySelectorAll('.step-content').forEach(el => el.classList.remove('active'));
     const targetId = UX_STEP_HTML[n] || ('step' + n);
     document.getElementById(targetId).classList.add('active');
@@ -2201,6 +2217,7 @@
     document.getElementById('errDl').style.display = 'none';
 
     if (status === 'verified') {
+      try { if (!window.__dlTracked) { window.__dlTracked = 1; window.stcTrack && stcTrack('booking_dl_verified'); } } catch (e) {}
       verifiedBox.style.display = 'block';
       const expires = info.dl_expires_at ? new Date(info.dl_expires_at).toLocaleDateString('de-DE') : '–';
       const klass   = (info.dl_classes || []).join(', ') || 'B';
@@ -2233,6 +2250,7 @@
   }
 
   async function startIdentityVerification() {
+    try { window.stcTrack && stcTrack('booking_dl_verify_start'); } catch (e) {}
     const consent = document.getElementById('biometricCheck')?.checked;
     if (!consent) {
       const err = document.getElementById('errDl');
@@ -2354,13 +2372,33 @@
     }
   }
 
+  let stripePaymentElement = null;
+  let lastStripeSignature  = null;
+
   async function initStripe() {
     const payBtn = document.getElementById('payBtn');
+
+    // Guard: identische Buchungs-Parameter => bestehendes Payment-Element weiterverwenden
+    // (verhindert verwaiste PaymentIntents + Doppel-Mounts bei Stepper vor/zurueck)
+    const signature = [trailerId, document.getElementById('startTime').value,
+      document.getElementById('endTime').value, selectedInsurance, bookingMode,
+      selectedFreeFloating, cancellationProtection].join('|');
+    if (stripeElements && stripePaymentElement && lastStripeSignature === signature) {
+      payBtn.textContent = 'Jetzt buchen & bezahlen';
+      payBtn.dataset.stripeReady = '1';
+      updatePayBtnState();
+      return;
+    }
+    if (stripePaymentElement) {
+      try { stripePaymentElement.unmount(); } catch (e) {}
+      stripePaymentElement = null;
+    }
+
     payBtn.disabled = true;
     payBtn.textContent = 'Zahlung wird vorbereitet...';
 
     try {
-      const res = await fetch('/api/create-payment-intent', {
+      const res = await authedFetch('/api/create-payment-intent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -2385,6 +2423,7 @@
         })
       });
 
+      if (!res) throw new Error('Anmeldung abgelaufen — bitte neu einloggen.');
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Fehler beim Laden der Zahlung');
 
@@ -2402,6 +2441,8 @@
 
       const pe = stripeElements.create('payment');
       pe.mount('#payment-element');
+      stripePaymentElement = pe;
+      lastStripeSignature  = signature;
 
       payBtn.textContent = 'Jetzt buchen & bezahlen';
       payBtn.dataset.stripeReady = '1';
@@ -2459,17 +2500,25 @@
     payBtn.disabled = true;
     payBtn.textContent = 'Zahlung wird verarbeitet...';
     hidePaymentError();
+    try { window.stcTrack && stcTrack('booking_pay_clicked'); } catch (e) {}
 
-    const { error } = await stripeClient.confirmPayment({
-      elements: stripeElements,
-      confirmParams: {
-        return_url: `${window.location.origin}/booking-confirm`
-      },
-      redirect: 'if_required'
-    });
+    let error = null;
+    try {
+      ({ error } = await stripeClient.confirmPayment({
+        elements: stripeElements,
+        confirmParams: {
+          return_url: `${window.location.origin}/booking-confirm`
+        },
+        redirect: 'if_required'
+      }));
+    } catch (ex) {
+      // Netzabriss/Stripe-Exception: Button NICHT haengen lassen
+      error = { message: 'Verbindung unterbrochen — bitte erneut versuchen. Es wurde nichts abgebucht.' };
+    }
 
     if (error) {
       showPaymentError(error.message);
+      try { window.stcTrack && stcTrack('booking_payment_error'); } catch (e) {}
       payBtn.disabled = false;
       payBtn.textContent = 'Jetzt buchen & bezahlen';
     } else {

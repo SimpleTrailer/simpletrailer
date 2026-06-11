@@ -12,7 +12,7 @@ const Anthropic = require('@anthropic-ai/sdk');
 // In-memory Rate-Limit
 const rateLimit = new Map();
 const RATE_WINDOW_MS = 60_000;
-const RATE_MAX = 10;
+const RATE_MAX = 6;
 
 function isRateLimited(ip) {
   const now = Date.now();
@@ -172,6 +172,13 @@ module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
+
+  // Origin-Check: Chat nur von der eigenen Seite (drosselt Kosten-Abuse per Skript)
+  const origin = req.headers.origin || '';
+  const ALLOWED = ['https://simpletrailer.de', 'https://www.simpletrailer.de', 'capacitor://localhost', 'http://localhost'];
+  if (origin && !ALLOWED.some(a => origin === a || origin.startsWith(a + ':'))) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
   if (req.method !== 'POST')    return res.status(405).json({ error: 'Method Not Allowed' });
 
   const ip = (req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || 'unknown').split(',')[0].trim();

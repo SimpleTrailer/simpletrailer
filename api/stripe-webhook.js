@@ -34,6 +34,28 @@ module.exports = async (req, res) => {
           .update({ status: 'confirmed' })
           .eq('stripe_payment_intent_id', pi.id)
           .eq('status', 'pending');
+
+        // RECONCILE: Wenn der Browser nach der Zahlung abbrach, hat der Client
+        // /api/booking nie aufgerufen -> Geld da, aber keine Buchung/Mail/Code.
+        // Wir legen die Buchung dann serverseitig ueber denselben (idempotenten)
+        // Endpoint an. Existiert sie schon, ist der Call ein No-Op.
+        if (pi.metadata?.trailer_id) {
+          const { data: row } = await supabase.from('bookings')
+            .select('id').eq('stripe_payment_intent_id', pi.id).maybeSingle();
+          if (!row) {
+            const siteUrl = process.env.SITE_URL || 'https://www.simpletrailer.de';
+            try {
+              const r = await fetch(`${siteUrl}/api/booking`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ payment_intent_id: pi.id })
+              });
+              console.log('Webhook-Reconcile Buchung angelegt:', pi.id, r.status);
+            } catch (e) {
+              console.error('Webhook-Reconcile fehlgeschlagen:', pi.id, e.message);
+            }
+          }
+        }
       }
     }
 

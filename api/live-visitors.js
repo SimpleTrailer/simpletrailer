@@ -9,7 +9,7 @@ const supabase     = createClient(process.env.SUPABASE_URL, process.env.SUPABASE
 const supabaseAuth = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
 
 const ACTIVE_WINDOW_SECONDS = 30; // Session gilt als aktiv wenn Heartbeat in den letzten 30s (Frontend pingt alle 10s)
-const ADMIN_EMAIL = 'admin@simpletrailer.de';
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || 'admin@simpletrailer.de,info@simpletrailer.de,lion@simpletrailer.de').split(',').map(s => s.trim());
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -23,7 +23,7 @@ module.exports = async (req, res) => {
   if (!auth.startsWith('Bearer ')) return res.status(401).json({ error: 'Unauthorized' });
   const userToken = auth.replace('Bearer ', '');
   const { data: { user }, error: authError } = await supabaseAuth.auth.getUser(userToken);
-  if (authError || !user || user.email !== ADMIN_EMAIL) {
+  if (authError || !user || !ADMIN_EMAILS.includes(user.email)) {
     return res.status(403).json({ error: 'Forbidden' });
   }
 

@@ -120,7 +120,7 @@
       if (path.startsWith('https://simpletrailer.de')) {
         path = path.replace('https://simpletrailer.de', '');
       }
-      if (path && path !== window.location.pathname + window.location.search) {
+      if (path && path.startsWith('/') && path !== window.location.pathname + window.location.search) {
         window.location.href = path;
       }
     } catch (e) { /* ignore */ }

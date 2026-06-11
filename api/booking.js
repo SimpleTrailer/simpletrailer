@@ -40,9 +40,13 @@ module.exports = async (req, res) => {
     try {
       const { payment_intent_id } = req.body;
 
-      const pi = await stripe.paymentIntents.retrieve(payment_intent_id);
+      const pi = await stripe.paymentIntents.retrieve(payment_intent_id, { expand: ['latest_charge'] });
       if (pi.status !== 'succeeded') {
         return res.status(400).json({ error: 'Zahlung noch nicht abgeschlossen' });
+      }
+      // Bereits (teil-)erstattete Zahlung darf NIE mehr eine Buchung + Schloss-Code erzeugen
+      if (pi.latest_charge && (pi.latest_charge.refunded || (pi.latest_charge.amount_refunded || 0) > 0)) {
+        return res.status(409).json({ error: 'Diese Zahlung wurde bereits erstattet.', refunded: true });
       }
 
       const { data: existing } = await supabase
@@ -50,7 +54,7 @@ module.exports = async (req, res) => {
         .eq('stripe_payment_intent_id', payment_intent_id).maybeSingle();
 
       if (existing) {
-        const siteUrlEx = process.env.SITE_URL || 'https://simpletrailer.de';
+        const siteUrlEx = process.env.SITE_URL || 'https://www.simpletrailer.de';
         const precheckUrlEx = existing.precheck_token
           ? `${siteUrlEx}/precheck?id=${existing.id}&token=${existing.precheck_token}`
           : null;
@@ -66,6 +70,65 @@ module.exports = async (req, res) => {
 
       const meta = pi.metadata;
       const amount = pi.amount / 100;
+
+      // DOUBLE-BOOKING-SCHUTZ: Overlap-Recheck direkt vor dem Insert.
+      // Der Check bei PI-Erstellung reicht nicht — zwei Kunden koennen denselben
+      // Zeitraum parallel bezahlen. Der Verlierer bekommt automatisch eine
+      // vollstaendige Erstattung + Info-Mail, Lion wird benachrichtigt.
+      {
+        const BUFFER_MS = 60 * 60 * 1000;
+        const { data: clash } = await supabase
+          .from('bookings').select('id, start_time, end_time, stripe_payment_intent_id')
+          .eq('trailer_id', meta.trailer_id).in('status', ['confirmed', 'active']);
+        const nStart = new Date(meta.start_time).getTime();
+        const nEnd   = new Date(meta.end_time).getTime();
+        const hasClash = (clash || []).some(b =>
+          b.stripe_payment_intent_id !== payment_intent_id &&
+          new Date(b.start_time).getTime() < nEnd &&
+          new Date(b.end_time).getTime() + BUFFER_MS > nStart);
+        if (hasClash) {
+          let refunded = false;
+          try {
+            await stripe.refunds.create(
+              { payment_intent: payment_intent_id, reason: 'requested_by_customer' },
+              { idempotencyKey: `clash-refund-${payment_intent_id}` }
+            );
+            refunded = true;
+          } catch (refErr) {
+            console.error('Clash-Refund fehlgeschlagen:', payment_intent_id, refErr.message);
+          }
+          try { await resend.emails.send({
+            from: 'SimpleTrailer <buchung@simpletrailer.de>',
+            reply_to: 'info@simpletrailer.de',
+            to: meta.customer_email,
+            subject: 'Deine Buchung konnte leider nicht bestätigt werden — volle Erstattung',
+            text: `Hallo ${meta.customer_name},
+
+es tut uns wirklich leid: Der Anhänger wurde für deinen Zeitraum (${fmt(meta.start_time)} – ${fmt(meta.end_time)} Uhr) in genau diesem Moment von einer anderen Person gebucht.
+
+${refunded ? 'Deine Zahlung wurde bereits vollständig erstattet — je nach Bank dauert die Gutschrift 3–5 Werktage.' : 'Deine Zahlung wird umgehend vollständig erstattet.'}
+
+Gern kannst du direkt einen anderen Zeitraum wählen: https://www.simpletrailer.de/booking
+
+Sorry für die Umstände!
+Lion & Samuel — SimpleTrailer`
+          }); } catch (e) { console.error('Clash-Kundenmail fehlgeschlagen:', e.message); }
+          try { await resend.emails.send({
+            from: 'SimpleTrailer <buchung@simpletrailer.de>',
+            to: 'info@simpletrailer.de',
+            subject: '⚠ Double-Booking abgefangen — automatisch erstattet',
+            text: `PI: ${payment_intent_id}
+Kunde: ${meta.customer_name} (${meta.customer_email})
+Zeitraum: ${meta.start_time} – ${meta.end_time}
+Trailer: ${meta.trailer_id}
+Refund: ${refunded ? 'OK' : 'FEHLGESCHLAGEN — manuell in Stripe pruefen!'}`
+          }); } catch (e) {}
+          return res.status(409).json({
+            error: 'Der Zeitraum wurde in der Zwischenzeit leider vergeben. Deine Zahlung wurde vollständig erstattet.',
+            refunded: true
+          });
+        }
+      }
       const return_token    = crypto.randomBytes(32).toString('hex');
       const precheck_token  = crypto.randomBytes(32).toString('hex');
 
@@ -123,6 +186,23 @@ module.exports = async (req, res) => {
           .from('bookings').insert(minimal).select('*, trailers(name)').single());
       }
 
+      if (bookingError && (bookingError.code === '23505' || /duplicate key/i.test(bookingError.message || ''))) {
+        // Race: Webhook und Client haben gleichzeitig angelegt — die andere Seite hat gewonnen.
+        const { data: won } = await supabase
+          .from('bookings').select('id, access_code, return_token, precheck_token, start_time, end_time, total_amount, pickup_lat, pickup_lng')
+          .eq('stripe_payment_intent_id', payment_intent_id).maybeSingle();
+        if (won) {
+          const siteUrlW = process.env.SITE_URL || 'https://www.simpletrailer.de';
+          return res.status(200).json({
+            booking_id: won.id, already_confirmed: true,
+            precheck_url: won.precheck_token ? `${siteUrlW}/precheck?id=${won.id}&token=${won.precheck_token}` : null,
+            return_token: won.return_token,
+            start_time: won.start_time, end_time: won.end_time,
+            amount: won.total_amount || 0,
+            pickup_lat: won.pickup_lat, pickup_lng: won.pickup_lng
+          });
+        }
+      }
       if (bookingError) throw bookingError;
 
       // Hinweis: is_available wird NICHT mehr auf false gesetzt — die Verfügbarkeit
@@ -130,7 +210,7 @@ module.exports = async (req, res) => {
       // (currently_booked = aktiver Buchung-Status). Der Flag trailers.is_available
       // markiert nur noch "im Service / Wartung", nicht "gerade gebucht".
 
-      const siteUrl     = process.env.SITE_URL || 'https://simpletrailer.de';
+      const siteUrl     = process.env.SITE_URL || 'https://www.simpletrailer.de';
       const returnUrl   = `${siteUrl}/return.html?id=${booking.id}&token=${return_token}`;
       const precheckUrl = `${siteUrl}/precheck?id=${booking.id}&token=${precheck_token}`;
 

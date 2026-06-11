@@ -89,7 +89,7 @@ self.addEventListener('fetch', (event) => {
   // HTML: Network-first, Cache-Fallback fuer Offline
   if (request.headers.get('accept')?.includes('text/html')) {
     event.respondWith(
-      fetch(request).catch(() => caches.match(request) || caches.match('/'))
+      fetch(request).catch(() => caches.match(request).then((r) => r || caches.match('/')))
     );
   }
 });

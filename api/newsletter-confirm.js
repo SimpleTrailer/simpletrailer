@@ -26,6 +26,8 @@ const errorHtml = (msg) => `<!DOCTYPE html><html lang="de"><head><meta charset="
 <a href="https://simpletrailer.de">Zur Startseite →</a>
 </div></body></html>`;
 
+const escMail = s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
 module.exports = async (req, res) => {
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
 
@@ -53,7 +55,7 @@ module.exports = async (req, res) => {
     }
 
     if (sub.status === 'confirmed') {
-      res.status(200).end(successHtml(sub.email));
+      res.status(200).end(successHtml(escMail(sub.email)));
       return;
     }
 
@@ -68,7 +70,7 @@ module.exports = async (req, res) => {
 
     if (updErr) throw updErr;
 
-    res.status(200).end(successHtml(sub.email));
+    res.status(200).end(successHtml(escMail(sub.email)));
   } catch (err) {
     console.error('newsletter-confirm:', err);
     res.status(500).end(errorHtml('Es gab ein technisches Problem. Versuch es später nochmal.'));
