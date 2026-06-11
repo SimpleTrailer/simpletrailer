@@ -369,6 +369,38 @@
       .price-summary { flex-direction: column; gap: 4px; text-align: center; }
       .price-summary-amount { font-size: 1.8rem; }
     }
+
+    /* ===== Seriositaets-Layer: Fortschritt, Fehler, Polish (additiv) ===== */
+    .booking-progress { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+    .bp-label { font-size: .75rem; font-weight: 700; color: var(--orange); white-space: nowrap; letter-spacing: .04em; }
+    .bp-bar { flex: 1; height: 6px; background: var(--s2); border-radius: 99px; overflow: hidden; border: 1px solid var(--border); }
+    .bp-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--orange), #ff8a3d); transition: width .45s cubic-bezier(.16,1,.3,1); }
+
+    /* Stepper verfeinert */
+    @media (min-width: 641px) { .step-circle { width: 34px; height: 34px; font-size: .8rem; } }
+    .step-line { height: 2px; border-radius: 2px; }
+
+    /* Fehlermeldungen: ruhige Karte statt roter Schrei */
+    .error-msg {
+      background: rgba(239,68,68,.08);
+      border: 1px solid rgba(239,68,68,.28);
+      border-left: 3px solid #ef4444;
+      border-radius: 10px;
+      padding: 10px 14px;
+      color: #fca5a5;
+      font-size: .84rem;
+      line-height: 1.5;
+      margin-top: 8px;
+    }
+    .fs-result.warn { background: rgba(239,68,68,.07); border: 1px solid rgba(239,68,68,.3); border-left: 3px solid #b91c1c; border-radius: 10px; color: #fca5a5; }
+    .fs-result.ok { background: rgba(34,197,94,.07); border: 1px solid rgba(34,197,94,.3); border-left: 3px solid #16a34a; border-radius: 10px; }
+
+    /* Karten + Eingaben: mehr Tiefe, klare Focus-Zustaende */
+    .card { border-radius: 18px; box-shadow: 0 6px 24px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.03); }
+    .field-input:focus, .slot-btn:focus-visible { outline: none; border-color: var(--orange); box-shadow: 0 0 0 3px rgba(232,93,0,.18); }
+    .pricing-option { border-radius: 14px; }
+    .pricing-option.selected { box-shadow: 0 0 0 3px rgba(232,93,0,.18), 0 8px 22px rgba(232,93,0,.12); }
+    .slot-btn.blocked { background: #161010; border-color: #2a1515; color: #5a3535; }
   </style>
 </head>
 <body>
@@ -379,6 +411,12 @@
 </nav>
 
 <div class="page">
+
+  <!-- FORTSCHRITT (additiv, liest Stepper-Status) -->
+  <div class="booking-progress">
+    <span class="bp-label" id="bpLabel">Schritt 1 von 5</span>
+    <div class="bp-bar"><div class="bp-fill" id="bpFill" style="width:20%"></div></div>
+  </div>
 
   <!-- STEPPER -->
   <div class="stepper">
@@ -2427,5 +2465,26 @@
 
 <!-- KI Chat-Widget: hilft Kunden waehrend der Buchung -->
 <script src="/chat-widget.js?v=6" defer></script>
+
+<script>
+/* Fortschritts-Balken: spiegelt den bestehenden Stepper-Status (additiv, fail-silent) */
+(function(){
+  try {
+    var fill = document.getElementById('bpFill');
+    var label = document.getElementById('bpLabel');
+    var circles = [1,2,3,4,5].map(function(n){ return document.getElementById('sc'+n); });
+    if (!fill || !label || circles.some(function(x){ return !x; })) return;
+    function update(){
+      var cur = 1;
+      circles.forEach(function(el, i){ if (el.classList.contains('active') || el.classList.contains('done')) cur = Math.max(cur, i+1); });
+      fill.style.width = (cur/5*100) + '%';
+      label.textContent = 'Schritt ' + cur + ' von 5';
+    }
+    var obs = new MutationObserver(update);
+    circles.forEach(function(el){ obs.observe(el, { attributes: true, attributeFilter: ['class'] }); });
+    update();
+  } catch(e) {}
+})();
+</script>
 </body>
 </html>
