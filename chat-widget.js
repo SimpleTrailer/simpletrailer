@@ -557,7 +557,113 @@
   }
 
   // ===== Streaming Send =============================================
+  // ===== Rueckruf-Flow: "Lieber mit einem Menschen sprechen" =====
+  // Simply sammelt Anliegen, Name und Telefonnummer ein und schickt das
+  // als Rueckruf-Bitte an info@ — statt den User in sein Mailprogramm zu werfen.
+  let humanFlow = null; // { step: 'reason'|'name'|'phone', data: {...} }
+
+  function botSay(text) {
+    addMessageDom('bot', text);
+    history.push({ role: 'assistant', content: text });
+    persist();
+  }
+
+  function startHumanFlow() {
+    if (!win.classList.contains('open')) openChat();
+    if (humanFlow) return;
+    humanFlow = { step: 'reason', data: {} };
+    quickEl.innerHTML = '';
+    botSay('Klar, machen wir! 👍 Damit dich der richtige Mensch zurückrufen kann, brauche ich nur drei Dinge.\n\n**1/3 — Worum geht es?** Beschreib kurz dein Anliegen.\n\n_(Tippe „abbrechen", falls du es dir anders überlegst.)_');
+    inputEl.placeholder = 'Dein Anliegen…';
+    inputEl.focus();
+  }
+
+  async function handleHumanFlow(text) {
+    addMessageDom('user', text);
+    history.push({ role: 'user', content: text });
+    persist();
+
+    if (/^abbrechen$/i.test(text.trim())) {
+      humanFlow = null;
+      inputEl.placeholder = 'Frag Simply alles...';
+      botSay('Alles klar, kein Problem — ich bin weiter für dich da. Frag mich einfach!');
+      return;
+    }
+
+    if (humanFlow.step === 'reason') {
+      humanFlow.data.reason = text.trim().slice(0, 1500);
+      humanFlow.step = 'name';
+      botSay('Notiert! **2/3 — Wie heißt du?**');
+      inputEl.placeholder = 'Dein Name…';
+      return;
+    }
+
+    if (humanFlow.step === 'name') {
+      humanFlow.data.name = text.trim().slice(0, 120);
+      humanFlow.step = 'phone';
+      botSay('Danke, ' + humanFlow.data.name.split(' ')[0] + '! **3/3 — Deine Telefonnummer?** Dann rufen wir dich zurück. (Alternativ geht auch deine E-Mail-Adresse.)');
+      inputEl.placeholder = 'Telefonnummer oder E-Mail…';
+      return;
+    }
+
+    if (humanFlow.step === 'phone') {
+      const contact = text.trim().slice(0, 200);
+      const isPhone = /^[\d\s+()\/-]{6,20}$/.test(contact);
+      const isMail  = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(contact);
+      if (!isPhone && !isMail) {
+        botSay('Hmm, das sieht weder nach Telefonnummer noch nach E-Mail aus — magst du es nochmal probieren? (z.B. 0151 1234567)');
+        return;
+      }
+      const d = humanFlow.data;
+      humanFlow = null;
+      inputEl.placeholder = 'Frag Simply alles...';
+
+      const lastMsgs = (history || []).slice(-10)
+        .map(m => (m.role === 'user' ? 'Kunde: ' : 'Simply: ') + (typeof m.content === 'string' ? m.content : ''))
+        .join('\n');
+
+      const typing = addMessageDom('bot', '');
+      typing.innerHTML = '<span class="stc-typing"><span></span><span></span><span></span></span>';
+      try {
+        const res = await fetch('/api/contact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: d.name,
+            email: isMail ? contact : 'rueckruf@simply-chat.simpletrailer.de',
+            phone: isPhone ? contact : '',
+            message: 'RÜCKRUF-BITTE über Simply-Chat\n\nAnliegen: ' + d.reason +
+                     '\nKontakt: ' + contact + (isPhone ? ' (Telefon)' : ' (E-Mail)') +
+                     '\n\n--- Chat-Verlauf (Auszug) ---\n' + lastMsgs
+          })
+        });
+        if (!res.ok) throw new Error('send failed');
+        const confirmMsg = isPhone
+          ? 'Perfekt, ' + d.name.split(' ')[0] + '! 📞 Deine Rückruf-Bitte ist raus — Lion oder Samuel rufen dich so schnell wie möglich unter **' + contact + '** zurück (meist innerhalb weniger Stunden, werktags).'
+          : 'Perfekt, ' + d.name.split(' ')[0] + '! ✉️ Deine Nachricht ist raus — wir antworten dir so schnell wie möglich an **' + contact + '**.';
+        typing.innerHTML = renderMarkdown(confirmMsg);
+        history.push({ role: 'assistant', content: confirmMsg });
+        persist();
+        try { window.stcTrack && stcTrack('simply_callback_request'); } catch (e) {}
+      } catch (err) {
+        const failMsg = 'Mist, das Senden hat gerade nicht geklappt. 🙈 Schreib uns bitte direkt an **info@simpletrailer.de** — oder versuch es gleich nochmal.';
+        typing.innerHTML = renderMarkdown(failMsg);
+        history.push({ role: 'assistant', content: failMsg });
+        persist();
+      }
+      return;
+    }
+  }
+
   async function sendMessage(text) {
+    text = (text || '').trim();
+    if (humanFlow) {
+      if (!text || isStreaming) return;
+      inputEl.value = '';
+      await handleHumanFlow(text);
+      return;
+    }
+
     text = (text || '').trim();
     if (!text || isStreaming) return;
 
@@ -868,18 +974,7 @@
   if (humanLink) {
     humanLink.addEventListener('click', (e) => {
       e.preventDefault();
-      // Letzte 2 Bot-/User-Nachrichten als Kontext in den Mail-Body packen
-      const lastMsgs = (history || []).slice(-4)
-        .map(m => (m.role === 'user' ? 'Ich: ' : 'Simply: ') +
-                  (typeof m.content === 'string' ? m.content : ''))
-        .join('\n');
-      const subject = encodeURIComponent('Anfrage über Simply-Chat');
-      const body = encodeURIComponent(
-        'Hallo SimpleTrailer-Team,\n\n' +
-        'ich habe eine Frage die Simply mir nicht beantworten konnte:\n\n[Hier deine Frage]\n\n' +
-        '---\nVerlauf:\n' + lastMsgs
-      );
-      window.location.href = 'mailto:info@simpletrailer.de?subject=' + subject + '&body=' + body;
+      startHumanFlow();
     });
   }
 
