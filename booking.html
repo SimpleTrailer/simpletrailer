@@ -421,6 +421,24 @@
     }
     .ins-info-btn::after { content: ''; position: absolute; inset: -12px; }
     .ins-info-btn:hover { border-color: var(--orange); color: var(--orange); }
+
+    /* Tarif-Karten: aufgeraeumt — einheitliche Preise, Spar-Badge, keine Emojis */
+    .mode-option { position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px; padding-top: 18px !important; padding-bottom: 16px !important; }
+    .mode-name { font-weight: 700; font-size: .92rem; letter-spacing: -.01em; }
+    .mode-price { font-size: 1.5rem; font-weight: 800; letter-spacing: -.03em; color: var(--white); line-height: 1.1; }
+    .mode-price span { font-size: .8rem; font-weight: 600; color: var(--gray); }
+    .mode-option.selected .mode-price { color: var(--orange); }
+    .mode-desc { font-size: .74rem; color: var(--gray); line-height: 1.4; }
+    .mode-save {
+      position: absolute; top: -9px; right: 10px;
+      background: rgba(34,197,94,.12); color: #4ade80;
+      border: 1px solid rgba(34,197,94,.35);
+      font-size: .66rem; font-weight: 800; letter-spacing: .03em;
+      padding: 2px 9px; border-radius: 999px;
+    }
+    @media (max-width: 640px) {
+      .mode-option { flex-direction: column; align-items: center; text-align: center; }
+    }
   </style>
 </head>
 <body>
@@ -492,34 +510,32 @@
       <p class="field-label" style="margin-bottom:12px;" data-i18n="booking.choose_tariff">Tarif wählen</p>
       <div class="mode-grid">
         <button type="button" class="mode-option selected" id="modeFlexible" onclick="setMode('flexible')">
-          <div class="mode-icon">📅</div>
           <div class="mode-name" data-i18n="booking.mode.flex">Individuell</div>
-          <div class="mode-desc"><span data-i18n="booking.mode.flex.desc">Beliebiger Zeitraum</span><br><span style="color:var(--gray)"><span data-i18n="booking.from">ab</span> 9 €</span></div>
+          <div class="mode-price"><span data-i18n="booking.from">ab</span> 9 €</div>
+          <div class="mode-desc" data-i18n="booking.mode.flex.desc">Beliebiger Zeitraum</div>
         </button>
         <button type="button" class="mode-option" id="modeDay" onclick="setMode('day')">
-          <div class="mode-icon">☀️</div>
           <div class="mode-name" data-i18n="booking.mode.day">Ganzer Tag</div>
-          <div class="mode-desc"><span data-i18n="booking.mode.day.desc">24 Std. Festpreis</span><br><strong style="color:var(--orange)">29 €</strong></div>
+          <div class="mode-price">29 €</div>
+          <div class="mode-desc" data-i18n="booking.mode.day.desc">24 Std. Festpreis</div>
         </button>
         <button type="button" class="mode-option" id="modeWeekend" onclick="setMode('weekend')">
-          <div class="mode-icon">🎉</div>
           <div class="mode-name" data-i18n="booking.mode.weekend">Wochenende</div>
-          <div class="mode-desc">Fr–So · <strong style="color:var(--orange)">19,67 € / <span data-i18n="booking.day">Tag</span></strong><br>
-            <span style="color:#4ade80;font-size:.72rem;font-weight:700;"><span data-i18n="booking.save">spare</span> 18 €</span>
-          </div>
+          <div class="mode-price">59 €</div>
+          <div class="mode-desc">Fr–So komplett</div>
+          <span class="mode-save"><span data-i18n="booking.save">spare</span> 18 €</span>
         </button>
         <button type="button" class="mode-option" id="modeWeek" onclick="setMode('week')">
-          <div class="mode-icon">🔥</div>
           <div class="mode-name" data-i18n="booking.mode.week">1 Woche</div>
-          <div class="mode-desc">7 <span data-i18n="booking.days">Tage</span> · <strong style="color:#f59e0b">119 €</strong><br>
-            <span style="color:var(--gray);font-size:.68rem;">≈ 17,00 € / <span data-i18n="booking.day">Tag</span> · </span><span style="color:#4ade80;font-size:.72rem;font-weight:700;"><span data-i18n="booking.save">spare</span> 54 €</span>
-          </div>
+          <div class="mode-price">119 €</div>
+          <div class="mode-desc">7 <span data-i18n="booking.days">Tage</span> · ≈ 17 €/<span data-i18n="booking.day">Tag</span></div>
+          <span class="mode-save"><span data-i18n="booking.save">spare</span> 54 €</span>
         </button>
       </div>
 
       <!-- Preisstaffel für Individuell -->
       <div id="flexPriceInfo" style="margin-top:14px;background:#111;border-radius:10px;padding:12px 14px;display:block;">
-        <p style="font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gray);margin-bottom:8px;">Preisstaffel</p>
+        <p style="font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gray);margin-bottom:8px;">So berechnet sich dein Preis</p>
         <div style="display:grid;grid-template-columns:1fr auto;gap:4px 16px;font-size:.82rem;">
           <span style="color:var(--gray);">bis 3 Std.</span><span style="font-weight:700;">9 €</span>
           <span style="color:var(--gray);">bis 6 Std.</span><span style="font-weight:700;">18 €</span>
