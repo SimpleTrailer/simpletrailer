@@ -40,6 +40,57 @@
   }
   .stc-fab.stc-overlay-hidden { display: none !important; }
   .stc-fab.stc-dragging { cursor: grabbing; transition: none; }
+
+  /* Rueckruf-Formular (Popup) */
+  .stc-hf-overlay {
+    position: fixed; inset: 0; z-index: 100001;
+    display: none; align-items: center; justify-content: center;
+    background: rgba(0,0,0,.7); backdrop-filter: blur(6px);
+    padding: 18px;
+  }
+  .stc-hf-overlay.open { display: flex; }
+  .stc-hf-card {
+    position: relative;
+    width: 100%; max-width: 400px;
+    background: #161616; border: 1px solid #2e2e2e;
+    border-radius: 18px; padding: 22px;
+    color: #fff; font-family: 'Inter', system-ui, sans-serif;
+    box-shadow: 0 24px 64px rgba(0,0,0,.6);
+    animation: stc-slideUp .25s cubic-bezier(.16,1,.3,1);
+    max-height: 92dvh; overflow-y: auto;
+  }
+  .stc-hf-close {
+    position: absolute; top: 10px; right: 12px;
+    background: rgba(255,255,255,.08); border: none; color: #aaa;
+    width: 30px; height: 30px; border-radius: 50%;
+    font-size: 1.15rem; cursor: pointer; line-height: 1;
+  }
+  .stc-hf-close:hover { color: #fff; background: rgba(255,255,255,.16); }
+  .stc-hf-title { font-weight: 800; font-size: 1.08rem; margin: 0 0 6px; letter-spacing: -.01em; }
+  .stc-hf-sub { color: #999; font-size: .8rem; line-height: 1.5; margin: 0 0 16px; }
+  .stc-hf-label { display: block; font-size: .72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #888; margin: 12px 0 5px; }
+  .stc-hf-input {
+    width: 100%; box-sizing: border-box;
+    background: #0D0D0D; border: 1.5px solid #2e2e2e; border-radius: 10px;
+    color: #fff; padding: 11px 12px; font-size: 16px; font-family: inherit;
+    outline: none; transition: border-color .15s;
+  }
+  .stc-hf-input:focus { border-color: #E85D00; }
+  textarea.stc-hf-input { resize: vertical; min-height: 70px; }
+  .stc-hf-err { color: #f87171; font-size: .8rem; min-height: 1.2em; margin: 10px 0 4px; }
+  .stc-hf-submit {
+    width: 100%; background: linear-gradient(135deg, #E85D00, #FF6A00);
+    color: #fff; border: none; border-radius: 11px;
+    padding: 14px; font-weight: 800; font-size: .98rem; font-family: inherit;
+    cursor: pointer; transition: transform .15s, box-shadow .15s;
+    box-shadow: 0 4px 14px rgba(232,93,0,.35);
+  }
+  .stc-hf-submit:hover { transform: translateY(-1px); }
+  .stc-hf-submit:disabled { opacity: .7; cursor: wait; transform: none; }
+  @media (max-width: 480px) {
+    .stc-hf-overlay { align-items: flex-end; padding: 0; }
+    .stc-hf-card { max-width: none; border-radius: 20px 20px 0 0; }
+  }
   .stc-fab:hover { transform: scale(1.06); }
   .stc-fab:active { transform: scale(0.97); }
   .stc-fab:focus-visible { outline: 2px solid #FF8C42; outline-offset: 6px; border-radius: 14px; }
@@ -557,112 +608,109 @@
   }
 
   // ===== Streaming Send =============================================
-  // ===== Rueckruf-Flow: "Lieber mit einem Menschen sprechen" =====
-  // Simply sammelt Anliegen, Name und Telefonnummer ein und schickt das
-  // als Rueckruf-Bitte an info@ — statt den User in sein Mailprogramm zu werfen.
-  let humanFlow = null; // { step: 'reason'|'name'|'phone', data: {...} }
+  // ===== Rueckruf-Formular (Popup): "Lieber mit einem Menschen sprechen" =====
+  // Oeffnet ein kleines Kontaktformular ueber dem Chat. Der bisherige
+  // Simply-Verlauf wird (transparent angekuendigt) mitgesendet, damit
+  // Lion/Samuel den Kontext sehen.
+  let humanFormEl = null;
 
-  function botSay(text) {
-    addMessageDom('bot', text);
-    history.push({ role: 'assistant', content: text });
-    persist();
+  function chatTranscript() {
+    return (history || []).slice(-12)
+      .map(m => (m.role === 'user' ? 'Kunde: ' : 'Simply: ') + (typeof m.content === 'string' ? m.content : ''))
+      .join('\n');
   }
 
-  function startHumanFlow() {
-    if (!win.classList.contains('open')) openChat();
-    if (humanFlow) return;
-    humanFlow = { step: 'reason', data: {} };
-    quickEl.innerHTML = '';
-    botSay('Klar, machen wir! 👍 Damit dich der richtige Mensch zurückrufen kann, brauche ich nur drei Dinge.\n\n**1/3 — Worum geht es?** Beschreib kurz dein Anliegen.\n\n_(Tippe „abbrechen", falls du es dir anders überlegst.)_');
-    inputEl.placeholder = 'Dein Anliegen…';
-    inputEl.focus();
-  }
+  function buildHumanForm() {
+    if (humanFormEl) return humanFormEl;
+    const wrap = document.createElement('div');
+    wrap.className = 'stc-hf-overlay';
+    wrap.setAttribute('role', 'dialog');
+    wrap.setAttribute('aria-label', 'Rückruf anfordern');
+    wrap.innerHTML = `
+      <div class="stc-hf-card">
+        <button type="button" class="stc-hf-close" aria-label="Schließen">×</button>
+        <p class="stc-hf-title">📞 Wir rufen dich zurück</p>
+        <p class="stc-hf-sub">Meist innerhalb weniger Stunden (werktags). Dein bisheriger Chat mit Simply wird mitgesendet, damit wir direkt im Thema sind.</p>
+        <label class="stc-hf-label" for="stcHfName">Dein Name *</label>
+        <input class="stc-hf-input" id="stcHfName" type="text" maxlength="120" autocomplete="name" placeholder="Vor- und Nachname" />
+        <label class="stc-hf-label" for="stcHfPhone">Telefonnummer *</label>
+        <input class="stc-hf-input" id="stcHfPhone" type="tel" maxlength="40" inputmode="tel" autocomplete="tel" placeholder="z.B. 0151 1234567" />
+        <label class="stc-hf-label" for="stcHfMail">E-Mail <span style="opacity:.55;font-weight:400;">(optional)</span></label>
+        <input class="stc-hf-input" id="stcHfMail" type="email" maxlength="200" autocomplete="email" placeholder="deine@email.de" />
+        <label class="stc-hf-label" for="stcHfMsg">Worum geht es? *</label>
+        <textarea class="stc-hf-input" id="stcHfMsg" rows="3" maxlength="1500" placeholder="Kurz dein Anliegen…"></textarea>
+        <p class="stc-hf-err" id="stcHfErr"></p>
+        <button type="button" class="stc-hf-submit" id="stcHfSubmit">Rückruf anfordern →</button>
+      </div>`;
+    document.body.appendChild(wrap);
 
-  async function handleHumanFlow(text) {
-    addMessageDom('user', text);
-    history.push({ role: 'user', content: text });
-    persist();
+    const close = () => wrap.classList.remove('open');
+    wrap.addEventListener('click', (e) => { if (e.target === wrap) close(); });
+    wrap.querySelector('.stc-hf-close').addEventListener('click', close);
 
-    if (/^abbrechen$/i.test(text.trim())) {
-      humanFlow = null;
-      inputEl.placeholder = 'Frag Simply alles...';
-      botSay('Alles klar, kein Problem — ich bin weiter für dich da. Frag mich einfach!');
-      return;
-    }
+    wrap.querySelector('#stcHfSubmit').addEventListener('click', async () => {
+      const name  = wrap.querySelector('#stcHfName').value.trim();
+      const phone = wrap.querySelector('#stcHfPhone').value.trim();
+      const mail  = wrap.querySelector('#stcHfMail').value.trim();
+      const msg   = wrap.querySelector('#stcHfMsg').value.trim();
+      const err   = wrap.querySelector('#stcHfErr');
+      const btn   = wrap.querySelector('#stcHfSubmit');
 
-    if (humanFlow.step === 'reason') {
-      humanFlow.data.reason = text.trim().slice(0, 1500);
-      humanFlow.step = 'name';
-      botSay('Notiert! **2/3 — Wie heißt du?**');
-      inputEl.placeholder = 'Dein Name…';
-      return;
-    }
+      const phoneOk = /^[\d\s+()\/-]{6,20}$/.test(phone);
+      const mailOk  = !mail || /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(mail);
+      if (!name || !msg) { err.textContent = 'Bitte Name und Anliegen ausfüllen.'; return; }
+      if (!phoneOk)      { err.textContent = 'Bitte eine gültige Telefonnummer angeben.'; return; }
+      if (!mailOk)       { err.textContent = 'Die E-Mail-Adresse sieht nicht richtig aus.'; return; }
+      err.textContent = '';
+      btn.disabled = true;
+      btn.textContent = 'Wird gesendet…';
 
-    if (humanFlow.step === 'name') {
-      humanFlow.data.name = text.trim().slice(0, 120);
-      humanFlow.step = 'phone';
-      botSay('Danke, ' + humanFlow.data.name.split(' ')[0] + '! **3/3 — Deine Telefonnummer?** Dann rufen wir dich zurück. (Alternativ geht auch deine E-Mail-Adresse.)');
-      inputEl.placeholder = 'Telefonnummer oder E-Mail…';
-      return;
-    }
-
-    if (humanFlow.step === 'phone') {
-      const contact = text.trim().slice(0, 200);
-      const isPhone = /^[\d\s+()\/-]{6,20}$/.test(contact);
-      const isMail  = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(contact);
-      if (!isPhone && !isMail) {
-        botSay('Hmm, das sieht weder nach Telefonnummer noch nach E-Mail aus — magst du es nochmal probieren? (z.B. 0151 1234567)');
-        return;
-      }
-      const d = humanFlow.data;
-      humanFlow = null;
-      inputEl.placeholder = 'Frag Simply alles...';
-
-      const lastMsgs = (history || []).slice(-10)
-        .map(m => (m.role === 'user' ? 'Kunde: ' : 'Simply: ') + (typeof m.content === 'string' ? m.content : ''))
-        .join('\n');
-
-      const typing = addMessageDom('bot', '');
-      typing.innerHTML = '<span class="stc-typing"><span></span><span></span><span></span></span>';
       try {
         const res = await fetch('/api/contact', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            name: d.name,
-            email: isMail ? contact : 'rueckruf@simply-chat.simpletrailer.de',
-            phone: isPhone ? contact : '',
-            message: 'RÜCKRUF-BITTE über Simply-Chat\n\nAnliegen: ' + d.reason +
-                     '\nKontakt: ' + contact + (isPhone ? ' (Telefon)' : ' (E-Mail)') +
-                     '\n\n--- Chat-Verlauf (Auszug) ---\n' + lastMsgs
+            name,
+            phone,
+            email: mail || 'rueckruf@simply-chat.simpletrailer.de',
+            message: 'RÜCKRUF-BITTE über Simply-Chat\n\nAnliegen: ' + msg +
+                     '\n\n--- Bisheriger Chat mit Simply ---\n' + (chatTranscript() || '(noch kein Verlauf)')
           })
         });
         if (!res.ok) throw new Error('send failed');
-        const confirmMsg = isPhone
-          ? 'Perfekt, ' + d.name.split(' ')[0] + '! 📞 Deine Rückruf-Bitte ist raus — Lion oder Samuel rufen dich so schnell wie möglich unter **' + contact + '** zurück (meist innerhalb weniger Stunden, werktags).'
-          : 'Perfekt, ' + d.name.split(' ')[0] + '! ✉️ Deine Nachricht ist raus — wir antworten dir so schnell wie möglich an **' + contact + '**.';
-        typing.innerHTML = renderMarkdown(confirmMsg);
-        history.push({ role: 'assistant', content: confirmMsg });
-        persist();
         try { window.stcTrack && stcTrack('simply_callback_request'); } catch (e) {}
-      } catch (err) {
-        const failMsg = 'Mist, das Senden hat gerade nicht geklappt. 🙈 Schreib uns bitte direkt an **info@simpletrailer.de** — oder versuch es gleich nochmal.';
-        typing.innerHTML = renderMarkdown(failMsg);
-        history.push({ role: 'assistant', content: failMsg });
-        persist();
+        btn.textContent = 'Angefragt ✓';
+        btn.style.background = '#22c55e';
+        setTimeout(() => {
+          close();
+          btn.disabled = false;
+          btn.textContent = 'Rückruf anfordern →';
+          btn.style.background = '';
+          wrap.querySelector('#stcHfMsg').value = '';
+          const note = 'Deine Rückruf-Bitte ist raus, ' + name.split(' ')[0] + '! 📞 Wir melden uns so schnell wie möglich unter **' + phone + '**.';
+          addMessageDom('bot', note);
+          history.push({ role: 'assistant', content: note });
+          persist();
+        }, 1200);
+      } catch (e2) {
+        err.textContent = 'Senden fehlgeschlagen — bitte direkt an info@simpletrailer.de mailen.';
+        btn.disabled = false;
+        btn.textContent = 'Rückruf anfordern →';
       }
-      return;
-    }
+    });
+
+    humanFormEl = wrap;
+    return wrap;
+  }
+
+  function startHumanFlow() {
+    const f = buildHumanForm();
+    f.classList.add('open');
+    setTimeout(() => { try { f.querySelector('#stcHfName').focus(); } catch (e) {} }, 80);
   }
 
   async function sendMessage(text) {
     text = (text || '').trim();
-    if (humanFlow) {
-      if (!text || isStreaming) return;
-      inputEl.value = '';
-      await handleHumanFlow(text);
-      return;
-    }
 
     text = (text || '').trim();
     if (!text || isStreaming) return;

@@ -440,19 +440,6 @@
       transition: transform .45s ease;
     }
     .usecase-card.has-image:hover .usecase-image img { transform: scale(1.04); }
-    .usecase-image .usecase-badge {
-      position: absolute;
-      top: 10px; left: 10px;
-      background: rgba(13,13,13,0.82);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      width: 38px; height: 38px;
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.1rem;
-      z-index: 2;
-      border: 1px solid rgba(255,255,255,0.08);
-    }
     .usecase-content { padding: 16px 18px 14px; display:flex; flex-direction:column; gap:5px; }
     .usecase-icon { font-size: 1.8rem; line-height: 1; margin-bottom: 6px; }
     .usecase-title { font-size: 1rem; font-weight: 700; color: var(--white); letter-spacing: -.01em; }
@@ -2928,7 +2915,6 @@
     <div class="usecase-grid">
       <button type="button" onclick="openTrailerModal('flexible')" class="usecase-card has-image reveal">
         <div class="usecase-image">
-          <span class="usecase-badge" aria-hidden="true">📦</span>
           <picture>
             <source srcset="/use-umzug.webp?v=3" type="image/webp">
             <img src="/use-umzug.jpg?v=3" alt="Anhänger mit Umzugskartons in Bremen" loading="lazy" decoding="async" width="1536" height="1024">
@@ -2942,7 +2928,6 @@
       </button>
       <button type="button" onclick="openTrailerModal('flexible')" class="usecase-card has-image reveal">
         <div class="usecase-image">
-          <span class="usecase-badge" aria-hidden="true">🌿</span>
           <picture>
             <source srcset="/use-garten.webp?v=3" type="image/webp">
             <img src="/use-garten.jpg?v=3" alt="Anhänger mit Sperrmüll und Gartenabfällen" loading="lazy" decoding="async" width="1536" height="1024">
@@ -2956,7 +2941,6 @@
       </button>
       <button type="button" onclick="openNotifyModal('Autotransporter')" class="usecase-card has-image soon reveal">
         <div class="usecase-image">
-          <span class="usecase-badge" aria-hidden="true">🚗</span>
           <span class="usecase-soon-badge" data-i18n="trailers.soon">Demnächst</span>
           <picture>
             <source srcset="/use-auto.webp?v=3" type="image/webp">
@@ -2971,7 +2955,6 @@
       </button>
       <button type="button" onclick="openTrailerModal('flexible')" class="usecase-card has-image reveal">
         <div class="usecase-image">
-          <span class="usecase-badge" aria-hidden="true">🛒</span>
           <picture>
             <source srcset="/use-bremen.webp?v=3" type="image/webp">
             <img src="/use-bremen.jpg?v=3" alt="Anhänger im Bremer Stadtverkehr für Großeinkauf" loading="lazy" decoding="async" width="1536" height="1024">
