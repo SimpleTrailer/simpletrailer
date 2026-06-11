@@ -371,10 +371,6 @@
     }
 
     /* ===== Seriositaets-Layer: Fortschritt, Fehler, Polish (additiv) ===== */
-    .booking-progress { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
-    .bp-label { font-size: .75rem; font-weight: 700; color: var(--orange); white-space: nowrap; letter-spacing: .04em; }
-    .bp-bar { flex: 1; height: 6px; background: var(--s2); border-radius: 99px; overflow: hidden; border: 1px solid var(--border); }
-    .bp-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--orange), #ff8a3d); transition: width .45s cubic-bezier(.16,1,.3,1); }
 
     /* Stepper verfeinert */
     @media (min-width: 641px) { .step-circle { width: 34px; height: 34px; font-size: .8rem; } }
@@ -401,6 +397,30 @@
     .pricing-option { border-radius: 14px; }
     .pricing-option.selected { box-shadow: 0 0 0 3px rgba(232,93,0,.18), 0 8px 22px rgba(232,93,0,.12); }
     .slot-btn.blocked { background: #161010; border-color: #2a1515; color: #5a3535; }
+
+    /* Stepper: integrierter Fortschritt + Klick-Zurueck + Mobile-Slide */
+    .step-line { transition: background .45s cubic-bezier(.16,1,.3,1); }
+    .step-line.passed { background: var(--orange); }
+    .step-circle.done { cursor: pointer; }
+    .step-circle.done:hover { box-shadow: 0 0 0 3px rgba(34,197,94,.25); }
+    @media (max-width: 640px) {
+      .stepper { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding-bottom: 4px; }
+      .stepper::-webkit-scrollbar { display: none; }
+      .step-item { flex: 0 0 auto; }
+      .step-line { min-width: 26px; flex: 0 0 26px; }
+      /* iOS-Zoom-Fix: Eingaben mind. 16px, sonst zoomt Safari beim Fokus */
+      .field-input, input[type="email"], input[type="password"], input[type="text"], input[type="tel"], select, textarea { font-size: 16px !important; }
+    }
+    /* Schutzpaket-Info-Button */
+    .ins-info-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 22px; height: 22px; border-radius: 50%; position: relative;
+      border: 1.5px solid var(--border); background: var(--s2); color: var(--gray);
+      font-size: .68rem; font-weight: 800; cursor: pointer; margin-left: 8px;
+      vertical-align: middle; transition: all .15s; font-family: var(--font);
+    }
+    .ins-info-btn::after { content: ''; position: absolute; inset: -12px; }
+    .ins-info-btn:hover { border-color: var(--orange); color: var(--orange); }
   </style>
 </head>
 <body>
@@ -411,13 +431,6 @@
 </nav>
 
 <div class="page">
-
-  <!-- FORTSCHRITT (additiv, liest Stepper-Status) -->
-  <div class="booking-progress">
-    <span class="bp-label" id="bpLabel">Schritt 1 von 5</span>
-    <div class="bp-bar"><div class="bp-fill" id="bpFill" style="width:20%"></div></div>
-  </div>
-
   <!-- STEPPER -->
   <div class="stepper">
     <div class="step-item">
@@ -774,7 +787,7 @@
   <!-- STEP 4: Schutzpaket + Rückgabe-Option -->
   <div class="step-content" id="step4" style="max-width:560px;margin-left:auto;margin-right:auto;">
     <div class="card">
-      <p class="field-label" style="margin-bottom:4px;" data-i18n="booking.protection">Schutzpaket wählen</p>
+      <p class="field-label" style="margin-bottom:4px;"><span data-i18n="booking.protection">Schutzpaket wählen</span><button type="button" class="ins-info-btn" onclick="openInsInfo()" aria-label="Was bedeuten die Schutzpakete?">i</button></p>
       <p style="color:var(--gray);font-size:.78rem;margin-bottom:14px;">Begrenze deine Haftung bei Schäden am Anhänger. Vorausgewählt: <strong style="color:#fff;">Basis Schutz</strong>.</p>
       <div class="insurance-grid">
         <div class="insurance-option selected" id="ins-basis" onclick="selectInsurance('basis')">
@@ -804,15 +817,15 @@
       </div>
 
       <!-- Warnung wenn "Kein Schutz" gewählt -->
-      <div id="noShieldWarning" style="display:none;background:#1a0808;border:2px solid #dc2626;border-radius:10px;padding:16px 18px;margin-top:14px;">
-        <div style="display:flex;align-items:center;gap:8px;font-size:1rem;font-weight:800;color:#fca5a5;margin-bottom:8px;letter-spacing:-.01em;">
-          🛑 ACHTUNG — VOLLE HAFTUNG
+      <div id="noShieldWarning" style="display:none;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.25);border-left:3px solid #b91c1c;border-radius:10px;padding:14px 16px;margin-top:14px;">
+        <div style="display:flex;align-items:center;gap:8px;font-size:.9rem;font-weight:700;color:#f3a5a5;margin-bottom:8px;letter-spacing:-.01em;">
+          Wichtig: volle Haftung ohne Schutzpaket
         </div>
         <div style="font-size:.84rem;color:#fecaca;line-height:1.55;margin-bottom:12px;">
           Bei Schäden, Unfall oder Diebstahl haftest du in voller Höhe.<br>
           Im schlimmsten Fall können <strong style="color:#fff;">bis zu 5.000 €</strong> auf dich zukommen (Wiederbeschaffungswert + Gutachter + Wertminderung + Mietausfall + Bergung).
         </div>
-        <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:10px;background:#0a0202;border-radius:8px;border:1px solid #7f1d1d;">
+        <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:10px;background:#141414;border-radius:8px;border:1px solid #333;">
           <input type="checkbox" id="noShieldConfirm" onchange="updateStep4ContinueState()" style="margin-top:3px;flex-shrink:0;width:18px;height:18px;accent-color:#dc2626;">
           <span style="font-size:.84rem;color:#fff;line-height:1.5;">
             Ich habe verstanden und buche bewusst <strong>ohne Schutzpaket</strong>. Mir ist klar, dass ich im Schadensfall den vollen Betrag selbst trage.
@@ -838,7 +851,7 @@
           <div class="ins-radio"></div>
           <div class="ins-body">
             <div class="ins-name">Ohne kostenlose Stornierung</div>
-            <div class="ins-desc">Bei Stornierung oder Nichtantritt fallen <strong style="color:#f87171;">90 % des Mietpreises</strong> als Storno-Gebühr an (AGB § 6).</div>
+            <div class="ins-desc">Bei Stornierung fallen <strong style="color:#f87171;">90 % des Mietpreises</strong> als Storno-Gebühr an (AGB § 6).</div>
           </div>
           <div class="ins-price free">0,00 €</div>
         </div>
@@ -873,10 +886,10 @@
       <div id="returnZoneMap" style="height:240px;margin-top:14px;border-radius:10px;overflow:hidden;border:1px solid var(--border);background:#0a0a0a;"></div>
 
       <!-- Warnhinweis: 50€ bei Fehlrückgabe + Halteverbot-Konsequenzen -->
-      <div style="background:#1f1606;border-left:3px solid #f59e0b;padding:12px 14px;border-radius:8px;margin-top:14px;">
-        <div style="font-size:.82rem;font-weight:700;color:#fbbf24;margin-bottom:4px;">⚠ Rückgabe außerhalb der Zone</div>
+      <div style="background:var(--s2);border:1px solid var(--border);border-left:3px solid #555;padding:12px 14px;border-radius:8px;margin-top:14px;">
+        <div style="font-size:.8rem;font-weight:700;color:#aaa;margin-bottom:4px;">Gut zu wissen: Rückgabe-Zone</div>
         <div id="returnZoneWarning" style="font-size:.78rem;color:#ddd;line-height:1.5;">
-          Wird der Anhänger nicht innerhalb der erlaubten Zone abgestellt, berechnen wir eine Rückführungspauschale von <strong style="color:#fbbf24;">50,00 €</strong> (siehe <a href="#" onclick="openLegalModal('agb');return false;" style="color:#fbbf24;">AGB §13.6</a>). Dir bleibt der Nachweis vorbehalten, dass kein oder ein geringerer Schaden entstanden ist. Zusätzlich gilt: keine Halteverbote, kein Privatgrund, nicht verkehrsbehindernd — sonst trägst Du Bußgelder und Abschleppkosten (AGB §13.5).
+          Wird der Anhänger nicht innerhalb der erlaubten Zone abgestellt, berechnen wir eine Rückführungspauschale von <strong style="color:#ddd;">50,00 €</strong> (siehe <a href="#" onclick="openLegalModal('agb');return false;" style="color:#aaa;">AGB §13.6</a>). Dir bleibt der Nachweis vorbehalten, dass kein oder ein geringerer Schaden entstanden ist. Zusätzlich gilt: keine Halteverbote, kein Privatgrund, nicht verkehrsbehindernd — sonst trägst Du Bußgelder und Abschleppkosten (AGB §13.5).
         </div>
       </div>
     </div>
@@ -2467,24 +2480,77 @@
 <script src="/chat-widget.js?v=6" defer></script>
 
 <script>
-/* Fortschritts-Balken: spiegelt den bestehenden Stepper-Status (additiv, fail-silent) */
+/* Stepper-Komfort (additiv): Linien als Fortschritt, fertige Schritte klickbar,
+   auf Mobile slidet der aktive Schritt in Sicht. Logik unveraendert. */
 (function(){
   try {
-    var fill = document.getElementById('bpFill');
-    var label = document.getElementById('bpLabel');
     var circles = [1,2,3,4,5].map(function(n){ return document.getElementById('sc'+n); });
-    if (!fill || !label || circles.some(function(x){ return !x; })) return;
-    function update(){
+    if (circles.some(function(x){ return !x; })) return;
+    var lines = Array.prototype.slice.call(document.querySelectorAll('.stepper .step-line'));
+    function current(){
       var cur = 1;
       circles.forEach(function(el, i){ if (el.classList.contains('active') || el.classList.contains('done')) cur = Math.max(cur, i+1); });
-      fill.style.width = (cur/5*100) + '%';
-      label.textContent = 'Schritt ' + cur + ' von 5';
+      return cur;
+    }
+    function update(){
+      var cur = current();
+      lines.forEach(function(l, i){ l.classList.toggle('passed', i < cur - 1); });
+      if (window.matchMedia('(max-width: 640px)').matches) {
+        var el = circles[cur-1];
+        var st = document.querySelector('.stepper');
+        if (el && st && st.scrollTo) {
+          try { st.scrollTo({ left: el.offsetLeft - (st.clientWidth - el.offsetWidth) / 2, behavior: 'smooth' }); } catch(e) {}
+        }
+      }
     }
     var obs = new MutationObserver(update);
     circles.forEach(function(el){ obs.observe(el, { attributes: true, attributeFilter: ['class'] }); });
+    circles.forEach(function(el, i){
+      function back(){
+        if (el.classList.contains('done') && typeof goToStep === 'function') {
+          try { goToStep(i+1); } catch(e) {}
+        }
+      }
+      el.addEventListener('click', back);
+      var lbl = document.getElementById('sl'+(i+1));
+      if (lbl) lbl.addEventListener('click', back);
+    });
     update();
   } catch(e) {}
 })();
+</script>
+
+<!-- Schutzpaket-Erklaerung (additiv) -->
+<div id="insInfoOverlay" class="info-overlay" onclick="if(event.target===this)closeInsInfo()">
+  <div class="info-modal-inner" style="padding:22px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <strong style="font-size:1.05rem;letter-spacing:-.01em;">Schutzpakete erklärt</strong>
+      <button onclick="closeInsInfo()" style="background:var(--s2);border:1px solid var(--border);color:var(--gray);width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1rem;">×</button>
+    </div>
+    <p style="color:var(--gray);font-size:.85rem;line-height:1.6;margin-bottom:14px;">Das Schutzpaket begrenzt, was du im Schadensfall maximal selbst zahlst (Selbstbeteiligung) — egal wie hoch der Schaden ist.</p>
+    <div style="display:grid;gap:10px;">
+      <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;">
+        <strong style="font-size:.88rem;">Basis Schutz</strong>
+        <p style="color:var(--gray);font-size:.8rem;line-height:1.55;margin-top:4px;">Du zahlst maximal <strong style="color:#fff;">500 €</strong> selbst, den Rest übernehmen wir.</p>
+      </div>
+      <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;">
+        <strong style="font-size:.88rem;">Premium Schutz</strong>
+        <p style="color:var(--gray);font-size:.8rem;line-height:1.55;margin-top:4px;">Du zahlst maximal <strong style="color:#fff;">50 €</strong> selbst — der Sorglos-Tarif.</p>
+      </div>
+      <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;">
+        <strong style="font-size:.88rem;">Kein Schutz</strong>
+        <p style="color:var(--gray);font-size:.8rem;line-height:1.55;margin-top:4px;">Du haftest in voller Höhe — im Extremfall mehrere tausend Euro.</p>
+      </div>
+      <div style="background:rgba(232,93,0,.06);border:1px solid rgba(232,93,0,.25);border-radius:10px;padding:12px 14px;">
+        <strong style="font-size:.82rem;color:var(--orange);">Beispiel</strong>
+        <p style="color:#ccc;font-size:.8rem;line-height:1.6;margin-top:4px;">Beim Rangieren entsteht ein Schaden von <strong style="color:#fff;">800 €</strong>:<br>· Basis Schutz → du zahlst 500 €<br>· Premium Schutz → du zahlst 50 €<br>· Kein Schutz → du zahlst 800 €</p>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+function openInsInfo(){ var o=document.getElementById('insInfoOverlay'); if(o){ o.style.display='block'; document.body.style.overflow='hidden'; } }
+function closeInsInfo(){ var o=document.getElementById('insInfoOverlay'); if(o){ o.style.display='none'; document.body.style.overflow=''; } }
 </script>
 </body>
 </html>
