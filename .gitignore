@@ -13,3 +13,5 @@ package-lock.json
 credentials.json
 service-account*.json
 .vercel
+index-preview.html
+google-ads-logo.png
