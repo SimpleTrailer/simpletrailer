@@ -2454,6 +2454,35 @@
       /* iOS-Zoom-Fix auch hier */
       .field-input, input[type="email"], input[type="text"], select { font-size: 16px !important; }
     }
+
+    /* Bewerte-uns: schlanker Streifen, Teil des Sektions-Rhythmus */
+    .rate-strip {
+      background: #121212;
+      border-top: 1px solid #1e1e1e;
+      border-bottom: 1px solid #1e1e1e;
+      padding: 30px 5%;
+    }
+    .rate-strip-inner {
+      max-width: 1200px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: center;
+      gap: 10px 26px; flex-wrap: wrap; text-align: center;
+    }
+    .rate-stars { display: inline-flex; gap: 3px; flex-shrink: 0; }
+    .rate-strip-inner p { margin: 0; font-size: .92rem; color: var(--gray); max-width: 560px; }
+    .rate-strip-inner p strong { color: var(--white); }
+    .rate-strip-btn {
+      display: inline-flex; align-items: center;
+      padding: 11px 20px; border-radius: 10px;
+      border: 1.5px solid var(--border);
+      color: var(--white); text-decoration: none;
+      font-weight: 700; font-size: .88rem;
+      white-space: nowrap; flex-shrink: 0;
+      transition: all .2s;
+    }
+    .rate-strip-btn:hover { border-color: var(--orange); color: var(--orange); transform: translateY(-1px); }
+    @media (max-width: 760px) {
+      .rate-strip-inner { flex-direction: column; gap: 12px; }
+    }
   </style>
 </head>
 <body>
@@ -3152,18 +3181,14 @@
 </section>
 
 <!-- CONTACT -->
-<!-- Du warst zufrieden? Bewerte-uns CTA — direkt unter den Reviews -->
-  <div class="section-inner" style="max-width:760px;margin:clamp(28px,5vw,48px) auto 0;padding:0 5%;">
-    <div class="reveal" style="padding:clamp(24px,4vw,32px) 24px;background:linear-gradient(180deg,rgba(232,93,0,.05),transparent 40%),var(--card);border:1px solid var(--border);border-top:3px solid var(--orange);border-radius:16px;text-align:center;box-shadow:0 10px 32px rgba(0,0,0,.3);">
-      <div style="display:flex;justify-content:center;gap:4px;margin-bottom:12px;"><svg width="22" height="22" viewBox="0 0 24 24" fill="#F59E0B" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg><svg width="22" height="22" viewBox="0 0 24 24" fill="#F59E0B" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg><svg width="22" height="22" viewBox="0 0 24 24" fill="#F59E0B" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg><svg width="22" height="22" viewBox="0 0 24 24" fill="#F59E0B" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg><svg width="22" height="22" viewBox="0 0 24 24" fill="#F59E0B" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg></div>
-      <p style="font-weight:700;margin-bottom:6px;" data-i18n="reviews.you_satisfied">Du warst zufrieden? Bewerte uns.</p>
-      <p style="color:var(--gray);font-size:.88rem;margin-bottom:16px;line-height:1.5;" data-i18n="reviews.you_satisfied.sub">Eine kurze Google-Bewertung hilft anderen, uns zu finden — und uns, weiter zu wachsen.</p>
-      <a href="https://g.page/r/Cd6jwKdwS_Y7EAE/review" target="_blank" rel="noopener"
-         style="display:inline-block;padding:12px 24px;background:var(--orange);color:#fff;border-radius:10px;font-weight:700;font-size:.92rem;text-decoration:none;" data-i18n="reviews.write_google">
-        Google-Bewertung schreiben →
-      </a>
-    </div>
+<!-- Bewerte-uns: integrierter Streifen zwischen den Sektionen -->
+<div class="rate-strip">
+  <div class="rate-strip-inner">
+    <span class="rate-stars"><svg width="18" height="18" viewBox="0 0 24 24" fill="#F59E0B" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg><svg width="18" height="18" viewBox="0 0 24 24" fill="#F59E0B" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg><svg width="18" height="18" viewBox="0 0 24 24" fill="#F59E0B" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg><svg width="18" height="18" viewBox="0 0 24 24" fill="#F59E0B" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg><svg width="18" height="18" viewBox="0 0 24 24" fill="#F59E0B" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg></span>
+    <p><strong data-i18n="reviews.you_satisfied">Du warst zufrieden? Bewerte uns.</strong> <span data-i18n="reviews.you_satisfied.sub">Eine kurze Google-Bewertung hilft anderen, uns zu finden — und uns, weiter zu wachsen.</span></p>
+    <a href="https://g.page/r/Cd6jwKdwS_Y7EAE/review" target="_blank" rel="noopener" class="rate-strip-btn" data-i18n="reviews.write_google">Google-Bewertung schreiben →</a>
   </div>
+</div>
 
 <section id="kontakt">
   <div class="section-inner">
