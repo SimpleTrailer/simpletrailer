@@ -23,7 +23,8 @@
   const css = `
   .stc-fab {
     position: fixed; bottom: 14px; right: 14px;
-    width: 128px; height: auto;
+    width: 92px; height: auto;
+    touch-action: none;
     background: transparent; border: none; padding: 0;
     cursor: pointer;
     z-index: 99998;
@@ -37,6 +38,8 @@
     pointer-events: none;
     animation: stc-bob 3.8s ease-in-out infinite;
   }
+  .stc-fab.stc-overlay-hidden { display: none !important; }
+  .stc-fab.stc-dragging { cursor: grabbing; transition: none; }
   .stc-fab:hover { transform: scale(1.06); }
   .stc-fab:active { transform: scale(0.97); }
   .stc-fab:focus-visible { outline: 2px solid #FF8C42; outline-offset: 6px; border-radius: 14px; }
@@ -172,7 +175,7 @@
       from { transform: translateY(100%); }
       to { transform: translateY(0); }
     }
-    .stc-fab { bottom: 12px; right: 12px; width: 104px; }
+    .stc-fab { bottom: 12px; right: 12px; width: 76px; }
     /* Drag-Handle oben — prominenter als Popup-Hinweis */
     .stc-window::before {
       content: ''; position: absolute; top: 10px; left: 50%;
@@ -675,6 +678,98 @@
     win.style.height = '';
     win.style.maxHeight = '';
   }
+
+  // ===== Overlay-Watcher: Simply verschwindet, wenn Modals/Flows offen sind =====
+  // (Anhaenger-Wahl, Info-, Notify-, Rechts-Overlays) — er bleibt der Homepage-Begleiter
+  // und haengt nicht ueber Buttons in den Dialogen.
+  (function overlayWatcher() {
+    const SELECTORS = '#trailerModal, #notifyModal, #infoOverlayIdx, #insInfoOverlay, .info-overlay, .trailer-modal-bg';
+    function anyOverlayOpen() {
+      try {
+        return Array.from(document.querySelectorAll(SELECTORS)).some(el => {
+          const st = window.getComputedStyle(el);
+          return st.display !== 'none' && st.visibility !== 'hidden';
+        });
+      } catch (e) { return false; }
+    }
+    let raf = null;
+    function sync() {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = null;
+        fab.classList.toggle('stc-overlay-hidden', anyOverlayOpen());
+      });
+    }
+    try {
+      const mo = new MutationObserver(sync);
+      mo.observe(document.body, { attributes: true, attributeFilter: ['style', 'class'], subtree: true });
+      sync();
+    } catch (e) { /* alte Browser: FAB bleibt einfach sichtbar */ }
+  })();
+
+  // ===== Draggable: Simply frei verschieben (Position bleibt gespeichert) =====
+  (function draggableFab() {
+    const KEY = 'st_simply_pos_v1';
+    let dragging = false, moved = false, startX = 0, startY = 0, origX = 0, origY = 0;
+
+    function clamp(x, y) {
+      const r = fab.getBoundingClientRect();
+      const maxX = window.innerWidth  - r.width  - 4;
+      const maxY = window.innerHeight - r.height - 4;
+      return [Math.min(Math.max(4, x), maxX), Math.min(Math.max(4, y), maxY)];
+    }
+    function apply(x, y) {
+      fab.style.left = x + 'px';
+      fab.style.top = y + 'px';
+      fab.style.right = 'auto';
+      fab.style.bottom = 'auto';
+    }
+    // Gespeicherte Position wiederherstellen
+    try {
+      const saved = JSON.parse(localStorage.getItem(KEY) || 'null');
+      if (saved && typeof saved.x === 'number') {
+        requestAnimationFrame(() => { const [x, y] = clamp(saved.x, saved.y); apply(x, y); });
+      }
+    } catch (e) {}
+
+    fab.addEventListener('pointerdown', (e) => {
+      dragging = true; moved = false;
+      startX = e.clientX; startY = e.clientY;
+      const r = fab.getBoundingClientRect();
+      origX = r.left; origY = r.top;
+      try { fab.setPointerCapture(e.pointerId); } catch (err) {}
+    });
+    fab.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      const dx = e.clientX - startX, dy = e.clientY - startY;
+      if (!moved && Math.hypot(dx, dy) < 7) return; // Klick-Toleranz
+      moved = true;
+      fab.classList.add('stc-dragging');
+      const [x, y] = clamp(origX + dx, origY + dy);
+      apply(x, y);
+    });
+    function endDrag(e) {
+      if (!dragging) return;
+      dragging = false;
+      fab.classList.remove('stc-dragging');
+      if (moved) {
+        const r = fab.getBoundingClientRect();
+        try { localStorage.setItem(KEY, JSON.stringify({ x: r.left, y: r.top })); } catch (err) {}
+        // Klick nach Drag unterdruecken
+        const block = (ev) => { ev.stopPropagation(); ev.preventDefault(); fab.removeEventListener('click', block, true); };
+        fab.addEventListener('click', block, true);
+        setTimeout(() => fab.removeEventListener('click', block, true), 0);
+      }
+    }
+    fab.addEventListener('pointerup', endDrag);
+    fab.addEventListener('pointercancel', endDrag);
+    window.addEventListener('resize', () => {
+      try {
+        const saved = JSON.parse(localStorage.getItem(KEY) || 'null');
+        if (saved) { const [x, y] = clamp(saved.x, saved.y); apply(x, y); }
+      } catch (e) {}
+    });
+  })();
 
   fab.addEventListener('click', openChat);
   closeBtn.addEventListener('click', closeChat);
