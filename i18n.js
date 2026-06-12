@@ -243,7 +243,7 @@
       'newsletter.title': 'Die besten Anhänger-Tipps direkt ins Postfach',
       'newsletter.sub': 'Praktische Anleitungen, Saison-Aktionen, neue Anhänger-Typen — kein Spam, jederzeit kündbar.',
       'newsletter.signup': 'Anmelden',
-      'newsletter.legal': 'Mit Anmeldung bestätigst du unsere <a href="/datenschutz" style="color:#888;">Datenschutzerklärung</a>. Double-Opt-In: du bekommst eine Bestätigungs-Mail.',
+      'newsletter.legal': 'Mit Anmeldung bestätigst du unsere <a href="/datenschutz" style="color:#fff;">Datenschutzerklärung</a>. Double-Opt-In: du bekommst eine Bestätigungs-Mail.',
 
       // Reviews
       'reviews.title': 'Was unsere Mieter sagen.',
@@ -703,7 +703,7 @@
       'newsletter.title': 'The best trailer tips straight to your inbox',
       'newsletter.sub': 'Practical guides, seasonal deals, new trailer types — no spam, unsubscribe anytime.',
       'newsletter.signup': 'Sign up',
-      'newsletter.legal': 'By signing up, you confirm our <a href="/datenschutz" style="color:#888;">Privacy Policy</a>. Double opt-in: you\'ll receive a confirmation email.',
+      'newsletter.legal': 'By signing up, you confirm our <a href="/datenschutz" style="color:#fff;">Privacy Policy</a>. Double opt-in: you\'ll receive a confirmation email.',
 
       'reviews.title': 'What our renters say.',
       'reviews.you_satisfied': 'Were you happy? Rate us.',

@@ -2789,6 +2789,117 @@
       #hero #map { height: 300px !important; }
     }
   </style>
+
+  <!-- ===== SITE LIGHT V1: helle Sektionen, Schwarz+Orange als Akzente ===== -->
+  <style id="site-light-v1">
+    body { background: #FFFFFF; }
+
+    /* Orange Buttons behalten IMMER weisse Schrift (Var-Flip unten aendert --white) */
+    .btn-orange { color: #FFFFFF !important; }
+    .review-avatar { color: #FFFFFF !important; }
+
+    /* --- Scoped Var-Flip: alle Content-Sektionen werden hell --- */
+    #anhaenger, #bewertungen, #preise, #anwendungen, #how, #faq, #ratgeber-section, #kontakt {
+      --s1: #FFFFFF;
+      --s2: #FFFFFF;
+      --card: #FFFFFF;
+      --bg: #FFFFFF;
+      --white: #111213;
+      --gray: #5C5953;
+      --text-muted: #6B6862;
+      --border: rgba(17,18,19,0.10);
+      color: #34322E;
+    }
+
+    /* --- Sektions-Rhythmus: Weiss / warmes Papier im Wechsel --- */
+    #anhaenger        { background: #F6F3EE; }
+    #bewertungen      { background: #FFFFFF; }
+    #preise           { background: #F6F3EE; }
+    #anwendungen      { background: #FFFFFF; }
+    #how              { background: #F6F3EE; }
+    #faq              { background: #FFFFFF; }
+    #ratgeber-section { background: #F6F3EE; }
+    #kontakt          { background: #FFFFFF; }
+
+    /* --- Kicker im Hero-Stil (Strich + Versalien) in hellen Sektionen --- */
+    #anhaenger .section-tag, #bewertungen .section-tag, #preise .section-tag,
+    #anwendungen .section-tag, #how .section-tag, #faq .section-tag,
+    #ratgeber-section .section-tag, #kontakt .section-tag {
+      display: inline-flex; align-items: center; gap: 10px;
+      color: #B84A00; letter-spacing: .16em; font-weight: 800;
+    }
+    #anhaenger .section-tag::before, #bewertungen .section-tag::before, #preise .section-tag::before,
+    #anwendungen .section-tag::before, #how .section-tag::before, #faq .section-tag::before,
+    #ratgeber-section .section-tag::before, #kontakt .section-tag::before {
+      content: ''; width: 22px; height: 2px; flex-shrink: 0;
+      background: #E85D00; border-radius: 2px;
+    }
+
+    /* --- Anhaenger-Karten --- */
+    .trailer-card { box-shadow: 0 10px 30px -14px rgba(17,18,19,0.12); }
+    .trailer-card:hover { border-color: #C9C4BD; box-shadow: 0 16px 40px -16px rgba(17,18,19,0.18); }
+    .trailer-card-img { background: #EFECE6; }
+    .trailer-card-img-placeholder { background: #EFECE6; }
+    .avail-badge { color: #15803D; }
+    .btn-disabled { background: #EFECE6; color: #8A8780; }
+    #anhaenger .btn-outline { border-color: #C9C4BD; }
+    #anhaenger .btn-outline:hover { border-color: #111213; background: rgba(17,18,19,0.04); }
+
+    /* --- Bewertungen --- */
+    .review-card { background: #FBF8F4; box-shadow: 0 8px 24px -14px rgba(17,18,19,0.10); }
+    .review-card:hover { border-color: #C9C4BD; }
+    .reviews-summary { background: #FFFFFF; box-shadow: 0 6px 18px -8px rgba(17,18,19,0.12); }
+
+    /* --- Preise --- */
+    .price-card { box-shadow: 0 10px 30px -16px rgba(17,18,19,0.12); }
+    .price-card:hover { border-color: #C9C4BD; }
+    .price-card.featured { background: #FFF4EA; }
+    .price-card.featured-green { background: #F0FBF2; border-color: #16A34A; }
+    .price-card.featured-green:hover { border-color: #15803D; }
+    .price-features li::before { background-color: #EFE9E1; }
+    .price-card.featured .price-features li::before { background-color: #FFE8D4; }
+    .price-card.week-card .price-features li::before { background-color: #FFF1CC; }
+    .price-card.featured-green .price-features li::before { background-color: #DCF5E2; }
+    #preise .week-card { background: #FFFBEA !important; }
+    .card-badge.amber { background: #FFF3D6; color: #B45309; }
+    .card-badge.deal { background: #FEE2E2; color: #B91C1C; }
+    .price-old { color: #A8A49D; }
+    .price-sub .save { color: #15803D; }
+
+    /* --- Use-Cases --- */
+    .usecase-card { box-shadow: 0 8px 24px -14px rgba(17,18,19,0.10); }
+    .usecase-card:hover { background: #FFF8F2; }
+    .usecase-image { background: #EFECE6; }
+
+    /* --- How (Schritte) --- */
+    .steps::before { background: #E3DED5; }
+    .step-num::before { box-shadow: 0 0 12px rgba(232,93,0,0.35); }
+
+    /* --- FAQ --- */
+    .faq-list { background: #FFFFFF; box-shadow: 0 10px 30px -18px rgba(17,18,19,0.12); }
+    .faq-q:hover { background: rgba(17,18,19,0.03); }
+    .faq-icon { border-color: #C9C4BD; }
+    .faq-cta-sub strong { color: #C24E00; }
+    .faq-cta-mascot img { filter: drop-shadow(0 10px 16px rgba(17,18,19,0.22)) drop-shadow(0 2px 5px rgba(17,18,19,0.14)); }
+
+    /* --- Ratgeber --- */
+    #ratgeber-section { background: #F6F3EE !important; }
+    .ratgeber-card { box-shadow: 0 8px 24px -14px rgba(17,18,19,0.10); }
+    .ratgeber-card-img { background: #EFECE6; }
+
+    /* --- Kontakt --- */
+    #kontakt .field-input {
+      background: #F6F3EE;
+      border-color: rgba(17,18,19,0.14);
+      color: #111213;
+    }
+    #kontakt .field-input::placeholder { color: #9B9892; }
+    #kontakt .field-input:focus { border-color: var(--orange); }
+    #kontakt .contact-detail-icon { background: #FFFFFF; }
+
+    /* --- Newsletter (Orange-Band): Button-Hover dunkel halten --- */
+    #newsletterSec .btn-orange:hover { background: #000000 !important; border-color: #000000 !important; }
+  </style>
 </head>
 <body>
 
@@ -3533,17 +3644,17 @@
 
 <!-- FOOTER -->
 <!-- Newsletter-Sektion vor Footer -->
-<section style="padding:60px 5% 40px;background:linear-gradient(135deg,#1a0f10,#0d0d0d);">
+<section id="newsletterSec" style="padding:64px 5% 52px;background:linear-gradient(130deg,#FF6A00 0%,#E85D00 55%,#D45400 100%);">
   <div style="max-width:680px;margin:0 auto;text-align:center;">
-    <p style="font-size:.65rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--orange);margin-bottom:8px;" data-i18n="newsletter.tag">Newsletter</p>
-    <h2 style="font-size:1.6rem;margin:0 0 8px;letter-spacing:-.02em;" data-i18n="newsletter.title">Die besten Anhänger-Tipps direkt ins Postfach</h2>
-    <p style="color:var(--text-muted);margin-bottom:24px;line-height:1.6;font-size:.92rem;" data-i18n="newsletter.sub">Praktische Anleitungen, Saison-Aktionen, neue Anhänger-Typen — kein Spam, jederzeit kündbar.</p>
+    <p style="font-size:.65rem;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.8);margin-bottom:8px;" data-i18n="newsletter.tag">Newsletter</p>
+    <h2 style="font-size:1.6rem;margin:0 0 8px;letter-spacing:-.02em;color:#fff;" data-i18n="newsletter.title">Die besten Anhänger-Tipps direkt ins Postfach</h2>
+    <p style="color:rgba(255,255,255,.85);margin-bottom:24px;line-height:1.6;font-size:.92rem;" data-i18n="newsletter.sub">Praktische Anleitungen, Saison-Aktionen, neue Anhänger-Typen — kein Spam, jederzeit kündbar.</p>
     <form id="newsletterForm" onsubmit="submitNewsletter(event)" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:480px;margin:0 auto;">
-      <input type="email" required name="email" id="newsletterEmail" placeholder="deine@email.de" style="flex:1;min-width:200px;padding:12px 16px;border-radius:10px;border:1px solid var(--border);background:#0a0a0a;color:#fff;font-size:.95rem;font-family:inherit;" />
-      <button type="submit" id="newsletterSubmit" class="btn btn-orange" style="padding:12px 24px;" data-i18n="newsletter.signup">Anmelden</button>
+      <input type="email" required name="email" id="newsletterEmail" placeholder="deine@email.de" style="flex:1;min-width:200px;padding:12px 16px;border-radius:10px;border:1px solid rgba(255,255,255,.3);background:#FFFFFF;color:#111213;font-size:.95rem;font-family:inherit;box-shadow:0 8px 24px rgba(0,0,0,.12);" />
+      <button type="submit" id="newsletterSubmit" class="btn btn-orange" style="padding:12px 24px;background:#111213;border-color:#111213;" data-i18n="newsletter.signup">Anmelden</button>
     </form>
-    <p id="newsletterMsg" style="margin-top:12px;font-size:.78rem;color:var(--text-muted);min-height:1.4em;"></p>
-    <p style="margin-top:8px;font-size:.7rem;color:#555;" data-i18n-html="newsletter.legal">Mit Anmeldung bestätigst du unsere <a href="/datenschutz" style="color:#888;">Datenschutzerklärung</a>. Double-Opt-In: du bekommst eine Bestätigungs-Mail.</p>
+    <p id="newsletterMsg" style="margin-top:12px;font-size:.78rem;color:rgba(255,255,255,.9);min-height:1.4em;"></p>
+    <p style="margin-top:8px;font-size:.7rem;color:rgba(255,255,255,.7);" data-i18n-html="newsletter.legal">Mit Anmeldung bestätigst du unsere <a href="/datenschutz" style="color:#fff;">Datenschutzerklärung</a>. Double-Opt-In: du bekommst eine Bestätigungs-Mail.</p>
   </div>
 </section>
 
