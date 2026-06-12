@@ -2526,30 +2526,27 @@
 
     .hero2-inner {
       width: 100%; max-width: 1240px; margin: 0 auto;
-      display: grid; grid-template-columns: 1.04fr 1fr;
-      gap: 56px; align-items: center;
+      display: grid; grid-template-columns: 1fr 1.18fr;
+      gap: 48px; align-items: center;
       position: relative; z-index: 1;
       min-height: 0; max-height: 100%;
     }
 
     .hero2-tag {
-      display: inline-flex; align-items: center; gap: 9px;
-      background: rgba(232,93,0,0.07);
-      border: 1px solid rgba(232,93,0,0.20);
+      display: flex; align-items: center; gap: 12px;
       color: #B84A00;
-      border-radius: 999px; padding: 7px 15px;
-      font-size: .7rem; font-weight: 800;
-      letter-spacing: .11em; text-transform: uppercase;
-      margin-bottom: 22px;
+      font-size: .72rem; font-weight: 800;
+      letter-spacing: .16em; text-transform: uppercase;
+      margin-bottom: 18px;
     }
-    .h2t-dot {
-      width: 7px; height: 7px; border-radius: 50%;
-      background: #E85D00;
-      box-shadow: 0 0 0 4px rgba(232,93,0,0.14);
+    .hero2-tag::before {
+      content: '';
+      width: 26px; height: 2px; flex-shrink: 0;
+      background: #E85D00; border-radius: 2px;
     }
 
     .hero2-h1 {
-      font-size: clamp(2.5rem, 4.6vw, 4.2rem);
+      font-size: clamp(2.4rem, 4.2vw, 3.9rem);
       font-weight: 800; line-height: 1.04;
       letter-spacing: -0.045em;
       color: #111213;
@@ -2640,19 +2637,7 @@
     .hero2-points strong { color: #111213; font-weight: 800; }
 
     .hero2-proof { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-    .hero2-grating {
-      display: inline-flex; align-items: center; gap: 7px;
-      background: #fff;
-      border: 1px solid rgba(17,18,19,0.10);
-      border-radius: 999px; padding: 7px 14px 7px 9px;
-      text-decoration: none; color: #111213;
-      font-size: .82rem; transition: all .2s;
-      box-shadow: 0 2px 8px rgba(17,18,19,0.06);
-    }
-    .hero2-grating:hover { border-color: #A8A49D; transform: translateY(-1px); }
-    .hero2-grating strong { font-weight: 800; }
-    #hero .hg-g { box-shadow: 0 0 0 1px rgba(17,18,19,0.10); }
-    #hero .hero-live { background: rgba(34,197,94,0.10); border-color: rgba(21,128,61,0.35); color: #15803D; }
+    #hero .hero-live { background: rgba(34,197,94,0.10); border-color: rgba(21,128,61,0.35); color: #15803D; margin-top: 10px; }
 
     /* Karte: App-Card mit schwebenden Controls */
     .hero2-mapcol { position: relative; min-height: 0; }
@@ -2665,7 +2650,7 @@
     }
     #hero .map-inner { border-radius: 20px; overflow: hidden; position: relative; }
     #hero #map {
-      height: clamp(360px, calc(100dvh - 330px), 620px) !important;
+      height: clamp(400px, calc(100dvh - 265px), 720px) !important;
       border: none !important; border-radius: 20px;
       box-shadow: none !important;
     }
@@ -2711,15 +2696,7 @@
     #hero .suggest-item { color: #4A4742; border-bottom-color: rgba(17,18,19,0.06); }
     #hero .suggest-item:hover { background: rgba(232,93,0,0.07); color: #111213; }
 
-    #hero .map-badge {
-      top: 62px !important;
-      background: rgba(255,255,255,0.94) !important;
-      color: #111213 !important;
-      border: 1px solid rgba(17,18,19,0.09);
-      box-shadow: 0 6px 18px rgba(17,18,19,0.14) !important;
-      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-      font-weight: 700;
-    }
+    #hero .map-badge { display: none !important; }
 
     .h2m-gps {
       position: absolute; right: 12px; bottom: 12px; z-index: 650;
@@ -2773,7 +2750,7 @@
     }
     @media (max-width: 640px) {
       .hero2-tag { margin-bottom: 12px; padding: 6px 12px; font-size: .62rem; }
-      .hero2-h1 { font-size: clamp(1.95rem, 8.6vw, 2.5rem); margin-bottom: 10px; }
+      .hero2-h1 { font-size: clamp(2.1rem, 9vw, 2.65rem); margin-bottom: 10px; }
       .hero2-sub { font-size: .94rem; margin-bottom: 14px; }
       .hero2-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 8px; border-radius: 18px; }
       .hero2-bar .h2b-field { padding: 7px 12px; background: #FAF6F1; border-radius: 12px; }
@@ -2784,7 +2761,6 @@
       /* Doppelte Suche weg: Lupe + GPS schweben mobil NICHT auf der Karte */
       .h2m-search { display: none; }
       .h2m-gps { display: none; }
-      #hero .map-badge { top: 10px !important; }
       /* Standort-Feld = Kopf der Karten-Card (eine Einheit) */
       .hero2-mapcard .mobile-loc-row {
         background: #FAF6F1 !important;
@@ -2799,7 +2775,6 @@
       .hero2-points { gap: 6px 14px; margin: 10px 2px 8px; }
       .hero2-points li { font-size: .78rem; }
       .hero2-proof { gap: 8px; }
-      .hero2-grating { padding: 6px 12px 6px 8px; font-size: .78rem; }
       .h2m-gps span { display: none; }
       .h2m-gps { padding: 11px; }
     }
@@ -2843,7 +2818,7 @@
 <section id="hero">
   <div class="hero2-inner">
     <div class="hero2-text">
-      <p class="hero2-tag"><span class="h2t-dot"></span><span data-i18n="hero.tag">Anhängervermietung Bremen</span></p>
+      <p class="hero2-tag" data-i18n="hero.tag">Anhängervermietung Bremen</p>
       <h1 class="hero2-h1"><span data-i18n="hero.title.1">Anhänger mieten.</span><br><em data-i18n="hero.title.2">Einfach.</em> <span data-i18n="hero.title.3">Sofort.</span></h1>
       <p class="hero2-sub"><span data-i18n="hero.sub.1">Einfach online buchen.</span> <span class="hero-sub-extra" data-i18n="hero.sub.extra">Kein Papierkram, keine Kaution, keine Wartezeit.</span> <span style="white-space:nowrap;" data-i18n="hero.sub.cta">Fahr einfach los.</span></p>
 
@@ -2868,11 +2843,6 @@
       </ul>
 
       <div class="hero2-proof">
-        <a class="hero2-grating" href="https://www.google.com/search?q=SimpleTrailer+Bremen+Bewertungen" target="_blank" rel="noopener" aria-label="SimpleTrailer bei Google: 5,0 Sterne">
-          <span class="hg-g" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V7.06H2.18A10.96 10.96 0 0 0 1 12c0 1.78.43 3.45 1.18 4.94l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg></span>
-          <span class="hg-stars" aria-hidden="true">★★★★★</span>
-          <strong>5,0</strong>
-        </a>
         <span class="hero-live" id="heroLiveBadge" style="display:none;"><span class="hl-dot"></span><span id="heroLiveText">Heute verfügbar</span></span>
       </div>
     </div>
