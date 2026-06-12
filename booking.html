@@ -448,6 +448,7 @@
     .mode-save { z-index: 2; }
     .mode-grid { row-gap: 16px; }
   </style>
+  <link rel="stylesheet" href="/light-theme.css?v=1">
 </head>
 <body>
 
@@ -2428,12 +2429,12 @@
       if (!res.ok) throw new Error(data.error || 'Fehler beim Laden der Zahlung');
 
       stripeElements = stripeClient.elements({ clientSecret: data.client_secret, appearance: {
-        theme: 'night',
+        theme: 'stripe',
         variables: {
           colorPrimary: '#E85D00',
-          colorBackground: '#161616',
-          colorText: '#ffffff',
-          colorDanger: '#f87171',
+          colorBackground: '#FFFFFF',
+          colorText: '#111213',
+          colorDanger: '#DC2626',
           fontFamily: 'system-ui, sans-serif',
           borderRadius: '8px'
         }

@@ -1,0 +1,172 @@
+/* ============================================================
+   SimpleTrailer — Light Theme für Kundenseiten
+   (booking, booking-confirm, account, precheck, return,
+    anleitung, ratgeber/*)
+   Prinzip:
+   1) CSS-Variablen-Flip (deckt ~80% ab)
+   2) Klassen-Overrides pro Seite
+   3) [style*=…]-Regeln für Inline-Styles (auch JS-Templates)
+   Kopfzeile (nav) bleibt bewusst dunkel — wie auf der Startseite.
+   ============================================================ */
+
+:root {
+  --bg: #F6F3EE;
+  --s1: #FFFFFF;
+  --s2: #F4F0EA;
+  --card: #FFFFFF;
+  --white: #111213;
+  --gray: #5C5953;
+  --border: rgba(17, 18, 19, 0.14);
+}
+
+body { background: var(--bg); }
+
+/* ---- Dunkle Kopfzeile bleibt lesbar (Text-Logo nutzt geflippte Vars) ---- */
+nav { border-bottom-color: rgba(255, 255, 255, 0.10) !important; }
+nav .logo span:first-child { color: #FFFFFF !important; }
+nav .back-link { color: #999999 !important; }
+nav .back-link:hover { color: #FFFFFF !important; }
+
+/* ---- Buttons ---- */
+.btn-orange { color: #FFFFFF !important; }
+.btn-orange:disabled { background: #C9C4BD !important; }
+
+/* ---- Karten ---- */
+.card { box-shadow: 0 8px 24px -16px rgba(17, 18, 19, 0.10); }
+
+/* ---- Eingabefelder ---- */
+.field-input, .input-wrap { background: #FFFFFF !important; }
+.field-input { color: #111213; }
+.field-input::placeholder { color: #9B9892; }
+.field-input::-webkit-calendar-picker-indicator { filter: none !important; opacity: .55; }
+.field-input option { background: #FFFFFF !important; color: #111213 !important; }
+
+/* ---- Auswahl-Kacheln (Tarif / Schutzpaket / Modus / Fahrzeug) ---- */
+.pricing-option:hover, .insurance-option:hover, .mode-option:hover { border-color: #C9C4BD !important; }
+.pricing-option.selected, .insurance-option.selected, .mode-option.selected,
+.fs-car-btn.active { background: #FFF4EA !important; }
+.fs-car-btn { background: #FFFFFF; color: #111213; }
+.ins-badge { background: #DCF5E2 !important; color: #15803D !important; }
+.fs-result.warn { background: #FEF1F1 !important; border-color: #DC2626 !important; }
+
+/* ---- AGB-Checkbox-Zeile ---- */
+.agb-row:hover { border-color: #C9C4BD !important; background: #FAF6F1 !important; }
+.agb-row:active { background: #F4EFE8 !important; }
+.agb-text { color: #4A4742; }
+.agb-text strong { color: #111213; }
+
+/* ---- Stepper ---- */
+.step-label.active { color: #111213; }
+
+/* ---- Kalender (Buchung Schritt 1) ---- */
+.cal-day.available { background: #E8F8EE !important; color: #15803D !important; border-color: #BFE8CD !important; }
+.cal-day.available:hover { background: #D7F2E2 !important; border-color: #16A34A !important; }
+.cal-day.in-range { background: #FFF4EA !important; color: #111213 !important; }
+.cal-day.not-selectable { color: #C0BBB2 !important; background: #F1EDE6 !important; border-color: #E8E3DA !important; }
+.cal-day.partial { background: #FFF8E6 !important; color: #B45309 !important; border-color: #F2D798 !important; }
+.cal-day.partial:hover { background: #FFF3D6 !important; border-color: #D97706 !important; }
+.cal-hint { background: #FFF4EA !important; }
+.slot-btn.blocked { background: #F7E9E9 !important; border-color: #EBCFCF !important; color: #C9A0A0 !important; }
+
+/* ---- Modals werden hell (konsistent zur hellen Seite) ---- */
+.legal-modal { background: #FFFFFF !important; }
+.info-modal-inner { background: #FFFFFF !important; border-color: var(--border) !important; }
+
+/* ---- Zahlung ---- */
+#payment-message { color: #DC2626 !important; }
+
+/* ---- Account ---- */
+.status-returned { color: #15803D !important; }
+
+/* ---- Precheck ---- */
+.upload-area:hover, .upload-area.drag { background: #FFF4EA !important; }
+.access-code-box { background: #E8F8EE !important; }
+
+/* ---- Rückgabe ---- */
+.zone-status.in-zone { background: #E8F8EE !important; border-color: #16A34A !important; color: #15803D !important; }
+.zone-status.out-zone { background: #FFF1E6 !important; border-color: #EA7E33 !important; color: #B45309 !important; }
+.zone-status.unknown { background: #FFF8E6 !important; border-color: #D9A521 !important; color: #A16207 !important; }
+.confirm-box { background: #FFFFFF !important; }
+.confirm-box.warning { background: #FFF4EA !important; }
+.geo-btn { background: #FFFFFF !important; color: #111213 !important; }
+#returnMap, .leaflet-container { background: #EDEAE4 !important; }
+.leaflet-popup-content-wrapper { background: #FFFFFF !important; color: #111213 !important; }
+.leaflet-popup-tip { background: #FFFFFF !important; }
+
+/* ---- Anleitung ---- */
+.step-tip { background: #F4F0EA !important; color: #4A4742 !important; }
+.step-warn { background: #FEF1F1 !important; color: #B91C1C !important; }
+.tab .tab-count { background: rgba(17, 18, 19, 0.07) !important; }
+.tab:hover:not(.active) { color: #111213 !important; background: rgba(17, 18, 19, 0.04) !important; }
+.step > summary:hover { background: rgba(17, 18, 19, 0.02) !important; }
+
+/* ---- Bestätigungsseite ---- */
+.code-box { background: #FFF4EA !important; }
+
+/* ---- Ratgeber ---- */
+.article-card-badge { display: none !important; }
+.article-card-img { background: #EFECE6 !important; }
+.cta-block { background: linear-gradient(135deg, #FFF4EA 0%, #FFE8D4 100%) !important; }
+
+/* ---- Helle Klassen-Textfarben → dunkel ---- */
+.intro-card p, .step-desc, .end-card p { color: #4A4742 !important; }
+.position-meta strong { color: #34322E !important; }
+.confirm-box.warning label { color: #B45309 !important; }
+.error-view .icon { color: #DC2626 !important; }
+nav .nav-back { color: #999999 !important; }
+nav .nav-back:hover { color: #FFFFFF !important; }
+.info-spec-row { border-bottom-color: rgba(17, 18, 19, 0.10) !important; }
+
+/* ============================================================
+   Inline-Style-Flips (greifen auch in JS-generierten Templates)
+   ============================================================ */
+
+/* Dunkle Flächen → helle Flächen */
+[style*="background:#0d0d0d"], [style*="background:#0D0D0D"], [style*="background:#0a0a0a"] { background: #F6F3EE !important; }
+[style*="background:#111;"], [style*="background:#111\""], [style*="background:#141414"] { background: #F4F0EA !important; }
+[style*="background:#1a1a1a"], [style*="background:#1A1A1A"], [style*="background:#1f1f1f"] { background: #FFFFFF !important; }
+
+/* Farbige Tönungen */
+[style*="background:#1a0d00"] { background: #FFF4EA !important; }
+[style*="background:#0a1f0a"], [style*="background:#0a1a0a"] { background: #E8F8EE !important; }
+[style*="background:#1a1606"] { background: #FFF8E6 !important; }
+[style*="background:#1a0808"], [style*="background:#0a0202"] { background: #FEF1F1 !important; }
+[style*="background:#120d00"] { background: #FFFBEA !important; }
+
+/* Helle Inline-Textfarben → dunkle */
+[style*="color:#fff"], [style*="color: #fff"] { color: #111213 !important; }
+[style*="color:#ddd"], [style*="color:#ccc"], [style*="color:#bbb"], [style*="color:#aaa"] { color: #4A4742 !important; }
+[style*="color:#86efac"], [style*="color:#4ade80"] { color: #15803D !important; }
+[style*="color:#fcd34d"], [style*="color:#fde047"], [style*="color:#fbbf24"] { color: #A16207 !important; }
+[style*="color:#fca5a5"], [style*="color:#fecaca"], [style*="color:#f3a5a5"] { color: #B91C1C !important; }
+[style*="color:#fdba74"] { color: #B45309 !important; }
+
+/* Dunkelgrüne Gradient-Karten → hellgrün (Zugangscode, Führerschein-bestätigt) */
+[style*="background:linear-gradient(135deg,#0d2f0d"],
+[style*="background:linear-gradient(180deg,#0a1f0a"] { background: #E8F8EE !important; }
+
+/* Weitere helle Signal-/Grautöne → dunkle Pendants */
+[style*="color:#9ca3af"] { color: #4A4742 !important; }
+[style*="color:#f87171"] { color: #B91C1C !important; }
+[style*="color:#facc15"] { color: #A16207 !important; }
+[style*="color:#60a5fa"] { color: #1D4ED8 !important; }
+
+/* Dunkelrote Fehlerbox im Lösch-Modal → heller Rot-Tint */
+[style*="background:#2a0a0a"] { background: #FEF1F1 !important; border-color: #F3C5C5 !important; }
+
+/* Dunkle Inline-Borders → helle */
+[style*="#383838"] { border-color: rgba(17, 18, 19, 0.14) !important; }
+[style*="solid #333"] { border-color: rgba(17, 18, 19, 0.16) !important; }
+[style*="solid #1f1f1f"] { border-color: rgba(17, 18, 19, 0.10) !important; }
+
+/* Spinner: nur die grauen Seiten aufhellen, Orange-Top bleibt */
+[style*="border:3px solid #2a2a2a"] {
+  border-left-color: #E8E3DA !important;
+  border-right-color: #E8E3DA !important;
+  border-bottom-color: #E8E3DA !important;
+}
+
+/* Ausnahmen: farbige Flächen behalten weiße Schrift */
+[style*="background:#1A1F71"], [style*="background:#003087"], [style*="background:#000;"],
+[style*="background:#7f1d1d"], [style*="background:#dc2626"],
+[style*="background:#E85D00"], [style*="background:var(--orange)"] { color: #FFFFFF !important; }
