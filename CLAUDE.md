@@ -96,7 +96,7 @@
 
 ## Design
 - **Skill:** Nutze immer den Frontend Design Skill für UI-Entscheidungen
-- **Stil:** Modern, dunkel (`#0D0D0D`), bold orange Akzent (`#E85D00`)
+- **Stil (seit 2026-06-12):** HELL — weißer Vollbild-Hero (100dvh, helle Map-Tiles), Sektions-Rhythmus Weiß/warmes Papier (`#F6F3EE`), Orange-Akzent (`#E85D00`), Schwarz nur als Rahmen (Nav, Bewerte-uns-Streifen, Footer) + Newsletter als Orange-Band. Modals/Overlays + booking.html bleiben dunkel (`#0D0D0D`). Umsetzung: `<style id="hero-v2-styles">` + `<style id="site-light-v1">` in index.html (scoped CSS-Var-Flip)
 - **Mobile-first:** Karte/Buttons/Bottom-Sheets touch-optimiert
 - **Performance:** Schnelle Ladezeiten, kein React-Overhead, Vanilla-JS
 - **Distinctive:** SimpleTrailer soll auffallen — kein generisches AI-Aussehen
