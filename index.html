@@ -2899,6 +2899,91 @@
 
     /* --- Newsletter (Orange-Band): Button-Hover dunkel halten --- */
     #newsletterSec .btn-orange:hover { background: #000000 !important; border-color: #000000 !important; }
+
+    /* ================= INDEX-MODALS HELL ================= */
+    /* Scrims weicher */
+    .trailer-modal-bg { background: rgba(17,18,19,0.55) !important; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+    #notifyModal { background: rgba(17,18,19,0.55) !important; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+    .info-overlay { background: rgba(17,18,19,0.55) !important; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+
+    /* Panels weiss + eigene Textgrundfarbe (Body ist auf index weiss) */
+    .trailer-modal-panel { background: #FFFFFF; border-color: rgba(17,18,19,0.10); color: #34322E; }
+    .info-modal-inner { background: #FFFFFF; border-color: rgba(17,18,19,0.10); color: #34322E; }
+    #notifyModal > div { color: #34322E; }
+    #notifyModal h3 { color: #111213; }
+
+    /* Anhaenger-Listen-Karten */
+    .modal-trailer-card { background: #F8F5F0; border-color: rgba(17,18,19,0.10); }
+    .modal-trailer-card:hover { background: #FFF8F2; }
+    .modal-trailer-card.unavail { background: #F1EDE6; border-color: rgba(17,18,19,0.08); }
+    .modal-trailer-card.unavail:hover { background: #F1EDE6; border-color: rgba(17,18,19,0.08); }
+    .modal-trailer-thumb { background: #EFECE6; border-color: rgba(17,18,19,0.10); }
+    .modal-trailer-sub { color: #6B6862; }
+    .modal-card-chevron { color: #B5B0A8; }
+    .modal-belegt { color: #8A8780; }
+
+    /* Detail-Ansicht */
+    .modal-back-btn { color: #6B6862; }
+    .modal-back-btn:hover { color: #111213; background: #F1EDE6; }
+    .modal-detail-img, .modal-detail-img-placeholder { background: #EFECE6; }
+    .modal-detail-img-placeholder { color: #B5B0A8; }
+    .modal-detail-name { color: #111213; }
+    .modal-detail-meta { color: #6B6862; }
+    .modal-detail-status.ok   { color: #15803D; background: rgba(34,197,94,.10); border-color: rgba(21,128,61,.30); }
+    .modal-detail-status.busy { color: #B91C1C; background: rgba(248,113,113,.10); border-color: rgba(185,28,28,.25); }
+    .modal-spec-grid { background: #F8F5F0; border-color: rgba(17,18,19,0.08); }
+    .modal-spec-row .lbl { color: #6B6862; }
+    .modal-spec-row .val { color: #111213; }
+    .modal-detail-bookbtn.disabled { background: #E5E0D8; color: #9B9892; }
+    .modal-detail-secondary { color: #5C5953; border-color: #D8D3CA; }
+    .modal-detail-secondary:hover { color: #111213; }
+    .modal-route-card { background: linear-gradient(180deg, #FFFFFF 0%, #FFF6EE 100%); border-color: rgba(232,93,0,0.25); }
+    .modal-route-card .mrc-label { color: #8A8780; }
+    .modal-route-card .mrc-info { color: #111213; }
+    .modal-detail-routemap { background: #EDEAE4; border-color: rgba(17,18,19,0.10); }
+    .modal-detail-pickup { color: #6B6862; }
+    .modal-detail-pickup strong { color: #34322E; }
+
+    /* Standort-Banner + Eingaben im Modal */
+    .modal-loc-banner-title { color: #111213; }
+    .modal-loc-banner-perks { color: #5C5953; }
+    .modal-loc-banner-row { background: #FFFFFF; border-color: rgba(17,18,19,0.14); }
+    .modal-loc-banner-row input { color: #111213; }
+    .modal-loc-banner-row input::placeholder { color: #9B9892; }
+    #modalLocSuggestDrop, #modalDetailLocSuggestDrop { background: #FFFFFF; border-color: rgba(17,18,19,0.12); box-shadow: 0 12px 32px rgba(17,18,19,0.16); }
+    .trailer-modal-bg .suggest-item { color: #4A4742; border-bottom-color: rgba(17,18,19,0.06); }
+    .trailer-modal-bg .suggest-item:hover { background: rgba(232,93,0,0.07); color: #111213; }
+    .mdl-prompt-title { color: #111213; }
+    .mdl-prompt-sub { color: #6B6862; }
+    .mdl-prompt-row input { background: #FFFFFF; border-color: rgba(17,18,19,0.14); color: #111213; }
+    .mdl-prompt-row input::placeholder { color: #9B9892; }
+    .mdl-prompt-gps { background: #FFFFFF; border-color: rgba(17,18,19,0.14); color: #111213; }
+    .mdl-prompt-gps:hover { background: #FFF4EA; }
+
+    /* Fuehrerschein-Rechner + Info-Boxen */
+    .fs-car-btn { background: #FFFFFF; border-color: rgba(17,18,19,0.14); color: #111213; }
+    .fs-car-btn.active { background: #FFF4EA; }
+    .fs-result.ok { background: #E8F8EE; border-color: #16A34A; }
+    .fs-result.warn { background: #FEF1F1; border-color: #DC2626; }
+    .info-spec-row { border-bottom-color: rgba(17,18,19,0.08); }
+
+    /* Karten (Leaflet) in Modals hell */
+    .trailer-modal-bg .leaflet-container { background: #EDEAE4 !important; }
+    .trailer-modal-bg .leaflet-popup-content-wrapper { background: #FFFFFF; color: #111213; border: 1px solid rgba(17,18,19,0.12); box-shadow: 0 10px 30px rgba(17,18,19,0.22); }
+    .trailer-modal-bg .leaflet-popup-tip { background: #FFFFFF; }
+    .trailer-modal-bg .leaflet-popup-content { color: #111213; }
+
+    /* Inline-Styles in Modals umfaerben (auch JS-Templates) */
+    #trailerModal [style*="color:#fff"], #notifyModal [style*="color:#fff"], .info-overlay [style*="color:#fff"] { color: #111213 !important; }
+    #trailerModal [style*="color:#aaa"], #trailerModal [style*="color:#bbb"], #trailerModal [style*="color:#ccc"], #trailerModal [style*="color:#ddd"],
+    #notifyModal [style*="color:#aaa"], .info-overlay [style*="color:#aaa"], .info-overlay [style*="color:#bbb"], .info-overlay [style*="color:#ddd"] { color: #4A4742 !important; }
+    #trailerModal [style*="#383838"], .info-overlay [style*="#383838"] { border-color: rgba(17,18,19,0.10) !important; }
+    #notifyModal [style*="background:#1a1a1a"] { background: #FFFFFF !important; }
+    #notifyModal [style*="background:#0a0a0a"] { background: #F6F3EE !important; }
+    #notifyModal [style*="border-color:#333"] { border-color: #D8D3CA !important; }
+    .info-overlay [style*="background:#111"] { background: #F4F0EA !important; }
+    /* dunkler Popup-CTA auf der Karte bleibt dunkel mit weisser Schrift */
+    [style*="background:#1f2937"] { background: #111213 !important; color: #FFFFFF !important; }
   </style>
 </head>
 <body>
@@ -3854,7 +3939,7 @@
         </button>
         <strong id="modalTitle" style="font-size:1.02rem;letter-spacing:-.02em;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Anhänger wählen</strong>
       </div>
-      <button onclick="closeTrailerModal()" style="background:none;border:none;color:#666;font-size:1.6rem;cursor:pointer;line-height:1;padding:0 2px;transition:color .2s;flex-shrink:0;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#666'">×</button>
+      <button onclick="closeTrailerModal()" style="background:none;border:none;color:#666;font-size:1.6rem;cursor:pointer;line-height:1;padding:0 2px;transition:color .2s;flex-shrink:0;" onmouseover="this.style.color='#111213'" onmouseout="this.style.color='#666'">×</button>
     </div>
     <!-- LIST VIEW -->
     <div id="modalListView">
@@ -4840,7 +4925,7 @@
         zoomControl: false, scrollWheelZoom: false, dragging: false,
         touchZoom: false, doubleClickZoom: false, boxZoom: false, keyboard: false
       }).setView([userLocation.lat, userLocation.lng], 13);
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
         attribution: '© OSM © CARTO', subdomains: 'abcd', maxZoom: 19
       }).addTo(modalDetailMap);
     }
@@ -5167,7 +5252,7 @@
     if (!modalMap) {
       modalMap = L.map('modalMap', { zoomControl: false, scrollWheelZoom: false, dragging: false })
                   .setView([53.079, 8.802], 13);
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
         attribution: '© OSM © CARTO', subdomains: 'abcd', maxZoom: 19
       }).addTo(modalMap);
     }
