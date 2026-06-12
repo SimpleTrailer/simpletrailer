@@ -2563,6 +2563,31 @@
       background: var(--orange); opacity: .22;
       transform: rotate(-1.2deg);
     }
+    /* Gestaffelter Lade-Einstieg */
+    @media (prefers-reduced-motion: no-preference) {
+      .hero2-tag, .hero2-h1, .hero2-sub, .hero2-bar, .hero2-points, .hero2-proof {
+        animation: h2Rise .65s cubic-bezier(.16, 1, .3, 1) both;
+      }
+      .hero2-h1 { animation-delay: .07s; }
+      .hero2-sub { animation-delay: .14s; }
+      .hero2-bar { animation-delay: .21s; }
+      .hero2-points { animation-delay: .3s; }
+      .hero2-proof { animation-delay: .36s; }
+      .hero2-mapcol { animation: h2Rise .8s .22s cubic-bezier(.16, 1, .3, 1) both; }
+      .hero2-h1 em::after {
+        transform-origin: left center;
+        animation: h2Underline .55s .62s cubic-bezier(.16, 1, .3, 1) both;
+      }
+    }
+    @keyframes h2Rise {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: none; }
+    }
+    @keyframes h2Underline {
+      from { transform: scaleX(0) rotate(-1.2deg); }
+      to   { transform: scaleX(1) rotate(-1.2deg); }
+    }
+
     .hero2-sub {
       font-size: 1.06rem; color: #5C5953;
       line-height: 1.6; letter-spacing: -0.01em;
@@ -2756,7 +2781,21 @@
       .hero2-cta { grid-column: 1 / -1; margin-left: 0; padding: 14px; }
       .h2b-input { font-size: 16px !important; }
       .h2b-input::-webkit-calendar-picker-indicator { display: none; }
-      .mobile-loc-row { margin-top: 8px; }
+      /* Doppelte Suche weg: Lupe + GPS schweben mobil NICHT auf der Karte */
+      .h2m-search { display: none; }
+      .h2m-gps { display: none; }
+      #hero .map-badge { top: 10px !important; }
+      /* Standort-Feld = Kopf der Karten-Card (eine Einheit) */
+      .hero2-mapcard .mobile-loc-row {
+        background: #FAF6F1 !important;
+        border: none !important;
+        box-shadow: none !important;
+        border-radius: 13px !important;
+        overflow: visible !important;
+        margin: 0 0 8px;
+        flex-shrink: 0;
+      }
+      .hero2-mapcard .mobile-loc-row input { font-weight: 600; }
       .hero2-points { gap: 6px 14px; margin: 10px 2px 8px; }
       .hero2-points li { font-size: .78rem; }
       .hero2-proof { gap: 8px; }
@@ -2821,17 +2860,6 @@
         <button class="hero2-cta" onclick="findTrailer()" data-i18n="booking.find_trailer">Anhänger finden →</button>
       </div>
 
-      <!-- Mobile-only: Standortsuche -->
-      <div class="mobile-loc-row" style="display:none;align-items:center;gap:0;background:#FFFFFF;border:1.5px solid rgba(17,18,19,0.12);border-radius:14px;overflow:hidden;box-shadow:0 4px 14px rgba(17,18,19,0.06);">
-        <svg style="margin-left:14px;flex-shrink:0;color:#A39E96;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" id="mobileLocInput" class="h2b-input" style="border:none;background:transparent;padding:12px 10px;font-size:16px;flex:1;" placeholder="Standort (z.B. Bremen)" autocomplete="off"
-          oninput="syncMobileLoc(this.value)"
-          onkeydown="if(event.key==='Enter')this.blur()" />
-        <button onclick="useMobileGPS()" style="background:none;border:none;color:#A39E96;padding:0 14px;cursor:pointer;height:100%;display:flex;align-items:center;" title="GPS">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>
-        </button>
-        <div id="mobileSuggestDrop"></div>
-      </div>
 
       <ul class="hero2-points">
         <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" fill="rgba(232,93,0,0.10)" stroke="none"/><path d="M8 12.5l2.6 2.6L16 9.5" stroke="#E85D00"/></svg><span data-i18n-html="hero.pt.price"><strong>ab 9&nbsp;€</strong> für 3 Std</span></li>
@@ -2851,6 +2879,17 @@
 
     <div class="hero2-mapcol">
       <div class="hero2-mapcard">
+          <!-- Mobile: Standort-Feld als Kopf der Karten-Card -->
+        <div class="mobile-loc-row" style="display:none;align-items:center;gap:0;background:#FFFFFF;border:1.5px solid rgba(17,18,19,0.12);border-radius:14px;overflow:hidden;box-shadow:0 4px 14px rgba(17,18,19,0.06);">
+          <svg style="margin-left:14px;flex-shrink:0;color:#A39E96;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="mobileLocInput" class="h2b-input" style="border:none;background:transparent;padding:12px 10px;font-size:16px;flex:1;" placeholder="Standort (z.B. Bremen)" autocomplete="off"
+            oninput="syncMobileLoc(this.value)"
+            onkeydown="if(event.key==='Enter')this.blur()" />
+          <button onclick="useMobileGPS()" style="background:none;border:none;color:#A39E96;padding:0 14px;cursor:pointer;height:100%;display:flex;align-items:center;" title="GPS">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>
+          </button>
+          <div id="mobileSuggestDrop"></div>
+        </div>
         <div class="map-inner" id="mapInner">
           <div id="map"></div>
           <!-- Schwebende Such-Pille auf der Karte -->
