@@ -96,7 +96,7 @@
 
 ## Design
 - **Skill:** Nutze immer den Frontend Design Skill für UI-Entscheidungen
-- **Stil (seit 2026-06-12):** HELL — weißer Vollbild-Hero (100dvh, helle Map-Tiles), Sektions-Rhythmus Weiß/warmes Papier (`#F6F3EE`), Orange-Akzent (`#E85D00`), Schwarz nur als Rahmen (Nav, Bewerte-uns-Streifen, Footer) + Newsletter als Orange-Band. Modals/Overlays + booking.html bleiben dunkel (`#0D0D0D`). Umsetzung: `<style id="hero-v2-styles">` + `<style id="site-light-v1">` in index.html (scoped CSS-Var-Flip)
+- **Stil (seit 2026-06-12):** HELL — weißer Vollbild-Hero (100dvh, helle Map-Tiles), Sektions-Rhythmus Weiß/warmes Papier (`#F6F3EE`), Orange-Akzent (`#E85D00`), Schwarz nur als Rahmen (Nav, Bewerte-uns-Streifen, Footer) + Newsletter als Orange-Band. Index-Modals + Simply-Chat bleiben dunkel. **Alle Kundenseiten ebenfalls hell** via zentralem [light-theme.css](light-theme.css) (Var-Flip + `[style*=]`-Regeln; eingebunden in booking, booking-confirm, account, precheck, return, anleitung, ratgeber/*) — bei neuen Seiten/Templates dunkle Inline-Farben vermeiden oder light-theme.css erweitern (Cache-Buster `?v=` hochzählen!). Stripe Payment Element: `theme: 'stripe'` (hell). Umsetzung index: `<style id="hero-v2-styles">` + `<style id="site-light-v1">`
 - **Mobile-first:** Karte/Buttons/Bottom-Sheets touch-optimiert
 - **Performance:** Schnelle Ladezeiten, kein React-Overhead, Vanilla-JS
 - **Distinctive:** SimpleTrailer soll auffallen — kein generisches AI-Aussehen
