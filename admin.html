@@ -2903,11 +2903,12 @@
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Vorschau fehlgeschlagen');
       const srcdoc = String(data.html).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
-      const recipientList = leads.map(l => escapeHtml(l.email)).join(', ');
+      const recipientList = leads.map(l => `${l.first_name ? '<strong>' + escapeHtml(l.first_name) + '</strong> — ' : '<span style="color:#888">(ohne Name → „Hallo,")</span> — '}${escapeHtml(l.email)}`).join('<br>');
       body.innerHTML = `
         <div style="background:var(--s2);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:.86rem;">
-          Geht einzeln an <strong>${leads.length}</strong> frische Lead${leads.length > 1 ? 's' : ''} (letzte 7 Tage):<br>
-          <span style="color:var(--gray);font-size:.8rem;">${recipientList}</span>
+          Geht <strong>einzeln</strong> an ${leads.length} frische Lead${leads.length > 1 ? 's' : ''} (letzte 7 Tage) — jede/r mit eigenem Namen:<br>
+          <div style="color:var(--gray);font-size:.8rem;margin-top:6px;line-height:1.7;">${recipientList}</div>
+          <div style="color:#888;font-size:.72rem;margin-top:8px;">Die Vorschau oben zeigt nur eine Beispiel-Anrede.</div>
         </div>
         <iframe srcdoc="${srcdoc}" style="width:100%;height:520px;border:1px solid var(--border);border-radius:10px;background:#0D0D0D;"></iframe>
         <button id="winbackSendBtn" onclick="doSendWinback()" style="margin-top:14px;width:100%;background:var(--orange);color:#fff;border:none;border-radius:10px;padding:13px;font-weight:800;cursor:pointer;font-size:.95rem;">Jetzt an ${leads.length} Lead${leads.length > 1 ? 's' : ''} senden →</button>
