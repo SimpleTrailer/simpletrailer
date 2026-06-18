@@ -657,8 +657,6 @@ Bei Fragen sind wir unter info@simpletrailer.de gerne für dich da.
     // ─── SEND-WINBACK: Rückhol-Mail an offene Leads — jeder bekommt EINE eigene Mail (kein CC) ───
     if (section === 'send-winback' && req.method === 'POST') {
       const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
-      const recipients = Array.isArray(body.recipients) ? body.recipients : [];
-      if (!recipients.length) return res.status(400).json({ error: 'Keine Empfänger übergeben' });
 
       const { Resend } = require('resend');
       const resend = new Resend(process.env.RESEND_API_KEY);
@@ -698,6 +696,14 @@ Jetzt buchen: https://simpletrailer.de/booking
 Liebe Grüße,
 Lion & Samuel · SimpleTrailer
 SimpleTrailer GbR · Waltjenstr. 96, 28237 Bremen · info@simpletrailer.de`;
+
+      // Vorschau: rendert die Mail ohne zu senden (Admin-Check vor dem Versand)
+      if (body.preview) {
+        return res.status(200).json({ subject: 'Wir schulden dir eine Entschuldigung – und 20 %', html: winbackHtml(String(body.sample_name || '').trim()) });
+      }
+
+      const recipients = Array.isArray(body.recipients) ? body.recipients : [];
+      if (!recipients.length) return res.status(400).json({ error: 'Keine Empfänger übergeben' });
 
       let sent = 0, skipped = 0, failed = 0;
       for (const r of recipients.slice(0, 300)) {

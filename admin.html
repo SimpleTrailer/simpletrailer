@@ -535,7 +535,7 @@
           <button class="filter-btn"        id="ufBooked"    onclick="setUserFilter('booked', this)">Hat gebucht</button>
           <button class="filter-btn"        id="ufLeads"     onclick="setUserFilter('leads', this)">Offene Leads</button>
           <button id="refreshUsersBtn" onclick="loadUsers()" title="Aktualisieren">↺</button>
-          <button id="winbackBtn" onclick="sendWinback()" title="Rückhol-Mail an alle offenen Leads senden" style="background:var(--orange);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-weight:700;cursor:pointer;font-size:.82rem;">📧 Rückhol-Mail an offene Leads</button>
+          <button id="winbackBtn" onclick="openWinbackPreview()" title="Rückhol-Mail: Vorschau + an frische Leads (letzte 7 Tage) senden" style="background:var(--orange);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-weight:700;cursor:pointer;font-size:.82rem;">📧 Rückhol-Mail (Vorschau)</button>
         </div>
       </div>
 
@@ -2878,14 +2878,50 @@
     }).catch(() => {});
   }
 
-  // Rückhol-Mail an alle offenen Leads (jeder bekommt EINE eigene Mail; schon Angeschriebene werden serverseitig übersprungen).
-  async function sendWinback() {
-    const leads = allUsers
-      .filter(u => u.dl_status !== 'verified')
+  // Frische offene Leads = nicht verifiziert UND in den letzten 7 Tagen registriert (= vom Bug betroffen).
+  function winbackLeads() {
+    const weekMs = 7 * 24 * 3600 * 1000, now = Date.now();
+    return allUsers
+      .filter(u => u.dl_status !== 'verified' && (now - new Date(u.created_at).getTime()) < weekMs)
       .map(u => ({ user_id: u.id, email: u.email, first_name: u.first_name }));
-    if (!leads.length) { alert('Keine offenen Leads vorhanden.'); return; }
-    if (!confirm(`${leads.length} offene Leads per Rückhol-Mail anschreiben?\n\nJeder bekommt eine eigene Mail mit 20%-Gutschein (WILLKOMMEN20). Bereits angeschriebene werden automatisch übersprungen.`)) return;
-    const btn = document.getElementById('winbackBtn');
+  }
+
+  // Schritt 1: Vorschau der Mail (rendert serverseitig dieselbe Mail) + Empfängerliste, dann erst senden.
+  async function openWinbackPreview() {
+    const leads = winbackLeads();
+    if (!leads.length) { alert('Keine frischen offenen Leads (letzte 7 Tage) vorhanden.'); return; }
+    document.getElementById('modalTitle').textContent = 'Rückhol-Mail – Vorschau';
+    const body = document.getElementById('modalBody');
+    body.innerHTML = '<div class="table-info"><div class="spin"></div><p>Vorschau wird geladen…</p></div>';
+    document.getElementById('modalBg').classList.add('open');
+    try {
+      const res = await fetch('/api/admin?section=send-winback', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${authToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ preview: true, sample_name: leads[0].first_name || '' })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Vorschau fehlgeschlagen');
+      const srcdoc = String(data.html).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+      const recipientList = leads.map(l => escapeHtml(l.email)).join(', ');
+      body.innerHTML = `
+        <div style="background:var(--s2);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:.86rem;">
+          Geht einzeln an <strong>${leads.length}</strong> frische Lead${leads.length > 1 ? 's' : ''} (letzte 7 Tage):<br>
+          <span style="color:var(--gray);font-size:.8rem;">${recipientList}</span>
+        </div>
+        <iframe srcdoc="${srcdoc}" style="width:100%;height:520px;border:1px solid var(--border);border-radius:10px;background:#0D0D0D;"></iframe>
+        <button id="winbackSendBtn" onclick="doSendWinback()" style="margin-top:14px;width:100%;background:var(--orange);color:#fff;border:none;border-radius:10px;padding:13px;font-weight:800;cursor:pointer;font-size:.95rem;">Jetzt an ${leads.length} Lead${leads.length > 1 ? 's' : ''} senden →</button>
+        <div style="text-align:center;font-size:.72rem;color:var(--gray);margin-top:8px;">Bereits angeschriebene werden automatisch übersprungen.</div>`;
+    } catch (e) {
+      body.innerHTML = `<p style="color:var(--red)">Fehler bei der Vorschau: ${escapeHtml(e.message)}</p>`;
+    }
+  }
+
+  // Schritt 2: tatsächlicher Einzelversand (jeder bekommt EINE eigene Mail).
+  async function doSendWinback() {
+    const leads = winbackLeads();
+    if (!leads.length) { alert('Keine frischen Leads.'); return; }
+    const btn = document.getElementById('winbackSendBtn');
     if (btn) { btn.disabled = true; btn.textContent = 'Sende …'; }
     try {
       const res = await fetch('/api/admin?section=send-winback', {
@@ -2895,11 +2931,11 @@
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Fehler beim Senden');
+      document.getElementById('modalBg').classList.remove('open');
       alert(`Fertig!\n\n✓ Gesendet: ${data.sent}\n↺ Übersprungen (schon angeschrieben): ${data.skipped}\n✗ Fehler: ${data.failed}`);
     } catch (e) {
       alert('Fehler beim Senden: ' + e.message);
-    } finally {
-      if (btn) { btn.disabled = false; btn.textContent = '📧 Rückhol-Mail an offene Leads'; }
+      if (btn) { btn.disabled = false; btn.textContent = 'Jetzt senden →'; }
     }
   }
 
