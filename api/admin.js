@@ -597,7 +597,7 @@ Wir bitten den Ausfall zu entschuldigen.
               amount: remainingCents,
               reason: 'requested_by_customer',
               metadata: { booking_id: booking.id, reason: 'admin_cancellation' }
-            }, { idempotencyKey: `cancel-${booking.id}` });
+            }, { idempotencyKey: `cancel-${booking.id}-${remainingCents}` });
             refundId = refund.id;
           }
           refundedAmount = (alreadyCents + remainingCents) / 100;
