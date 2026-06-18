@@ -717,7 +717,7 @@ SimpleTrailer GbR · Waltjenstr. 96, 28237 Bremen · info@simpletrailer.de`;
         const vorname = String(r.first_name || '').trim();
         try {
           await resend.emails.send({
-            from: 'SimpleTrailer <buchung@simpletrailer.de>',
+            from: 'SimpleTrailer <info@simpletrailer.de>',
             reply_to: 'info@simpletrailer.de',
             to: email,
             subject: 'Wir schulden dir eine Entschuldigung – und 20 %',
