@@ -56,7 +56,19 @@ module.exports = async (req, res) => {
         dl_issuing_country: u.user_metadata?.dl_issuing_country || null,
         dl_session_id:  u.user_metadata?.dl_session_id  || null,
       })).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-      return res.status(200).json({ users });
+
+      // "Benachrichtigen wenn da"-Anmeldungen — warme Leads für noch nicht verfügbare Anhänger
+      let notify = [];
+      try {
+        const { data: nd, error: notifyError } = await supabase
+          .from('notify_when_available')
+          .select('email, trailer_type, notified, created_at')
+          .order('created_at', { ascending: false });
+        if (notifyError) console.warn('[admin] notify_when_available nicht lesbar:', notifyError.message);
+        else notify = nd || [];
+      } catch (e) { console.warn('[admin] notify_when_available Query-Exception:', e.message); }
+
+      return res.status(200).json({ users, notify });
     }
 
     if (section === 'daily-briefing') {

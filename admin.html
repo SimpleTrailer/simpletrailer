@@ -533,9 +533,12 @@
           <button class="filter-btn active" id="ufAll"       onclick="setUserFilter('all', this)">Alle</button>
           <button class="filter-btn"        id="ufConfirmed" onclick="setUserFilter('confirmed', this)">Bestätigt</button>
           <button class="filter-btn"        id="ufBooked"    onclick="setUserFilter('booked', this)">Hat gebucht</button>
+          <button class="filter-btn"        id="ufLeads"     onclick="setUserFilter('leads', this)">Offene Leads</button>
           <button id="refreshUsersBtn" onclick="loadUsers()" title="Aktualisieren">↺</button>
         </div>
       </div>
+
+      <div id="userStats" style="margin:12px 0"></div>
 
       <p class="result-count" id="userResultCount"></p>
 
@@ -1206,6 +1209,7 @@
   let authToken    = null;
   let allBookings  = [];
   let allUsers     = [];
+  let allNotify    = [];
   let activeFilter = 'all';
   let activeUserFilter = 'all';
   let currentTab   = 'cockpit';
@@ -1261,7 +1265,7 @@
   }
 
   function doLogout() {
-    authToken = null; allBookings = []; allUsers = []; usersLoaded = false;
+    authToken = null; allBookings = []; allUsers = []; allNotify = []; usersLoaded = false;
     if (_liveTimer) { clearInterval(_liveTimer); _liveTimer = null; }
     document.getElementById('mainView').style.display  = 'none';
     document.getElementById('loginView').style.display = 'flex';
@@ -2357,6 +2361,7 @@
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Fehler beim Laden');
       allUsers = data.users;
+      allNotify = data.notify || [];
       usersLoaded = true;
       renderUsers();
     } catch (e) {
@@ -2750,11 +2755,13 @@
   }
 
   function renderUsers() {
+    renderUserStats();
     const query = (document.getElementById('userSearchInput')?.value || '').toLowerCase().trim();
     let list = allUsers;
 
     if (activeUserFilter === 'confirmed') list = list.filter(u => u.confirmed);
     if (activeUserFilter === 'booked') list = list.filter(u => u.bookings_count > 0);
+    if (activeUserFilter === 'leads') list = list.filter(u => u.dl_status !== 'verified');
     if (query) list = list.filter(u =>
       (u.email || '').toLowerCase().includes(query) ||
       (u.first_name + ' ' + u.last_name).toLowerCase().includes(query)
@@ -2772,13 +2779,17 @@
     const initials = u => escapeHtml(((u.first_name?.[0] || '') + (u.last_name?.[0] || '') || u.email?.[0] || '?').toUpperCase());
     const fullName = u => [u.first_name, u.last_name].filter(Boolean).map(escapeHtml).join(' ') || '–';
 
-    const rows = list.map(u => `
-      <tr onclick="openUserModal(${JSON.stringify(u).replace(/"/g,'&quot;')})" style="cursor:pointer">
+    const weekMs = 7 * 24 * 3600 * 1000;
+    const rows = list.map(u => {
+      const fresh = u.dl_status !== 'verified' && (Date.now() - new Date(u.created_at).getTime()) < weekMs;
+      const trStyle = 'cursor:pointer' + (fresh ? ';background:rgba(234,179,8,.06);box-shadow:inset 3px 0 0 #facc15' : '');
+      return `
+      <tr onclick="openUserModal(${JSON.stringify(u).replace(/"/g,'&quot;')})" style="${trStyle}">
         <td>
           <div class="user-info">
             <div class="user-avatar">${initials(u)}</div>
             <div>
-              <div class="user-name">${fullName(u)}</div>
+              <div class="user-name">${fullName(u)}${fresh ? ' <span style="font-size:.58rem;font-weight:700;color:#facc15;border:1px solid rgba(234,179,8,.4);border-radius:4px;padding:1px 5px;margin-left:4px;vertical-align:middle">NEU · OFFEN</span>' : ''}</div>
               <div class="user-email">${escapeHtml(u.email)}</div>
             </div>
           </div>
@@ -2789,7 +2800,8 @@
         <td style="text-align:center;font-weight:600">${u.bookings_count}</td>
         <td style="font-weight:700">${u.bookings_total > 0 ? fmtEur(u.bookings_total) : '–'}</td>
         <td style="color:var(--gray);font-size:.78rem">${fmtDate(u.created_at).split(',')[0]}</td>
-      </tr>`).join('');
+      </tr>`;
+    }).join('');
 
     document.getElementById('usersBody').innerHTML = `
       <table>
@@ -2801,6 +2813,34 @@
         </thead>
         <tbody>${rows}</tbody>
       </table>`;
+  }
+
+  function renderUserStats() {
+    const el = document.getElementById('userStats');
+    if (!el) return;
+    const weekMs = 7 * 24 * 3600 * 1000, now = Date.now();
+    const total      = allUsers.length;
+    const verified   = allUsers.filter(u => u.dl_status === 'verified').length;
+    const open       = allUsers.filter(u => u.dl_status !== 'verified').length;
+    const openRecent = allUsers.filter(u => u.dl_status !== 'verified' && (now - new Date(u.created_at).getTime()) < weekMs).length;
+    const notifyTotal = allNotify.length;
+    const nByType = t => allNotify.filter(n => n.trailer_type === t).length;
+
+    const card = (label, value, color, sub) => `
+      <div style="background:var(--s2);border-radius:10px;padding:14px 16px">
+        <div style="font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gray);margin-bottom:4px">${label}</div>
+        <div style="font-size:1.6rem;font-weight:800;color:${color}">${value}</div>
+        ${sub ? `<div style="font-size:.72rem;color:var(--gray);margin-top:2px">${sub}</div>` : ''}
+      </div>`;
+
+    el.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px">
+        ${card('Accounts gesamt', total, 'var(--orange)', 'wollten buchen')}
+        ${card('Verifiziert', verified, 'var(--green)')}
+        ${card('Offene Leads', open, '#facc15', 'kein Führerschein')}
+        ${card('Davon letzte 7 Tage', openRecent, openRecent > 0 ? 'var(--red)' : 'var(--gray)', 'frische verlorene Leads')}
+        ${card('Notify-Liste', notifyTotal, 'var(--blue)', `Auto ${nByType('Autotransporter')} · Koffer ${nByType('Kofferanhaenger')} · Plane ${nByType('PKW-Plane')}`)}
+      </div>`;
   }
 
   /* ── MODALS ───────────────────────────────────────────── */
