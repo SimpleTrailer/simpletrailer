@@ -170,3 +170,24 @@ nav .nav-back:hover { color: #FFFFFF !important; }
 [style*="background:#1A1F71"], [style*="background:#003087"], [style*="background:#000;"],
 [style*="background:#7f1d1d"], [style*="background:#dc2626"],
 [style*="background:#E85D00"], [style*="background:var(--orange)"] { color: #FFFFFF !important; }
+
+/* ============================================================
+   Nachzügler-Fixes (dunkle Klassen-Regeln ohne Override) — 2026-06-16
+   ============================================================ */
+
+/* Anleitung: dunkle Tab-Leiste, Phasen-Trenner-Pillen, Endkarte */
+.tabs { background: #FFFFFF !important; box-shadow: 0 4px 24px -14px rgba(17, 18, 19, 0.14) !important; }
+.phase-divider span { background: #FFFFFF !important; color: #5C5953 !important; }
+.end-card { background: linear-gradient(135deg, #FFFFFF, #F1ECE3) !important; }
+/* Fett hervorgehobene Wörter in Schritt-Texten waren weiß → unsichtbar */
+.step-desc strong { color: #111213 !important; }
+
+/* Buchung: gebuchte Kalendertage (dunkelrot → hellrot), Warn-Box-Text lesbar */
+.cal-day.booked { background: #FDECEC !important; color: #DC2626 !important; border-color: #F3C5C5 !important; }
+.fs-result.warn { color: #B91C1C !important; }
+
+/* Rückgabe: Geo-Button-Hover bleibt lesbar (war #2a2a2a dunkel) */
+.geo-btn:hover { background: #F4F0EA !important; color: #111213 !important; }
+
+/* Precheck/Rückgabe: deaktivierter Grün-Button war dunkelgrau (#333) */
+.btn-green:disabled { background: #E8E3DA !important; color: #9B9892 !important; }

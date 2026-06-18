@@ -550,6 +550,110 @@ Wir bitten den Ausfall zu entschuldigen.
       }
     }
 
+    // ─── CANCEL-BOOKING: Admin storniert eine Buchung (Refund + Slot frei + Mail) ───
+    if (section === 'cancel-booking' && req.method === 'POST') {
+      const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+      const { booking_id } = body;
+      if (!booking_id) return res.status(400).json({ error: 'booking_id erforderlich' });
+
+      const { data: booking } = await supabase.from('bookings').select('*, trailers(name)').eq('id', booking_id).maybeSingle();
+      if (!booking) return res.status(404).json({ error: 'Buchung nicht gefunden' });
+      if (booking.status === 'cancelled') return res.status(200).json({ ok: true, already_cancelled: true });
+
+      // Atomarer Lock (gleiche Spalte wie der Mieter-Storno api/cancel-booking.js) →
+      // verhindert Doppel-Refund bei parallelem Mieter+Admin-Storno: nur EIN Request gewinnt.
+      const { data: locked } = await supabase
+        .from('bookings')
+        .update({ cancelled_at: new Date().toISOString() })
+        .eq('id', booking.id)
+        .is('cancelled_at', null)
+        .select('id')
+        .maybeSingle();
+      if (!locked) return res.status(409).json({ error: 'Stornierung läuft bereits oder ist abgeschlossen.' });
+
+      const totalPaid = Number(booking.total_amount || 0);
+
+      // Buchung ohne hinterlegte Zahlung: nicht still als "erstattet" markieren — Lock lösen + abbrechen.
+      if (totalPaid > 0 && !booking.stripe_payment_intent_id) {
+        await supabase.from('bookings').update({ cancelled_at: null }).eq('id', booking.id);
+        return res.status(400).json({ error: 'Buchung ohne hinterlegte Zahlung — bitte manuell im Stripe-Dashboard erstatten.' });
+      }
+
+      // Voller Refund — robust: nur den NOCH NICHT erstatteten Rest zurückzahlen
+      // (falls der Mieter z.B. schon einen Teil-Refund erhalten hat → Aufstockung auf 100 %).
+      const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+      let refundId = booking.cancellation_refund_id || null;
+      let refundedAmount = 0;
+      if (booking.stripe_payment_intent_id) {
+        try {
+          const pi = await stripe.paymentIntents.retrieve(booking.stripe_payment_intent_id, { expand: ['latest_charge'] });
+          const ch = pi.latest_charge;
+          const chargedCents = ch ? (ch.amount || 0) : 0;
+          const alreadyCents = ch ? (ch.amount_refunded || 0) : 0;
+          const remainingCents = Math.max(0, chargedCents - alreadyCents);
+          if (remainingCents > 0) {
+            const refund = await stripe.refunds.create({
+              payment_intent: booking.stripe_payment_intent_id,
+              amount: remainingCents,
+              reason: 'requested_by_customer',
+              metadata: { booking_id: booking.id, reason: 'admin_cancellation' }
+            }, { idempotencyKey: `cancel-${booking.id}` });
+            refundId = refund.id;
+          }
+          refundedAmount = (alreadyCents + remainingCents) / 100;
+        } catch (e) {
+          await supabase.from('bookings').update({ cancelled_at: null }).eq('id', booking.id);
+          console.error('Admin-Cancel Stripe-Refund-Fehler', { code: e.code, type: e.type, booking_id: booking.id });
+          return res.status(500).json({ error: 'Stripe-Refund fehlgeschlagen — bitte Stripe-Dashboard prüfen.' });
+        }
+      }
+
+      const { error: finalErr } = await supabase.from('bookings').update({
+        status: 'cancelled',
+        cancellation_refund_amount: refundedAmount,
+        cancellation_refund_id: refundId,
+        refund_status: 'approved'
+      }).eq('id', booking.id);
+      if (finalErr) console.error('CRITICAL: admin-cancel final status update failed', { booking_id: booking.id, refund_id: refundId, err: finalErr.message });
+
+      // Mieter informieren
+      try {
+        const { Resend } = require('resend');
+        const resend = new Resend(process.env.RESEND_API_KEY);
+        const num = booking.id.slice(0, 8).toUpperCase();
+        await resend.emails.send({
+          from: 'SimpleTrailer <buchung@simpletrailer.de>',
+          reply_to: 'info@simpletrailer.de',
+          to: booking.customer_email,
+          subject: `Buchung storniert — #${num}`,
+          text: `Hi ${booking.customer_name || ''},
+
+deine Buchung (#${num}) wurde storniert.${refundedAmount > 0 ? `
+Erstattung: ${refundedAmount.toFixed(2).replace('.', ',')} € — automatisch über deine Zahlungsmethode (3-5 Werktage).` : ''}
+
+Bei Fragen sind wir unter info@simpletrailer.de gerne für dich da.
+
+— SimpleTrailer GbR`,
+          html: `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0D0D0D;font-family:system-ui,sans-serif;color:#fff;">
+            <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
+              <div style="text-align:center;margin-bottom:24px;"><span style="font-size:1.5rem;font-weight:800;">Simple</span><span style="font-size:1.5rem;font-weight:800;color:#E85D00;">Trailer</span></div>
+              <div style="background:#1A1A1A;border-radius:16px;padding:30px;border:1px solid #383838;">
+                <h1 style="margin:0 0 6px;font-size:1.3rem;">Buchung storniert</h1>
+                <p style="color:#888;margin:0 0 22px;">Buchung #${num} · ${booking.trailers?.name || 'Anhänger'}</p>
+                <table style="width:100%;border-collapse:collapse;margin-bottom:16px;">
+                  <tr><td style="color:#888;padding:7px 0;border-bottom:1px solid #2a2a2a;font-size:.86rem;">Gezahlt</td><td style="text-align:right;padding:7px 0;border-bottom:1px solid #2a2a2a;font-size:.86rem;">${totalPaid.toFixed(2).replace('.', ',')} €</td></tr>
+                  <tr><td style="color:#888;padding:7px 0;font-size:.86rem;">Erstattung</td><td style="text-align:right;padding:7px 0;color:${refundedAmount > 0 ? '#22c55e' : '#888'};font-weight:700;font-size:1rem;">${refundedAmount > 0 ? refundedAmount.toFixed(2).replace('.', ',') + ' €' : 'Keine'}</td></tr>
+                </table>
+                ${refundedAmount > 0 ? `<div style="background:#0a1f0a;border:1px solid #22c55e;border-radius:10px;padding:14px 18px;color:#86efac;font-size:.84rem;">Die Erstattung wird automatisch auf deine Zahlungsmethode zurückgebucht (3-5 Werktage).</div>` : ''}
+                <p style="color:#666;font-size:.78rem;margin:18px 0 0;text-align:center;">Fragen? Antworte auf diese Mail oder schreib an info@simpletrailer.de.</p>
+              </div>
+            </div></body></html>`
+        });
+      } catch (e) { console.error('Storno-Mail fail:', e.message); }
+
+      return res.status(200).json({ ok: true, refund_id: refundId, amount: refundedAmount });
+    }
+
     // ─── TRAILERS: Vollständige Liste mit allen Flotten-Daten ───
     if (section === 'trailers') {
       // Versuche das ganze Set — bei fehlenden Spalten fallback auf Basis-Liste

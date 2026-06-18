@@ -2826,9 +2826,9 @@
     const notifyTotal = allNotify.length;
     const nByType = t => allNotify.filter(n => n.trailer_type === t).length;
 
-    const card = (label, value, color, sub) => `
-      <div style="background:var(--s2);border-radius:10px;padding:14px 16px">
-        <div style="font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gray);margin-bottom:4px">${label}</div>
+    const card = (label, value, color, sub, onclick) => `
+      <div ${onclick ? `onclick="${onclick}" ` : ''}style="background:var(--s2);border-radius:10px;padding:14px 16px${onclick ? ';cursor:pointer' : ''}">
+        <div style="font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gray);margin-bottom:4px">${label}${onclick ? ' <span style="color:var(--orange);font-weight:800">›</span>' : ''}</div>
         <div style="font-size:1.6rem;font-weight:800;color:${color}">${value}</div>
         ${sub ? `<div style="font-size:.72rem;color:var(--gray);margin-top:2px">${sub}</div>` : ''}
       </div>`;
@@ -2839,8 +2839,42 @@
         ${card('Verifiziert', verified, 'var(--green)')}
         ${card('Offene Leads', open, '#facc15', 'kein Führerschein')}
         ${card('Davon letzte 7 Tage', openRecent, openRecent > 0 ? 'var(--red)' : 'var(--gray)', 'frische verlorene Leads')}
-        ${card('Notify-Liste', notifyTotal, 'var(--blue)', `Auto ${nByType('Autotransporter')} · Koffer ${nByType('Kofferanhaenger')} · Plane ${nByType('PKW-Plane')}`)}
+        ${card('Notify-Liste', notifyTotal, 'var(--blue)', `Auto ${nByType('Autotransporter')} · Koffer ${nByType('Kofferanhaenger')} · Plane ${nByType('PKW-Plane')}`, 'openNotifyModal()')}
       </div>`;
+  }
+
+  function openNotifyModal() {
+    const tLabel = { Autotransporter: 'Autotransporter', Kofferanhaenger: 'Kofferanhänger', 'PKW-Plane': 'PKW-Plane' };
+    document.getElementById('modalTitle').textContent = `Notify-Liste (${allNotify.length})`;
+    const body = document.getElementById('modalBody');
+    if (!allNotify.length) {
+      body.innerHTML = '<p style="color:var(--gray)">Noch keine „Benachrichtigen wenn da"-Anmeldungen.</p>';
+    } else {
+      const rows = allNotify.map(n => `
+        <tr>
+          <td style="padding:8px 6px 8px 0;border-bottom:1px solid var(--border)"><a href="mailto:${escapeHtml(n.email)}" style="color:var(--orange);text-decoration:none">${escapeHtml(n.email)}</a></td>
+          <td style="padding:8px 6px;border-bottom:1px solid var(--border);color:var(--gray);font-size:.82rem">${escapeHtml(tLabel[n.trailer_type] || n.trailer_type)}</td>
+          <td style="padding:8px 0 8px 6px;border-bottom:1px solid var(--border);color:var(--gray);font-size:.78rem;white-space:nowrap;text-align:right">${fmtDate(n.created_at).split(',')[0]}</td>
+        </tr>`).join('');
+      body.innerHTML = `
+        <table style="width:100%;border-collapse:collapse;font-size:.88rem">
+          <thead><tr style="color:var(--gray);font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;text-align:left">
+            <th style="padding-bottom:6px">E-Mail</th><th>Typ</th><th style="text-align:right">Datum</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+        <button id="notifyCopyBtn" onclick="copyNotifyEmails()"
+          style="margin-top:16px;padding:9px 16px;border:1px solid var(--border);border-radius:8px;background:var(--s2);color:inherit;font-weight:700;cursor:pointer;font-size:.85rem">Alle E-Mails kopieren</button>`;
+    }
+    document.getElementById('modalBg').classList.add('open');
+  }
+
+  function copyNotifyEmails() {
+    const emails = allNotify.map(n => n.email).join(', ');
+    navigator.clipboard.writeText(emails).then(() => {
+      const b = document.getElementById('notifyCopyBtn');
+      if (b) { b.textContent = '✓ Kopiert'; setTimeout(() => { b.textContent = 'Alle E-Mails kopieren'; }, 1500); }
+    }).catch(() => {});
   }
 
   /* ── MODALS ───────────────────────────────────────────── */
@@ -2890,8 +2924,31 @@
       ${row('Verspätungsaufpreis', lateStatus)}
       ${precheckPhotoHtml}
       ${photoHtml}
+      ${['pending','confirmed','active'].includes(b.status) ? `
+        <div style="margin-top:18px;border-top:1px solid var(--border);padding-top:16px">
+          <button onclick="cancelBooking('${b.id}')" style="width:100%;background:#7f1d1d;color:#fff;border:1px solid #b91c1c;padding:12px 16px;border-radius:10px;font-weight:800;cursor:pointer;font-family:inherit;font-size:.9rem">Buchung stornieren — Refund + Slot freigeben</button>
+          <div style="color:#888;font-size:.72rem;margin-top:6px;text-align:center">Voller Betrag zurück an den Kunden, Anhänger wieder buchbar, Mieter wird per Mail informiert.</div>
+        </div>` : (b.status === 'cancelled'
+          ? `<p class="section-tag">Stornierung</p>${row('Erstattet', b.cancellation_refund_amount ? fmtEur(b.cancellation_refund_amount) : '–')}${b.cancelled_at ? row('Storniert am', fmtDate(b.cancelled_at)) : ''}`
+          : '')}
     `;
     document.getElementById('modalBg').classList.add('open');
+  }
+
+  async function cancelBooking(bookingId) {
+    if (!confirm('Buchung wirklich stornieren?\n\nDer volle Betrag wird an den Kunden erstattet, der Anhänger-Slot freigegeben und der Mieter per E-Mail informiert.')) return;
+    try {
+      const r = await fetch('/api/admin?section=cancel-booking', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
+        body: JSON.stringify({ booking_id: bookingId })
+      });
+      const j = await r.json();
+      if (!r.ok) { alert('Fehler: ' + (j.error || r.status)); return; }
+      alert(j.already_cancelled ? 'Diese Buchung war bereits storniert.' : `✓ Buchung storniert.${j.amount ? ' ' + fmtEur(j.amount) + ' erstattet.' : ''} Mieter wurde informiert.`);
+      document.getElementById('modalBg').classList.remove('open');
+      loadData();
+    } catch (e) { alert('Fehler: ' + e.message); }
   }
 
   function openUserModal(u) {

@@ -95,6 +95,8 @@
 ---
 
 ## Design
+- **🏆 Qualitäts-Latte (HART, ohne Nachfragen):** Jede Webseite — SimpleTrailer wie jedes Kundenprojekt — muss aussehen und sich anfühlen wie ein **20.000-€-Projekt**: edel, hochwertig, feine Animationen/Micro-Interactions, durchdachte Typo & Abstände, kein generisches AI-Aussehen. Niemals „reicht schon" abliefern — das Premium-Niveau ist der Default, nicht die Kür.
+- **📅 Buchungssystem in der Kopfzeile (automatisch, ohne dass der User es sagt):** Wenn die Branche es nahelegt (Vermietung, Friseur/Barber, Beauty, Praxis, Gastro, Dienstleister mit Terminen o. ä.), gehört **immer** ein sichtbarer Buchen-/Termin-Button bzw. ein Buchungssystem **oben in die Navigation/Kopfzeile** — proaktiv einplanen, nicht erst auf Aufforderung. Passt die Branche nicht, weglassen.
 - **Skill:** Nutze immer den Frontend Design Skill für UI-Entscheidungen
 - **Stil (seit 2026-06-12):** HELL — weißer Vollbild-Hero (100dvh, helle Map-Tiles), Sektions-Rhythmus Weiß/warmes Papier (`#F6F3EE`), Orange-Akzent (`#E85D00`), Schwarz nur als Rahmen (Nav, Bewerte-uns-Streifen, Footer) + Newsletter als Orange-Band. Index-Modals + Simply-Chat bleiben dunkel. **Alle Kundenseiten ebenfalls hell** via zentralem [light-theme.css](light-theme.css) (Var-Flip + `[style*=]`-Regeln; eingebunden in booking, booking-confirm, account, precheck, return, anleitung, ratgeber/*) — bei neuen Seiten/Templates dunkle Inline-Farben vermeiden oder light-theme.css erweitern (Cache-Buster `?v=` hochzählen!). Stripe Payment Element: `theme: 'stripe'` (hell). Umsetzung index: `<style id="hero-v2-styles">` + `<style id="site-light-v1">`
 - **Mobile-first:** Karte/Buttons/Bottom-Sheets touch-optimiert
