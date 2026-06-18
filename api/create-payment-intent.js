@@ -4,6 +4,20 @@ const { createClient } = require('@supabase/supabase-js');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
+// ── Rabattcodes (serverseitig = Single Source of Truth) ──────────────────
+// percent: Prozent-Rabatt auf den Gesamtbetrag. validUntil: letzter gültiger Moment (inkl., Berlin-Zeit).
+const DISCOUNT_CODES = {
+  WILLKOMMEN20: { percent: 20, validUntil: '2026-06-25T23:59:59+02:00' },
+};
+function resolveDiscount(raw) {
+  const code = String(raw || '').trim().toUpperCase();
+  if (!code) return { code: null, percent: 0 };
+  const def = DISCOUNT_CODES[code];
+  if (!def) return { error: 'Code ungültig' };
+  if (Date.now() > new Date(def.validUntil).getTime()) return { error: 'Code abgelaufen' };
+  return { code, percent: def.percent };
+}
+
 const rateLimit = new Map();
 function isRateLimited(ip) {
   const now = Date.now();
@@ -134,7 +148,18 @@ module.exports = async (req, res) => {
       : 0;
 
     const amount    = baseAmount + insAmount + freeFloatingFee + cancellationProtectionFee;
-    const amountInCents = Math.round(amount * 100);
+
+    // Rabattcode (optional) — serverseitig validiert + abgezogen.
+    // Client-Wert ist NUR Anzeige; hier ist die einzige verbindliche Berechnung.
+    const disc = resolveDiscount(req.body.discount_code);
+    if (disc.error) return res.status(400).json({ error: `Rabattcode: ${disc.error}` });
+    const discountCode    = disc.code || null;
+    const discountPercent = disc.percent || 0;
+    const discountAmount  = discountPercent ? Math.round(amount * discountPercent) / 100 : 0;
+    const finalAmount     = Math.round((amount - discountAmount) * 100) / 100;
+    if (finalAmount < 0.50) return res.status(400).json({ error: 'Betrag nach Rabatt zu niedrig.' });
+
+    const amountInCents = Math.round(finalAmount * 100);
 
     const existing = await stripe.customers.list({ email: customer_email, limit: 1 });
     let customer;
@@ -154,7 +179,7 @@ module.exports = async (req, res) => {
     // bei anderen Methoden faellt Auto-Charge auf manuelle E-Mail mit
     // Zahlungslink zurueck (process-return.js loggt + Lion-Mail).
     // Im Tausch: Mieter sehen PayPal, Apple Pay, Google Pay, Link als Option.
-    const idemBasis = [effectiveUserId, trailer_id, start_time, end_time, insType, booking_mode || '', pricing_type || '', freeFloating ? 1 : 0, cancellationProtection ? 1 : 0, amountInCents, customer_name || '', customer_email || '', customer_phone || '', customer_address || '', agb_version || ''].join('|');
+    const idemBasis = [effectiveUserId, trailer_id, start_time, end_time, insType, booking_mode || '', pricing_type || '', freeFloating ? 1 : 0, cancellationProtection ? 1 : 0, amountInCents, discountCode || '', customer_name || '', customer_email || '', customer_phone || '', customer_address || '', agb_version || ''].join('|');
     const idempotencyKey = 'pi-' + crypto.createHash('sha256').update(idemBasis).digest('hex').slice(0, 40);
 
     const paymentIntent = await stripe.paymentIntents.create({
@@ -167,7 +192,7 @@ module.exports = async (req, res) => {
       },
       receipt_email: customer_email,
       description: `SimpleTrailer – ${trailer.name} – ${pricing_type}`,
-      metadata: { trailer_id, pricing_type, start_time, end_time, customer_name, customer_email, customer_phone: customer_phone || '', customer_address: customer_address || '', insurance_type: insType, insurance_amount: String(insAmount), user_id: effectiveUserId, agb_version: agb_version || '2026-06-05', free_floating: freeFloating ? '1' : '0', free_floating_fee: String(freeFloatingFee), cancellation_protection: cancellationProtection ? '1' : '0', cancellation_protection_fee: String(cancellationProtectionFee) }
+      metadata: { trailer_id, pricing_type, start_time, end_time, customer_name, customer_email, customer_phone: customer_phone || '', customer_address: customer_address || '', insurance_type: insType, insurance_amount: String(insAmount), user_id: effectiveUserId, agb_version: agb_version || '2026-06-05', free_floating: freeFloating ? '1' : '0', free_floating_fee: String(freeFloatingFee), cancellation_protection: cancellationProtection ? '1' : '0', cancellation_protection_fee: String(cancellationProtectionFee), discount_code: discountCode || '', discount_percent: String(discountPercent), discount_amount: String(discountAmount) }
     }, { idempotencyKey });
 
     // AGB-Zeitstempel/IP NACH dem Create setzen — Updates sind nicht
@@ -185,6 +210,7 @@ module.exports = async (req, res) => {
       payment_intent_id: paymentIntent.id,
       amount, base_amount: baseAmount, insurance_amount: insAmount, insurance_type: insType,
       free_floating: freeFloating, free_floating_fee: freeFloatingFee,
+      discount_code: discountCode, discount_percent: discountPercent, discount_amount: discountAmount, total_amount: finalAmount,
       trailer_name: trailer.name
     });
 

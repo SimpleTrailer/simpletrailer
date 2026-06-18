@@ -448,7 +448,7 @@
     .mode-save { z-index: 2; }
     .mode-grid { row-gap: 16px; }
   </style>
-  <link rel="stylesheet" href="/light-theme.css?v=1">
+  <link rel="stylesheet" href="/light-theme.css?v=2">
 </head>
 <body>
 
@@ -935,6 +935,18 @@
       <div class="summary-row" id="sumFreeFloatRow" style="display:none"><span class="label">Rückgabe egal-wo</span><span id="sumFreeFloat">–</span></div>
       <div class="summary-row"><span class="label">Von</span><span id="sumVon">–</span></div>
       <div class="summary-row"><span class="label">Bis</span><span id="sumBis">–</span></div>
+
+      <div id="discountBox" style="margin:12px 0 4px;">
+        <div style="display:flex;gap:8px;">
+          <input type="text" id="discountInput" placeholder="Rabattcode" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();applyDiscount();}"
+            style="flex:1;min-width:0;padding:9px 12px;border:1px solid var(--border);border-radius:8px;background:var(--s2);color:inherit;font-size:.9rem;text-transform:uppercase;" />
+          <button type="button" id="discountBtn" onclick="applyDiscount()"
+            style="flex:none;padding:9px 16px;border:1px solid var(--border);border-radius:8px;background:var(--s2);color:inherit;font-weight:700;cursor:pointer;font-size:.85rem;">Einlösen</button>
+        </div>
+        <div id="discountMsg" style="font-size:.78rem;margin-top:6px;display:none;"></div>
+      </div>
+
+      <div class="summary-row" id="sumDiscRow" style="display:none"><span class="label" id="sumDiscLabel">Rabatt</span><span id="sumDisc" style="color:#16a34a;font-weight:700">–</span></div>
       <div class="summary-total"><span>Gesamt</span><span class="amount" id="sumTotal">–</span></div>
       <div style="text-align:right;font-size:.7rem;color:var(--gray);margin-top:6px;">inkl. 19 % MwSt</div>
     </div>
@@ -1525,6 +1537,40 @@
     const eMs = new Date(document.getElementById('endTime').value).getTime()   || 0;
     const p = calcPrice(sMs, eMs); if (!p) return 0;
     return p.base + getInsuranceAmount() + getFreeFloatingFee() + getCancellationProtectionFee();
+  }
+
+  function showDiscountMsg(text, ok) {
+    const m = document.getElementById('discountMsg');
+    if (!m) return;
+    m.style.display = 'block';
+    m.textContent = text;
+    m.style.color = ok ? '#16a34a' : '#dc2626';
+  }
+
+  // Rabattcode anwenden: löst eine PaymentIntent-Neuerstellung MIT Code aus.
+  // Validierung + Abzug passieren ausschließlich serverseitig in create-payment-intent.js.
+  async function applyDiscount() {
+    const code = (document.getElementById('discountInput')?.value || '').trim().toUpperCase();
+    const btn  = document.getElementById('discountBtn');
+    if (!code) { showDiscountMsg('Bitte einen Code eingeben.', false); return; }
+    const prev = appliedDiscountCode;
+    appliedDiscountCode = code;
+    if (btn) { btn.disabled = true; btn.textContent = '…'; }
+    try {
+      await initStripe();   // Server validiert + zieht ab; setzt appliedDiscount
+      if (appliedDiscount && appliedDiscount.code) {
+        showDiscountMsg(`✓ Code „${appliedDiscount.code}" aktiv – ${appliedDiscount.percent}% Rabatt`, true);
+      } else {
+        appliedDiscountCode = prev;
+        showDiscountMsg('Code konnte nicht angewendet werden.', false);
+      }
+    } catch (e) {
+      appliedDiscountCode = prev;   // zurück auf vorigen Stand
+      showDiscountMsg((e.message || 'Code ungültig').replace(/^Rabattcode:\s*/, ''), false);
+      try { await initStripe(); } catch (_) {}   // PI ohne ungültigen Code wiederherstellen
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = 'Einlösen'; }
+    }
   }
 
   function selectCancellationProtection(yes) {
@@ -2371,10 +2417,24 @@
         cpRow.style.display = 'none';
       }
     }
+    // Rabatt-Zeile + rabattierter Gesamtpreis (Server = Single Source of Truth)
+    const discRow = document.getElementById('sumDiscRow');
+    if (discRow) {
+      if (appliedDiscount && appliedDiscount.amount > 0) {
+        discRow.style.display = 'flex';
+        document.getElementById('sumDiscLabel').textContent = `Rabatt (${appliedDiscount.code}, −${appliedDiscount.percent}%)`;
+        document.getElementById('sumDisc').textContent = '−' + appliedDiscount.amount.toFixed(2).replace('.',',') + ' €';
+        document.getElementById('sumTotal').textContent = appliedDiscount.total.toFixed(2).replace('.',',') + ' €';
+      } else {
+        discRow.style.display = 'none';
+      }
+    }
   }
 
   let stripePaymentElement = null;
   let lastStripeSignature  = null;
+  let appliedDiscount      = null;   // vom Server bestätigter Rabatt (nur Anzeige)
+  let appliedDiscountCode  = '';     // Code, der an den Server gesendet wird
 
   async function initStripe() {
     const payBtn = document.getElementById('payBtn');
@@ -2383,7 +2443,7 @@
     // (verhindert verwaiste PaymentIntents + Doppel-Mounts bei Stepper vor/zurueck)
     const signature = [trailerId, document.getElementById('startTime').value,
       document.getElementById('endTime').value, selectedInsurance, bookingMode,
-      selectedFreeFloating, cancellationProtection].join('|');
+      selectedFreeFloating, cancellationProtection, appliedDiscountCode].join('|');
     if (stripeElements && stripePaymentElement && lastStripeSignature === signature) {
       payBtn.textContent = 'Jetzt buchen & bezahlen';
       payBtn.dataset.stripeReady = '1';
@@ -2420,13 +2480,20 @@
           agb_version:      '2026-06-05',
           free_floating:    selectedFreeFloating,
           cancellation_protection:     cancellationProtection,
-          cancellation_protection_fee: getCancellationProtectionFee()
+          cancellation_protection_fee: getCancellationProtectionFee(),
+          discount_code:               appliedDiscountCode
         })
       });
 
       if (!res) throw new Error('Anmeldung abgelaufen — bitte neu einloggen.');
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Fehler beim Laden der Zahlung');
+
+      // Rabatt-Ergebnis vom Server übernehmen (Single Source of Truth)
+      appliedDiscount = data.discount_code
+        ? { code: data.discount_code, percent: data.discount_percent, amount: data.discount_amount, total: data.total_amount }
+        : null;
+      updateSummary();
 
       stripeElements = stripeClient.elements({ clientSecret: data.client_secret, appearance: {
         theme: 'stripe',
