@@ -535,6 +535,7 @@
           <button class="filter-btn"        id="ufBooked"    onclick="setUserFilter('booked', this)">Hat gebucht</button>
           <button class="filter-btn"        id="ufLeads"     onclick="setUserFilter('leads', this)">Offene Leads</button>
           <button id="refreshUsersBtn" onclick="loadUsers()" title="Aktualisieren">↺</button>
+          <button id="winbackBtn" onclick="sendWinback()" title="Rückhol-Mail an alle offenen Leads senden" style="background:var(--orange);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-weight:700;cursor:pointer;font-size:.82rem;">📧 Rückhol-Mail an offene Leads</button>
         </div>
       </div>
 
@@ -2875,6 +2876,31 @@
       const b = document.getElementById('notifyCopyBtn');
       if (b) { b.textContent = '✓ Kopiert'; setTimeout(() => { b.textContent = 'Alle E-Mails kopieren'; }, 1500); }
     }).catch(() => {});
+  }
+
+  // Rückhol-Mail an alle offenen Leads (jeder bekommt EINE eigene Mail; schon Angeschriebene werden serverseitig übersprungen).
+  async function sendWinback() {
+    const leads = allUsers
+      .filter(u => u.dl_status !== 'verified')
+      .map(u => ({ user_id: u.id, email: u.email, first_name: u.first_name }));
+    if (!leads.length) { alert('Keine offenen Leads vorhanden.'); return; }
+    if (!confirm(`${leads.length} offene Leads per Rückhol-Mail anschreiben?\n\nJeder bekommt eine eigene Mail mit 20%-Gutschein (WILLKOMMEN20). Bereits angeschriebene werden automatisch übersprungen.`)) return;
+    const btn = document.getElementById('winbackBtn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Sende …'; }
+    try {
+      const res = await fetch('/api/admin?section=send-winback', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${authToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ recipients: leads })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Fehler beim Senden');
+      alert(`Fertig!\n\n✓ Gesendet: ${data.sent}\n↺ Übersprungen (schon angeschrieben): ${data.skipped}\n✗ Fehler: ${data.failed}`);
+    } catch (e) {
+      alert('Fehler beim Senden: ' + e.message);
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = '📧 Rückhol-Mail an offene Leads'; }
+    }
   }
 
   /* ── MODALS ───────────────────────────────────────────── */

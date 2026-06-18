@@ -654,6 +654,88 @@ Bei Fragen sind wir unter info@simpletrailer.de gerne für dich da.
       return res.status(200).json({ ok: true, refund_id: refundId, amount: refundedAmount });
     }
 
+    // ─── SEND-WINBACK: Rückhol-Mail an offene Leads — jeder bekommt EINE eigene Mail (kein CC) ───
+    if (section === 'send-winback' && req.method === 'POST') {
+      const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+      const recipients = Array.isArray(body.recipients) ? body.recipients : [];
+      if (!recipients.length) return res.status(400).json({ error: 'Keine Empfänger übergeben' });
+
+      const { Resend } = require('resend');
+      const resend = new Resend(process.env.RESEND_API_KEY);
+      const esc = s => String(s || '').replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
+
+      const winbackHtml = (vorname) => `<!DOCTYPE html><html lang="de"><body style="margin:0;padding:0;background:#0D0D0D;font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#fff;">
+        <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
+          <div style="text-align:center;margin-bottom:28px;"><span style="font-size:1.6rem;font-weight:800;">Simple</span><span style="font-size:1.6rem;font-weight:800;color:#E85D00;">Trailer</span></div>
+          <div style="background:#1A1A1A;border:1px solid #2a2a2a;border-radius:18px;padding:34px 30px;">
+            <h1 style="margin:0 0 14px;font-size:1.45rem;line-height:1.25;">Das tut uns aufrichtig leid.</h1>
+            <p style="color:#bbb;font-size:.95rem;line-height:1.65;margin:0 0 16px;">Hallo${vorname ? ' ' + esc(vorname) : ''},<br><br>du wolltest bei uns einen Anhänger buchen – und bist bei der Führerschein-Prüfung hängengeblieben. Schuld war ein <strong style="color:#fff;">technisches Problem auf unserer Seite</strong>, nicht an dir.</p>
+            <p style="color:#bbb;font-size:.95rem;line-height:1.65;margin:0 0 24px;">Die gute Nachricht: <strong style="color:#fff;">Es ist behoben.</strong> Die Verifizierung läuft jetzt in unter einer Minute durch.</p>
+            <div style="background:linear-gradient(135deg,#E85D00 0%,#c24d00 100%);border-radius:14px;padding:24px;text-align:center;margin-bottom:24px;">
+              <div style="font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#ffe6d4;margin-bottom:6px;">Unser Dankeschön fürs Dranbleiben</div>
+              <div style="font-size:2.4rem;font-weight:900;color:#fff;line-height:1;margin-bottom:8px;">20 % Rabatt</div>
+              <div style="display:inline-block;background:rgba(0,0,0,.25);border:1px dashed rgba(255,255,255,.5);border-radius:8px;padding:8px 18px;font-size:1.1rem;font-weight:800;letter-spacing:.15em;color:#fff;">WILLKOMMEN20</div>
+              <div style="font-size:.78rem;color:#ffe6d4;margin-top:12px;">Gültig bis <strong>25.06.2026</strong></div>
+            </div>
+            <p style="color:#bbb;font-size:.9rem;line-height:1.6;margin:0 0 24px;"><strong style="color:#fff;">So einlösen:</strong> Buch wie gewohnt auf simpletrailer.de und gib im Zahlungs-Schritt den Code <strong style="color:#fff;">WILLKOMMEN20</strong> ein – die 20 % werden direkt abgezogen.</p>
+            <div style="text-align:center;"><a href="https://simpletrailer.de/booking" style="display:inline-block;background:#fff;color:#0D0D0D;text-decoration:none;font-weight:800;font-size:1rem;padding:15px 34px;border-radius:12px;">Jetzt Anhänger buchen →</a></div>
+          </div>
+          <p style="color:#777;font-size:.85rem;line-height:1.6;text-align:center;margin:24px 0 0;">Fragen? Antworte einfach auf diese Mail.<br>Liebe Grüße,<br><strong style="color:#aaa;">Lion & Samuel · SimpleTrailer</strong></p>
+          <p style="font-size:.7rem;color:#555;text-align:center;margin:18px 0 0;">SimpleTrailer GbR · Waltjenstr. 96, 28237 Bremen · info@simpletrailer.de</p>
+        </div></body></html>`;
+
+      const winbackText = (vorname) => `Hallo${vorname ? ' ' + vorname : ''},
+
+du wolltest bei uns einen Anhänger buchen und bist bei der Führerschein-Prüfung hängengeblieben. Schuld war ein technisches Problem auf unserer Seite – nicht an dir.
+
+Die gute Nachricht: Es ist behoben. Die Verifizierung läuft jetzt in unter einer Minute durch.
+
+Als Dankeschön: 20 % Rabatt auf deine Buchung. Code: WILLKOMMEN20 (gültig bis 25.06.2026).
+So einlösen: Buch wie gewohnt auf simpletrailer.de und gib im Zahlungs-Schritt den Code ein – die 20 % werden direkt abgezogen.
+
+Jetzt buchen: https://simpletrailer.de/booking
+
+Liebe Grüße,
+Lion & Samuel · SimpleTrailer
+SimpleTrailer GbR · Waltjenstr. 96, 28237 Bremen · info@simpletrailer.de`;
+
+      let sent = 0, skipped = 0, failed = 0;
+      for (const r of recipients.slice(0, 300)) {
+        const email = String(r.email || '').trim().toLowerCase();
+        if (!email || !email.includes('@') || !email.includes('.')) { failed++; continue; }
+
+        // Doppel-Sende-Schutz: schon angeschrieben? + bestehende Metadaten für das Update holen
+        let existingMeta = {};
+        if (r.user_id) {
+          try {
+            const { data: { user: u } } = await supabase.auth.admin.getUserById(r.user_id);
+            existingMeta = u?.user_metadata || {};
+            if (existingMeta.winback_sent_at) { skipped++; continue; }
+          } catch (e) {}
+        }
+
+        const vorname = String(r.first_name || '').trim();
+        try {
+          await resend.emails.send({
+            from: 'SimpleTrailer <buchung@simpletrailer.de>',
+            reply_to: 'info@simpletrailer.de',
+            to: email,
+            subject: 'Wir schulden dir eine Entschuldigung – und 20 %',
+            html: winbackHtml(vorname),
+            text: winbackText(vorname)
+          });
+          sent++;
+          if (r.user_id) {
+            try { await supabase.auth.admin.updateUserById(r.user_id, { user_metadata: { ...existingMeta, winback_sent_at: new Date().toISOString() } }); } catch (e) {}
+          }
+        } catch (e) {
+          console.error('Winback-Mail fail:', email, e.message);
+          failed++;
+        }
+      }
+      return res.status(200).json({ sent, skipped, failed });
+    }
+
     // ─── TRAILERS: Vollständige Liste mit allen Flotten-Daten ───
     if (section === 'trailers') {
       // Versuche das ganze Set — bei fehlenden Spalten fallback auf Basis-Liste
