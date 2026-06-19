@@ -4,6 +4,7 @@ const { Resend } = require('resend');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 const resend = new Resend(process.env.RESEND_API_KEY);
+const T = require('./_email-template');
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -258,26 +259,17 @@ module.exports = async (req, res) => {
     const bookingRef = booking_id.slice(0, 8).toUpperCase();
 
     const lateBlock = lateFeeAmount > 0
-      ? `<div style="background:#1a0d00;border:1.5px solid #E85D00;border-radius:12px;padding:20px;margin-bottom:20px;">
-           <p style="color:#E85D00;font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin:0 0 4px;">Verspätungsaufpreis</p>
-           <p style="margin:0 0 4px;font-size:.9rem;">${lateHours} Stunde${lateHours > 1 ? 'n' : ''} × ${lateFeePerHour.toFixed(2)} € = <strong>${lateFeeAmount.toFixed(2)} €</strong></p>
-           <p style="color:#888;font-size:.78rem;margin:0;">${lateFeeCharged ? '✓ Automatisch abgebucht.' : '⚠ Automatische Abbuchung fehlgeschlagen. Wir melden uns.'}</p>
-         </div>`
-      : `<div style="background:#0a1f0a;border:1.5px solid #22c55e;border-radius:12px;padding:16px 20px;margin-bottom:20px;">
-           <p style="color:#4ade80;font-weight:700;margin:0;">✓ Pünktlich zurückgegeben – danke!</p>
-         </div>`;
+      ? T.callout(`<strong>Verspätungsaufpreis</strong><br>${lateHours} Stunde${lateHours > 1 ? 'n' : ''} × ${lateFeePerHour.toFixed(2)} € = <strong>${lateFeeAmount.toFixed(2)} €</strong><br><span style="font-size:13px;color:#8A857D;">${lateFeeCharged ? '✓ Automatisch abgebucht.' : '⚠ Automatische Abbuchung fehlgeschlagen. Wir melden uns.'}</span>`, 'orange')
+      : T.callout('<strong>✓ Pünktlich zurückgegeben – danke!</strong>', 'green');
 
     // Review-CTA: nur wenn pünktlich zurückgegeben (positive Erfahrung)
-    const reviewBlock = lateFeeAmount > 0 ? '' : `
-      <div style="background:#1A1A1A;border:1px solid #383838;border-radius:12px;padding:24px 20px;margin-top:24px;text-align:center;">
-        <div style="font-size:1.4rem;margin-bottom:6px;">⭐⭐⭐⭐⭐</div>
-        <p style="font-weight:700;font-size:.95rem;margin:0 0 6px;">Wie war deine Erfahrung?</p>
-        <p style="color:#888;font-size:.82rem;margin:0 0 16px;line-height:1.5;">Eine kurze Google-Bewertung hilft uns, weiter zu wachsen — und anderen, uns zu finden.</p>
-        <a href="https://g.page/r/Cd6jwKdwS_Y7EAE/review" target="_blank"
-           style="display:inline-block;background:#E85D00;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:700;font-size:.88rem;">
-          Auf Google bewerten →
-        </a>
-      </div>`;
+    const reviewBlock = lateFeeAmount > 0 ? '' :
+      `<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-top:8px;"><tr><td align="center" style="background:#F6F3EE;border:1px solid #E7E2D9;border-radius:12px;padding:22px 20px;">
+        <div style="font-size:24px;letter-spacing:5px;color:#E85D00;margin-bottom:6px;">★★★★★</div>
+        <div style="font-weight:700;font-size:15px;color:#111213;margin-bottom:6px;font-family:system-ui,sans-serif;">Wie war deine Erfahrung?</div>
+        <div style="color:#5C5953;font-size:13px;margin-bottom:16px;line-height:1.5;font-family:system-ui,sans-serif;">Eine kurze Google-Bewertung hilft uns, weiter zu wachsen — und anderen, uns zu finden.</div>
+        <a href="https://g.page/r/Cd6jwKdwS_Y7EAE/review" style="display:inline-block;background:#E85D00;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:700;font-size:14px;font-family:system-ui,sans-serif;">Auf Google bewerten →</a>
+      </td></tr></table>`;
 
     // Bei pending_position_check: Mieter bekommt erstmal "wir warten auf Tracker"-Mail.
     // Die finale Abrechnung schickt der Cron sobald die Position bestaetigt ist.
@@ -288,20 +280,14 @@ module.exports = async (req, res) => {
           reply_to: 'info@simpletrailer.de',
           to: booking.customer_email,
           subject: `Rückgabe vermerkt #${bookingRef} – wir bestätigen final per E-Mail`,
-          html: `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0D0D0D;font-family:system-ui,sans-serif;color:#fff;">
-            <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
-              <div style="text-align:center;margin-bottom:32px;">
-                <span style="font-size:1.5rem;font-weight:800;">Simple</span><span style="font-size:1.5rem;font-weight:800;color:#E85D00;">Trailer</span>
-              </div>
-              <div style="background:#1A1A1A;border-radius:16px;padding:32px;border:1px solid #383838;">
-                <h1 style="margin:0 0 8px;font-size:1.4rem;">⏳ Rückgabe vermerkt</h1>
-                <p style="color:#ccc;margin:0 0 16px;line-height:1.6;">Hallo ${booking.customer_name},<br><br>danke für die Rückgabe! Der GPS-Tracker am Anhänger meldet sich nicht immer sofort — manchmal dauert es bis zu einer Stunde bis die finale Position übermittelt wird.</p>
-                <p style="color:#ccc;margin:0 0 16px;line-height:1.6;">Sobald der Tracker sich gemeldet hat, prüfen wir automatisch ob der Anhänger im Zone-Bereich steht und schicken dir die finale Abrechnung per E-Mail. Du musst nichts weiter tun.</p>
-                <p style="color:#888;margin:0;font-size:.85rem;">Buchungsnummer: <strong>#${bookingRef}</strong></p>
-              </div>
-              <p style="color:#444;font-size:.72rem;text-align:center;margin-top:24px;">SimpleTrailer · Bremen · info@simpletrailer.de</p>
-            </div>
-          </body></html>`
+          html: T.layout({
+            heading: '⏳ Rückgabe vermerkt',
+            preheader: 'Wir bestätigen die finale Abrechnung in Kürze per E-Mail.',
+            bodyHtml:
+              T.p(`Hallo ${T.esc(booking.customer_name)},<br>danke für die Rückgabe! Der GPS-Tracker am Anhänger meldet sich nicht immer sofort — manchmal dauert es bis zu einer Stunde, bis die finale Position übermittelt wird.`) +
+              T.p('Sobald der Tracker sich gemeldet hat, prüfen wir automatisch, ob der Anhänger im Zone-Bereich steht, und schicken dir die finale Abrechnung per E-Mail. Du musst nichts weiter tun.') +
+              T.rows([['Buchungsnummer', `#${bookingRef}`]])
+          })
         });
       } catch (mailErr) {
         console.error('Pending-Mail fehlgeschlagen:', mailErr.message);
@@ -320,26 +306,21 @@ module.exports = async (req, res) => {
       reply_to: 'info@simpletrailer.de',
       to: booking.customer_email,
       subject: `Rückgabe bestätigt #${bookingRef} – SimpleTrailer`,
-      html: `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0D0D0D;font-family:system-ui,sans-serif;color:#fff;">
-        <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
-          <div style="text-align:center;margin-bottom:32px;">
-            <span style="font-size:1.5rem;font-weight:800;">Simple</span><span style="font-size:1.5rem;font-weight:800;color:#E85D00;">Trailer</span>
-          </div>
-          <div style="background:#1A1A1A;border-radius:16px;padding:32px;border:1px solid #383838;">
-            <h1 style="margin:0 0 8px;font-size:1.4rem;">Rückgabe bestätigt</h1>
-            <p style="color:#888;margin:0 0 24px;">Hallo ${booking.customer_name}, hier deine Abrechnung.</p>
-            ${lateBlock}
-            <table style="width:100%;border-collapse:collapse;">
-              <tr><td style="color:#888;padding:9px 0;border-bottom:1px solid #2a2a2a;font-size:.88rem;">Buchung</td><td style="text-align:right;padding:9px 0;border-bottom:1px solid #2a2a2a;font-size:.88rem;">#${bookingRef}</td></tr>
-              <tr><td style="color:#888;padding:9px 0;border-bottom:1px solid #2a2a2a;font-size:.88rem;">Mietbetrag</td><td style="text-align:right;padding:9px 0;border-bottom:1px solid #2a2a2a;font-size:.88rem;">${booking.total_amount.toFixed(2)} €</td></tr>
-              ${lateFeeAmount > 0 ? `<tr><td style="color:#888;padding:9px 0;border-bottom:1px solid #2a2a2a;font-size:.88rem;">Verspätung</td><td style="text-align:right;padding:9px 0;border-bottom:1px solid #2a2a2a;color:#E85D00;font-size:.88rem;">+ ${lateFeeAmount.toFixed(2)} €</td></tr>` : ''}
-              <tr><td style="color:#888;padding:9px 0;font-size:.88rem;font-weight:700;">Gesamt</td><td style="text-align:right;padding:9px 0;font-weight:800;font-size:1.05rem;">${total.toFixed(2)} €</td></tr>
-            </table>
-            ${reviewBlock}
-          </div>
-          <p style="color:#444;font-size:.72rem;text-align:center;margin-top:24px;">SimpleTrailer · Bremen · info@simpletrailer.de</p>
-        </div>
-      </body></html>`
+      html: T.layout({
+        heading: 'Rückgabe bestätigt ✓',
+        preheader: `Deine Abrechnung — Gesamt ${total.toFixed(2)} €`,
+        replyNote: 'Fragen? Antworte einfach auf diese Mail.',
+        bodyHtml:
+          T.p(`Hallo ${T.esc(booking.customer_name)}, hier deine Abrechnung.`) +
+          lateBlock +
+          T.rows([
+            ['Buchung', `#${bookingRef}`],
+            ['Mietbetrag', `${booking.total_amount.toFixed(2)} €`],
+            ...(lateFeeAmount > 0 ? [['Verspätung', `<span style="color:#E85D00;">+ ${lateFeeAmount.toFixed(2)} €</span>`]] : []),
+            ['Gesamt', `${total.toFixed(2)} €`]
+          ]) +
+          reviewBlock
+      })
     });
 
     return res.status(200).json({

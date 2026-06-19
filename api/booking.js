@@ -3,6 +3,7 @@ const { createClient } = require('@supabase/supabase-js');
 const { Resend } = require('resend');
 const crypto = require('crypto');
 const { generateMietvertrag, generateRechnung } = require('./_pdf-templates');
+const T = require('./_email-template');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -335,84 +336,40 @@ info@simpletrailer.de · simpletrailer.de`;
           'X-Entity-Ref-ID': booking.id
         },
         attachments,
-        html: `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0D0D0D;font-family:system-ui,sans-serif;color:#fff;">
-          <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
-            <div style="text-align:center;margin-bottom:32px;">
-              <span style="font-size:1.5rem;font-weight:800;">Simple</span><span style="font-size:1.5rem;font-weight:800;color:#E85D00;">Trailer</span>
-            </div>
-            <div style="background:#1A1A1A;border-radius:16px;padding:32px;border:1px solid #383838;">
-              <h1 style="margin:0 0 8px;font-size:1.4rem;">Mietvertrag bestätigt</h1>
-              <p style="color:#888;margin:0 0 24px;">Hallo ${meta.customer_name}, dein Anhänger ist reserviert.</p>
-
-              <!-- "So findest du den Anhaenger" — Foto inline (cid:) + Route-Button -->
-              <div style="background:#0a1a0a;border:1.5px solid #22c55e;border-radius:12px;padding:18px 20px;margin:0 0 22px;">
-                <p style="color:#4ade80;font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin:0 0 12px;">🔍 So findest du deinen Anhänger</p>
-                ${photoAttachment ? `<img src="cid:${photoCid}" alt="So sieht dein Anhänger aus" style="width:100%;max-width:400px;border-radius:8px;display:block;margin:0 auto 14px;" />` : ''}
-                <table style="width:100%;font-size:.9rem;border-collapse:collapse;margin-bottom:14px;">
-                  <tr><td style="color:#888;padding:5px 0;">Kennzeichen</td><td style="text-align:right;padding:5px 0;"><strong style="color:#fff;font-family:monospace;letter-spacing:.05em;">${trailerNow?.license_plate || '–'}</strong></td></tr>
-                  <tr><td style="color:#888;padding:5px 0;">Farbe</td><td style="text-align:right;padding:5px 0;color:#ddd;">Grau (Branding folgt)</td></tr>
-                </table>
-                ${routeUrl ? `<a href="${routeUrl}" style="display:block;background:#22c55e;color:#000;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:700;font-size:.9rem;text-align:center;">🧭 Route in Google Maps öffnen</a>` : ''}
-              </div>
-
-              <div style="background:#111;border-radius:10px;padding:16px 20px;margin-bottom:20px;">
-                <p style="color:#E85D00;font-size:0.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin:0 0 4px;">Buchungsnummer</p>
-                <p style="font-weight:800;font-size:1.1rem;margin:0;">#${booking.id.slice(0, 8).toUpperCase()}</p>
-              </div>
-              <table style="width:100%;border-collapse:collapse;margin-bottom:24px;">
-                <tr><td style="color:#888;padding:9px 0;border-bottom:1px solid #2a2a2a;font-size:.88rem;">Anhänger</td><td style="text-align:right;padding:9px 0;border-bottom:1px solid #2a2a2a;font-size:.88rem;">${booking.trailers?.name || 'PKW-Anhänger'}</td></tr>
-                <tr><td style="color:#888;padding:9px 0;border-bottom:1px solid #2a2a2a;font-size:.88rem;">Mietdauer</td><td style="text-align:right;padding:9px 0;border-bottom:1px solid #2a2a2a;font-size:.88rem;">${meta.pricing_type || '–'}</td></tr>
-                <tr><td style="color:#888;padding:9px 0;border-bottom:1px solid #2a2a2a;font-size:.88rem;">Schutzpaket</td><td style="text-align:right;padding:9px 0;border-bottom:1px solid #2a2a2a;font-size:.88rem;">${insType === 'none' ? 'Kein Schutz' : insType === 'basis' ? 'Basis Schutz (500 € SB)' : 'Premium Schutz (50 € SB)'}</td></tr>
-                <tr><td style="color:#888;padding:9px 0;border-bottom:1px solid #2a2a2a;font-size:.88rem;">Von</td><td style="text-align:right;padding:9px 0;border-bottom:1px solid #2a2a2a;font-size:.88rem;">${fmt(meta.start_time)}</td></tr>
-                <tr><td style="color:#888;padding:9px 0;border-bottom:1px solid #2a2a2a;font-size:.88rem;">Bis</td><td style="text-align:right;padding:9px 0;border-bottom:1px solid #2a2a2a;font-size:.88rem;">${fmt(meta.end_time)}</td></tr>
-                <tr><td style="color:#888;padding:9px 0;font-size:.88rem;">Bezahlt</td><td style="text-align:right;padding:9px 0;color:#E85D00;font-weight:700;font-size:1rem;">${amount.toFixed(2)} €</td></tr>
+        html: T.layout({
+          heading: 'Mietvertrag bestätigt ✓',
+          preheader: `Dein Anhänger ist reserviert — Code, Route & Vertrag im Detail.`,
+          replyNote: 'Beide Links (Vorab-Check &amp; Rückgabe) bitte aufbewahren. Fragen? Antworte auf diese Mail.',
+          bodyHtml:
+            T.p(`Hallo ${T.esc(meta.customer_name)}, dein Anhänger ist reserviert.`) +
+            `<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 20px;"><tr><td style="background:#E8F8EE;border:1px solid #BFE8CD;border-radius:12px;padding:16px 18px;">
+              <div style="font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#3f7553;margin-bottom:10px;font-family:system-ui,sans-serif;">🔍 So findest du deinen Anhänger</div>
+              ${photoAttachment ? `<img src="cid:${photoCid}" alt="So sieht dein Anhänger aus" width="100%" style="display:block;width:100%;max-width:400px;border-radius:8px;margin:0 auto 12px;" />` : ''}
+              <table width="100%" style="font-size:14px;border-collapse:collapse;font-family:system-ui,sans-serif;">
+                <tr><td style="color:#5C5953;padding:4px 0;">Kennzeichen</td><td style="text-align:right;padding:4px 0;"><strong style="color:#111213;font-family:Menlo,Consolas,monospace;letter-spacing:.5px;">${T.esc(trailerNow?.license_plate || '–')}</strong></td></tr>
+                <tr><td style="color:#5C5953;padding:4px 0;">Farbe</td><td style="text-align:right;padding:4px 0;color:#4A4742;">Grau (Branding folgt)</td></tr>
               </table>
-              <div style="background:#0a1f0a;border:1.5px solid #22c55e;border-radius:12px;padding:20px;margin-bottom:20px;">
-                <p style="color:#4ade80;font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin:0 0 6px;">Schritt 1 – Vor Abholung</p>
-                <p style="margin:0 0 12px;font-size:.9rem;">Mache ein <strong>Foto des Anhängers</strong> und bestätige den Zustand – erst dann wird dir der Zugangscode für das Schloss angezeigt.</p>
-                <a href="${precheckUrl}" style="display:inline-block;background:#22c55e;color:#000;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:700;font-size:.9rem;">📷 Vorab-Check starten</a>
-              </div>
-              <div style="background:#1a1a1a;border:1px solid #383838;border-radius:12px;padding:16px 20px;margin-bottom:20px;text-align:center;">
-                <p style="color:#888;font-size:.78rem;margin:0 0 4px;">Schritt 2 – Nach der Nutzung</p>
-                <a href="${returnUrl}" style="color:#E85D00;font-size:.85rem;font-weight:600;text-decoration:none;">Rückgabe bestätigen</a>
-              </div>
-              <!-- GROSSER Kundenbereich-CTA — alles jederzeit steuerbar -->
-              <div style="background:linear-gradient(135deg,#1a1208 0%,#2a1a0a 100%);border:1.5px solid #E85D00;border-radius:14px;padding:26px 22px;text-align:center;margin-bottom:18px;">
-                <p style="color:#E85D00;font-size:.7rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin:0 0 10px;">🎛 Dein Kundenbereich</p>
-                <h2 style="color:#fff;font-size:1.15rem;margin:0 0 10px;font-weight:700;">Alles jederzeit unter Kontrolle</h2>
-                <p style="color:#ccc;font-size:.88rem;line-height:1.6;margin:0 0 18px;">
-                  Hier kannst du <strong style="color:#fff;">jederzeit</strong>:<br>
-                  ✓ Buchung verlängern oder stornieren<br>
-                  ✓ Vorab-Check &amp; Rückgabe öffnen<br>
-                  ✓ Mietvertrag &amp; Rechnung herunterladen<br>
-                  ✓ Anhänger-Standort live in Google Maps sehen<br>
-                  ✓ Zukünftige Buchungen verwalten
-                </p>
-                <a href="${siteUrl}/account" style="display:inline-block;background:#E85D00;color:#fff;text-decoration:none;padding:14px 28px;border-radius:10px;font-weight:800;font-size:.95rem;letter-spacing:.02em;box-shadow:0 4px 14px rgba(232,93,0,.35);">Zum Kundenbereich</a>
-                <p style="color:#888;font-size:.72rem;margin:14px 0 0;">Login mit derselben E-Mail wie bei der Buchung.</p>
-              </div>
-              <p style="color:#555;font-size:.75rem;text-align:center;margin:0;">Beide Links bitte aufbewahren.</p>
-
-              <div style="background:#0a0a0a;border:1px solid #383838;border-radius:10px;padding:14px 18px;margin-top:18px;">
-                <p style="color:#E85D00;font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin:0 0 6px;">📎 Anhänge zu dieser Buchung</p>
-                <p style="font-size:.85rem;color:#ccc;margin:0;line-height:1.55;">
-                  Im Anhang findest du <strong style="color:#fff;">Mietvertrag</strong> und <strong style="color:#fff;">Rechnung</strong> als PDF — beide rechtssicher und druckbar.
-                </p>
-              </div>
-
-              <p style="color:#666;font-size:.72rem;margin:14px 0 0;line-height:1.55;text-align:center;">
-                Mit Bezahlung wurde der Mietvertrag elektronisch geschlossen. Du hast die <a href="${siteUrl}/agb.html" style="color:#E85D00;text-decoration:none;">AGB (Stand ${meta.agb_version || '2026-06-05'})</a> und die <a href="${siteUrl}/datenschutz.html" style="color:#E85D00;text-decoration:none;">Datenschutzerklärung</a> akzeptiert.<br>
-                Es besteht kein Widerrufsrecht gem. § 312g Abs. 2 Nr. 9 BGB.
-              </p>
-            </div>
-
-            <div style="margin-top:24px;padding:14px 18px;background:#0a0a0a;border-radius:8px;border:1px solid #1f1f1f;color:#888;font-size:.72rem;font-family:Arial,sans-serif;line-height:1.55;text-align:center;">
-              <strong style="color:#bbb;">SimpleTrailer GbR</strong> · Lion Grone &amp; Samuel Obodoefuna · Waltjenstr. 96, 28237 Bremen<br>
-              Steuernummer: 60/176/10854 (Finanzamt Bremen) · USt-IdNr.: DE462214434<br>
-              info@simpletrailer.de · simpletrailer.de
-            </div>
-          </div>
-        </body></html>`
+              ${routeUrl ? `<div style="margin-top:12px;"><a href="${routeUrl}" style="display:block;background:#16A34A;color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:700;font-size:14px;text-align:center;font-family:system-ui,sans-serif;">🧭 Route in Google Maps öffnen</a></div>` : ''}
+            </td></tr></table>` +
+            T.rows([
+              ['Buchungsnummer', `#${booking.id.slice(0, 8).toUpperCase()}`],
+              ['Anhänger', T.esc(booking.trailers?.name || 'PKW-Anhänger')],
+              ['Mietdauer', T.esc(meta.pricing_type || '–')],
+              ['Schutzpaket', insType === 'none' ? 'Kein Schutz' : insType === 'basis' ? 'Basis Schutz (500 € SB)' : 'Premium Schutz (50 € SB)'],
+              ['Von', fmt(meta.start_time)],
+              ['Bis', fmt(meta.end_time)],
+              ['Bezahlt', `<span style="color:#E85D00;">${amount.toFixed(2)} €</span>`]
+            ]) +
+            T.callout(`<strong>Schritt 1 – Vor Abholung:</strong> Mach ein <strong>Foto des Anhängers</strong> und bestätige den Zustand – erst dann wird dir der Zugangscode für das Schloss angezeigt.`, 'green') +
+            T.cta(T.btn('📷 Vorab-Check starten', precheckUrl)) +
+            T.callout(`<strong>Schritt 2 – Nach der Nutzung:</strong> <a href="${returnUrl}" style="color:#E85D00;">Rückgabe bestätigen</a>`, 'grey') +
+            T.callout(`<strong style="color:#7A3D00;">🎛 Dein Kundenbereich — alles jederzeit unter Kontrolle</strong><br><br>Hier kannst du jederzeit:<br>✓ Buchung verlängern oder stornieren<br>✓ Vorab-Check &amp; Rückgabe öffnen<br>✓ Mietvertrag &amp; Rechnung herunterladen<br>✓ Anhänger-Standort live in Google Maps sehen<br>✓ Zukünftige Buchungen verwalten`, 'orange') +
+            T.cta(T.btn('Zum Kundenbereich', `${siteUrl}/account`)) +
+            T.p('<span style="font-size:13px;color:#8A857D;display:block;text-align:center;">Login mit derselben E-Mail wie bei der Buchung.</span>') +
+            T.callout('📎 Im Anhang findest du <strong>Mietvertrag</strong> und <strong>Rechnung</strong> als PDF — beide rechtssicher und druckbar.', 'grey') +
+            T.p(`<span style="font-size:12px;color:#8A857D;line-height:1.55;">Mit Bezahlung wurde der Mietvertrag elektronisch geschlossen. Du hast die <a href="${siteUrl}/agb.html" style="color:#E85D00;">AGB (Stand ${meta.agb_version || '2026-06-05'})</a> und die <a href="${siteUrl}/datenschutz.html" style="color:#E85D00;">Datenschutzerklärung</a> akzeptiert. Es besteht kein Widerrufsrecht gem. § 312g Abs. 2 Nr. 9 BGB.</span>`) +
+            T.callout(`<span style="font-size:12px;color:#5C5953;line-height:1.55;"><strong style="color:#34322E;">SimpleTrailer GbR</strong> · Lion Grone &amp; Samuel Obodoefuna · Waltjenstr. 96, 28237 Bremen<br>Steuernummer: 60/176/10854 (Finanzamt Bremen) · USt-IdNr.: DE462214434<br>info@simpletrailer.de · simpletrailer.de</span>`, 'grey')
+        })
       }); } catch(emailErr) { console.error('E-Mail Fehler:', emailErr.message); }
 
       return res.status(200).json({
