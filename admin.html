@@ -204,6 +204,16 @@
       .panel-meta { width:100%; margin-left:0; }
       /* Inputs ≥16px → iPhone zoomt beim Tippen nicht rein */
       input[type="text"], input[type="email"], input[type="number"], input[type="password"], input[type="search"], .field input, .search-wrap input { font-size:16px; }
+
+      /* App-Feeling: Seite seitlich SPERREN (kein Wegwischen nach rechts).
+         overflow-x:clip statt hidden → sticky Nav + Tab-Leiste bleiben stehen. */
+      html, body { overflow-x:clip; max-width:100%; }
+      .container { max-width:100%; }
+      /* Header entschlacken: lange E-Mail raus, damit nichts über den Rand ragt */
+      nav { padding:0 14px; }
+      .nav-badge { display:none; }
+      .nav-right { gap:8px; }
+      .logo { font-size:1rem; }
     }
   </style>
 </head>
