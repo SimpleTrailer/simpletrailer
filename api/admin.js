@@ -97,6 +97,17 @@ module.exports = async (req, res) => {
         }
       } catch (e) {}
 
+      // Offene Forderungen: Verspätungsgebühr fällig, aber Auto-Abbuchung fehlgeschlagen (manuell einziehen!)
+      try {
+        const { data: feeBookings } = await supabase.from('bookings')
+          .select('id, late_fee_amount, late_fee_payment_intent_id').gt('late_fee_amount', 0);
+        const claims = (feeBookings || []).filter(b => !b.late_fee_payment_intent_id || String(b.late_fee_payment_intent_id).startsWith('FAILED'));
+        if (claims.length > 0) {
+          const sum = claims.reduce((s, c) => s + (c.late_fee_amount || 0), 0);
+          items.push({ severity: 'red', icon: '💸', title: `${claims.length} offene Forderung(en): ${sum.toFixed(2)} € nicht eingezogen`, detail: 'Verspätung/Schaden — Auto-Abbuchung fehlgeschlagen. Manuell per Stripe-Payment-Link einziehen.' });
+        }
+      } catch (e) {}
+
       try {
         const today = new Date().toISOString().slice(0, 10);
         const { data: posts } = await supabase.from('social_posts_queue')

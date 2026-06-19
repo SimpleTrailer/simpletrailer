@@ -52,6 +52,17 @@ module.exports = async (req, res) => {
         lateFeeCharged = true;
       } catch (stripeErr) {
         console.error('Verspätungsaufpreis fehlgeschlagen:', stripeErr.message);
+        // Markieren als offene Forderung (queryable im Admin) + SOFORT Lion alarmieren.
+        lateFeePaymentIntentId = 'FAILED:offsession';
+        try {
+          await resend.emails.send({
+            from: 'SimpleTrailer <buchung@simpletrailer.de>',
+            reply_to: 'info@simpletrailer.de',
+            to: 'info@simpletrailer.de',
+            subject: `⚠ OFFENE FORDERUNG: ${lateFeeAmount.toFixed(2)} € Verspätung NICHT eingezogen — #${booking_id.slice(0,8).toUpperCase()}`,
+            text: `Die automatische Abbuchung der Verspätungsgebühr ist FEHLGESCHLAGEN — bitte manuell einziehen.\n\nKunde:   ${booking.customer_name} (${booking.customer_email})\nBuchung: #${booking_id.slice(0,8).toUpperCase()}\nBetrag:  ${lateFeeAmount.toFixed(2)} € (${lateHours}h Verspätung)\nGrund:   ${stripeErr.code || stripeErr.decline_code || stripeErr.message}\n\nEinziehen: Stripe → Payment Links → ${lateFeeAmount.toFixed(2)} € → an ${booking.customer_email} senden.`
+          });
+        } catch (e) { console.error('Alarm-Mail (late_fee) fehlgeschlagen:', e.message); }
       }
     }
 
@@ -221,6 +232,16 @@ module.exports = async (req, res) => {
         returnExtraFeePiId = feePi.id;
       } catch (stripeErr) {
         console.error('Rückgabe-Aufpreis Stripe-Charge fehlgeschlagen:', stripeErr.message);
+        // SOFORT Lion alarmieren — Rückgabe-Aufpreis manuell einziehen.
+        try {
+          await resend.emails.send({
+            from: 'SimpleTrailer <buchung@simpletrailer.de>',
+            reply_to: 'info@simpletrailer.de',
+            to: 'info@simpletrailer.de',
+            subject: `⚠ OFFENE FORDERUNG: ${returnExtraFee.toFixed(2)} € Rückgabe-Aufpreis NICHT eingezogen — #${booking_id.slice(0,8).toUpperCase()}`,
+            text: `Die automatische Abbuchung des Rückgabe-Aufpreises ist FEHLGESCHLAGEN — bitte manuell einziehen.\n\nKunde:   ${booking.customer_name} (${booking.customer_email})\nBuchung: #${booking_id.slice(0,8).toUpperCase()}\nBetrag:  ${returnExtraFee.toFixed(2)} € (${returnStatus})\nGrund:   ${stripeErr.code || stripeErr.decline_code || stripeErr.message}\n\nEinziehen: Stripe → Payment Links → ${returnExtraFee.toFixed(2)} € → an ${booking.customer_email} senden.`
+          });
+        } catch (e) { console.error('Alarm-Mail (extra_fee) fehlgeschlagen:', e.message); }
       }
     }
 

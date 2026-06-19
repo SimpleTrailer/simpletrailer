@@ -182,18 +182,33 @@ module.exports = async (req, res) => {
     const idemBasis = [effectiveUserId, trailer_id, start_time, end_time, insType, booking_mode || '', pricing_type || '', freeFloating ? 1 : 0, cancellationProtection ? 1 : 0, amountInCents, discountCode || '', customer_name || '', customer_email || '', customer_phone || '', customer_address || '', agb_version || ''].join('|');
     const idempotencyKey = 'pi-' + crypto.createHash('sha256').update(idemBasis).digest('hex').slice(0, 40);
 
-    const paymentIntent = await stripe.paymentIntents.create({
+    const piParams = {
       amount: amountInCents, currency: 'eur',
       customer: customer.id,
       automatic_payment_methods: { enabled: true },
       payment_method_options: {
-        card: { setup_future_usage: 'off_session' },
-        link: { setup_future_usage: 'off_session' }
+        card:   { setup_future_usage: 'off_session' },
+        link:   { setup_future_usage: 'off_session' },
+        paypal: { setup_future_usage: 'off_session' }
       },
       receipt_email: customer_email,
       description: `SimpleTrailer – ${trailer.name} – ${pricing_type}`,
       metadata: { trailer_id, pricing_type, start_time, end_time, customer_name, customer_email, customer_phone: customer_phone || '', customer_address: customer_address || '', insurance_type: insType, insurance_amount: String(insAmount), user_id: effectiveUserId, agb_version: agb_version || '2026-06-05', free_floating: freeFloating ? '1' : '0', free_floating_fee: String(freeFloatingFee), cancellation_protection: cancellationProtection ? '1' : '0', cancellation_protection_fee: String(cancellationProtectionFee), discount_code: discountCode || '', discount_percent: String(discountPercent), discount_amount: String(discountAmount) }
-    }, { idempotencyKey });
+    };
+    let paymentIntent;
+    try {
+      paymentIntent = await stripe.paymentIntents.create(piParams, { idempotencyKey });
+    } catch (ppErr) {
+      // Sicherheitsnetz: Falls das Stripe-Konto PayPal-Off-Session (noch) nicht unterstützt,
+      // darf das NIEMALS den ganzen Checkout kippen → ohne PayPal-SFU erneut (eigener Idempotency-Key).
+      if (/paypal|setup_future_usage|payment.?method/i.test(ppErr.message || '')) {
+        console.warn('PayPal off_session nicht unterstuetzt — Fallback ohne PayPal-SFU:', ppErr.message);
+        delete piParams.payment_method_options.paypal;
+        paymentIntent = await stripe.paymentIntents.create(piParams, { idempotencyKey: idempotencyKey + '-nopp' });
+      } else {
+        throw ppErr;
+      }
+    }
 
     // AGB-Zeitstempel/IP NACH dem Create setzen — Updates sind nicht
     // idempotenz-geprueft, so bleibt der Create-Payload fuer denselben Key stabil.
