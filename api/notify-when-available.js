@@ -8,6 +8,7 @@
 const { createClient } = require('@supabase/supabase-js');
 const { Resend } = require('resend');
 const { isRateLimited } = require('./_rate-limit');
+const T = require('./_email-template');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -55,26 +56,22 @@ module.exports = async (req, res) => {
     // Bestaetigungsmail
     try {
       const labelMap = { Autotransporter: 'Autotransporter', Kofferanhaenger: 'Kofferanhänger', 'PKW-Plane': 'PKW-Anhänger mit Plane' };
+      const label = labelMap[trailerType];
       await resend.emails.send({
         from: 'SimpleTrailer <buchung@simpletrailer.de>',
         reply_to: 'info@simpletrailer.de',
         to: email,
-        subject: `✅ Wir benachrichtigen dich, sobald der ${labelMap[trailerType]} da ist`,
-        html: `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0D0D0D;font-family:system-ui,sans-serif;color:#fff;">
-          <div style="max-width:600px;margin:0 auto;padding:32px 20px;">
-            <div style="text-align:center;margin-bottom:24px;">
-              <span style="font-size:1.4rem;font-weight:800;">Simple</span><span style="font-size:1.4rem;font-weight:800;color:#E85D00;">Trailer</span>
-            </div>
-            <div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:14px;padding:24px;">
-              <h1 style="font-size:1.2rem;margin:0 0 12px;">Du bist auf der Liste! 🎉</h1>
-              <p style="color:#bbb;font-size:.9rem;line-height:1.6;margin:0 0 16px;">
-                Sobald der <strong>${labelMap[trailerType]}</strong> in Bremen verfügbar ist, schicken wir dir sofort eine Mail mit dem direkten Buchungs-Link.
-              </p>
-              <p style="color:#888;font-size:.82rem;margin:0;">Bis dahin: ein PKW-Anhänger mit Plane ist schon jetzt buchbar — falls du auch damit fahren kannst, schau gern auf <a href="https://simpletrailer.de" style="color:#E85D00;">simpletrailer.de</a> vorbei.</p>
-            </div>
-            <p style="font-size:.72rem;color:#555;text-align:center;margin:24px 0 0;">SimpleTrailer GbR · Waltjenstr. 96, 28237 Bremen · info@simpletrailer.de</p>
-          </div>
-        </body></html>`
+        subject: `✅ Wir benachrichtigen dich, sobald der ${label} da ist`,
+        html: T.layout({
+          heading: 'Du bist auf der Liste 🎉',
+          preheader: `Wir melden uns, sobald der ${label} in Bremen verfügbar ist.`,
+          replyNote: 'Fragen? Antworte einfach auf diese Mail.',
+          bodyHtml:
+            T.p('Hallo,') +
+            T.p(`sobald der <strong>${T.esc(label)}</strong> in Bremen verfügbar ist, schicken wir dir sofort eine Mail mit dem direkten Buchungs-Link.`) +
+            T.callout('Schon jetzt buchbar: unser <strong>PKW-Anhänger mit Plane</strong> — falls du auch damit fahren kannst.', 'grey') +
+            T.cta(T.btn('Zu simpletrailer.de →', 'https://simpletrailer.de'))
+        })
       });
     } catch (e) { /* Mail-Fail ist nicht kritisch */ }
 
