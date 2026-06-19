@@ -94,8 +94,8 @@ function photo(src, captionHtml) {
  * @param {string} [o.preheader] versteckter Vorschautext (Inbox-Snippet)
  */
 function layout({ heading, bodyHtml, replyNote = '', preheader = '' }) {
-  return `<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light only"></head>
-<body style="margin:0;padding:0;background:${C.paper};">
+  return `<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light only"><meta name="supported-color-schemes" content="light only"><style>:root{color-scheme:light only;supported-color-schemes:light only;}</style></head>
+<body style="margin:0;padding:0;background:${C.paper};color-scheme:light only;">
 ${preheader ? `<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;opacity:0;">${preheader}</div>` : ''}
 <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:${C.paper};font-family:${FONT};">
 <tr><td align="center" style="padding:34px 16px 44px;">
