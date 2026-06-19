@@ -59,7 +59,7 @@ module.exports = async (req, res) => {
                 ['Buchung', `#${b.id.slice(0,8).toUpperCase()}`],
                 ['Rückgabe bis', `<span style="color:#E85D00;">${fmt(b.end_time)} Uhr</span>`]
               ]) +
-              T.callout(`<strong>Bitte gib den Anhänger pünktlich bis ${fmt(b.end_time)} Uhr zurück.</strong><br><span style="color:#B91C1C;font-weight:600;">Bei verspäteter Rückgabe berechnen wir 15 € pro angefangene Stunde.</span>`, 'orange') +
+              T.callout(`<strong>Bitte gib den Anhänger pünktlich bis ${fmt(b.end_time)} Uhr zurück.</strong><br><span style="color:#B91C1C;font-weight:600;">Bei verspäteter Rückgabe berechnen wir 10 € pro angefangene Stunde.</span>`, 'orange') +
               T.cta(T.btn('Rückgabe jetzt bestätigen →', `${process.env.SITE_URL || 'https://simpletrailer.de'}/return.html?id=${b.id}&token=${b.return_token}`))
           })
         });
@@ -68,7 +68,7 @@ module.exports = async (req, res) => {
         if (b.user_id) {
           await sendPushToUser(b.user_id, {
             title: '⏰ Anhaenger-Rueckgabe in 1 Stunde',
-            body:  `Bitte gib deinen Anhaenger bis ${fmt(b.end_time)} Uhr zurueck — sonst 15 €/Std Verspaetungsgebuehr.`,
+            body:  `Bitte gib deinen Anhaenger bis ${fmt(b.end_time)} Uhr zurueck — sonst 10 €/Std Verspaetungsgebuehr.`,
             channel: 'bookings',
             data: { type: 'return_reminder', booking_id: b.id },
             deep_link: `simpletrailer://return?id=${b.id}&token=${b.return_token}`

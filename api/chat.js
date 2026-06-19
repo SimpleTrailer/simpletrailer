@@ -120,7 +120,7 @@ PKW-Anhänger mit Plane (Humbaur Steely Cover Tieflader):
 - Premium-Schutz (+30% Aufpreis): 50 € Selbstbeteiligung
 
 # Verspätung & Sonstiges
-- 15 €/angefangene Stunde Verspätung (automatisch abgebucht)
+- 10 €/angefangene Stunde Verspätung (automatisch abgebucht)
 - 30 € Reinigungspauschale bei nicht ordentlich zurückgegeben
 - Mindestalter 18, Klasse B reicht (Anhänger ≤ 750 kg)
 - Stripe-Identity Führerschein-Verifikation einmalig (~5 Min)

@@ -197,7 +197,7 @@ async function generateMietvertrag(p) {
   doc.moveDown(0.5);
 
   const gebuehren = [
-    ['Verspätungsgebühr',         '15,00 € pro angefangener Stunde nach vereinbartem Mietende.'],
+    ['Verspätungsgebühr',         '10,00 € pro angefangener Stunde nach vereinbartem Mietende.'],
     ['Reinigungspauschale',       '30,00 € bei nicht ordnungsgemäß gereinigter Rückgabe.'],
     ['Rückführungspauschale',     '50,00 € wenn der Anhänger außerhalb der Rückgabe-Zone abgestellt wird (Bremen-Stadtgebiet bei Flex / 100 m Toleranz beim Heimat-Stellplatz). Bei Entfernungen über 30 km werden zusätzlich die tatsächlichen Kosten (Kraftstoff, Arbeitszeit, Bergung) berechnet.'],
     ['Falsch-Rückgabe / Bußgeld', 'Verwarn- und Bußgelder, Abschlepp-, Standplatz- und Verwahrkosten bei Verstößen gegen die Rückgabe-Regeln (Halteverbot, Privatgrund, Anwohnerparkzone usw.) plus Bearbeitungspauschale 15,00 €.'],
@@ -331,7 +331,7 @@ async function generateRechnung(p) {
   doc.moveDown(0.8);
   doc.fontSize(8).fillColor(GREY).text('Zusatz-Konditionen (nur fällig bei tatsächlichem Verstoß):', 50, doc.y);
   doc.moveDown(0.2);
-  doc.text('• Verspätungsgebühr bei verspäteter Rückgabe: 15,00 € pro angefangener Stunde', { width: 495 });
+  doc.text('• Verspätungsgebühr bei verspäteter Rückgabe: 10,00 € pro angefangener Stunde', { width: 495 });
   doc.text('• Reinigungspauschale bei nicht ordnungsgemäßer Rückgabe: 30,00 €', { width: 495 });
   doc.text('• Rückführungspauschale bei Rückgabe außerhalb der Zone: 50,00 €', { width: 495 });
 
