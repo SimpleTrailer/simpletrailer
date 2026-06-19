@@ -30,7 +30,8 @@ module.exports = async (req, res) => {
     const now = new Date();
     const expectedEnd = new Date(booking.end_time);
     const lateMs = now - expectedEnd;
-    const lateHours = Math.max(0, Math.ceil(lateMs / (1000 * 60 * 60)));
+    const GRACE_MS = 3 * 60 * 1000; // 3 Min Kulanz — erst danach zählt die Verspätung
+    const lateHours = lateMs <= GRACE_MS ? 0 : Math.ceil(lateMs / (1000 * 60 * 60));
     const lateFeePerHour = booking.trailers?.late_fee_per_hour || 5;
     const lateFeeAmount = lateHours * lateFeePerHour;
 
