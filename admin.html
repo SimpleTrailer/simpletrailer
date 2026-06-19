@@ -175,6 +175,15 @@
       #cockpitContent > .span-half { grid-column:auto / span 1; }
     }
 
+    /* ── COCKPIT-Reihenfolge: Alarme/To-dos → Heute/Umsatz → Anhänger → Rest ── */
+    #refundPendingWrap                          { order:-3; } /* nicht-fahrtauglich-Alarm */
+    #cockpitContent > .panel--accent            { order:-2; } /* "Heute zu tun" (To-dos)  */
+    #cockpitContent > .panel:has(#cpAnomalies)  { order:-1; } /* Anomalien & Alerts       */
+    /* KPI-Cards (Heute/Woche/Monat) + Agent-Inbox bleiben auf order:0 = "Heute" */
+    #cpTrackerBox                               { order:1; }  /* Anhänger-Status live      */
+    #cockpitContent > .panel--ai                { order:2; }  /* Empfehlung der Woche      */
+    #cockpitContent > .panel--live              { order:3; }  /* Live-Besucher (untere Prio) */
+
     @media(max-width:700px) {
       .container { padding:16px 14px 60px; }
       .stats-grid { grid-template-columns:repeat(2,1fr); gap:8px; }
@@ -185,6 +194,16 @@
       .panel { padding:14px 16px; }
       .login-card { padding:28px 22px; }
       .page-title { font-size:1.2rem; }
+      /* App-Feeling: größere Touch-Flächen, kein iOS-Zoom, luftiger */
+      .tab-btn { padding:10px 16px; font-size:.9rem; }
+      td, th { padding:11px 12px; }
+      .table-wrap { -webkit-overflow-scrolling:touch; }
+      .modal { padding:22px 18px; border-radius:16px; }
+      .filter-btn { padding:8px 14px; }
+      #cockpitContent { gap:12px; }
+      .panel-meta { width:100%; margin-left:0; }
+      /* Inputs ≥16px → iPhone zoomt beim Tippen nicht rein */
+      input[type="text"], input[type="email"], input[type="number"], input[type="password"], input[type="search"], .field input, .search-wrap input { font-size:16px; }
     }
   </style>
 </head>
