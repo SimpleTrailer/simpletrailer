@@ -2730,8 +2730,9 @@
     }
 
     const rows = filtered.map((b, i) => {
+      const lateFeePaid = b.late_fee_payment_intent_id && !b.late_fee_payment_intent_id.startsWith('FAILED:');
       const lateFeeCell = b.late_fee_amount > 0
-        ? `<span class="${b.late_fee_payment_intent_id && !b.late_fee_payment_intent_id.startsWith('FAILED:') ? 'late-fee-ok' : 'late-fee'}">${fmtEur(b.late_fee_amount)}</span>`
+        ? `<span class="${lateFeePaid ? 'late-fee-ok' : 'late-fee'}">${fmtEur(b.late_fee_amount)} ${lateFeePaid ? '✓ bezahlt' : '✗ offen'}</span>`
         : `<span style="color:var(--gray)">–</span>`;
 
       return `
@@ -2974,7 +2975,10 @@
       ? `<p class="section-tag">Vorher-Foto (Vorab-Check)</p><img src="${b.precheck_photo_url}" class="photo-preview" alt="Vorher-Foto" />`
       : '';
     const photoHtml = b.return_photo_url
-      ? `<p class="section-tag">Rückgabefoto</p><img src="${b.return_photo_url}" class="photo-preview" alt="Rückgabefoto" />`
+      ? `<p class="section-tag">Rückgabefoto (Anhänger am Stellplatz)</p><img src="${b.return_photo_url}" class="photo-preview" alt="Rückgabefoto" />`
+      : '';
+    const ladeHtml = b.ladeflaeche_photo_url
+      ? `<p class="section-tag">Rückgabefoto (Ladefläche)</p><img src="${b.ladeflaeche_photo_url}" class="photo-preview" alt="Ladefläche" />`
       : '';
 
     document.getElementById('modalTitle').textContent = 'Buchungsdetails';
@@ -3006,6 +3010,7 @@
       ${row('Verspätungsaufpreis', lateStatus)}
       ${precheckPhotoHtml}
       ${photoHtml}
+      ${ladeHtml}
       ${['pending','confirmed','active'].includes(b.status) ? `
         <div style="margin-top:18px;border-top:1px solid var(--border);padding-top:16px">
           <button onclick="cancelBooking('${b.id}')" style="width:100%;background:#7f1d1d;color:#fff;border:1px solid #b91c1c;padding:12px 16px;border-radius:10px;font-weight:800;cursor:pointer;font-family:inherit;font-size:.9rem">Buchung stornieren — Refund + Slot freigeben</button>

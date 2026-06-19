@@ -178,13 +178,25 @@
 
     <!-- Foto Upload -->
     <div class="card">
-      <p class="section-tag" data-i18n="return.photo.title">Foto zur Bestätigung</p>
+      <p class="section-tag" data-i18n="return.photo.title">Foto 1 · Anhänger am Stellplatz</p>
       <p style="color:var(--gray);font-size:.85rem;margin-bottom:14px;" data-i18n="return.photo.desc">Mach ein Foto des Anhängers an seinem Stellplatz – damit bestätigen wir die ordnungsgemäße Rückgabe.</p>
       <div class="upload-area" id="uploadArea" onclick="onUploadAreaClick()">
         <div class="upload-icon">📷</div>
         <div class="upload-text"><strong id="uploadCta" data-i18n="return.photo.choose">Foto auswählen</strong> <span data-i18n="return.photo.or_drop">oder hierher ziehen</span></div>
         <input type="file" id="photoInput" accept="image/*" capture="environment" onchange="handlePhoto(event)" />
         <img id="photoPreview" class="upload-preview" alt="Vorschau" />
+      </div>
+    </div>
+
+    <!-- Foto 2: Ladefläche -->
+    <div class="card">
+      <p class="section-tag">Foto 2 · Ladefläche</p>
+      <p style="color:var(--gray);font-size:.85rem;margin-bottom:14px;">Mach ein Foto der <strong style="color:var(--white);">Ladefläche</strong> – so halten wir den Zustand bei Rückgabe fest. Schützt dich &amp; uns bei Schäden oder Verschmutzung.</p>
+      <div class="upload-area" id="uploadAreaLade" onclick="onUploadAreaLadeClick()">
+        <div class="upload-icon">📦</div>
+        <div class="upload-text"><strong id="uploadCtaLade">Foto auswählen</strong> oder hierher ziehen</div>
+        <input type="file" id="photoInputLade" accept="image/*" capture="environment" onchange="handlePhotoLade(event)" />
+        <img id="photoPreviewLade" class="upload-preview" alt="Vorschau Ladefläche" />
       </div>
     </div>
 
@@ -242,6 +254,7 @@
 
   let booking    = null;
   let photoFile  = null;
+  let ladePhotoFile = null;
   let timer      = null;
 
   // Karten- und Zone-State
@@ -428,7 +441,7 @@
 
   function updateSubmitState() {
     const btn = document.getElementById('returnBtn');
-    const hasPhoto = !!photoFile;
+    const hasPhoto = !!photoFile && !!ladePhotoFile;
     const confirmed = document.getElementById('confirmInZone').checked;
     btn.disabled = !(hasPhoto && confirmed);
   }
@@ -511,6 +524,35 @@
     document.getElementById('photoInput').click();
   }
 
+  function handlePhotoLade(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    setLadePhotoFile(file);
+  }
+  function setLadePhotoFile(file) {
+    ladePhotoFile = file;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const p = document.getElementById('photoPreviewLade');
+      p.src = ev.target.result; p.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+    updateSubmitState();
+    if (window.SimpleTrailerNative) window.SimpleTrailerNative.haptic('light');
+  }
+  async function onUploadAreaLadeClick() {
+    const N = window.SimpleTrailerNative;
+    if (N && N.isNative) { const file = await N.takePhoto({ source: 'PROMPT' }); if (file) setLadePhotoFile(file); return; }
+    document.getElementById('photoInputLade').click();
+  }
+  (function(){
+    const a = document.getElementById('uploadAreaLade');
+    if (!a) return;
+    a.addEventListener('dragover', (e) => { e.preventDefault(); a.classList.add('dragover'); });
+    a.addEventListener('dragleave', () => a.classList.remove('dragover'));
+    a.addEventListener('drop', (e) => { e.preventDefault(); a.classList.remove('dragover'); const f = e.dataTransfer.files[0]; if (f && f.type.startsWith('image/')) setLadePhotoFile(f); });
+  })();
+
   // CTA-Text in der App leicht anpassen (nach native-bridge.js geladen ist)
   document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
@@ -546,6 +588,18 @@
         'Content-Type': photoFile.type
       },
       body: photoFile
+    });
+    if (!res.ok) return null;
+    return `${SUPABASE_URL}/storage/v1/object/public/return-photos/${fileName}`;
+  }
+
+  async function uploadLadePhoto() {
+    if (!ladePhotoFile) return null;
+    const fileName = `lade-${bookingId}-${Date.now()}.${ladePhotoFile.name.split('.').pop()}`;
+    const res = await fetch(`${SUPABASE_URL}/storage/v1/object/return-photos/${fileName}`, {
+      method: 'POST',
+      headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}`, 'Content-Type': ladePhotoFile.type },
+      body: ladePhotoFile
     });
     if (!res.ok) return null;
     return `${SUPABASE_URL}/storage/v1/object/public/return-photos/${fileName}`;
@@ -593,6 +647,10 @@
         } catch (e) { /* fail-open */ }
       }
 
+      btn.innerHTML = '<div class="spinner"></div> Ladeflächen-Foto wird hochgeladen…';
+      const ladeUrl = await uploadLadePhoto();
+      if (!ladeUrl) throw new Error('Ladeflächen-Foto-Upload fehlgeschlagen — bitte erneut versuchen.');
+
       btn.innerHTML = '<div class="spinner"></div> Wird verarbeitet…';
       // Mieter-Bestaetigung + Geolocation mitschicken — Backend nutzt das fuer pending-Logik
       const mieterConfirmedInZone = !document.getElementById('confirmBox').classList.contains('warning');
@@ -603,6 +661,7 @@
           booking_id: bookingId,
           return_token: returnToken,
           photo_url: photoUrl,
+          ladeflaeche_photo_url: ladeUrl,
           mieter_confirmed_in_zone: mieterConfirmedInZone,
           mieter_geo_lat: meLat,
           mieter_geo_lng: meLng

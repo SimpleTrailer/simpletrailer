@@ -15,7 +15,7 @@ module.exports = async (req, res) => {
 
   try {
     const {
-      booking_id, return_token, photo_url,
+      booking_id, return_token, photo_url, ladeflaeche_photo_url,
       mieter_confirmed_in_zone, mieter_geo_lat, mieter_geo_lng
     } = req.body;
 
@@ -257,6 +257,7 @@ module.exports = async (req, res) => {
     };
     // Neue Felder optional anhängen — DB-Fallback wenn Migration noch nicht durchgelaufen.
     const bookingUpdateWithZone = { ...bookingUpdate,
+      ladeflaeche_photo_url: ladeflaeche_photo_url || null,
       return_lat: returnLat, return_lng: returnLng,
       return_distance_m: returnDistanceM,
       return_status: returnStatus,

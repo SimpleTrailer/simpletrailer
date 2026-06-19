@@ -1022,7 +1022,7 @@ SimpleTrailer GbR · Waltjenstr. 96, 28237 Bremen · info@simpletrailer.de`;
       status, access_code, actual_return_time,
       late_fee_amount, late_fee_payment_intent_id,
       stripe_payment_intent_id, created_at,
-      return_photo_url, precheck_photo_url, insurance_type, insurance_amount,
+      return_photo_url, ladeflaeche_photo_url, precheck_photo_url, insurance_type, insurance_amount,
       trailers(name)
     `).order('created_at', { ascending: false });
     if (error) throw error;
