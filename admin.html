@@ -1254,6 +1254,78 @@
   const statusLabel = { pending:'Ausstehend', confirmed:'Bestätigt', active:'Aktiv', returned:'Abgeschlossen' };
 
   /* ── AUTH ─────────────────────────────────────────────── */
+  // "Eingeloggt bleiben": Session wird lokal gespeichert, damit man die Web-App
+  // nicht jedes Mal neu öffnen muss. Das ist KEINE Sicherheitslücke — der echte
+  // Schutz sitzt im Backend (api/admin.js prüft JWT + Admin-Whitelist bei JEDEM
+  // Request; der mächtige Service-Key liegt nur am Server). Der gespeicherte
+  // Token ist nur der "Angemeldet bleiben"-Schlüssel wie bei Gmail.
+  const SESSION_KEY = 'st_admin_session';
+  let _refreshTimer = null;
+
+  function saveSession(s)  { try { localStorage.setItem(SESSION_KEY, JSON.stringify(s)); } catch (e) {} }
+  function loadSession()   { try { return JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); } catch (e) { return null; } }
+  function clearSession()  { try { localStorage.removeItem(SESSION_KEY); } catch (e) {} }
+
+  // Token läuft nach ~1h ab → 5 Min vorher automatisch erneuern, solange die App offen ist.
+  function scheduleTokenRefresh(expiresAtSec) {
+    if (_refreshTimer) { clearTimeout(_refreshTimer); _refreshTimer = null; }
+    if (!expiresAtSec) return;
+    const ms = (expiresAtSec - 300) * 1000 - Date.now();
+    _refreshTimer = setTimeout(refreshNow, Math.max(5000, Math.min(ms, 0x7fffffff)));
+  }
+
+  // Neuen Access-Token per (rotierendem) Refresh-Token holen.
+  async function refreshNow() {
+    const s = loadSession();
+    if (!s || !s.refresh_token) return false;
+    try {
+      const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', apikey: SUPABASE_ANON },
+        body: JSON.stringify({ refresh_token: s.refresh_token })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.access_token || data.user?.email !== 'admin@simpletrailer.de') { clearSession(); return false; }
+      authToken = data.access_token;
+      saveSession({ access_token: data.access_token, refresh_token: data.refresh_token, expires_at: data.expires_at, email: data.user.email });
+      scheduleTokenRefresh(data.expires_at);
+      return true;
+    } catch (e) {
+      // Netz-Aussetzer (kein Auth-Fehler) → Session NICHT löschen, in 30s erneut versuchen.
+      if (_refreshTimer) clearTimeout(_refreshTimer);
+      _refreshTimer = setTimeout(refreshNow, 30000);
+      return false;
+    }
+  }
+
+  // Gemeinsamer Einstieg ins Dashboard (von Login UND Session-Restore genutzt).
+  function enterApp(email) {
+    document.getElementById('adminEmail').textContent = email || '';
+    document.getElementById('loginView').style.display = 'none';
+    document.getElementById('mainView').style.display  = 'block';
+    switchTab('cockpit');
+    loadData();
+    startLivePolling();
+    setTimeout(() => fetch('/api/admin?section=ai-inbox', { headers: { Authorization: `Bearer ${authToken}` }})
+      .then(r => r.json()).then(d => updateInboxBadge(d.counts?.total || 0)).catch(()=>{}), 1500);
+  }
+
+  // Beim App-Start: gespeicherte Session wiederherstellen → kein erneutes Login.
+  async function tryRestoreSession() {
+    const s = loadSession();
+    if (!s || !s.refresh_token) return false;
+    const nowSec = Math.floor(Date.now() / 1000);
+    if (s.access_token && s.expires_at && s.expires_at - 60 > nowSec) {
+      authToken = s.access_token;
+      scheduleTokenRefresh(s.expires_at);
+      enterApp(s.email);
+      return true;
+    }
+    // Access-Token abgelaufen → mit Refresh-Token erneuern
+    if (await refreshNow()) { enterApp(loadSession()?.email); return true; }
+    return false;
+  }
+
   async function doLogin() {
     const email = document.getElementById('loginEmail').value.trim();
     const pass  = document.getElementById('loginPassword').value;
@@ -1276,16 +1348,10 @@
         throw new Error('Kein Zugriff auf diesen Bereich.');
       }
       authToken = data.access_token;
-      document.getElementById('adminEmail').textContent = email;
-      document.getElementById('loginView').style.display = 'none';
-      document.getElementById('mainView').style.display  = 'block';
-      // Cockpit als Default
-      switchTab('cockpit');
-      loadData();
-      startLivePolling();
-      // Inbox-Badge initial laden (auch wenn Tab nicht offen)
-      setTimeout(() => fetch('/api/admin?section=ai-inbox', { headers: { Authorization: `Bearer ${authToken}` }})
-        .then(r => r.json()).then(d => updateInboxBadge(d.counts?.total || 0)).catch(()=>{}), 1500);
+      // Session merken → beim nächsten Öffnen automatisch eingeloggt.
+      saveSession({ access_token: data.access_token, refresh_token: data.refresh_token, expires_at: data.expires_at, email: data.user.email });
+      scheduleTokenRefresh(data.expires_at);
+      enterApp(email);
 
     } catch (e) {
       err.textContent = e.message;
@@ -1297,6 +1363,8 @@
 
   function doLogout() {
     authToken = null; allBookings = []; allUsers = []; allNotify = []; usersLoaded = false;
+    clearSession();
+    if (_refreshTimer) { clearTimeout(_refreshTimer); _refreshTimer = null; }
     if (_liveTimer) { clearInterval(_liveTimer); _liveTimer = null; }
     document.getElementById('mainView').style.display  = 'none';
     document.getElementById('loginView').style.display = 'flex';
@@ -1416,6 +1484,36 @@
   document.addEventListener('keydown', e => {
     if (e.key === 'Enter' && document.getElementById('loginView').style.display !== 'none') doLogin();
     if (e.key === 'Escape') document.getElementById('modalBg').classList.remove('open');
+  });
+
+  // 401-Recovery: läuft ein Admin-Request mit abgelaufenem Token, einmal automatisch
+  // neu anmelden + Request wiederholen statt einen Fehler zu zeigen (deckt den seltenen
+  // Fall ab, dass der Refresh-Timer im Hintergrund eingefroren war).
+  const _origFetch = window.fetch.bind(window);
+  window.fetch = async (input, init) => {
+    let res = await _origFetch(input, init);
+    const url = typeof input === 'string' ? input : (input && input.url) || '';
+    if (res.status === 401 && authToken && /\/api\//.test(url)) {
+      if (await refreshNow()) {
+        const retryInit = { ...(init || {}) };
+        retryInit.headers = { ...((init && init.headers) || {}), Authorization: `Bearer ${authToken}` };
+        res = await _origFetch(input, retryInit);
+      } else { doLogout(); }
+    }
+    return res;
+  };
+
+  // App-Start: falls eine gültige Session gespeichert ist → direkt rein (kein erneutes Login).
+  tryRestoreSession();
+
+  // PWA: kommt die App aus dem Hintergrund zurück, kann der Refresh-Timer eingefroren gewesen sein.
+  // Dann Token sofort erneuern, BEVOR Polling/Requests mit totem Token laufen.
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible' || !authToken) return;
+    const s = loadSession();
+    if (!s || !s.refresh_token) return;
+    const nowSec = Math.floor(Date.now() / 1000);
+    if (!s.expires_at || s.expires_at - 60 <= nowSec) refreshNow();
   });
 
   /* ── TABS ─────────────────────────────────────────────── */
@@ -1562,17 +1660,17 @@
             </div>
             <span style="font-size:.72rem;color:var(--gray);">${new Date(dm.created_at).toLocaleDateString('de-DE')}</span>
           </div>
-          <div style="font-size:.82rem;color:#ddd;line-height:1.5;margin-bottom:6px;">${dm.description.replace(/</g,'&lt;')}</div>
+          <div style="font-size:.82rem;color:#ddd;line-height:1.5;margin-bottom:6px;">${escapeHtml(dm.description)}</div>
           <div style="display:flex;gap:8px;align-items:center;font-size:.76rem;flex-wrap:wrap;">
-            ${dm.photo_url ? `<a href="${dm.photo_url}" target="_blank" rel="noopener" style="color:var(--orange);text-decoration:none;">📷 Foto</a>` : ''}
-            <span style="color:var(--gray);">Quelle: ${dm.source}</span>
-            ${dm.reported_by ? `<span style="color:var(--gray);">· ${dm.reported_by}</span>` : ''}
+            ${safeUrl(dm.photo_url) ? `<a href="${safeUrl(dm.photo_url)}" target="_blank" rel="noopener" style="color:var(--orange);text-decoration:none;">📷 Foto</a>` : ''}
+            <span style="color:var(--gray);">Quelle: ${escapeHtml(dm.source)}</span>
+            ${dm.reported_by ? `<span style="color:var(--gray);">· ${escapeHtml(dm.reported_by)}</span>` : ''}
             ${dm.status === 'open' ? `
               <button onclick="resolveDamage('${dm.id}','resolved','${trailerId}')" style="margin-left:auto;background:#22c55e;color:#fff;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;font-family:inherit;font-size:.74rem;font-weight:700;">✓ Erledigt</button>
               <button onclick="resolveDamage('${dm.id}','wont_fix','${trailerId}')" style="background:#444;color:#fff;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;font-family:inherit;font-size:.74rem;font-weight:700;">akzeptiert</button>
             ` : `<button onclick="resolveDamage('${dm.id}','open','${trailerId}')" style="margin-left:auto;background:transparent;border:1px solid var(--border);color:var(--gray);padding:5px 10px;border-radius:5px;cursor:pointer;font-family:inherit;font-size:.74rem;">wieder öffnen</button>`}
           </div>
-          ${dm.resolved_note ? `<div style="margin-top:6px;font-size:.76rem;color:var(--gray);font-style:italic;">Notiz: ${dm.resolved_note.replace(/</g,'&lt;')}</div>` : ''}
+          ${dm.resolved_note ? `<div style="margin-top:6px;font-size:.76rem;color:var(--gray);font-style:italic;">Notiz: ${escapeHtml(dm.resolved_note)}</div>` : ''}
         </div>`).join('');
     } catch (e) {
       el.innerHTML = '<em style="color:#f87171;">Fehler beim Laden.</em>';
@@ -1754,6 +1852,8 @@
   }
 
   function escapeHtml(s) { return String(s || '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
+  // Nur http(s)-URLs durchlassen (blockt javascript:/data: u. Attribut-Breakout) + für Attribut escapen.
+  function safeUrl(u) { u = String(u || ''); return /^https?:\/\//i.test(u) ? escapeHtml(u) : ''; }
 
   async function inboxAction(kind, id, action) {
     try {
@@ -1917,8 +2017,8 @@
                 </div>
                 <div style="font-size:.82rem;color:#ddd;margin-bottom:4px;">${escapeHtml(b.customer_name)} · <a href="mailto:${escapeHtml(b.customer_email)}" style="color:var(--orange);">${escapeHtml(b.customer_email)}</a></div>
                 <div style="font-size:.78rem;color:var(--gray);margin-bottom:10px;">Gemeldet: ${b.not_drivable_reported_at ? new Date(b.not_drivable_reported_at).toLocaleString('de-DE') : '–'}</div>
-                <div style="background:#1a0d0d;border-left:3px solid #dc2626;padding:10px 14px;border-radius:6px;font-size:.84rem;color:#fecaca;margin-bottom:10px;white-space:pre-wrap;">${(b.not_drivable_description || '(keine Beschreibung)').replace(/</g,'&lt;')}</div>
-                ${b.not_drivable_photo_url ? `<p style="margin:0 0 12px;"><a href="${b.not_drivable_photo_url}" target="_blank" rel="noopener" style="color:var(--orange);font-size:.84rem;">📷 Foto öffnen →</a></p>` : ''}
+                <div style="background:#1a0d0d;border-left:3px solid #dc2626;padding:10px 14px;border-radius:6px;font-size:.84rem;color:#fecaca;margin-bottom:10px;white-space:pre-wrap;">${escapeHtml(b.not_drivable_description || '(keine Beschreibung)')}</div>
+                ${safeUrl(b.not_drivable_photo_url) ? `<p style="margin:0 0 12px;"><a href="${safeUrl(b.not_drivable_photo_url)}" target="_blank" rel="noopener" style="color:var(--orange);font-size:.84rem;">📷 Foto öffnen →</a></p>` : ''}
                 <div style="display:flex;gap:8px;">
                   <button onclick="processRefund('${b.id}','approve')" style="background:#22c55e;color:#000;border:none;padding:10px 16px;border-radius:8px;font-weight:800;cursor:pointer;font-family:inherit;font-size:.86rem;">✓ Refund freigeben (${(b.total_amount || 0).toFixed(2).replace('.', ',')} €)</button>
                   <button onclick="processRefund('${b.id}','reject')" style="background:transparent;color:#fca5a5;border:1px solid #7f1d1d;padding:10px 16px;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit;font-size:.86rem;">✗ Ablehnen</button>
@@ -2982,14 +3082,14 @@
           ? `<span style="color:var(--green)">✓ Abgebucht (${fmtEur(b.late_fee_amount)})</span>`
           : `<span style="color:var(--red)">✗ Fehlgeschlagen (${fmtEur(b.late_fee_amount)})</span>`)
       : '<span style="color:var(--gray)">Keine</span>';
-    const precheckPhotoHtml = b.precheck_photo_url
-      ? `<p class="section-tag">Vorher-Foto (Vorab-Check)</p><img src="${b.precheck_photo_url}" class="photo-preview" alt="Vorher-Foto" />`
+    const precheckPhotoHtml = safeUrl(b.precheck_photo_url)
+      ? `<p class="section-tag">Vorher-Foto (Vorab-Check)</p><img src="${safeUrl(b.precheck_photo_url)}" class="photo-preview" alt="Vorher-Foto" />`
       : '';
-    const photoHtml = b.return_photo_url
-      ? `<p class="section-tag">Rückgabefoto (Anhänger am Stellplatz)</p><img src="${b.return_photo_url}" class="photo-preview" alt="Rückgabefoto" />`
+    const photoHtml = safeUrl(b.return_photo_url)
+      ? `<p class="section-tag">Rückgabefoto (Anhänger am Stellplatz)</p><img src="${safeUrl(b.return_photo_url)}" class="photo-preview" alt="Rückgabefoto" />`
       : '';
-    const ladeHtml = b.ladeflaeche_photo_url
-      ? `<p class="section-tag">Rückgabefoto (Ladefläche)</p><img src="${b.ladeflaeche_photo_url}" class="photo-preview" alt="Ladefläche" />`
+    const ladeHtml = safeUrl(b.ladeflaeche_photo_url)
+      ? `<p class="section-tag">Rückgabefoto (Ladefläche)</p><img src="${safeUrl(b.ladeflaeche_photo_url)}" class="photo-preview" alt="Ladefläche" />`
       : '';
 
     document.getElementById('modalTitle').textContent = 'Buchungsdetails';
