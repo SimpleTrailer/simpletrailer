@@ -21,6 +21,7 @@ const { setCors } = require('./_cors');
 const supabase     = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 const supabaseAuth = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
 const resend = new Resend(process.env.RESEND_API_KEY);
+const T = require('./_email-template');
 
 const fmt = d => new Date(d).toLocaleString('de-DE', {
   day: '2-digit', month: '2-digit', year: 'numeric',
@@ -175,23 +176,19 @@ Neues Mietende: ${fmt(new Date(newEnd))} Uhr
 Aufpreis: ${extraAmount.toFixed(2).replace('.', ',')} € (bereits abgebucht)
 
 — SimpleTrailer GbR`,
-        html: `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0D0D0D;font-family:system-ui,sans-serif;color:#fff;">
-          <div style="max-width:560px;margin:0 auto;padding:32px 20px;">
-            <div style="text-align:center;margin-bottom:24px;">
-              <span style="font-size:1.5rem;font-weight:800;">Simple</span><span style="font-size:1.5rem;font-weight:800;color:#E85D00;">Trailer</span>
-            </div>
-            <div style="background:#1A1A1A;border-radius:14px;padding:28px;border:1px solid #383838;">
-              <h1 style="margin:0 0 6px;font-size:1.2rem;">Verlängerung bestätigt ✓</h1>
-              <p style="color:#888;margin:0 0 18px;">Buchung #${booking.id.slice(0,8).toUpperCase()}</p>
-              <table style="width:100%;border-collapse:collapse;font-size:.88rem;">
-                <tr><td style="color:#888;padding:7px 0;border-bottom:1px solid #2a2a2a;">Anhänger</td><td style="text-align:right;padding:7px 0;border-bottom:1px solid #2a2a2a;">${booking.trailers?.name || '—'}</td></tr>
-                <tr><td style="color:#888;padding:7px 0;border-bottom:1px solid #2a2a2a;">Verlängerung</td><td style="text-align:right;padding:7px 0;border-bottom:1px solid #2a2a2a;"><strong>+${hrs}h</strong></td></tr>
-                <tr><td style="color:#888;padding:7px 0;border-bottom:1px solid #2a2a2a;">Neues Mietende</td><td style="text-align:right;padding:7px 0;border-bottom:1px solid #2a2a2a;">${fmt(new Date(newEnd))} Uhr</td></tr>
-                <tr><td style="color:#888;padding:7px 0;">Aufpreis (abgebucht)</td><td style="text-align:right;padding:7px 0;color:#E85D00;font-weight:700;">${extraAmount.toFixed(2).replace('.', ',')} €</td></tr>
-              </table>
-            </div>
-          </div>
-        </body></html>`
+        html: T.layout({
+          heading: 'Verlängerung bestätigt ✓',
+          preheader: `+${hrs}h · neues Mietende ${fmt(new Date(newEnd))} Uhr`,
+          replyNote: 'Fragen? Antworte einfach auf diese Mail.',
+          bodyHtml:
+            T.p(`Buchung <strong>#${booking.id.slice(0,8).toUpperCase()}</strong> — deine Mietzeit wurde verlängert.`) +
+            T.rows([
+              ['Anhänger', T.esc(booking.trailers?.name || '—')],
+              ['Verlängerung', `+${hrs}h`],
+              ['Neues Mietende', `${fmt(new Date(newEnd))} Uhr`],
+              ['Aufpreis (abgebucht)', `<span style="color:#E85D00;">${extraAmount.toFixed(2).replace('.', ',')} €</span>`]
+            ])
+        })
       });
     } catch (mailErr) {
       console.error('Extend-Mail fehlgeschlagen:', mailErr.message);

@@ -16,6 +16,7 @@ const { Resend } = require('resend');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 const resend = new Resend(process.env.RESEND_API_KEY);
+const T = require('../_email-template');
 
 // Platzhalter — sobald GBP-Place-ID da, hier einsetzen (auch in process-return.js).
 // Bis dahin: leerer Link → "Auf Google bewerten" wird zur Startseite mit Anker.
@@ -100,34 +101,17 @@ module.exports = async (req, res) => {
           reply_to: 'info@simpletrailer.de',
           to: b.customer_email,
           subject: `Wie war deine Erfahrung, ${firstName}? – SimpleTrailer`,
-          html: `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0D0D0D;font-family:system-ui,sans-serif;color:#fff;">
-            <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
-              <div style="text-align:center;margin-bottom:24px;">
-                <span style="font-size:1.5rem;font-weight:800;">Simple</span><span style="font-size:1.5rem;font-weight:800;color:#E85D00;">Trailer</span>
-              </div>
-              <div style="background:#1A1A1A;border-radius:16px;padding:32px;border:1px solid #383838;text-align:center;">
-                <div style="font-size:1.6rem;margin-bottom:10px;">⭐⭐⭐⭐⭐</div>
-                <h1 style="margin:0 0 12px;font-size:1.3rem;">Hi ${firstName} 👋</h1>
-                <p style="color:#ccc;font-size:.95rem;margin:0 0 18px;line-height:1.6;">
-                  vor ein paar Tagen hast du den ${trailerName} bei uns gemietet. Wir hoffen alles hat geklappt!
-                </p>
-                <p style="color:#aaa;font-size:.88rem;margin:0 0 24px;line-height:1.6;">
-                  Magst du uns kurz auf Google bewerten? Eine kurze Bewertung hilft uns als kleinem Bremer Start-up enorm — und anderen, uns zu finden.
-                </p>
-                <a href="${GBP_REVIEW_URL}" target="_blank"
-                   style="display:inline-block;background:#E85D00;color:#fff;text-decoration:none;padding:14px 28px;border-radius:8px;font-weight:700;font-size:.95rem;">
-                  Jetzt auf Google bewerten →
-                </a>
-                <p style="color:#666;font-size:.78rem;margin:18px 0 0;line-height:1.5;">
-                  Dauert weniger als 30 Sekunden. Danke!<br>
-                  – Lion &amp; Samuel
-                </p>
-              </div>
-              <p style="color:#444;font-size:.72rem;text-align:center;margin-top:20px;">
-                Du bekommst diese Mail einmalig nach deiner Buchung. Antwort an info@simpletrailer.de wenn etwas nicht passte.
-              </p>
-            </div>
-          </body></html>`
+          html: T.layout({
+            heading: `Hi ${T.esc(firstName)} 👋`,
+            preheader: 'Eine kurze Google-Bewertung hilft uns enorm.',
+            replyNote: 'Du bekommst diese Mail einmalig nach deiner Buchung. Etwas hat nicht gepasst? Antworte an info@simpletrailer.de — wir kümmern uns.',
+            bodyHtml:
+              `<div style="text-align:center;font-size:26px;letter-spacing:6px;color:#E85D00;margin:2px 0 16px;">★★★★★</div>` +
+              T.p(`vor ein paar Tagen hast du den <strong>${T.esc(trailerName)}</strong> bei uns gemietet. Wir hoffen, alles hat geklappt!`) +
+              T.p('Magst du uns kurz auf Google bewerten? Eine kurze Bewertung hilft uns als kleinem Bremer Start-up enorm — und anderen, uns zu finden.') +
+              T.cta(T.btn('Jetzt auf Google bewerten →', GBP_REVIEW_URL)) +
+              T.p('<span style="font-size:13px;color:#8A857D;display:block;text-align:center;">Dauert weniger als 30 Sekunden. Danke!<br>– Lion &amp; Samuel</span>')
+          })
         });
 
         sent++;

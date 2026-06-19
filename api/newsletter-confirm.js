@@ -9,7 +9,7 @@ const { createClient } = require('@supabase/supabase-js');
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
 const successHtml = (email) => `<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Newsletter bestätigt — SimpleTrailer</title>
-<style>body{margin:0;padding:0;background:#0D0D0D;font-family:system-ui,sans-serif;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;}.box{max-width:480px;padding:40px 28px;text-align:center;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:14px;}h1{font-size:1.4rem;margin:0 0 12px;}p{color:#bbb;font-size:.9rem;line-height:1.6;}a{display:inline-block;margin-top:20px;background:#E85D00;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;}</style>
+<style>body{margin:0;padding:0;background:#F6F3EE;font-family:system-ui,sans-serif;color:#111213;min-height:100vh;display:flex;align-items:center;justify-content:center;}.box{max-width:480px;padding:40px 28px;text-align:center;background:#FFFFFF;border:1px solid #E7E2D9;border-top:3px solid #E85D00;border-radius:14px;box-shadow:0 18px 40px -22px rgba(17,18,19,.25);}h1{font-size:1.4rem;margin:0 0 12px;}p{color:#5C5953;font-size:.9rem;line-height:1.6;}a{display:inline-block;margin-top:20px;background:#E85D00;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:700;}</style>
 </head><body><div class="box">
 <div style="font-size:2.5rem;margin-bottom:14px;">✅</div>
 <h1>Anmeldung bestätigt!</h1>
@@ -18,7 +18,7 @@ const successHtml = (email) => `<!DOCTYPE html><html lang="de"><head><meta chars
 </div></body></html>`;
 
 const errorHtml = (msg) => `<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><title>Fehler</title>
-<style>body{margin:0;padding:0;background:#0D0D0D;font-family:system-ui,sans-serif;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;}.box{max-width:480px;padding:40px 28px;text-align:center;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:14px;}h1{font-size:1.4rem;margin:0 0 12px;color:#ef4444;}p{color:#bbb;font-size:.9rem;line-height:1.6;}a{display:inline-block;margin-top:20px;background:#E85D00;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;}</style>
+<style>body{margin:0;padding:0;background:#F6F3EE;font-family:system-ui,sans-serif;color:#111213;min-height:100vh;display:flex;align-items:center;justify-content:center;}.box{max-width:480px;padding:40px 28px;text-align:center;background:#FFFFFF;border:1px solid #E7E2D9;border-top:3px solid #E85D00;border-radius:14px;box-shadow:0 18px 40px -22px rgba(17,18,19,.25);}h1{font-size:1.4rem;margin:0 0 12px;color:#DC2626;}p{color:#5C5953;font-size:.9rem;line-height:1.6;}a{display:inline-block;margin-top:20px;background:#E85D00;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:700;}</style>
 </head><body><div class="box">
 <div style="font-size:2.5rem;margin-bottom:14px;">⚠️</div>
 <h1>Bestätigung fehlgeschlagen</h1>
