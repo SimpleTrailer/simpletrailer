@@ -14,6 +14,13 @@
   <link rel="apple-touch-icon" href="/logo-icon.png?v=10" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+  <!-- Perf: frühe Verbindung zu den Karten-CDNs (Leaflet + CARTO-Kacheln) → schnelleres Laden der Karte auf dem Handy -->
+  <link rel="preconnect" href="https://unpkg.com" crossorigin />
+  <link rel="preconnect" href="https://a.basemaps.cartocdn.com" crossorigin />
+  <link rel="preconnect" href="https://b.basemaps.cartocdn.com" crossorigin />
+  <link rel="dns-prefetch" href="https://c.basemaps.cartocdn.com" />
+  <link rel="dns-prefetch" href="https://d.basemaps.cartocdn.com" />
+
   <!-- SEO -->
   <title>Anhänger mieten Bremen ab 9 € – 24/7 online | SimpleTrailer</title>
   <meta name="description" content="Anhänger mieten in Bremen ab 9 €/3 h – 24/7 online buchen, kontaktlos per Code abholen, ohne Kaution. PKW-Anhänger für Umzug, Möbel &amp; Sperrmüll. Tag 29 €, Wochenende 59 €." />
