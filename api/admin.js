@@ -667,15 +667,23 @@ Bei Fragen sind wir unter info@simpletrailer.de gerne für dich da.
     // ─── SEND-CUSTOMER-MAIL: Einzel-Mail an einen Kunden (z. B. Kulanz) — hell via Resend ───
     if (section === 'send-customer-mail' && req.method === 'POST') {
       const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
-      const { booking_id } = body;
-      if (!booking_id) return res.status(400).json({ error: 'booking_id erforderlich' });
-      const { data: b } = await supabase.from('bookings').select('id, customer_email, customer_name').eq('id', booking_id).maybeSingle();
-      if (!b || !b.customer_email) return res.status(404).json({ error: 'Buchung/E-Mail nicht gefunden' });
+      const { booking_id, to } = body;
+      let recipient, num, vorname;
+      if (to) {                                    // Test-/Direkt-Versand an feste Adresse
+        recipient = String(to).trim();
+        if (!recipient.includes('@')) return res.status(400).json({ error: 'Ungültige Adresse' });
+        num = 'TEST'; vorname = '';
+      } else {
+        if (!booking_id) return res.status(400).json({ error: 'booking_id oder to erforderlich' });
+        const { data: b } = await supabase.from('bookings').select('id, customer_email, customer_name').eq('id', booking_id).maybeSingle();
+        if (!b || !b.customer_email) return res.status(404).json({ error: 'Buchung/E-Mail nicht gefunden' });
+        recipient = b.customer_email;
+        num = b.id.slice(0, 8).toUpperCase();
+        vorname = String(b.customer_name || '').split(' ')[0];
+      }
 
       const { Resend } = require('resend');
       const resend = new Resend(process.env.RESEND_API_KEY);
-      const num = b.id.slice(0, 8).toUpperCase();
-      const vorname = String(b.customer_name || '').split(' ')[0];
 
       const html = T.layout({
         heading: 'Alles gut 🙂',
@@ -693,7 +701,7 @@ Bei Fragen sind wir unter info@simpletrailer.de gerne für dich da.
         await resend.emails.send({
           from: 'SimpleTrailer <info@simpletrailer.de>',
           reply_to: 'info@simpletrailer.de',
-          to: b.customer_email,
+          to: recipient,
           subject: `Deine Buchung #${num} – alles gut 🙂`,
           html
         });
@@ -701,7 +709,7 @@ Bei Fragen sind wir unter info@simpletrailer.de gerne für dich da.
         console.error('send-customer-mail fail:', e.message);
         return res.status(500).json({ error: 'Mail-Versand fehlgeschlagen: ' + e.message });
       }
-      return res.status(200).json({ ok: true, to: b.customer_email });
+      return res.status(200).json({ ok: true, to: recipient });
     }
 
     // ─── SEND-WINBACK: Rückhol-Mail an offene Leads — jeder bekommt EINE eigene Mail (kein CC) ───

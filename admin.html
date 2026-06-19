@@ -258,6 +258,7 @@
         <div style="display:flex; gap:4px;">
           <button onclick="testHeartbeat()" style="background:transparent; border:1px solid var(--border); color:var(--gray); padding:4px 8px; border-radius:6px; font-size:.7rem; cursor:pointer; font-family:var(--font);" title="Sendet einen Heartbeat und zeigt die Antwort">⚡ Test</button>
           <button onclick="resetServiceWorker()" style="background:transparent; border:1px solid var(--border); color:var(--gray); padding:4px 8px; border-radius:6px; font-size:.7rem; cursor:pointer; font-family:var(--font);" title="Loescht Service Worker + Cache komplett — danach neu laden">🔄 SW Reset</button>
+          <button onclick="testKulanzMail()" style="background:transparent; border:1px solid var(--border); color:var(--gray); padding:4px 8px; border-radius:6px; font-size:.7rem; cursor:pointer; font-family:var(--font);" title="Kulanz-Mail-Vorlage an eine Test-Adresse senden">✉️ Test-Mail</button>
         </div>
       </div>
     </div>
@@ -3040,6 +3041,21 @@
       alert(j.already_cancelled ? 'Diese Buchung war bereits storniert.' : `✓ Buchung storniert.${j.amount ? ' ' + fmtEur(j.amount) + ' erstattet.' : ''} Mieter wurde informiert.`);
       document.getElementById('modalBg').classList.remove('open');
       loadData();
+    } catch (e) { alert('Fehler: ' + e.message); }
+  }
+
+  async function testKulanzMail() {
+    const to = prompt('Test-Kulanz-Mail an welche Adresse?', 'lion.grone@hotmail.com');
+    if (!to) return;
+    try {
+      const r = await fetch('/api/admin?section=send-customer-mail', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
+        body: JSON.stringify({ to })
+      });
+      const j = await r.json();
+      if (!r.ok) { alert('Fehler: ' + (j.error || r.status)); return; }
+      alert(`✓ Test-Kulanz-Mail gesendet an ${j.to}`);
     } catch (e) { alert('Fehler: ' + e.message); }
   }
 
