@@ -9,6 +9,7 @@ const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || 'admin@simpletrailer.de,info@s
   .split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
 
 const { setCors } = require('./_cors');
+const T = require('./_email-template');
 
 module.exports = async (req, res) => {
   setCors(req, res);
@@ -634,20 +635,18 @@ Erstattung: ${refundedAmount.toFixed(2).replace('.', ',')} € — automatisch �
 Bei Fragen sind wir unter info@simpletrailer.de gerne für dich da.
 
 — SimpleTrailer GbR`,
-          html: `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0D0D0D;font-family:system-ui,sans-serif;color:#fff;">
-            <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
-              <div style="text-align:center;margin-bottom:24px;"><span style="font-size:1.5rem;font-weight:800;">Simple</span><span style="font-size:1.5rem;font-weight:800;color:#E85D00;">Trailer</span></div>
-              <div style="background:#1A1A1A;border-radius:16px;padding:30px;border:1px solid #383838;">
-                <h1 style="margin:0 0 6px;font-size:1.3rem;">Buchung storniert</h1>
-                <p style="color:#888;margin:0 0 22px;">Buchung #${num} · ${booking.trailers?.name || 'Anhänger'}</p>
-                <table style="width:100%;border-collapse:collapse;margin-bottom:16px;">
-                  <tr><td style="color:#888;padding:7px 0;border-bottom:1px solid #2a2a2a;font-size:.86rem;">Gezahlt</td><td style="text-align:right;padding:7px 0;border-bottom:1px solid #2a2a2a;font-size:.86rem;">${totalPaid.toFixed(2).replace('.', ',')} €</td></tr>
-                  <tr><td style="color:#888;padding:7px 0;font-size:.86rem;">Erstattung</td><td style="text-align:right;padding:7px 0;color:${refundedAmount > 0 ? '#22c55e' : '#888'};font-weight:700;font-size:1rem;">${refundedAmount > 0 ? refundedAmount.toFixed(2).replace('.', ',') + ' €' : 'Keine'}</td></tr>
-                </table>
-                ${refundedAmount > 0 ? `<div style="background:#0a1f0a;border:1px solid #22c55e;border-radius:10px;padding:14px 18px;color:#86efac;font-size:.84rem;">Die Erstattung wird automatisch auf deine Zahlungsmethode zurückgebucht (3-5 Werktage).</div>` : ''}
-                <p style="color:#666;font-size:.78rem;margin:18px 0 0;text-align:center;">Fragen? Antworte auf diese Mail oder schreib an info@simpletrailer.de.</p>
-              </div>
-            </div></body></html>`
+          html: T.layout({
+            heading: 'Buchung storniert',
+            preheader: `Buchung #${num} wurde storniert`,
+            replyNote: 'Fragen? Antworte auf diese Mail oder schreib an info@simpletrailer.de.',
+            bodyHtml:
+              T.p(`Buchung <strong>#${num}</strong> · ${T.esc(booking.trailers?.name || 'Anhänger')}`) +
+              T.rows([
+                ['Gezahlt', `${totalPaid.toFixed(2).replace('.', ',')} €`],
+                ['Erstattung', refundedAmount > 0 ? `<span style="color:#15803D;font-weight:700;">${refundedAmount.toFixed(2).replace('.', ',')} €</span>` : 'Keine']
+              ]) +
+              (refundedAmount > 0 ? T.callout('Die Erstattung wird automatisch auf deine Zahlungsmethode zurückgebucht (3–5 Werktage).', 'green') : '')
+          })
         });
       } catch (e) { console.error('Storno-Mail fail:', e.message); }
 
@@ -662,25 +661,17 @@ Bei Fragen sind wir unter info@simpletrailer.de gerne für dich da.
       const resend = new Resend(process.env.RESEND_API_KEY);
       const esc = s => String(s || '').replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
 
-      const winbackHtml = (vorname) => `<!DOCTYPE html><html lang="de"><body style="margin:0;padding:0;background:#0D0D0D;font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#fff;">
-        <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
-          <div style="text-align:center;margin-bottom:28px;"><span style="font-size:1.6rem;font-weight:800;">Simple</span><span style="font-size:1.6rem;font-weight:800;color:#E85D00;">Trailer</span></div>
-          <div style="background:#1A1A1A;border:1px solid #2a2a2a;border-radius:18px;padding:34px 30px;">
-            <h1 style="margin:0 0 14px;font-size:1.45rem;line-height:1.25;">Das tut uns aufrichtig leid.</h1>
-            <p style="color:#bbb;font-size:.95rem;line-height:1.65;margin:0 0 16px;">Hallo${vorname ? ' ' + esc(vorname) : ''},<br><br>du wolltest bei uns einen Anhänger buchen – und bist bei der Führerschein-Prüfung hängengeblieben. Schuld war ein <strong style="color:#fff;">technisches Problem auf unserer Seite</strong>, nicht an dir.</p>
-            <p style="color:#bbb;font-size:.95rem;line-height:1.65;margin:0 0 24px;">Die gute Nachricht: <strong style="color:#fff;">Es ist behoben.</strong> Die Verifizierung läuft jetzt in unter einer Minute durch.</p>
-            <div style="background:linear-gradient(135deg,#E85D00 0%,#c24d00 100%);border-radius:14px;padding:24px;text-align:center;margin-bottom:24px;">
-              <div style="font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#ffe6d4;margin-bottom:6px;">Unser Dankeschön fürs Dranbleiben</div>
-              <div style="font-size:2.4rem;font-weight:900;color:#fff;line-height:1;margin-bottom:8px;">20 % Rabatt</div>
-              <div style="display:inline-block;background:rgba(0,0,0,.25);border:1px dashed rgba(255,255,255,.5);border-radius:8px;padding:8px 18px;font-size:1.1rem;font-weight:800;letter-spacing:.15em;color:#fff;">WILLKOMMEN20</div>
-              <div style="font-size:.78rem;color:#ffe6d4;margin-top:12px;">Gültig bis <strong>25.06.2026</strong></div>
-            </div>
-            <p style="color:#bbb;font-size:.9rem;line-height:1.6;margin:0 0 24px;"><strong style="color:#fff;">So einlösen:</strong> Buch wie gewohnt auf simpletrailer.de und gib im Zahlungs-Schritt den Code <strong style="color:#fff;">WILLKOMMEN20</strong> ein – die 20 % werden direkt abgezogen.</p>
-            <div style="text-align:center;"><a href="https://simpletrailer.de/booking" style="display:inline-block;background:#fff;color:#0D0D0D;text-decoration:none;font-weight:800;font-size:1rem;padding:15px 34px;border-radius:12px;">Jetzt Anhänger buchen →</a></div>
-          </div>
-          <p style="color:#777;font-size:.85rem;line-height:1.6;text-align:center;margin:24px 0 0;">Fragen? Antworte einfach auf diese Mail.<br>Liebe Grüße,<br><strong style="color:#aaa;">Lion & Samuel · SimpleTrailer</strong></p>
-          <p style="font-size:.7rem;color:#555;text-align:center;margin:18px 0 0;">SimpleTrailer GbR · Waltjenstr. 96, 28237 Bremen · info@simpletrailer.de</p>
-        </div></body></html>`;
+      const winbackHtml = (vorname) => T.layout({
+        heading: 'Das tut uns aufrichtig leid.',
+        preheader: 'Das technische Problem ist behoben — plus 20 % für dich.',
+        replyNote: 'Liebe Grüße, Lion &amp; Samuel · SimpleTrailer',
+        bodyHtml:
+          T.p(`Hallo${vorname ? ' ' + T.esc(vorname) : ''},<br>du wolltest bei uns einen Anhänger buchen – und bist bei der Führerschein-Prüfung hängengeblieben. Schuld war ein <strong>technisches Problem auf unserer Seite</strong>, nicht an dir.`) +
+          T.p('Die gute Nachricht: <strong>Es ist behoben.</strong> Die Verifizierung läuft jetzt in unter einer Minute durch.') +
+          T.voucher({ headline: 'Unser Dankeschön fürs Dranbleiben', big: '20 % Rabatt', code: 'WILLKOMMEN20', validity: 'Gültig bis 25.06.2026 · Code im Checkout eingeben' }) +
+          T.p('<strong>So löst du ihn ein:</strong> Buch wie gewohnt auf simpletrailer.de und gib im Zahlungs-Schritt den Code <strong>WILLKOMMEN20</strong> ein – die 20 % werden direkt abgezogen.') +
+          T.cta(T.btn('Jetzt mit 20 % buchen →', 'https://simpletrailer.de/booking'))
+      });
 
       const winbackText = (vorname) => `Hallo${vorname ? ' ' + vorname : ''},
 

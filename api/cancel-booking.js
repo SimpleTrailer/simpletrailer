@@ -18,6 +18,7 @@ const { setCors } = require('./_cors');
 const supabase     = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 const supabaseAuth = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
 const resend = new Resend(process.env.RESEND_API_KEY);
+const T = require('./_email-template');
 
 const fmt = d => new Date(d).toLocaleString('de-DE', {
   day: '2-digit', month: '2-digit', year: 'numeric',
@@ -163,29 +164,19 @@ Erstattung erfolgt automatisch über deine Zahlungsmethode (3-5 Werktage).
 
 — SimpleTrailer GbR
 info@simpletrailer.de`,
-        html: `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0D0D0D;font-family:system-ui,sans-serif;color:#fff;">
-          <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
-            <div style="text-align:center;margin-bottom:24px;">
-              <span style="font-size:1.5rem;font-weight:800;">Simple</span><span style="font-size:1.5rem;font-weight:800;color:#E85D00;">Trailer</span>
-            </div>
-            <div style="background:#1A1A1A;border-radius:16px;padding:30px;border:1px solid #383838;">
-              <h1 style="margin:0 0 6px;font-size:1.3rem;">Stornierung bestätigt</h1>
-              <p style="color:#888;margin:0 0 22px;">Buchung #${booking.id.slice(0,8).toUpperCase()} · ${booking.trailers?.name || 'Anhänger'}</p>
-              <table style="width:100%;border-collapse:collapse;margin-bottom:16px;">
-                <tr><td style="color:#888;padding:7px 0;border-bottom:1px solid #2a2a2a;font-size:.86rem;">Mietbeginn (geplant)</td><td style="text-align:right;padding:7px 0;border-bottom:1px solid #2a2a2a;font-size:.86rem;">${fmt(booking.start_time)}</td></tr>
-                <tr><td style="color:#888;padding:7px 0;border-bottom:1px solid #2a2a2a;font-size:.86rem;">Gezahlt</td><td style="text-align:right;padding:7px 0;border-bottom:1px solid #2a2a2a;font-size:.86rem;">${totalPaid.toFixed(2).replace('.',',')} €</td></tr>
-                <tr><td style="color:#888;padding:7px 0;font-size:.86rem;">Erstattung</td><td style="text-align:right;padding:7px 0;color:${refundAmount > 0 ? '#22c55e' : '#888'};font-weight:700;font-size:1rem;">${refundAmount > 0 ? refundAmount.toFixed(2).replace('.',',') + ' €' : 'Keine Erstattung'}</td></tr>
-              </table>
-              <div style="background:#0a1f0a;border:1px solid #22c55e;border-radius:10px;padding:14px 18px;color:#86efac;font-size:.84rem;">
-                ${refundReason}<br><br>
-                Die Erstattung wird automatisch auf deine Zahlungsmethode zurückgebucht (3-5 Werktage).
-              </div>
-              <p style="color:#666;font-size:.78rem;margin:18px 0 0;line-height:1.5;text-align:center;">
-                Fragen? Antworte auf diese Mail oder schreib an info@simpletrailer.de.
-              </p>
-            </div>
-          </div>
-        </body></html>`
+        html: T.layout({
+          heading: 'Stornierung bestätigt',
+          preheader: `Buchung #${booking.id.slice(0,8).toUpperCase()} storniert`,
+          replyNote: 'Fragen? Antworte auf diese Mail oder schreib an info@simpletrailer.de.',
+          bodyHtml:
+            T.p(`Buchung <strong>#${booking.id.slice(0,8).toUpperCase()}</strong> · ${T.esc(booking.trailers?.name || 'Anhänger')}`) +
+            T.rows([
+              ['Mietbeginn (geplant)', fmt(booking.start_time)],
+              ['Gezahlt', `${totalPaid.toFixed(2).replace('.',',')} €`],
+              ['Erstattung', refundAmount > 0 ? `<span style="color:#15803D;font-weight:700;">${refundAmount.toFixed(2).replace('.',',')} €</span>` : 'Keine Erstattung']
+            ]) +
+            T.callout(`${T.esc(refundReason)}<br><br>Die Erstattung wird automatisch auf deine Zahlungsmethode zurückgebucht (3–5 Werktage).`, 'green')
+        })
       });
     } catch (mailErr) {
       console.error('Storno-Mail fehlgeschlagen:', mailErr.message);
