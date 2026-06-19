@@ -664,6 +664,46 @@ Bei Fragen sind wir unter info@simpletrailer.de gerne für dich da.
       return res.status(200).json({ ok: true, refund_id: refundId, amount: refundedAmount });
     }
 
+    // ─── SEND-CUSTOMER-MAIL: Einzel-Mail an einen Kunden (z. B. Kulanz) — hell via Resend ───
+    if (section === 'send-customer-mail' && req.method === 'POST') {
+      const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+      const { booking_id } = body;
+      if (!booking_id) return res.status(400).json({ error: 'booking_id erforderlich' });
+      const { data: b } = await supabase.from('bookings').select('id, customer_email, customer_name').eq('id', booking_id).maybeSingle();
+      if (!b || !b.customer_email) return res.status(404).json({ error: 'Buchung/E-Mail nicht gefunden' });
+
+      const { Resend } = require('resend');
+      const resend = new Resend(process.env.RESEND_API_KEY);
+      const num = b.id.slice(0, 8).toUpperCase();
+      const vorname = String(b.customer_name || '').split(' ')[0];
+
+      const html = T.layout({
+        heading: 'Alles gut 🙂',
+        preheader: 'Wir drücken bei der Verspätung ein Auge zu.',
+        replyNote: 'Bis zur nächsten Fahrt! Liebe Grüße, Lion &amp; Samuel',
+        bodyHtml:
+          T.p(`Hallo${vorname ? ' ' + T.esc(vorname) : ''},`) +
+          T.p('danke, dass du den Anhänger bei uns gemietet hast!') +
+          T.p('Wir haben versucht, dich <strong>telefonisch zu erreichen</strong> — das hat leider nicht geklappt. Daher kurz auf diesem Weg:') +
+          T.p('Die Rückgabe war ein paar Minuten nach Mietende — laut AGB würde dafür eine kleine Verspätungsgebühr anfallen. Bei den paar Minuten drücken wir aber gerne ein Auge zu: <strong>Für dich fällt nichts an.</strong> 🙂') +
+          T.p('Wenn alles gepasst hat, freuen wir uns riesig über eine kurze Google-Bewertung — das hilft uns als jungem Bremer Team enorm:') +
+          T.cta(T.btn('Auf Google bewerten →', 'https://g.page/r/Cd6jwKdwS_Y7EAE/review'))
+      });
+      try {
+        await resend.emails.send({
+          from: 'SimpleTrailer <info@simpletrailer.de>',
+          reply_to: 'info@simpletrailer.de',
+          to: b.customer_email,
+          subject: `Deine Buchung #${num} – alles gut 🙂`,
+          html
+        });
+      } catch (e) {
+        console.error('send-customer-mail fail:', e.message);
+        return res.status(500).json({ error: 'Mail-Versand fehlgeschlagen: ' + e.message });
+      }
+      return res.status(200).json({ ok: true, to: b.customer_email });
+    }
+
     // ─── SEND-WINBACK: Rückhol-Mail an offene Leads — jeder bekommt EINE eigene Mail (kein CC) ───
     if (section === 'send-winback' && req.method === 'POST') {
       const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
