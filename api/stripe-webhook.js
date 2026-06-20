@@ -117,15 +117,11 @@ async function handleIdentityEvent(event) {
     meta.dl_classes = ['B'];
     meta.dl_failure_reason = null;
 
-    // AUTOFILL: Verifizierte Stripe-Identity-Daten sind ab jetzt Master.
-    // Vorname/Nachname/Geburtsdatum aus user_metadata werden überschrieben,
-    // damit Buchung, Rechnung und Mietvertrag exakt die geprüften Daten verwenden.
-    if (meta.dl_first_name) meta.first_name = meta.dl_first_name;
-    if (meta.dl_last_name)  meta.last_name  = meta.dl_last_name;
-    if (meta.dl_first_name && meta.dl_last_name) {
-      meta.full_name = `${meta.dl_first_name} ${meta.dl_last_name}`;
-    }
-    if (meta.dl_dob) meta.birthdate = meta.dl_dob;
+    // KEIN Überschreiben der Konto-Angaben: first_name/last_name/birthdate bleiben das,
+    // was der Kunde bei der Registrierung selbst angegeben hat. Die geprüften Führerschein-
+    // Daten liegen separat in dl_first_name/dl_last_name/dl_dob — so bleibt der Admin-Abgleich
+    // (Konto ↔ Führerschein) aussagekräftig (man sieht Abweichungen). Buchung & Mietvertrag
+    // nutzen ohnehin bevorzugt die dl_-Daten (siehe booking.html customer_name).
   }
 
   if (event.type === 'identity.verification_session.requires_input') {
