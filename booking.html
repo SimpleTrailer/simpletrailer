@@ -1503,13 +1503,32 @@
     else                   { remainPrice = trailerPrices.extra_day; } // > 6h Rest → ein weiterer Tag
 
     const extraDays = fullExtra + (remainH > 6 ? 1 : 0);
-    const base = trailerPrices.day
-               + extraDays * trailerPrices.extra_day
-               + (remainLabel ? remainPrice : 0);
 
-    return { base, extraDays, remainLabel, remainPrice: remainLabel ? remainPrice : 0,
-             label: `${extraDays + 1} Tage${remainLabel ? ' + ' + remainLabel : ''}`,
-             key: 'flexible' };
+    // Wochentarif automatisch: ab 7 Tagen greift der Wochenpreis + Extra-Tage (statt voller
+    // Tagespreis). Resttage, die teurer als eine weitere Woche wären, zählen als ganze Woche.
+    const totalDays = extraDays + 1;
+    let weeks   = Math.floor(totalDays / 7);
+    let remDays = totalDays - weeks * 7;
+    if (weeks >= 1 && remDays > 0 && remDays * trailerPrices.extra_day >= trailerPrices.week) { weeks += 1; remDays = 0; }
+
+    let base;
+    if (weeks === 0) {
+      base = trailerPrices.day + extraDays * trailerPrices.extra_day;
+    } else {
+      base = weeks * trailerPrices.week + remDays * trailerPrices.extra_day;
+    }
+    base += (remainLabel ? remainPrice : 0);
+
+    let label;
+    if (weeks > 0) {
+      label = (weeks > 1 ? weeks + ' Wochen' : '1 Woche') + (remDays > 0 ? ` + ${remDays} Tag${remDays > 1 ? 'e' : ''}` : '');
+    } else {
+      label = `${extraDays + 1} Tage`;
+    }
+    if (remainLabel) label += ' + ' + remainLabel;
+
+    return { base, extraDays, weeks, remDays, remainLabel, remainPrice: remainLabel ? remainPrice : 0,
+             label, key: 'flexible' };
   }
 
   function getInsuranceAmount() {
@@ -1684,6 +1703,22 @@
       document.getElementById('pbDay1Line').innerHTML = `<span>🔥 1 Woche Festpreis (7 Tage)</span><span>119,00 €</span>`;
       document.getElementById('pbExtraLine').innerHTML = `<span style="color:var(--gray);font-size:.75rem;">≈ 17,00 € / Tag · vs. einzeln (173 €)</span><span style="color:#4ade80;font-size:.82rem;font-weight:700;">spare 54 €</span>`;
       document.getElementById('pbExtraLine').style.display = 'flex'; document.getElementById('pbRemainLine').style.display = 'none';
+    } else if (p.weeks > 0) {
+      // Individuell ≥ 7 Tage: Wochentarif(e) + Extra-Tage
+      const wTotal = (p.weeks * trailerPrices.week).toFixed(2).replace('.', ',');
+      document.getElementById('pbDay1Line').innerHTML = `<span>🔥 ${p.weeks > 1 ? p.weeks + ' Wochen' : '1 Woche'} Festpreis${p.weeks === 1 ? ' (7 Tage)' : ''}</span><span>${wTotal} €</span>`;
+      if (p.remDays > 0) {
+        document.getElementById('pbExtraLine').innerHTML = `<span>${p.remDays} weitere${p.remDays > 1 ? '' : 'r'} Tag${p.remDays > 1 ? 'e' : ''} × ${trailerPrices.extra_day} €</span><span>${(p.remDays * trailerPrices.extra_day).toFixed(2).replace('.', ',')} €</span>`;
+        document.getElementById('pbExtraLine').style.display = 'flex';
+      } else {
+        document.getElementById('pbExtraLine').style.display = 'none';
+      }
+      if (p.remainLabel) {
+        document.getElementById('pbRemainLine').innerHTML = `<span>${p.remainLabel}</span><span>${p.remainPrice.toFixed(2).replace('.', ',')} €</span>`;
+        document.getElementById('pbRemainLine').style.display = 'flex';
+      } else {
+        document.getElementById('pbRemainLine').style.display = 'none';
+      }
     } else if (hours <= 3) {
       document.getElementById('pbDay1Line').innerHTML = `<span>Kurztrip (bis 3 Std.)</span><span>9,00 €</span>`; hideExtra();
     } else if (hours <= 6) {

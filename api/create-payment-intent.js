@@ -120,7 +120,15 @@ module.exports = async (req, res) => {
       else if (remainH <= 6) remainPrice = prices.halftag;
       else                   remainPrice = prices.extra_day;
       const extraDays = fullExtra + (remainH > 6 ? 1 : 0);
-      return prices.day + extraDays * prices.extra_day + (remainH > 0 && remainH <= 6 ? remainPrice : 0);
+      // Wochentarif automatisch: ab 7 Tagen Wochenpreis + Extra-Tage (IDENTISCH zu booking.html calcPrice).
+      const totalDays = extraDays + 1;
+      let weeks   = Math.floor(totalDays / 7);
+      let remDays = totalDays - weeks * 7;
+      if (weeks >= 1 && remDays > 0 && remDays * prices.extra_day >= prices.week) { weeks += 1; remDays = 0; }
+      const baseDays = weeks === 0
+        ? prices.day + extraDays * prices.extra_day
+        : weeks * prices.week + remDays * prices.extra_day;
+      return baseDays + (remainH > 0 && remainH <= 6 ? remainPrice : 0);
     }
 
     let baseAmount;
