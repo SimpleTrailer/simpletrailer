@@ -761,22 +761,22 @@ Bei Fragen sind wir unter info@simpletrailer.de gerne für dich da.
       const esc = s => String(s || '').replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
 
       const winbackHtml = (vorname) => T.layout({
-        heading: 'Das tut uns aufrichtig leid.',
-        preheader: 'Das technische Problem ist behoben — plus 20 % für dich.',
+        heading: 'Du warst nur einen Schritt entfernt.',
+        preheader: 'Deine Buchung ist in 2 Minuten fertig – plus 20 % für dich.',
         replyNote: 'Liebe Grüße, Lion &amp; Samuel · SimpleTrailer',
         bodyHtml:
-          T.p(`Hallo${vorname ? ' ' + T.esc(vorname) : ''},<br>du wolltest bei uns einen Anhänger buchen – und bist bei der Führerschein-Prüfung hängengeblieben. Schuld war ein <strong>technisches Problem auf unserer Seite</strong>, nicht an dir.`) +
-          T.p('Die gute Nachricht: <strong>Es ist behoben.</strong> Die Verifizierung läuft jetzt in unter einer Minute durch.') +
-          T.voucher({ headline: 'Unser Dankeschön fürs Dranbleiben', big: '20 % Rabatt', code: 'WILLKOMMEN20', validity: 'Gültig bis 25.06.2026 · Code im Checkout eingeben' }) +
+          T.p(`Hallo${vorname ? ' ' + T.esc(vorname) : ''},<br>du hast dir bei SimpleTrailer ein Konto angelegt, deine Buchung aber noch nicht abgeschlossen. Schade – der Rest ist in <strong>2 Minuten</strong> erledigt.`) +
+          T.p('Damit sich dein erster Anhänger besonders lohnt, schenken wir dir <strong>20 %</strong>.') +
+          T.voucher({ headline: 'Dein Willkommens-Rabatt', big: '20 % Rabatt', code: 'WILLKOMMEN20', validity: 'Gültig bis 25.06.2026 · Code im Checkout eingeben' }) +
           T.p('<strong>So löst du ihn ein:</strong> Buch wie gewohnt auf simpletrailer.de und gib im Zahlungs-Schritt den Code <strong>WILLKOMMEN20</strong> ein – die 20 % werden direkt abgezogen.') +
           T.cta(T.btn('Jetzt mit 20 % buchen →', 'https://simpletrailer.de/booking'))
       });
 
       const winbackText = (vorname) => `Hallo${vorname ? ' ' + vorname : ''},
 
-du wolltest bei uns einen Anhänger buchen und bist bei der Führerschein-Prüfung hängengeblieben. Schuld war ein technisches Problem auf unserer Seite – nicht an dir.
+du hast dir bei SimpleTrailer ein Konto angelegt, deine Buchung aber noch nicht abgeschlossen. Schade – der Rest ist in 2 Minuten erledigt.
 
-Die gute Nachricht: Es ist behoben. Die Verifizierung läuft jetzt in unter einer Minute durch.
+Damit sich dein erster Anhänger besonders lohnt, schenken wir dir 20 %.
 
 Als Dankeschön: 20 % Rabatt auf deine Buchung. Code: WILLKOMMEN20 (gültig bis 25.06.2026).
 So einlösen: Buch wie gewohnt auf simpletrailer.de und gib im Zahlungs-Schritt den Code ein – die 20 % werden direkt abgezogen.
@@ -789,7 +789,7 @@ SimpleTrailer GbR · Waltjenstr. 96, 28237 Bremen · info@simpletrailer.de`;
 
       // Vorschau: rendert die Mail ohne zu senden (Admin-Check vor dem Versand)
       if (body.preview) {
-        return res.status(200).json({ subject: 'Wir schulden dir eine Entschuldigung – und 20 %', html: winbackHtml(String(body.sample_name || '').trim()) });
+        return res.status(200).json({ subject: 'Dein Anhänger wartet – 20 % Willkommensrabatt für dich', html: winbackHtml(String(body.sample_name || '').trim()) });
       }
 
       const recipients = Array.isArray(body.recipients) ? body.recipients : [];
@@ -816,7 +816,7 @@ SimpleTrailer GbR · Waltjenstr. 96, 28237 Bremen · info@simpletrailer.de`;
             from: 'SimpleTrailer <info@simpletrailer.de>',
             reply_to: 'info@simpletrailer.de',
             to: email,
-            subject: 'Wir schulden dir eine Entschuldigung – und 20 %',
+            subject: 'Dein Anhänger wartet – 20 % Willkommensrabatt für dich',
             html: winbackHtml(vorname),
             text: winbackText(vorname)
           });
