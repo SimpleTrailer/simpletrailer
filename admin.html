@@ -3208,7 +3208,8 @@
       ${u.dl_doc_number ? row('FS-Nummer', u.dl_doc_number) : ''}
       ${u.dl_issuing_country ? row('Ausstellungsland', u.dl_issuing_country) : ''}
       ${u.dl_verified_at ? row('Verifiziert am', fmtDate(u.dl_verified_at)) : ''}
-      ${u.dl_status === 'verified' && u.dl_session_id ? `<div style="margin-top:10px;"><a href="https://dashboard.stripe.com/identity/verification-sessions/${u.dl_session_id}" target="_blank" style="color:var(--orange);font-size:.82rem;text-decoration:none;font-weight:600;">→ Bilder im Stripe Dashboard ansehen</a><div style="color:#555;font-size:.72rem;margin-top:4px;">Originalbilder verfügbar 30 Tage nach Verifikation</div></div>` : ''}
+      ${u.dl_status !== 'verified' && u.dl_failure_reason ? row('Fehlergrund', `<span style="color:#fca5a5;">${escapeHtml(u.dl_failure_reason)}</span>`) : ''}
+      ${(u.dl_session_id || u.dl_stripe_session_id) ? `<div style="margin-top:10px;"><a href="https://dashboard.stripe.com/identity/verification-sessions/${u.dl_session_id || u.dl_stripe_session_id}" target="_blank" style="color:var(--orange);font-size:.82rem;text-decoration:none;font-weight:600;">→ Session im Stripe Dashboard ansehen</a><div style="color:#555;font-size:.72rem;margin-top:4px;">${u.dl_status === 'verified' ? 'Bilder verfügbar 30 Tage nach Verifikation' : 'Dort siehst du die Dokument-Fotos + den genauen Fehler'}</div></div>` : ''}
 
       <p class="section-tag">Buchungen</p>
       ${row('Anzahl', u.bookings_count)}

@@ -58,6 +58,8 @@ module.exports = async (req, res) => {
         dl_doc_type:    u.user_metadata?.dl_doc_type    || null,
         dl_issuing_country: u.user_metadata?.dl_issuing_country || null,
         dl_session_id:  u.user_metadata?.dl_session_id  || null,
+        dl_stripe_session_id: u.user_metadata?.dl_stripe_session_id || null,
+        dl_failure_reason: u.user_metadata?.dl_failure_reason || null,
       })).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
       // "Benachrichtigen wenn da"-Anmeldungen — warme Leads für noch nicht verfügbare Anhänger
