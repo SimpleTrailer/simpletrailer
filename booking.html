@@ -948,6 +948,10 @@
 
       <div class="summary-row" id="sumDiscRow" style="display:none"><span class="label" id="sumDiscLabel">Rabatt</span><span id="sumDisc" style="color:#16a34a;font-weight:700">–</span></div>
       <div class="summary-total"><span>Gesamt</span><span class="amount" id="sumTotal">–</span></div>
+      <div id="sumSaveRow" style="display:none;align-items:center;justify-content:center;gap:8px;margin-top:10px;background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.35);border-radius:10px;padding:10px 14px;">
+        <span style="font-size:1.05rem;">🎉</span>
+        <span style="font-size:.9rem;font-weight:700;color:#16a34a;" id="sumSaveText"></span>
+      </div>
       <div style="text-align:right;font-size:.7rem;color:var(--gray);margin-top:6px;">inkl. 19 % MwSt</div>
     </div>
 
@@ -1481,8 +1485,8 @@
 
   /* ── PRICE CALC ───────────────────────────────── */
   function calcPrice(startMs, endMs) {
-    if (bookingMode === 'weekend') return { base: trailerPrices.weekend, extraDays: 0, label: 'Wochenende (Fr–So)', key: 'weekend', isWeekend: true };
-    if (bookingMode === 'week')    return { base: trailerPrices.week,    extraDays: 0, label: '1 Woche (7 Tage)',   key: 'week',    isWeek:    true };
+    if (bookingMode === 'weekend') return { base: trailerPrices.weekend, extraDays: 0, label: 'Wochenende (Fr–So)', key: 'weekend', isWeekend: true, savings: (trailerPrices.day + 2 * trailerPrices.extra_day) - trailerPrices.weekend };
+    if (bookingMode === 'week')    return { base: trailerPrices.week,    extraDays: 0, label: '1 Woche (7 Tage)',   key: 'week',    isWeek:    true, savings: (trailerPrices.day + 6 * trailerPrices.extra_day) - trailerPrices.week };
     if (bookingMode === 'day')     return { base: trailerPrices.day,     extraDays: 0, label: 'Ganzer Tag',         key: 'day',     isDay:     true };
     const hours = (endMs - startMs) / 3600000;
     if (hours <= 0)       return null;
@@ -1527,8 +1531,12 @@
     }
     if (remainLabel) label += ' + ' + remainLabel;
 
+    // Ersparnis ggü. reinem Tagespreis (für die "Du sparst X €"-Anzeige) — ab 7 Tagen > 0.
+    const dailyRef = trailerPrices.day + extraDays * trailerPrices.extra_day + (remainLabel ? remainPrice : 0);
+    const savings  = Math.max(0, dailyRef - base);
+
     return { base, extraDays, weeks, remDays, remainLabel, remainPrice: remainLabel ? remainPrice : 0,
-             label, key: 'flexible' };
+             label, savings, key: 'flexible' };
   }
 
   function getInsuranceAmount() {
@@ -2462,6 +2470,17 @@
         document.getElementById('sumTotal').textContent = appliedDiscount.total.toFixed(2).replace('.',',') + ' €';
       } else {
         discRow.style.display = 'none';
+      }
+    }
+    // "Du sparst X €" — Ersparnis durch Wochen-/Wochenend-Tarif ggü. reinem Tagespreis.
+    const saveRow = document.getElementById('sumSaveRow');
+    if (saveRow) {
+      const sav = p && p.savings ? p.savings : 0;
+      if (sav > 0) {
+        saveRow.style.display = 'flex';
+        document.getElementById('sumSaveText').textContent = `Du sparst ${sav.toFixed(2).replace('.', ',')} € gegenüber dem Tagespreis`;
+      } else {
+        saveRow.style.display = 'none';
       }
     }
   }
