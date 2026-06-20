@@ -543,7 +543,7 @@
       </div>
 
       <!-- Preisstaffel für Individuell -->
-      <div id="flexPriceInfo" style="margin-top:14px;background:#111;border-radius:10px;padding:12px 14px;display:block;">
+      <div id="flexPriceInfo" style="margin-top:14px;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:block;">
         <p style="font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gray);margin-bottom:8px;">So berechnet sich dein Preis</p>
         <div style="display:grid;grid-template-columns:1fr auto;gap:4px 16px;font-size:.82rem;">
           <span style="color:var(--gray);">bis 3 Std.</span><span style="font-weight:700;">9 €</span>
@@ -634,6 +634,10 @@
         <div class="pb-line" id="pbRemainLine" style="display:none;"></div>
         <div class="pb-divider"></div>
         <div class="pb-total"><span>Mietpreis</span><span id="pbTotal">–</span></div>
+        <div id="pbSaveRow" style="display:none;align-items:center;justify-content:center;gap:8px;margin-top:12px;background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.35);border-radius:10px;padding:9px 12px;">
+          <span style="font-size:1rem;">🎉</span>
+          <span style="font-size:.85rem;font-weight:700;color:#16a34a;" id="pbSaveText"></span>
+        </div>
       </div>
     </div>
 
@@ -1705,11 +1709,11 @@
       document.getElementById('pbDay1Line').innerHTML = `<span>Ganzer Tag (24 Std.)</span><span>29,00 €</span>`; hideExtra();
     } else if (p.isWeekend) {
       document.getElementById('pbDay1Line').innerHTML = `<span>Wochenende Festpreis (Fr–So)</span><span>59,00 €</span>`;
-      document.getElementById('pbExtraLine').innerHTML = `<span style="color:var(--gray);font-size:.75rem;">≈ 19,67 € / Tag · vs. einzeln (77 €)</span><span style="color:#4ade80;font-size:.82rem;font-weight:700;">spare 18 €</span>`;
+      document.getElementById('pbExtraLine').innerHTML = `<span style="color:var(--gray);font-size:.78rem;">≈ 19,67 € pro Tag</span>`;
       document.getElementById('pbExtraLine').style.display = 'flex'; document.getElementById('pbRemainLine').style.display = 'none';
     } else if (p.isWeek) {
       document.getElementById('pbDay1Line').innerHTML = `<span>🔥 1 Woche Festpreis (7 Tage)</span><span>119,00 €</span>`;
-      document.getElementById('pbExtraLine').innerHTML = `<span style="color:var(--gray);font-size:.75rem;">≈ 17,00 € / Tag · vs. einzeln (173 €)</span><span style="color:#4ade80;font-size:.82rem;font-weight:700;">spare 54 €</span>`;
+      document.getElementById('pbExtraLine').innerHTML = `<span style="color:var(--gray);font-size:.78rem;">≈ 17,00 € pro Tag</span>`;
       document.getElementById('pbExtraLine').style.display = 'flex'; document.getElementById('pbRemainLine').style.display = 'none';
     } else if (p.weeks > 0) {
       // Individuell ≥ 7 Tage: Wochentarif(e) + Extra-Tage
@@ -1747,6 +1751,17 @@
       document.getElementById('pbRemainLine').style.display = 'none';
     }
     document.getElementById('pbTotal').textContent = p.base.toFixed(2).replace('.',',') + ' €';
+    // "Du sparst X €" direkt unter dem Mietpreis (Wochen-/Wochenend-Tarif ggü. Tagespreis)
+    const pbSaveRow = document.getElementById('pbSaveRow');
+    if (pbSaveRow) {
+      const sav = p && p.savings ? p.savings : 0;
+      if (sav > 0) {
+        pbSaveRow.style.display = 'flex';
+        document.getElementById('pbSaveText').textContent = `Du sparst ${sav.toFixed(2).replace('.', ',')} € gegenüber dem Tagespreis`;
+      } else {
+        pbSaveRow.style.display = 'none';
+      }
+    }
     document.getElementById('priceBreakdown').style.display = 'block';
     updateInsurancePrices(p.base);
     renderCalendar();
