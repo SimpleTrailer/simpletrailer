@@ -196,8 +196,12 @@ module.exports = async (req, res) => {
       automatic_payment_methods: { enabled: true },
       payment_method_options: {
         card:   { setup_future_usage: 'off_session' },
-        link:   { setup_future_usage: 'off_session' },
-        paypal: { setup_future_usage: 'off_session' }
+        link:   { setup_future_usage: 'off_session' }
+        // PayPal bewusst OHNE off_session: solange Stripe "Wiederkehrende Zahlungen" für
+        // PayPal noch nicht freigegeben hat, würde off_session PayPal KOMPLETT ausblenden.
+        // So ist PayPal jetzt sichtbar/buchbar; Verspätungs-Auto-Charge fällt für PayPal-
+        // Zahler auf die manuelle Zahlungslink-Mail zurück (process-return.js). Sobald die
+        // Freigabe da ist, hier wieder `paypal: { setup_future_usage: 'off_session' }` ergänzen.
       },
       receipt_email: customer_email,
       description: `SimpleTrailer – ${trailer.name} – ${pricing_type}`,
