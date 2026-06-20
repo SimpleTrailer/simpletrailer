@@ -148,11 +148,11 @@ module.exports = async (req, res) => {
     const freeFloating = !!free_floating;
     const freeFloatingFee = freeFloating ? 15.00 : 0;
 
-    // Stornoschutz: 10% vom Mietpreis (NETTO = baseAmount ohne Schutz), mindestens 3 €.
+    // Stornoschutz: 10% vom Mietpreis (NETTO = baseAmount ohne Schutz), min. 3 €, max. 9,90 € (Deckel).
     // Berechnung serverseitig — Client-Wert ist nur Anzeige, der Server ist Single Source of Truth.
     const cancellationProtection = !!cancellation_protection;
     const cancellationProtectionFee = cancellationProtection
-      ? Math.max(3.00, Math.round(baseAmount * 0.10 * 100) / 100)
+      ? Math.min(9.90, Math.max(3.00, Math.round(baseAmount * 0.10 * 100) / 100))
       : 0;
 
     const amount    = baseAmount + insAmount + freeFloatingFee + cancellationProtectionFee;

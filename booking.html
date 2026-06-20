@@ -1093,6 +1093,7 @@
   let cancellationProtection = true;  // default: vorausgewählt
   const CP_RATE   = 0.10;   // 10% vom Mietpreis
   const CP_MIN    = 3.00;    // Mindestgebühr
+  const CP_MAX    = 9.90;    // Deckel (max. Stornoschutz-Gebühr)
   let bookingMode       = 'flexible'; // 'flexible' | 'weekend' | 'week'
   let calClickState     = 'start';   // 'start' | 'end' — for flexible mode only
 
@@ -1598,7 +1599,7 @@
     const sMs = new Date(document.getElementById('startTime').value).getTime() || 0;
     const eMs = new Date(document.getElementById('endTime').value).getTime()   || 0;
     const p = calcPrice(sMs, eMs); if (!p) return 0;
-    return Math.max(CP_MIN, Math.round(p.base * CP_RATE * 100) / 100);
+    return Math.min(CP_MAX, Math.max(CP_MIN, Math.round(p.base * CP_RATE * 100) / 100));
   }
 
   function getTotalPrice() {
@@ -1656,7 +1657,7 @@
     const sMs = new Date(document.getElementById('startTime').value).getTime() || 0;
     const eMs = new Date(document.getElementById('endTime').value).getTime()   || 0;
     const p = calcPrice(sMs, eMs);
-    const fee = p ? Math.max(CP_MIN, Math.round(p.base * CP_RATE * 100) / 100) : CP_MIN;
+    const fee = p ? Math.min(CP_MAX, Math.max(CP_MIN, Math.round(p.base * CP_RATE * 100) / 100)) : CP_MIN;
     el.textContent = '+' + fee.toFixed(2).replace('.', ',') + ' €';
   }
 
