@@ -3204,8 +3204,8 @@
       ${row('Name', fullName)}
       ${row('E-Mail', escapeHtml(u.email))}
       ${row('Telefon', escapeHtml(u.phone))}
-      ${u.address ? row('Adresse', escapeHtml(u.address)) : ''}
-      ${u.birthdate ? row('Geburtsdatum (Angabe)', new Date(u.birthdate).toLocaleDateString('de-DE')) : ''}
+      ${row('Adresse', escapeHtml(u.address) || '<span style="color:#888;">nicht angegeben</span>')}
+      ${row('Geburtsdatum (Angabe)', u.birthdate ? new Date(u.birthdate).toLocaleDateString('de-DE') : '<span style="color:#888;">nicht angegeben</span>')}
       ${row('Status', `<span class="badge ${u.confirmed ? 'badge-ok' : 'badge-no'}">${u.confirmed ? 'E-Mail bestätigt' : 'Nicht bestätigt'}</span>`)}
       ${row('Registriert', fmtDate(u.created_at))}
       ${row('Letzter Login', fmtDate(u.last_sign_in_at))}
