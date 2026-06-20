@@ -40,7 +40,9 @@ module.exports = async (req, res) => {
         byEmail[b.customer_email].count++;
         if (['confirmed','active','returned'].includes(b.status)) byEmail[b.customer_email].total += b.total_amount || 0;
       }
-      const users = usersData.users.map(u => ({
+      const users = usersData.users
+        .filter(u => !ADMIN_EMAILS.includes((u.email || '').toLowerCase()))  // Team-/Admin-Konten nicht als Kunden/Leads zählen
+        .map(u => ({
         id: u.id, email: u.email, created_at: u.created_at, last_sign_in_at: u.last_sign_in_at,
         first_name: u.user_metadata?.first_name || '', last_name: u.user_metadata?.last_name || '',
         phone: u.user_metadata?.phone || '', confirmed: !!u.email_confirmed_at,
