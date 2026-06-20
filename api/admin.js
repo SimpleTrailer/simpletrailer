@@ -46,6 +46,9 @@ module.exports = async (req, res) => {
         id: u.id, email: u.email, created_at: u.created_at, last_sign_in_at: u.last_sign_in_at,
         first_name: u.user_metadata?.first_name || '', last_name: u.user_metadata?.last_name || '',
         phone: u.user_metadata?.phone || '', confirmed: !!u.email_confirmed_at,
+        address: u.user_metadata?.address || '', birthdate: u.user_metadata?.birthdate || null,
+        dl_address: u.user_metadata?.dl_address || null, dl_manual: !!u.user_metadata?.dl_manual,
+        dl_manual_by: u.user_metadata?.dl_manual_by || null, dl_prev_failure_reason: u.user_metadata?.dl_prev_failure_reason || null,
         bookings_count: byEmail[u.email]?.count || 0, bookings_total: byEmail[u.email]?.total || 0,
         dl_status:      u.user_metadata?.dl_status      || 'unverified',
         dl_classes:     u.user_metadata?.dl_classes     || [],
@@ -111,6 +114,26 @@ module.exports = async (req, res) => {
       const { error: delErr } = await supabase.auth.admin.deleteUser(userId);
       if (delErr) return res.status(500).json({ error: 'Konto-Löschen fehlgeschlagen: ' + delErr.message });
 
+      return res.status(200).json({ ok: true });
+    }
+
+    // Führerschein MANUELL als verifiziert markieren (Admin-Sicht-Prüfung, z.B. ausländische Scheine).
+    if (section === 'verify-user-manual' && req.method === 'POST') {
+      const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+      const userId = body.user_id;
+      if (!userId || !/^[0-9a-f-]{36}$/i.test(String(userId))) return res.status(400).json({ error: 'Ungültige user_id.' });
+      const { data: tgt, error: getErr } = await supabase.auth.admin.getUserById(userId);
+      if (getErr || !tgt?.user) return res.status(404).json({ error: 'Benutzer nicht gefunden.' });
+      const meta = { ...(tgt.user.user_metadata || {}) };
+      meta.dl_prev_failure_reason = meta.dl_failure_reason || meta.dl_prev_failure_reason || null;  // Original-Stripe-Grund aufbewahren (Audit)
+      meta.dl_status = 'verified';
+      meta.dl_verified_at = new Date().toISOString();
+      meta.dl_manual = true;
+      meta.dl_manual_by = (user.email || '').toLowerCase();  // welcher Admin hat freigeschaltet
+      meta.dl_classes = (Array.isArray(meta.dl_classes) && meta.dl_classes.includes('B')) ? meta.dl_classes : [...new Set([...(meta.dl_classes || []), 'B'])];
+      meta.dl_failure_reason = null;
+      const { error: upErr } = await supabase.auth.admin.updateUserById(userId, { user_metadata: meta });
+      if (upErr) return res.status(500).json({ error: 'Speichern fehlgeschlagen: ' + upErr.message });
       return res.status(200).json({ ok: true });
     }
 

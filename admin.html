@@ -3188,6 +3188,15 @@
     const row = (label, val) =>
       `<div class="modal-row"><span class="key">${label}</span><span class="val">${val || '–'}</span></div>`;
     const fullName = [u.first_name, u.last_name].filter(Boolean).map(escapeHtml).join(' ') || '–';
+    // Abgleich Konto-Angaben ↔ Führerschein (Name + Geburtsdatum)
+    const acctName = `${u.first_name || ''} ${u.last_name || ''}`.trim().toLowerCase();
+    const dlName   = `${u.dl_first_name || ''} ${u.dl_last_name || ''}`.trim().toLowerCase();
+    const nameMatch = (acctName && dlName) ? (acctName === dlName) : null;
+    const dobMatch  = (u.birthdate && u.dl_dob) ? (String(u.birthdate) === String(u.dl_dob)) : null;
+    const matchBadge = m => m === null
+      ? '<span style="color:#888;">– keine Daten</span>'
+      : m ? '<span class="badge badge-ok">✓ stimmt überein</span>'
+          : '<span class="badge badge-no">⚠️ weicht ab</span>';
 
     document.getElementById('modalTitle').textContent = 'Nutzerprofil';
     document.getElementById('modalBody').innerHTML = `
@@ -3195,6 +3204,8 @@
       ${row('Name', fullName)}
       ${row('E-Mail', escapeHtml(u.email))}
       ${row('Telefon', escapeHtml(u.phone))}
+      ${u.address ? row('Adresse', escapeHtml(u.address)) : ''}
+      ${u.birthdate ? row('Geburtsdatum (Angabe)', new Date(u.birthdate).toLocaleDateString('de-DE')) : ''}
       ${row('Status', `<span class="badge ${u.confirmed ? 'badge-ok' : 'badge-no'}">${u.confirmed ? 'E-Mail bestätigt' : 'Nicht bestätigt'}</span>`)}
       ${row('Registriert', fmtDate(u.created_at))}
       ${row('Letzter Login', fmtDate(u.last_sign_in_at))}
@@ -3210,6 +3221,19 @@
       ${u.dl_verified_at ? row('Verifiziert am', fmtDate(u.dl_verified_at)) : ''}
       ${u.dl_status !== 'verified' && u.dl_failure_reason ? row('Fehlergrund', `<span style="color:#fca5a5;">${escapeHtml(u.dl_failure_reason)}</span>`) : ''}
       ${(u.dl_session_id || u.dl_stripe_session_id) ? `<div style="margin-top:10px;"><a href="https://dashboard.stripe.com/identity/verification-sessions/${u.dl_session_id || u.dl_stripe_session_id}" target="_blank" style="color:var(--orange);font-size:.82rem;text-decoration:none;font-weight:600;">→ Session im Stripe Dashboard ansehen</a><div style="color:#555;font-size:.72rem;margin-top:4px;">${u.dl_status === 'verified' ? 'Bilder verfügbar 30 Tage nach Verifikation' : 'Dort siehst du die Dokument-Fotos + den genauen Fehler'}</div></div>` : ''}
+
+      ${u.dl_status !== 'verified'
+        ? `<div style="margin-top:12px;"><button onclick="verifyUserManual('${u.id}', this)" style="background:#15803d;color:#fff;border:none;padding:9px 16px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:.84rem;font-weight:700;">✓ Manuell verifizieren</button><div style="color:#b45309;font-size:.72rem;margin-top:6px;line-height:1.45;">⚠️ <strong>NICHT</strong> nutzen, wenn Stripe „Betrug/Fälschung" meldet (Fehlergrund + Session prüfen!). Nur bei echtem, von dir sicht-geprüftem Führerschein. Wird als „manuell" protokolliert.</div></div>`
+        : (u.dl_manual ? `<div style="margin-top:8px;color:#3f7553;font-size:.78rem;font-weight:600;">✓ manuell durch Admin verifiziert${u.dl_manual_by ? ' (' + escapeHtml(u.dl_manual_by) + ')' : ''}</div>` : '')}
+
+      ${(u.dl_first_name || u.dl_last_name || u.dl_dob || u.dl_status === 'verified') ? `
+      <p class="section-tag">Abgleich Konto ↔ Führerschein</p>
+      ${row('Name Konto', escapeHtml(`${u.first_name || ''} ${u.last_name || ''}`.trim()) || '–')}
+      ${row('Name lt. Führerschein', escapeHtml(`${u.dl_first_name || ''} ${u.dl_last_name || ''}`.trim()) || '–')}
+      ${row('Name-Abgleich', matchBadge(nameMatch))}
+      ${row('Geburtsdatum-Abgleich', matchBadge(dobMatch))}
+      ${u.dl_prev_failure_reason ? row('Stripe-Originalbefund', `<span style="color:#fca5a5;">${escapeHtml(u.dl_prev_failure_reason)}</span>`) : ''}
+      ` : ''}
 
       <p class="section-tag">Buchungen</p>
       ${row('Anzahl', u.bookings_count)}
@@ -3238,6 +3262,26 @@
       if (!r.ok) throw new Error(d.error || ('Fehler ' + r.status));
       document.getElementById('modalBg').classList.remove('open');
       if (typeof loadUsers === 'function') loadUsers();   // Nutzerliste neu laden
+    } catch (e) {
+      alert('❌ ' + e.message);
+      btn.disabled = false; btn.textContent = orig;
+    }
+  }
+
+  async function verifyUserManual(userId, btn) {
+    if (!confirm('Führerschein MANUELL als verifiziert markieren?\n\n⚠️ NUR wenn du den ECHTEN Führerschein geprüft hast UND Stripe KEINEN Betrug/keine Fälschung gemeldet hat.\nBei Betrugs-/Fälschungs-Verdacht NICHT freischalten.\n\nWird als „manuell durch Admin" protokolliert.')) return;
+    const orig = btn.textContent;
+    btn.disabled = true; btn.textContent = 'Wird gespeichert…';
+    try {
+      const r = await fetch('/api/admin?section=verify-user-manual', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
+        body: JSON.stringify({ user_id: userId })
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || ('Fehler ' + r.status));
+      document.getElementById('modalBg').classList.remove('open');
+      if (typeof loadUsers === 'function') loadUsers();
     } catch (e) {
       alert('❌ ' + e.message);
       btn.disabled = false; btn.textContent = orig;
