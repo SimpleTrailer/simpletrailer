@@ -3213,8 +3213,34 @@
       <p class="section-tag">Buchungen</p>
       ${row('Anzahl', u.bookings_count)}
       ${row('Umsatz', u.bookings_total > 0 ? fmtEur(u.bookings_total) : '–')}
+      ${(u.bookings_total || 0) <= 0
+        ? `<div style="margin-top:18px;border-top:1px solid var(--border);padding-top:14px;">
+             <button onclick="deleteUser('${u.id}', this)" style="background:transparent;border:1px solid #7f1d1d;color:#fca5a5;padding:9px 14px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:.84rem;font-weight:700;">🗑 Test-Nutzer löschen</button>
+             <div style="color:#666;font-size:.72rem;margin-top:6px;">Nur ohne bezahlte Buchung möglich. Entfernt Konto + evtl. Test-/Pending-Buchungen. Nicht umkehrbar.</div>
+           </div>`
+        : `<div style="margin-top:18px;border-top:1px solid var(--border);padding-top:14px;color:#777;font-size:.78rem;">🔒 Konto mit echten Buchungen — Löschen gesperrt (Aufbewahrungspflicht).</div>`}
     `;
     document.getElementById('modalBg').classList.add('open');
+  }
+
+  async function deleteUser(userId, btn) {
+    if (!confirm('Diesen Nutzer wirklich löschen?\n\nKonto + evtl. Test-/Pending-Buchungen werden entfernt. Das kann nicht rückgängig gemacht werden.')) return;
+    const orig = btn.textContent;
+    btn.disabled = true; btn.textContent = 'Wird gelöscht…';
+    try {
+      const r = await fetch('/api/admin?section=delete-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
+        body: JSON.stringify({ user_id: userId })
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || ('Fehler ' + r.status));
+      document.getElementById('modalBg').classList.remove('open');
+      if (typeof loadUsers === 'function') loadUsers();   // Nutzerliste neu laden
+    } catch (e) {
+      alert('❌ ' + e.message);
+      btn.disabled = false; btn.textContent = orig;
+    }
   }
 
   function dlBadge(status) {

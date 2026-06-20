@@ -72,6 +72,44 @@ module.exports = async (req, res) => {
       return res.status(200).json({ users, notify });
     }
 
+    // Test-/Karteileichen-Nutzer löschen — MIT SCHUTZ vor echten Kunden.
+    if (section === 'delete-user' && req.method === 'POST') {
+      const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+      const userId = body.user_id;
+      if (!userId || !/^[0-9a-f-]{36}$/i.test(String(userId))) return res.status(400).json({ error: 'Ungültige user_id.' });
+
+      // Ziel-User holen (Email + Existenz)
+      const { data: tgt, error: getErr } = await supabase.auth.admin.getUserById(userId);
+      if (getErr || !tgt?.user) return res.status(404).json({ error: 'Benutzer nicht gefunden.' });
+      const targetEmail = (tgt.user.email || '').toLowerCase();
+
+      // Admin-Konten niemals löschbar
+      if (ADMIN_EMAILS.includes(targetEmail)) return res.status(403).json({ error: 'Admin-Konten können nicht gelöscht werden.' });
+
+      // 🔒 SCHUTZ: keine aufbewahrungspflichtigen Buchungen löschen (§147 AO, §14b UStG).
+      // Robust über customer_email (garantierte Spalte) + JS-Filter — keine Annahme über bookings.user_id.
+      const { data: userBookings, error: bErr } = await supabase.from('bookings')
+        .select('id, status, stripe_payment_intent_id').eq('customer_email', targetEmail);
+      if (bErr) throw bErr;
+      const hasRealBooking = (userBookings || []).some(b =>
+        ['confirmed', 'active', 'returned'].includes(b.status) ||
+        (b.status === 'cancelled' && b.stripe_payment_intent_id));
+      if (hasRealBooking) {
+        return res.status(409).json({ error: 'Benutzer hat echte/bezahlte Buchungen — Löschen gesperrt (Aufbewahrungspflicht). Nur Test-/Karteileichen löschbar.' });
+      }
+
+      // Aufräumen: Test-/Pending-Buchungen ZUERST und HART — kein Konto-Löschen bei Cleanup-Fehler (keine Waisen).
+      const { error: delBookErr } = await supabase.from('bookings').delete().eq('customer_email', targetEmail);
+      if (delBookErr) return res.status(500).json({ error: 'Buchungs-Cleanup fehlgeschlagen, Konto NICHT gelöscht: ' + delBookErr.message });
+      try { await supabase.from('push_tokens').delete().eq('user_id', userId); } catch (e) {}
+      try { await supabase.from('notify_when_available').delete().eq('email', targetEmail); } catch (e) {}
+
+      const { error: delErr } = await supabase.auth.admin.deleteUser(userId);
+      if (delErr) return res.status(500).json({ error: 'Konto-Löschen fehlgeschlagen: ' + delErr.message });
+
+      return res.status(200).json({ ok: true });
+    }
+
     if (section === 'daily-briefing') {
       // Aggregierte Tagesplan-Daten — gleicher Code wie /api/cron/daily-briefing aber als JSON
       const items = [];
