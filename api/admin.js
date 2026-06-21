@@ -1128,6 +1128,37 @@ SimpleTrailer GbR · Waltjenstr. 96, 28237 Bremen · info@simpletrailer.de`;
       });
     }
 
+    // Zahlungs-Info zu einer Buchung live aus Stripe (Methode + Status + Erstattungen)
+    if (section === 'payment-info') {
+      const piId = req.query.pi;
+      if (!piId || !/^pi_/.test(piId)) return res.status(400).json({ error: 'Ungültige Payment-Intent-ID' });
+      try {
+        const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+        const pi = await stripe.paymentIntents.retrieve(piId, { expand: ['latest_charge'] });
+        const charge = pi.latest_charge || {};
+        const pmd = charge.payment_method_details || {};
+        const type = pmd.type || (pi.payment_method_types && pi.payment_method_types[0]) || 'unbekannt';
+        let label = type;
+        if (pmd.card)        label = `${(pmd.card.brand || 'Karte').toUpperCase()} •••• ${pmd.card.last4 || '????'}`;
+        else if (pmd.paypal) label = `PayPal${pmd.paypal.payer_email ? ' · ' + pmd.paypal.payer_email : ''}`;
+        else if (pmd.link)   label = `Link${pmd.link.email ? ' · ' + pmd.link.email : ''}`;
+        else if (type === 'klarna') label = 'Klarna';
+        return res.status(200).json({
+          status: pi.status,                                  // 'succeeded' etc.
+          method_type: type,                                  // card | paypal | link | ...
+          method_label: label,
+          amount: (pi.amount || 0) / 100,
+          amount_refunded: (charge.amount_refunded || 0) / 100,
+          refunded: !!charge.refunded || (charge.amount_refunded || 0) > 0,
+          receipt_url: charge.receipt_url || null,
+          paid_at: charge.created ? new Date(charge.created * 1000).toISOString() : null
+        });
+      } catch (e) {
+        console.error('[admin payment-info]', e.message);
+        return res.status(200).json({ error: 'Stripe-Abruf fehlgeschlagen' });
+      }
+    }
+
     // section === 'data' (default)
     const { data: bookings, error } = await supabase.from('bookings').select(`
       id, customer_name, customer_email, customer_phone,
