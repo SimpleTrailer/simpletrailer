@@ -7,6 +7,8 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/logo-icon.png?v=10" />
   <link rel="apple-touch-icon" href="/logo-icon.png?v=10" />
   <title>CRM – SimpleTrailer</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
     :root{
@@ -355,7 +357,7 @@
       <div class="kpi"><div class="label">Umsatz Monat</div><div class="val sm">${eur(ST.stats.revenue_month)}</div></div>
     </div>`;
 
-    h+=`<div class="sect-title">⚠️ To-dos / Alarme</div>`;
+    h+=`<div class="sect-title">⚠️ Sofort prüfen (anklickbar)</div>`;
     h+= alarms.length ? `<div class="card">`+alarms.map(([c,txt,b])=>`
         <button class="row clickable" onclick="openBooking('${b.id}')">
           <div class="av" style="color:var(--${c})">!</div>
@@ -364,9 +366,18 @@
         </button>`).join('')+`</div>`
       : `<div class="card"><div class="empty">Keine offenen Alarme 🎉</div></div>`;
 
+    h+=`<div class="sect-title">📋 Tagesplan heute</div><div id="todoList"><div class="card"><div class="empty">lädt…</div></div></div>`;
     h+=`<div class="sect-title">↑ Abholungen heute</div>`+todayList(pickups,'start_time','Keine Abholungen heute');
     h+=`<div class="sect-title">↓ Rückgaben heute</div>`+todayList(returns,'end_time','Keine Rückgaben heute');
     document.getElementById('pane-heute').innerHTML=h;
+    loadTodos();
+  }
+  async function loadTodos(){
+    const el=document.getElementById('todoList'); if(!el)return;
+    try{ const d=await api('daily-briefing'); const items=d.items||[];
+      if(!document.getElementById('todoList'))return;
+      el.innerHTML = items.length ? '<div class="card">'+items.map(it=>`<div class="row"><div class="av" style="color:var(--${it.severity==='red'?'red':'yellow'})">${it.icon||'•'}</div><div class="main"><div class="t1">${esc(it.title||'')}</div><div class="t2" style="white-space:normal">${esc(it.detail||'')}</div></div></div>`).join('')+'</div>' : '<div class="card"><div class="empty">Nichts Offenes für heute 🎉</div></div>';
+    }catch(e){ el.innerHTML='<div class="card"><div class="empty">Tagesplan nicht ladbar.</div></div>'; }
   }
   function todayList(arr,tf,emptyMsg){
     if(!arr.length)return `<div class="card"><div class="empty">${emptyMsg}</div></div>`;
@@ -426,38 +437,74 @@
 
   /* ── FLOTTE ── */
   function renderFlotte(){
-    let h=`<div class="sect-title">Anhänger</div>`;
-    h+= ST.trailers.length ? ST.trailers.map(t=>{
+    let h=`<div class="sect-title">📍 Live-Standorte (GPS)</div>`;
+    h+=`<div id="theftAlerts"></div>`;
+    h+=`<div id="flotteMap" style="height:300px;border-radius:14px;overflow:hidden;border:1px solid var(--border);background:var(--s2)"></div>`;
+    h+=`<div class="sect-title">Anhänger</div><div id="flotteCards"></div>`;
+    h+=`<div class="sect-title">Offene Schäden (alle)</div><div id="flotteDamages"><div class="card"><div class="empty">lädt…</div></div></div>`;
+    document.getElementById('pane-flotte').innerHTML=h;
+    renderFlotteCards(); loadFlotteGps(); loadFlotteDamages();
+  }
+  function renderFlotteCards(){
+    const el=document.getElementById('flotteCards'); if(!el)return;
+    el.innerHTML = ST.trailers.length ? ST.trailers.map(t=>{
       const open=ST.bookings.filter(b=>b.trailers&&b.trailers.name===t.name&&['confirmed','active'].includes(b.status)).length;
       const tuev=t.next_tuev_date?' · TÜV '+fmtDay(t.next_tuev_date):'';
-      return `<div class="card" style="margin-bottom:10px"><button class="row clickable" onclick="openTrailer('${esc(t.id||t.name)}')">
-        <div class="av">▣</div>
-        <div class="main"><div class="t1">${esc(t.name||'Anhänger')}</div><div class="t2">${esc(t.type||'Anhänger')} · ${open} aktive Buchung(en)${tuev}</div></div>
-        <div class="right">${t.is_available?'<span class="pill green">Verfügbar</span>':'<span class="pill yellow">Belegt/Gesperrt</span>'}</div>
-      </button></div>`;
+      return `<div class="card" style="margin-bottom:10px"><button class="row clickable" onclick="openTrailer('${esc(t.id||t.name)}')"><div class="av">▣</div><div class="main"><div class="t1">${esc(t.name||'Anhänger')}</div><div class="t2">${esc(t.type||'Anhänger')} · ${open} aktive Buchung(en)${tuev}</div></div><div class="right">${t.is_available?'<span class="pill green">Verfügbar</span>':'<span class="pill yellow">Belegt/Gesperrt</span>'}</div></button></div>`;
     }).join('') : `<div class="card"><div class="empty">Keine Anhänger geladen.</div></div>`;
-    h+=`<div class="sect-title">GPS & Schäden</div><div class="card"><div class="row"><div class="main"><div class="t1">Live-Tracking & Schäden im Detail</div><div class="t2">GPS-Karte + Schadensverwaltung</div></div><a class="linkbtn" href="/admin#flotte">Öffnen ›</a></div></div>`;
-    document.getElementById('pane-flotte').innerHTML=h;
+  }
+  let _fmap=null, _fmapTries=0;
+  function loadFlotteGps(){
+    api('trailer-positions').then(d=>{
+      const pos=(d.trailers||[]).filter(t=>t.last_lat&&t.last_lng);
+      const ta=d.open_theft_alerts||[]; const taEl=document.getElementById('theftAlerts');
+      if(taEl)taEl.innerHTML = ta.length ? '<div class="card" style="border-color:rgba(255,93,93,.5);margin-bottom:8px">'+ta.map(a=>`<div class="row"><div class="av" style="color:var(--red)">⚠</div><div class="main"><div class="t1">Diebstahl-Alarm: ${esc(a.trailer_name||a.trailer_id||'')}</div><div class="t2">${a.triggered_at?fmtDate(a.triggered_at):''} · ${esc(a.reason||a.type||'')}</div></div></div>`).join('')+'</div>' : '';
+      initFmap(pos);
+    }).catch(()=>initFmap((ST.trailers||[]).filter(t=>t.last_lat&&t.last_lng)));
+  }
+  function initFmap(pos){
+    const el=document.getElementById('flotteMap'); if(!el)return;
+    if(typeof L==='undefined'){ if(_fmapTries++<20)setTimeout(()=>initFmap(pos),250); return; }
+    if(_fmap){try{_fmap.remove();}catch(e){} _fmap=null;}
+    const center=pos.length?[pos[0].last_lat,pos[0].last_lng]:[53.0793,8.8017];
+    _fmap=L.map(el,{attributionControl:false}).setView(center,pos.length?12:11);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(_fmap);
+    const markers=pos.map(t=>{const m=L.marker([t.last_lat,t.last_lng]).addTo(_fmap); m.bindPopup(`<b>${esc(t.name||'')}</b><br>${t.last_seen_at?'zuletzt '+fmtDate(t.last_seen_at):'—'}${t.last_battery_percent!=null?'<br>🔋 '+t.last_battery_percent+'%':''}${t.last_speed_kmh?'<br>'+t.last_speed_kmh+' km/h':''}`); return m;});
+    if(markers.length>1){try{_fmap.fitBounds(L.featureGroup(markers).getBounds().pad(0.3));}catch(e){}}
+    setTimeout(()=>{try{_fmap&&_fmap.invalidateSize();}catch(e){}},250);
+  }
+  async function loadFlotteDamages(){
+    const el=document.getElementById('flotteDamages'); if(!el)return;
+    try{ const d=await api('damages'); const open=(d.damages||[]).filter(x=>x.status==='open');
+      if(!document.getElementById('flotteDamages'))return;
+      el.innerHTML = open.length ? '<div class="card">'+open.map(x=>{const tn=(ST.trailers.find(t=>t.id===x.trailer_id)||{}).name||'';return `<button class="row clickable" onclick="openTrailer('${esc(x.trailer_id)}')"><div class="av" style="color:var(--${x.severity==='not_drivable'?'red':x.severity==='major'?'yellow':'muted'})">!</div><div class="main"><div class="t1">${esc((x.description||'').slice(0,70))}</div><div class="t2">${esc(tn)} · ${esc(x.source||'')} · ${x.created_at?fmtDay(x.created_at):''}</div></div><span class="chev">›</span></button>`;}).join('')+'</div>' : '<div class="card"><div class="empty">Keine offenen Schäden 🎉</div></div>';
+    }catch(e){ if(el)el.innerHTML='<div class="card"><div class="empty">Fehler.</div></div>'; }
   }
 
   /* ── FINANZEN ── */
+  let finPeriod='monat';
+  function finFrom(p){ const n=new Date(); if(p==='heute')return new Date(n.getFullYear(),n.getMonth(),n.getDate()); if(p==='woche'){const f=new Date(n);f.setDate(n.getDate()-6);f.setHours(0,0,0,0);return f;} if(p==='monat')return new Date(n.getFullYear(),n.getMonth(),1); if(p==='jahr')return new Date(n.getFullYear(),0,1); return new Date(0); }
   function renderFinanzen(){
-    const rev=ST.stats.revenue||0, net=rev/1.19, vat=rev-net;
-    const txns=ST.bookings.filter(b=>['confirmed','active','returned'].includes(b.status)).length;
-    const fee=rev*0.015 + txns*0.25; // grobe Stripe-Schätzung
-    let h=`<div class="grid kpis">
-      <div class="kpi"><div class="label">Umsatz gesamt (brutto)</div><div class="val">${eur(rev)}</div><div class="sub">${txns} bezahlte Buchungen</div></div>
-      <div class="kpi"><div class="label">Umsatz Monat</div><div class="val sm">${eur(ST.stats.revenue_month)}</div></div>
-      <div class="kpi"><div class="label">Ø Buchungswert</div><div class="val sm">${eur(ST.stats.avg_value)}</div></div>
+    const periods=[['heute','Heute'],['woche','7 Tage'],['monat','Monat'],['jahr','Jahr'],['gesamt','Gesamt']];
+    const from=finFrom(finPeriod);
+    const paid=ST.bookings.filter(b=>['confirmed','active','returned'].includes(b.status)&&new Date(b.created_at)>=from);
+    const rev=paid.reduce((s,b)=>s+(b.total_amount||0)+(b.late_fee_amount||0),0);
+    const insRev=paid.reduce((s,b)=>s+(b.insurance_amount||0),0);
+    const txns=paid.length, net=rev/1.19, vat=rev-net, fee=rev*0.015+txns*0.25, avg=txns?rev/txns:0;
+    let h=`<div class="toolbar">`+periods.map(([k,l])=>`<button class="chip ${finPeriod===k?'active':''}" onclick="finPeriod='${k}';renderFinanzen()">${l}</button>`).join('')+`</div>`;
+    h+=`<div class="grid kpis">
+      <div class="kpi"><div class="label">Umsatz (brutto)</div><div class="val">${eur(rev)}</div><div class="sub">${txns} bezahlte Buchungen</div></div>
+      <div class="kpi"><div class="label">Ø Buchungswert</div><div class="val sm">${eur(avg)}</div></div>
+      <div class="kpi"><div class="label">Schutzpaket-Umsatz</div><div class="val sm">${eur(insRev)}</div></div>
     </div>`;
     h+=`<div class="sect-title">Aufschlüsselung (geschätzt)</div><div class="card">
       <div class="row"><div class="main"><div class="t1">Netto-Umsatz</div><div class="t2">ohne MwSt</div></div><div class="right amt">${eur(net)}</div></div>
       <div class="row"><div class="main"><div class="t1">MwSt (19 %)</div><div class="t2">ans Finanzamt</div></div><div class="right amt" style="color:var(--yellow)">${eur(vat)}</div></div>
       <div class="row"><div class="main"><div class="t1">Stripe-Gebühren (ca.)</div><div class="t2">~1,5 % + 0,25 €/Buchung</div></div><div class="right amt" style="color:var(--red)">−${eur(fee)}</div></div>
-      <div class="row"><div class="main"><div class="t1">Schutzpaket-Umsatz</div><div class="t2">in brutto enthalten</div></div><div class="right amt">${eur(ST.stats.insurance_revenue)}</div></div>
     </div>`;
-    h+=`<div class="sect-title">Schutzpaket-Wahl</div><div class="card" style="padding:14px 16px">${barChart([['Basis',ST.stats.insurance_basis_count||0],['Premium',ST.stats.insurance_premium_count||0],['Keins',ST.stats.insurance_none_count||0]])}</div>`;
-    h+=`<div style="color:var(--dim);font-size:.78rem;margin-top:12px;padding:0 4px">💡 Zahlart pro Buchung siehst du in der jeweiligen Buchungs-Detailansicht (live aus Stripe). MwSt & Gebühren sind Schätzwerte — verbindlich rechnet dein Buchhaltungstool.</div>`;
+    const ib=paid.filter(b=>b.insurance_type==='basis').length, ip=paid.filter(b=>b.insurance_type==='premium').length, inone=paid.filter(b=>!b.insurance_type||b.insurance_type==='none').length;
+    h+=`<div class="sect-title">Schutzpaket-Wahl</div><div class="card" style="padding:14px 16px">${barChart([['Basis',ib],['Premium',ip],['Keins',inone]])}</div>`;
+    h+=`<div style="color:var(--dim);font-size:.78rem;margin-top:12px;padding:0 4px">💡 Zeitraum: ${periods.find(p=>p[0]===finPeriod)[1]} · Zahlart pro Buchung im Detail (live aus Stripe). MwSt/Gebühr = Schätzwerte.</div>`;
     document.getElementById('pane-finanzen').innerHTML=h;
   }
 
@@ -631,12 +678,13 @@
   async function loadTrDamages(tid){
     const el=document.getElementById('trDamages'); if(!el)return;
     try{
-      const r=await fetch('/api/damages?trailer_id='+encodeURIComponent(tid)+'&status=open',{headers:{Authorization:`Bearer ${authToken}`}});
-      const d=await r.json(); const dm=d.damages||[];
+      const d=await api('damages&trailer_id='+encodeURIComponent(tid));
+      const dm=(d.damages||[]).filter(x=>x.status==='open');
       if(!document.getElementById('trDamages'))return;
       el.innerHTML = dm.length ? '<div class="card">'+dm.map(x=>`<div class="row" style="display:block">
         <div style="display:flex;justify-content:space-between;gap:8px"><span class="pill ${x.severity==='not_drivable'?'red':x.severity==='major'?'yellow':'grey'}">${esc(x.severity||'')}</span><span style="font-size:.7rem;color:var(--dim)">${x.created_at?fmtDate(x.created_at):''}</span></div>
         <div style="font-size:.86rem;margin:6px 0">${esc(x.description||'')}</div>
+        <div style="font-size:.74rem;color:var(--dim);margin-bottom:6px">Quelle: ${esc(x.source||'–')}${x.reported_by?' · '+esc(x.reported_by):''}</div>
         ${safeUrl(x.photo_url)?`<a class="linkbtn" href="${safeUrl(x.photo_url)}" target="_blank">📷 Foto</a>`:''}
         <div style="margin-top:6px"><button class="chip active" onclick="resolveDmg('${x.id}','resolved','${tid}')">✓ Erledigt</button> <button class="chip" onclick="resolveDmg('${x.id}','wont_fix','${tid}')">akzeptiert</button></div>
       </div>`).join('')+'</div>' : '<div class="card"><div class="empty">Keine offenen Schäden 🎉</div></div>';
