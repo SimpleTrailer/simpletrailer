@@ -121,6 +121,9 @@
       top:0;right:0;height:100dvh;width:min(460px,100%);transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);
       display:flex;flex-direction:column;}
     #panel.open{transform:none;}
+    #sheet{position:fixed;z-index:100;left:0;right:0;bottom:0;background:var(--s1);border-top:1px solid var(--border);border-radius:18px 18px 0 0;box-shadow:var(--shadow);transform:translateY(110%);transition:transform .3s cubic-bezier(.4,0,.2,1);padding:6px 12px calc(16px + env(safe-area-inset-bottom));max-height:70vh;overflow-y:auto;}
+    #sheet.open{transform:none;}
+    #sheet .sheet-handle{width:42px;height:4px;background:var(--border2);border-radius:4px;margin:6px auto 8px;}
     .panel-head{position:sticky;top:0;background:var(--s1);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:15px 16px;}
     .panel-head h2{font-size:1.05rem;font-weight:800;letter-spacing:-.02em;}
     .panel-body{padding:16px;overflow-y:auto;flex:1;}
@@ -185,7 +188,8 @@
     <div class="tabpane" id="pane-flotte"></div>
     <div class="tabpane" id="pane-finanzen"></div>
     <div class="tabpane" id="pane-statistik"></div>
-    <div class="tabpane" id="pane-mehr"></div>
+    <div class="tabpane" id="pane-aistab"></div>
+    <div class="tabpane" id="pane-rechner"></div>
   </main>
 
   <nav class="botnav" id="botnav"></nav>
@@ -197,6 +201,7 @@
   <div class="panel-head"><h2 id="panelTitle">Detail</h2><button class="icon-btn" onclick="closePanel()">✕</button></div>
   <div class="panel-body" id="panelBody"></div>
 </aside>
+<div id="sheet"><div class="sheet-handle"></div><div id="sheetBody"></div></div>
 
 <script>
   const SUPABASE_URL  = 'https://zcjlfatuelhkghtdyrqh.supabase.co';
@@ -299,12 +304,19 @@
     {id:'flotte',label:'Flotte',ic:'▣'},
     {id:'finanzen',label:'Finanzen',ic:'€'},
     {id:'statistik',label:'Statistik',ic:'▦'},
-    {id:'mehr',label:'Mehr',ic:'⋯'},
+    {id:'aistab',label:'AI-Stab',ic:'✦'},
+    {id:'rechner',label:'Rechner',ic:'∑'},
   ];
+  const BOTTOM=['heute','buchungen','kunden','finanzen']; // Mobile-Bottom-Nav (+ Mehr-Sheet)
   function buildNav(){
     document.getElementById('tabStrip').innerHTML=TABS.map(t=>`<button class="tab" data-tab="${t.id}" onclick="switchTab('${t.id}')"><span>${t.ic}</span>${t.label}<span class="badge" id="tb-${t.id}" style="display:none"></span></button>`).join('');
-    const bottom=TABS.filter(t=>['heute','buchungen','kunden','finanzen','mehr'].includes(t.id));
-    document.getElementById('botnav').innerHTML=bottom.map(t=>`<button data-tab="${t.id}" onclick="switchTab('${t.id}')"><span class="ic">${t.ic}</span>${t.label}<span class="nbadge" id="nb-${t.id}" style="display:none"></span></button>`).join('');
+    let bn=BOTTOM.map(id=>{const t=TABS.find(x=>x.id===id);return `<button data-tab="${id}" onclick="switchTab('${id}')"><span class="ic">${t.ic}</span>${t.label}<span class="nbadge" id="nb-${id}" style="display:none"></span></button>`;}).join('');
+    bn+=`<button onclick="openMore()"><span class="ic">⋯</span>Mehr</button>`;
+    document.getElementById('botnav').innerHTML=bn;
+  }
+  function openMore(){
+    document.getElementById('sheetBody').innerHTML=TABS.filter(t=>!BOTTOM.includes(t.id)).map(t=>`<button class="row clickable" onclick="closePanel();switchTab('${t.id}')"><div class="av">${t.ic}</div><div class="main"><div class="t1">${t.label}</div></div><span class="chev">›</span></button>`).join('');
+    document.getElementById('scrim').classList.add('open'); document.getElementById('sheet').classList.add('open');
   }
   function switchTab(id){
     currentTab=id;
@@ -314,7 +326,7 @@
     document.getElementById('pane-'+id).classList.add('active');
     renderTab(id); window.scrollTo({top:0});
   }
-  function renderTab(id){ ({heute:renderHeute,buchungen:renderBuchungen,kunden:renderKunden,flotte:renderFlotte,finanzen:renderFinanzen,statistik:renderStatistik,mehr:renderMehr}[id]||(()=>{}))(); }
+  function renderTab(id){ ({heute:renderHeute,buchungen:renderBuchungen,kunden:renderKunden,flotte:renderFlotte,finanzen:renderFinanzen,statistik:renderStatistik,aistab:renderAistab,rechner:renderRechner}[id]||(()=>{}))(); }
 
   function updateBadges(){
     const now=Date.now();
@@ -471,22 +483,9 @@
   }
 
   /* ── MEHR ── */
-  function renderMehr(){
-    document.getElementById('pane-mehr').innerHTML=`
-      <div class="sect-title">Werkzeuge</div>
-      <div class="card">
-        <a class="row" href="/admin#aistab"><div class="av">🤖</div><div class="main"><div class="t1">AI-Stab</div><div class="t2">Agenten-Chat, Inbox, Empfehlungen</div></div><span class="chev">›</span></a>
-        <a class="row" href="/admin#rechner"><div class="av">🧮</div><div class="main"><div class="t1">Business-Rechner</div><div class="t2">Break-Even / Kalkulation</div></div><span class="chev">›</span></a>
-        <a class="row" href="/admin"><div class="av">⚙︎</div><div class="main"><div class="t1">Klassisches Dashboard</div><div class="t2">alte Vollansicht</div></div><span class="chev">›</span></a>
-      </div>
-      <div class="sect-title">Konto</div>
-      <div class="card"><button class="row clickable" onclick="doLogout()"><div class="av" style="color:var(--red)">⏻</div><div class="main"><div class="t1">Abmelden</div></div></button></div>
-      <div style="color:var(--dim);font-size:.74rem;text-align:center;margin-top:20px">SimpleTrailer CRM · admin@simpletrailer.de</div>`;
-  }
-
   /* ── DRILL-DOWN PANELS ── */
   function openPanel(title,html){ document.getElementById('panelTitle').textContent=title; document.getElementById('panelBody').innerHTML=html; document.getElementById('scrim').classList.add('open'); document.getElementById('panel').classList.add('open'); }
-  function closePanel(){ document.getElementById('scrim').classList.remove('open'); document.getElementById('panel').classList.remove('open'); }
+  function closePanel(){ document.getElementById('scrim').classList.remove('open'); document.getElementById('panel').classList.remove('open'); document.getElementById('sheet').classList.remove('open'); }
 
   function openBooking(id){
     const b=ST.bookings.find(x=>x.id===id); if(!b)return;
@@ -619,9 +618,109 @@
     </div>`;
     h+=`<div class="dlabel">Buchungen (${tb.length})</div>`;
     h+= tb.length ? `<div class="card">`+tb.slice(0,30).map(b=>`<button class="row clickable" onclick="openBooking('${b.id}')"><div class="main"><div class="t1">${esc(b.customer_name||'–')}</div><div class="t2">${fmtDay(b.start_time)}</div></div><div class="right">${statusPill(b.status)}</div></button>`).join('')+`</div>` : `<div class="card"><div class="empty">Keine Buchungen.</div></div>`;
-    h+=`<a class="linkbtn" href="/admin#flotte" style="margin-top:12px">GPS & Schäden im alten Dashboard ›</a>`;
+    h+=`<div class="dlabel">Offene Schäden</div><div id="trDamages"><div class="empty">lädt…</div></div>`;
+    h+=`<div class="dlabel">TÜV / Wartung</div><div class="dblock" style="padding:12px 14px">
+      <label style="font-size:.74rem;color:var(--muted);display:block;margin-bottom:8px">Nächster TÜV<input type="date" id="trTuev" value="${t.next_tuev_date?String(t.next_tuev_date).slice(0,10):''}" style="width:100%;margin-top:4px;background:var(--s3);border:1px solid var(--border2);color:var(--text);border-radius:8px;padding:8px"></label>
+      <label style="font-size:.74rem;color:var(--muted);display:block;margin-bottom:10px">Nächste Wartung<input type="date" id="trMaint" value="${t.next_maintenance_date?String(t.next_maintenance_date).slice(0,10):''}" style="width:100%;margin-top:4px;background:var(--s3);border:1px solid var(--border2);color:var(--text);border-radius:8px;padding:8px"></label>
+      ${t.id?`<button class="btn btn-primary" style="width:100%" onclick="saveTrailerDates('${esc(t.id)}')">Speichern</button>`:''}
+    </div>`;
+    if(t.last_lat&&t.last_lng)h+=`<a class="linkbtn" href="https://www.google.com/maps?q=${t.last_lat},${t.last_lng}" target="_blank">📍 GPS-Position auf Karte ›</a>`;
     openPanel('Anhänger',h);
+    if(t.id)loadTrDamages(t.id);
   }
+  async function loadTrDamages(tid){
+    const el=document.getElementById('trDamages'); if(!el)return;
+    try{
+      const r=await fetch('/api/damages?trailer_id='+encodeURIComponent(tid)+'&status=open',{headers:{Authorization:`Bearer ${authToken}`}});
+      const d=await r.json(); const dm=d.damages||[];
+      if(!document.getElementById('trDamages'))return;
+      el.innerHTML = dm.length ? '<div class="card">'+dm.map(x=>`<div class="row" style="display:block">
+        <div style="display:flex;justify-content:space-between;gap:8px"><span class="pill ${x.severity==='not_drivable'?'red':x.severity==='major'?'yellow':'grey'}">${esc(x.severity||'')}</span><span style="font-size:.7rem;color:var(--dim)">${x.created_at?fmtDate(x.created_at):''}</span></div>
+        <div style="font-size:.86rem;margin:6px 0">${esc(x.description||'')}</div>
+        ${safeUrl(x.photo_url)?`<a class="linkbtn" href="${safeUrl(x.photo_url)}" target="_blank">📷 Foto</a>`:''}
+        <div style="margin-top:6px"><button class="chip active" onclick="resolveDmg('${x.id}','resolved','${tid}')">✓ Erledigt</button> <button class="chip" onclick="resolveDmg('${x.id}','wont_fix','${tid}')">akzeptiert</button></div>
+      </div>`).join('')+'</div>' : '<div class="card"><div class="empty">Keine offenen Schäden 🎉</div></div>';
+    }catch(e){ if(el)el.innerHTML='<div class="card"><div class="empty">Fehler beim Laden.</div></div>'; }
+  }
+  async function resolveDmg(id,status,tid){
+    const note=prompt(status==='resolved'?'Notiz zur Behebung (optional):':'Grund (optional):');
+    try{ const r=await fetch('/api/damages',{method:'PATCH',headers:{'Content-Type':'application/json',Authorization:`Bearer ${authToken}`},body:JSON.stringify({id,status,resolved_note:note||undefined})}); if(!r.ok)throw new Error((await r.json()).error||'Fehler'); loadTrDamages(tid); }catch(e){alert('❌ '+e.message);}
+  }
+  async function saveTrailerDates(tid){
+    try{ const r=await fetch('/api/admin?section=update-trailer-dates',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${authToken}`},body:JSON.stringify({trailer_id:tid,next_tuev_date:document.getElementById('trTuev').value||null,next_maintenance_date:document.getElementById('trMaint').value||null})}); const d=await r.json(); if(!r.ok)throw new Error(d.error||'Fehler'); await loadAll(); alert('✓ Gespeichert.'); }catch(e){alert('❌ '+e.message);}
+  }
+
+  /* ── AI-STAB (Agenten-Chat + Inbox) ── */
+  const AGENTS=[['consultant','💡 Strategie-Berater'],['ads-specialist','📈 Werbe-Profi'],['content-writer','📝 Texter'],['support-writer','💬 Kunden-Antworter'],['legal-checker','⚖️ Rechts-Prüfer'],['bug-triager','🐛 Fehler-Sortierer'],['competitor-watcher','🔭 Konkurrenz-Wächter'],['mobile-app-architect','📱 App-Architekt'],['budget-optimizer','💰 Budget-Planer'],['code-reviewer','🔍 Code-Prüfer']];
+  const CK=a=>`st_chat_${a}`;
+  function renderAistab(){
+    let h=`<div class="sect-title">Agent fragen</div><div class="card" style="padding:14px 16px">
+      <select id="aiAgent" onchange="aiLoadConv()" style="width:100%;background:var(--s2);color:var(--text);border:1px solid var(--border2);border-radius:10px;padding:11px 12px;font-size:15px;margin-bottom:10px">${AGENTS.map(a=>`<option value="${a[0]}">${a[1]}</option>`).join('')}</select>
+      <div id="aiChat" style="max-height:340px;overflow-y:auto;margin-bottom:10px;display:none"></div>
+      <textarea id="aiQ" rows="3" placeholder="Frage… (Strg+Enter sendet)" style="width:100%;background:var(--s2);color:var(--text);border:1px solid var(--border2);border-radius:10px;padding:11px 12px;font-size:15px;resize:vertical;margin-bottom:8px" onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter')aiSend()"></textarea>
+      <div style="display:flex;gap:8px"><button class="btn btn-primary" style="flex:1" id="aiBtn" onclick="aiSend()">Fragen →</button><button class="btn btn-ghost" onclick="aiReset()" title="Konversation löschen">↺</button></div>
+      <div id="aiResult" style="font-size:.84rem;color:var(--muted);margin-top:8px"></div>
+    </div>
+    <div class="sect-title">Inbox <span style="color:var(--dim);font-weight:600;text-transform:none;letter-spacing:0">· Drafts / Posts / Insights</span></div>
+    <div id="aiInbox"><div class="card"><div class="empty">lädt…</div></div></div>`;
+    document.getElementById('pane-aistab').innerHTML=h;
+    aiLoadConv(); aiLoadInbox();
+  }
+  function aiLoadConv(){ const a=document.getElementById('aiAgent').value; let c=[]; try{c=JSON.parse(localStorage.getItem(CK(a))||'[]');}catch(e){} aiRenderChat(c); }
+  function aiRenderChat(c){ const box=document.getElementById('aiChat'); if(!box)return; if(!c.length){box.style.display='none';box.innerHTML='';return;} box.style.display='block'; box.innerHTML=c.map(m=>{const u=m.role==='user';return `<div style="background:${u?'var(--s2)':'var(--blue-soft)'};border:1px solid ${u?'var(--border)':'rgba(77,163,255,.3)'};border-radius:10px;padding:9px 12px;margin-bottom:8px"><div style="font-size:.62rem;text-transform:uppercase;letter-spacing:.06em;color:${u?'var(--dim)':'var(--blue)'};margin-bottom:3px">${u?'Du':'Agent'}</div><div style="font-size:.88rem;line-height:1.55;white-space:${u?'pre-wrap':'normal'}">${u?esc(m.content):m.content}</div></div>`;}).join(''); box.scrollTop=box.scrollHeight; }
+  async function aiSend(){
+    const a=document.getElementById('aiAgent').value, q=document.getElementById('aiQ').value.trim(), btn=document.getElementById('aiBtn'), res=document.getElementById('aiResult');
+    if(!q){res.textContent='Bitte Frage eingeben.';return;}
+    let c=[]; try{c=JSON.parse(localStorage.getItem(CK(a))||'[]');}catch(e){}
+    c.push({role:'user',content:q}); aiRenderChat(c); document.getElementById('aiQ').value=''; btn.disabled=true; btn.textContent='Agent denkt…'; res.textContent='⏳ 5–15 Sek…';
+    try{
+      const r=await fetch('/api/admin?section=direct-ask',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${authToken}`},body:JSON.stringify({agent:a,messages:c})});
+      const d=await r.json(); if(!r.ok)throw new Error(d.error||'Fehler');
+      c.push({role:'assistant',content:d.answer||''}); if(c.length>20)c=c.slice(-20); localStorage.setItem(CK(a),JSON.stringify(c)); aiRenderChat(c); res.textContent='';
+    }catch(e){ res.innerHTML=`<span style="color:var(--red)">${esc(e.message)}</span>`; }
+    finally{ btn.disabled=false; btn.textContent='Fragen →'; }
+  }
+  function aiReset(){ const a=document.getElementById('aiAgent').value; if(!confirm('Konversation löschen?'))return; localStorage.removeItem(CK(a)); aiRenderChat([]); document.getElementById('aiResult').innerHTML=''; }
+  async function aiLoadInbox(){
+    const box=document.getElementById('aiInbox'); if(!box)return;
+    try{
+      const d=await api('ai-inbox'); const items=d.items||[];
+      if(!document.getElementById('aiInbox'))return;
+      box.innerHTML = items.length ? '<div class="card">'+items.map(it=>{
+        const k={'content-draft':['📝 Draft','blue'],'social-post':['📱 Insta-Post','yellow'],'ai-insight':['💡 Insight','blue']}[it.kind]||[it.kind,'grey'];
+        return `<div class="row" style="display:block"><div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:5px"><span class="pill ${k[1]}">${k[0]}</span><span style="font-size:.7rem;color:var(--dim)">${it.created_at?fmtDate(it.created_at):''}</span></div><div style="font-weight:600;font-size:.9rem;margin-bottom:4px">${esc(it.title||'—')}</div><div style="font-size:.82rem;color:var(--muted);line-height:1.5;margin-bottom:8px">${esc((it.summary||'').slice(0,200))}${(it.summary||'').length>200?'…':''}</div><div style="display:flex;gap:6px;flex-wrap:wrap">${aiActions(it)}</div></div>`;
+      }).join('')+'</div>' : '<div class="card"><div class="empty">📬 Alles erledigt.</div></div>';
+    }catch(e){ if(box)box.innerHTML=`<div class="card"><div class="empty">Fehler: ${esc(e.message)}</div></div>`; }
+  }
+  function aiActions(it){ const b=(act,lbl,on)=>`<button class="chip ${on?'active':''}" onclick="aiAction('${it.kind}','${it.id}','${act}')">${lbl}</button>`;
+    if(it.kind==='social-post')return b('approve','✓ Gepostet',1)+b('skip','Skip');
+    if(it.kind==='content-draft')return b('approve','✓ Approve',1)+b('reject','Reject');
+    if(it.kind==='ai-insight')return b('acknowledge','✓ Verstanden',1);
+    return ''; }
+  async function aiAction(kind,id,action){ try{ const r=await fetch('/api/admin?section=inbox-action',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${authToken}`},body:JSON.stringify({kind,id,action})}); if(!r.ok)throw new Error((await r.json()).error||'Fehler'); aiLoadInbox(); }catch(e){alert('❌ '+e.message);} }
+
+  /* ── RECHNER (Business-/Break-Even-Kalkulator) ── */
+  const R_DEF={anzahlAnhaenger:20,auslastung:30,mietPreis:28,anschaffung:700,finanziert:false,zinssatz:8,laufzeit:48,versicherung:21,wartung:13,tuev:3,tracker:5,verschleiss:8,marketing:10,stellplatz:0,steuerberater:125,tools:80,haftpflicht:33,sonstiges:60,steuerKvSatz:30,nettoProPerson:1800};
+  const R_INPUTS=[['anzahlAnhaenger','Anzahl Anhänger',1,100,1,''],['auslastung','Auslastung',0,100,1,'%'],['mietPreis','Ø Mietpreis/Tag',10,80,1,'€'],['anschaffung','Anschaffung/Anhänger',300,3000,50,'€'],['versicherung','Versicherung/Anh./Mon.',0,100,1,'€'],['wartung','Wartung/Anh./Mon.',0,100,1,'€'],['tuev','TÜV/Anh./Mon.',0,50,1,'€'],['tracker','GPS-Tracker/Anh./Mon.',0,50,1,'€'],['verschleiss','Verschleiß/Anh./Mon.',0,100,1,'€'],['marketing','Marketing/Anh./Mon.',0,100,1,'€'],['stellplatz','Stellplatz/Anh./Mon.',0,200,5,'€'],['steuerberater','Steuerberater/Mon.',0,500,5,'€'],['tools','Tools/Software/Mon.',0,500,5,'€'],['haftpflicht','Betriebshaftpflicht/Mon.',0,200,1,'€'],['sonstiges','Sonstiges/Mon.',0,500,10,'€'],['steuerKvSatz','Steuer + KV-Satz',0,60,1,'%'],['nettoProPerson','Netto-Ziel/Person/Mon.',0,5000,100,'€']];
+  let RST={...R_DEF}, _rLoaded=false, _rSaveT=null;
+  const rfn=n=>new Intl.NumberFormat('de-DE',{maximumFractionDigits:0}).format(Math.round(n||0));
+  async function renderRechner(){
+    if(!_rLoaded){ try{const d=await api('calculator-state'); RST={...R_DEF,...(d.state||{})};}catch(e){RST={...R_DEF};} _rLoaded=true; }
+    let h=`<div id="rOut"></div>`;
+    h+=`<div class="sect-title">Finanzierung</div><div class="dblock" style="padding:12px 14px"><div style="display:flex;gap:8px;${RST.finanziert?'margin-bottom:10px':''}"><button class="chip ${!RST.finanziert?'active':''}" onclick="RST.finanziert=false;renderRechner();rDebSave()">Cash (AfA)</button><button class="chip ${RST.finanziert?'active':''}" onclick="RST.finanziert=true;renderRechner();rDebSave()">Finanziert</button></div>${RST.finanziert?rInputRow(['zinssatz','Zinssatz',0,15,0.5,'%'])+rInputRow(['laufzeit','Laufzeit',12,84,6,'Mon']):''}</div>`;
+    h+=`<div class="sect-title">Eingaben</div><div class="dblock" style="padding:12px 14px">${R_INPUTS.map(rInputRow).join('')}</div>`;
+    h+=`<button class="btn btn-ghost" style="margin-top:12px" onclick="RST={...R_DEF};renderRechner();rDebSave()">Zurücksetzen</button>`;
+    document.getElementById('pane-rechner').innerHTML=h; rUpdateOutput();
+  }
+  function rInputRow([key,lbl,min,max,step,unit]){ const v=RST[key]??0; return `<div style="margin-bottom:13px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><label style="font-size:.74rem;color:var(--muted)">${lbl}</label><span style="display:flex;align-items:center;gap:5px"><input type="number" value="${v}" step="${step}" onchange="RST['${key}']=parseFloat(this.value)||0;rUpdateOutput();rDebSave()" style="width:80px;background:var(--s3);border:1px solid var(--border2);color:var(--text);border-radius:8px;padding:4px 8px;text-align:right;font-family:var(--mono);font-size:.85rem"><span style="font-size:.7rem;color:var(--dim);min-width:26px">${unit}</span></span></div><input type="range" min="${min}" max="${max}" step="${step}" value="${Math.max(min,Math.min(max,v))}" oninput="RST['${key}']=parseFloat(this.value);rUpdateOutput();rDebSave()" style="width:100%;accent-color:var(--orange)"></div>`; }
+  function rUpdateOutput(){ const el=document.getElementById('rOut'); if(!el)return; const c=rCompute(); const ok=c.ueberschussNetto>=0;
+    let h=`<div class="kpi" style="border-color:${ok?'rgba(46,204,113,.45)':'rgba(255,93,93,.45)'}"><div class="label">Monats-Überschuss (beide, nach Steuer/KV)</div><div class="val" style="color:${ok?'var(--green)':'var(--red)'}">${(c.ueberschussNetto>=0?'+':'')+rfn(c.ueberschussNetto)} €</div><div class="sub">Netto/Person ${rfn(c.nettoProPersonMonat)} € · Ziel ${rfn(RST.nettoProPerson)} €/Person</div></div>`;
+    h+=`<div class="grid kpis" style="margin-top:10px"><div class="kpi"><div class="label">EBIT / Monat</div><div class="val sm">${rfn(c.ebitMonat)} €</div></div><div class="kpi"><div class="label">DB / Anhänger</div><div class="val sm">${rfn(c.dbProAnh)} €</div></div><div class="kpi"><div class="label">Umsatz / Jahr</div><div class="val sm">${rfn(c.umsatzJahr)} €</div></div><div class="kpi"><div class="label">Invest gesamt</div><div class="val sm">${rfn(c.gesamtInvest)} €</div></div></div>`;
+    if(!ok&&isFinite(c.benoetigteAnhaenger))h+=`<div class="card" style="padding:12px 14px;margin-top:10px;color:var(--yellow);font-size:.84rem">Für dein Ziel: ca. <strong>${Math.ceil(c.benoetigteAnhaenger)}</strong> Anhänger${c.altPreis?` · oder ~${rfn(c.altPreis)} €/Tag Miete`:''}${c.altAuslastung&&c.altAuslastung<=100?` · oder ~${Math.round(c.altAuslastung)}% Auslastung`:''}.</div>`;
+    el.innerHTML=h;
+  }
+  function rDebSave(){ if(_rSaveT)clearTimeout(_rSaveT); _rSaveT=setTimeout(async()=>{try{await fetch('/api/admin?section=calculator-state-save',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${authToken}`},body:JSON.stringify({state:RST})});}catch(e){}},1200); }
+  function rCompute(){ const s=RST; const tageProMonat=30.4*(s.auslastung/100); const umsatzBruttoProAnh=tageProMonat*s.mietPreis; const umsatzNettoProAnh=umsatzBruttoProAnh/1.19; let kapitalkosten; if(s.finanziert){const m=s.zinssatz/100/12; kapitalkosten=m>0?(s.anschaffung*m)/(1-Math.pow(1+m,-s.laufzeit)):s.anschaffung/s.laufzeit;}else{kapitalkosten=s.anschaffung/60;} const direktKostenProAnh=s.versicherung+s.wartung+s.tuev+s.tracker+s.verschleiss+s.marketing+s.stellplatz+kapitalkosten; const dbProAnh=umsatzNettoProAnh-direktKostenProAnh; const dbMonat=dbProAnh*s.anzahlAnhaenger; const fixkostenMonat=s.steuerberater+s.tools+s.haftpflicht+s.sonstiges; const ebitMonat=dbMonat-fixkostenMonat; const nettoBeideMonat=ebitMonat*(1-s.steuerKvSatz/100); const nettoProPersonMonat=nettoBeideMonat/2; const bedarfBeide=s.nettoProPerson*2; const ueberschussNetto=nettoBeideMonat-bedarfBeide; const benoetigterDbProMonat=bedarfBeide/(1-s.steuerKvSatz/100)+fixkostenMonat; const benoetigteAnhaenger=dbProAnh>0?benoetigterDbProMonat/dbProAnh:Infinity; let altPreis=null,altAuslastung=null; if(ueberschussNetto<0&&dbProAnh>0){const fvs=-ueberschussNetto/(1-s.steuerKvSatz/100); const fpapm=fvs/s.anzahlAnhaenger; altPreis=s.mietPreis+(tageProMonat>0?(fpapm/tageProMonat)*1.19:0); altAuslastung=((tageProMonat+(fpapm/(s.mietPreis/1.19)))/30.4)*100;} return {dbProAnh,ebitMonat,nettoProPersonMonat,ueberschussNetto,benoetigteAnhaenger,gesamtInvest:s.anschaffung*s.anzahlAnhaenger,umsatzJahr:umsatzBruttoProAnh*s.anzahlAnhaenger*12,altPreis,altAuslastung}; }
 
   document.addEventListener('keydown',e=>{ if(e.key==='Escape')closePanel(); if(e.key==='Enter'&&document.getElementById('loginView').style.display!=='none')doLogin(); });
   tryRestore();
