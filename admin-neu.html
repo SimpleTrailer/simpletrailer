@@ -513,6 +513,10 @@
       <div class="drow"><span class="k">Status</span><span class="v" id="payStatus">⏳</span></div>
     </div>`;
     if(photos.length){ h+=`<div class="dlabel">📸 Fotos</div><div class="photo-grid">`+photos.map(p=>`<a href="${safeUrl(p[1])}" target="_blank"><img src="${safeUrl(p[1])}" alt="${p[0]}" title="${p[0]}"></a>`).join('')+`</div>`; }
+    h+=`<div class="dlabel">Aktionen</div><div>
+      <button class="linkbtn" onclick="sendKulanz('${b.id}')">✉️ Kulanz-Mail</button>
+      ${b.status!=='cancelled'?`<button class="linkbtn" style="border-color:#7f1d1d;color:#fca5a5" onclick="cancelBooking('${b.id}')">⊘ Stornieren & erstatten</button>`:''}
+    </div>`;
     openPanel('Buchung',h);
     loadPayment(b);
   }
@@ -565,6 +569,8 @@
     const sess=u.dl_session_id||u.dl_stripe_session_id;
     if(sess)h+=`<a class="linkbtn" href="https://dashboard.stripe.com/identity/verification-sessions/${esc(sess)}" target="_blank">🪪 Identity-Bilder (Stripe) ›</a>`;
     if(u.dl_status!=='verified')h+=`<button class="linkbtn orange" onclick="verifyManual('${u.id}')">✓ Manuell verifizieren</button>`;
+    if((u.bookings_total||0)<=0)h+=`<button class="linkbtn" style="border-color:#7f1d1d;color:#fca5a5" onclick="deleteUser('${u.id}')">🗑 Löschen</button>`;
+    if((u.bookings_count||0)===0)h+=`<button class="linkbtn" onclick="sendWinback('${esc(u.email)}')">✉️ Rückhol-Mail (20%)</button>`;
     // Bilder aus seinen Buchungen
     const pics=[]; myBookings.forEach(b=>{[b.precheck_photo_url,b.return_photo_url,b.ladeflaeche_photo_url].forEach(p=>{if(safeUrl(p))pics.push(p);});});
     if(pics.length)h+=`<div class="dlabel">📸 Fotos aus Buchungen</div><div class="photo-grid">`+pics.map(p=>`<a href="${safeUrl(p)}" target="_blank"><img src="${safeUrl(p)}"></a>`).join('')+`</div>`;
@@ -580,6 +586,23 @@
       const d=await r.json(); if(!r.ok)throw new Error(d.error||'Fehler');
       closePanel(); await loadAll(); alert('✓ Verifiziert.');
     }catch(e){ alert('❌ '+e.message); }
+  }
+  async function cancelBooking(id){
+    if(!confirm('Buchung wirklich stornieren?\n\nVoller Betrag wird erstattet, Slot freigegeben, Mieter per E-Mail informiert.'))return;
+    try{ const r=await fetch('/api/admin?section=cancel-booking',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${authToken}`},body:JSON.stringify({booking_id:id})}); const j=await r.json(); if(!r.ok)throw new Error(j.error||r.status); closePanel(); await loadAll(); alert(j.already_cancelled?'War bereits storniert.':`✓ Storniert.${j.amount?' '+eur(j.amount)+' erstattet.':''} Mieter informiert.`); }catch(e){alert('❌ '+e.message);}
+  }
+  async function sendKulanz(id){
+    if(!confirm('Kulanz-Mail an den Kunden senden?\n(Verspätungsgebühr erlassen + Bitte um Google-Bewertung)'))return;
+    try{ const r=await fetch('/api/admin?section=send-customer-mail',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${authToken}`},body:JSON.stringify({booking_id:id})}); const j=await r.json(); if(!r.ok)throw new Error(j.error||r.status); alert(`✓ Kulanz-Mail gesendet an ${j.to}`); }catch(e){alert('❌ '+e.message);}
+  }
+  async function deleteUser(uid){
+    if(!confirm('Diesen Nutzer löschen?\n\nKonto + Test-/Pending-Buchungen werden entfernt. Nicht umkehrbar.'))return;
+    try{ const r=await fetch('/api/admin?section=delete-user',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${authToken}`},body:JSON.stringify({user_id:uid})}); const j=await r.json(); if(!r.ok)throw new Error(j.error||r.status); closePanel(); await loadAll(); alert('✓ Gelöscht.'); }catch(e){alert('❌ '+e.message);}
+  }
+  async function sendWinback(email){
+    const u=ST.users.find(x=>(x.email||'').toLowerCase()===String(email).toLowerCase()); if(!u)return;
+    if(!confirm(`Rückhol-Mail (20% Willkommensrabatt) an ${u.email} senden?`))return;
+    try{ const r=await fetch('/api/admin?section=send-winback',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${authToken}`},body:JSON.stringify({recipients:[{email:u.email,first_name:u.first_name||'',user_id:u.id}]})}); const j=await r.json(); if(!r.ok)throw new Error(j.error||r.status); alert(`Rückhol-Mail → gesendet: ${j.sent} · übersprungen: ${j.skipped} · Fehler: ${j.failed}`); }catch(e){alert('❌ '+e.message);}
   }
 
   function openTrailer(idOrName){
