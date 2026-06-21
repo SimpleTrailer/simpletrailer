@@ -3212,12 +3212,12 @@
 
       <p class="section-tag">Führerschein</p>
       ${row('Status', dlBadge(u.dl_status))}
-      ${(u.dl_first_name || u.dl_last_name) ? row('Name lt. FS', [u.dl_first_name, u.dl_last_name].filter(Boolean).join(' ')) : ''}
+      ${(u.dl_first_name || u.dl_last_name) ? row('Name lt. FS', escapeHtml([u.dl_first_name, u.dl_last_name].filter(Boolean).join(' '))) : ''}
       ${u.dl_dob ? row('Geburtsdatum', new Date(u.dl_dob).toLocaleDateString('de-DE')) : ''}
-      ${u.dl_classes?.length ? row('Klasse', u.dl_classes.join(', ')) : ''}
+      ${u.dl_classes?.length ? row('Klasse', escapeHtml(u.dl_classes.join(', '))) : ''}
       ${u.dl_expires_at ? row('Gültig bis', new Date(u.dl_expires_at).toLocaleDateString('de-DE')) : ''}
-      ${u.dl_doc_number ? row('FS-Nummer', u.dl_doc_number) : ''}
-      ${u.dl_issuing_country ? row('Ausstellungsland', u.dl_issuing_country) : ''}
+      ${u.dl_doc_number ? row('FS-Nummer', escapeHtml(u.dl_doc_number)) : ''}
+      ${u.dl_issuing_country ? row('Ausstellungsland', escapeHtml(u.dl_issuing_country)) : ''}
       ${u.dl_verified_at ? row('Verifiziert am', fmtDate(u.dl_verified_at)) : ''}
       ${u.dl_status !== 'verified' && u.dl_failure_reason ? row('Fehlergrund', `<span style="color:#fca5a5;">${escapeHtml(u.dl_failure_reason)}</span>`) : ''}
       ${(u.dl_session_id || u.dl_stripe_session_id) ? `<div style="margin-top:10px;"><a href="https://dashboard.stripe.com/identity/verification-sessions/${u.dl_session_id || u.dl_stripe_session_id}" target="_blank" style="color:var(--orange);font-size:.82rem;text-decoration:none;font-weight:600;">→ Session im Stripe Dashboard ansehen</a><div style="color:#555;font-size:.72rem;margin-top:4px;">${u.dl_status === 'verified' ? 'Bilder verfügbar 30 Tage nach Verifikation' : 'Dort siehst du die Dokument-Fotos + den genauen Fehler'}</div></div>` : ''}
