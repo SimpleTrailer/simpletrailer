@@ -21,10 +21,24 @@ const { setCors } = require('./_cors');
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+// In-memory Rate-Limit (jeder Call = bezahlter Vision-Request → Schutz gegen Kosten-Drain)
+const _rl = new Map();
+function rateLimited(ip, max = 8, windowMs = 60000) {
+  const now = Date.now();
+  const arr = (_rl.get(ip) || []).filter(t => now - t < windowMs);
+  if (arr.length >= max) return true;
+  arr.push(now); _rl.set(ip, arr);
+  if (_rl.size > 1000) for (const [k, v] of _rl) if (!v.some(t => now - t < windowMs)) _rl.delete(k);
+  return false;
+}
+
 module.exports = async (req, res) => {
   setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
+
+  const ip = (req.headers['x-forwarded-for'] || 'unknown').split(',')[0].trim();
+  if (rateLimited(ip)) return res.status(429).json({ error: 'Zu viele Anfragen — bitte kurz warten.' });
 
   try {
     // Wenn API-Key fehlt: explizit melden statt silent fail-open

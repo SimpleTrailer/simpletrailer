@@ -48,6 +48,10 @@ module.exports = async (req, res) => {
       await supabase.from('push_tokens').delete().eq('user_id', user.id);
     } catch (e) { /* push_tokens-Tabelle existiert ggf. nicht */ }
 
+    // 2b. Marketing-PII vollständig löschen (DSGVO Art. 17 — hier keine Aufbewahrungspflicht)
+    try { await supabase.from('newsletter_subscribers').delete().eq('email', user.email); } catch (e) {}
+    try { await supabase.from('notify_when_available').delete().eq('email', user.email); } catch (e) {}
+
     // 3. Buchungs-Historie anonymisieren (Steuerrecht §147 AO: 10 Jahre Aufbewahrung)
     await supabase
       .from('bookings')

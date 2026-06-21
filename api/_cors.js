@@ -32,7 +32,8 @@ function setCors(req, res) {
   let allowed;
   if (ALLOWED_ORIGINS.includes(origin)) {
     allowed = origin;
-  } else if (origin.endsWith('.vercel.app')) {
+  } else if (/^https:\/\/simpletrailer[a-z0-9-]*\.vercel\.app$/.test(origin)) {
+    // Nur EIGENE Vercel-Preview-Deployments (simpletrailer-…), nicht jede fremde *.vercel.app
     allowed = origin;
   } else {
     allowed = 'https://simpletrailer.de';

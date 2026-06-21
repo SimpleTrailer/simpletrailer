@@ -37,8 +37,10 @@ module.exports = async (req, res) => {
       const { trailer_id, status } = req.query;
       if (!trailer_id) return res.status(400).json({ error: 'trailer_id erforderlich' });
 
+      // Öffentlicher GET (Pre-Check ohne Login): NUR Anzeige-Felder, KEIN booking_id/reported_by
+      // (sonst Korrelation Schaden↔Buchung von außen möglich).
       let q = supabase.from('damages')
-        .select('id, trailer_id, booking_id, source, severity, description, photo_url, status, created_at')
+        .select('id, trailer_id, severity, description, photo_url, status, created_at')
         .eq('trailer_id', trailer_id)
         .order('created_at', { ascending: false });
       if (status) q = q.eq('status', status);
