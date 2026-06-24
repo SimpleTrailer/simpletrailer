@@ -937,11 +937,22 @@
     }
 
     /* Trailer Karten-Grid */
+    /* Anhänger als EINE horizontale Reihe — scrollen für weitere Anhänger */
+    .trailers-grid-wrapper {
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+      scroll-snap-type: x mandatory;
+      margin-top: 22px;
+    }
+    .trailers-grid-wrapper::-webkit-scrollbar { display: none; }
     .trailers-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      display: flex;
+      flex-direction: row;
       gap: 24px;
-      margin-top: 48px;
+      width: max-content;
+      padding: 4px 2px 8px;
     }
 
     .trailer-card {
@@ -952,10 +963,18 @@
       display: flex;
       flex-direction: column;
       transition: border-color .2s, transform .2s;
+      width: 320px;
+      flex-shrink: 0;
+      scroll-snap-align: start;
     }
     .trailer-card:hover { border-color: #555; transform: translateY(-2px); }
     .trailer-card.unavailable { opacity: .75; }
-    .swipe-hint { display: none; }
+    .swipe-hint {
+      display: inline-flex; align-items: center; gap: 6px;
+      margin-top: 16px; color: var(--gray); font-size: .82rem; font-weight: 600;
+    }
+    .swipe-hint-arrow { display: inline-flex; align-items: center; gap: 4px; animation: swipe-bounce 1.4s ease-in-out infinite; }
+    @keyframes swipe-bounce { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(5px); } }
 
     .trailer-card-img {
       width: 100%; aspect-ratio: 4/3;
@@ -3190,6 +3209,78 @@
         </div>
       </div>
 
+      <!-- Hochplanen-Anhänger (Humbaur HA132513 KV, 100 km/h) -->
+      <div class="trailer-card unavailable reveal">
+        <div class="trailer-card-img contain-light">
+          <img src="hochplane-mieten-bremen-simpletrailer.png?v=1" alt="Hochplanen-Anhänger mit Plane mieten in Bremen — SimpleTrailer"
+               loading="lazy" decoding="async" width="600" height="400"
+               onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+          <div class="trailer-card-img-placeholder" style="display:none;">🚛</div>
+          <div class="unavail-overlay">
+            <span style="color:#fff;font-size:.8rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;background:rgba(0,0,0,.6);padding:8px 16px;border-radius:20px;" data-i18n="trailers.soon">Demnächst</span>
+          </div>
+        </div>
+        <div class="trailer-card-body">
+          <span class="unavail-badge" data-i18n="trailers.unavailable">Momentan nicht verfügbar</span>
+          <div class="trailer-card-name" data-i18n="trailers.hochplane.name">Hochplanen-Anhänger</div>
+          <div class="trailer-card-specs">
+            <div class="trailer-card-spec">⚖ <span data-i18n-html="trailers.hochplane.spec1"><strong>Bis 1.300 kg</strong> zGG</span></div>
+            <div class="trailer-card-spec">🪪 <span data-i18n-html="trailers.hochplane.spec2"><strong>Führerschein B96</strong> / BE</span></div>
+            <div class="trailer-card-spec">📦 <span data-i18n-html="trailers.hochplane.spec3"><strong>1,60 m Hochplane</strong> – viel Volumen</span></div>
+            <div class="trailer-card-spec">🔑 <span data-i18n-html="trailers.spec.contactless"><strong>Kontaktlose</strong> Abholung</span></div>
+          </div>
+          <button class="btn btn-outline" style="margin-top:auto;width:100%;border-color:var(--orange);color:var(--orange);" onclick="openNotifyModal('Hochplane')" data-i18n="trailers.notify">Benachrichtigen wenn verfügbar</button>
+        </div>
+      </div>
+
+      <!-- Pferdeanhänger (Humbaur Equitos / Pferdeanhänger X) -->
+      <div class="trailer-card unavailable reveal">
+        <div class="trailer-card-img contain-light">
+          <img src="pferdeanhaenger-mieten-bremen-simpletrailer.png?v=1" alt="Pferdeanhänger mieten in Bremen — SimpleTrailer"
+               loading="lazy" decoding="async" width="600" height="400"
+               onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+          <div class="trailer-card-img-placeholder" style="display:none;">🐴</div>
+          <div class="unavail-overlay">
+            <span style="color:#fff;font-size:.8rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;background:rgba(0,0,0,.6);padding:8px 16px;border-radius:20px;" data-i18n="trailers.soon">Demnächst</span>
+          </div>
+        </div>
+        <div class="trailer-card-body">
+          <span class="unavail-badge" data-i18n="trailers.unavailable">Momentan nicht verfügbar</span>
+          <div class="trailer-card-name" data-i18n="trailers.pferde.name">Pferdeanhänger</div>
+          <div class="trailer-card-specs">
+            <div class="trailer-card-spec">⚖ <span data-i18n-html="trailers.pferde.spec1"><strong>Bis 2.000 kg</strong> zGG</span></div>
+            <div class="trailer-card-spec">🪪 <span data-i18n-html="trailers.pferde.spec2"><strong>Führerschein BE</strong> erforderlich</span></div>
+            <div class="trailer-card-spec">🐴 <span data-i18n-html="trailers.pferde.spec3"><strong>Für 2 Pferde</strong> · Alu-Boden</span></div>
+            <div class="trailer-card-spec">🔑 <span data-i18n-html="trailers.spec.contactless"><strong>Kontaktlose</strong> Abholung</span></div>
+          </div>
+          <button class="btn btn-outline" style="margin-top:auto;width:100%;border-color:var(--orange);color:var(--orange);" onclick="openNotifyModal('Pferdeanhaenger')" data-i18n="trailers.notify">Benachrichtigen wenn verfügbar</button>
+        </div>
+      </div>
+
+      <!-- Rückwärtskipper (Humbaur HUK 152314) -->
+      <div class="trailer-card unavailable reveal">
+        <div class="trailer-card-img contain-light">
+          <img src="rueckwaertskipper-mieten-bremen-simpletrailer.png?v=1" alt="Rückwärtskipper / Kipp-Anhänger mieten in Bremen — SimpleTrailer"
+               loading="lazy" decoding="async" width="600" height="400"
+               onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+          <div class="trailer-card-img-placeholder" style="display:none;">🛻</div>
+          <div class="unavail-overlay">
+            <span style="color:#fff;font-size:.8rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;background:rgba(0,0,0,.6);padding:8px 16px;border-radius:20px;" data-i18n="trailers.soon">Demnächst</span>
+          </div>
+        </div>
+        <div class="trailer-card-body">
+          <span class="unavail-badge" data-i18n="trailers.unavailable">Momentan nicht verfügbar</span>
+          <div class="trailer-card-name" data-i18n="trailers.kipper.name">Rückwärtskipper</div>
+          <div class="trailer-card-specs">
+            <div class="trailer-card-spec">⚖ <span data-i18n-html="trailers.kipper.spec1"><strong>Bis 1.500 kg</strong> zGG</span></div>
+            <div class="trailer-card-spec">🪪 <span data-i18n-html="trailers.kipper.spec2"><strong>Führerschein B96</strong> / BE</span></div>
+            <div class="trailer-card-spec">⬇ <span data-i18n-html="trailers.kipper.spec3"><strong>Hydraulisch kippbar</strong> · Alu-Bordwände</span></div>
+            <div class="trailer-card-spec">🔑 <span data-i18n-html="trailers.spec.contactless"><strong>Kontaktlose</strong> Abholung</span></div>
+          </div>
+          <button class="btn btn-outline" style="margin-top:auto;width:100%;border-color:var(--orange);color:var(--orange);" onclick="openNotifyModal('Rueckwaertskipper')" data-i18n="trailers.notify">Benachrichtigen wenn verfügbar</button>
+        </div>
+      </div>
+
     </div>
     </div><!-- end trailers-grid-wrapper -->
   </div>
@@ -3769,7 +3860,7 @@
   let notifyTrailerType = null;
   function openNotifyModal(type) {
     notifyTrailerType = type;
-    const labels = { Autotransporter: 'Autotransporter', Kofferanhaenger: 'Kofferanhänger' };
+    const labels = { Autotransporter: 'Autotransporter', Kofferanhaenger: 'Kofferanhänger', Hochplane: 'Hochplanen-Anhänger', Pferdeanhaenger: 'Pferdeanhänger', Rueckwaertskipper: 'Rückwärtskipper' };
     document.getElementById('notifyTrailerLabel').textContent = labels[type] || type;
     document.getElementById('notifyEmail').value = '';
     document.getElementById('notifyMsg').textContent = '';

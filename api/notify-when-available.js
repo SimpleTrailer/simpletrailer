@@ -37,7 +37,7 @@ module.exports = async (req, res) => {
   if (!email || !email.includes('@') || !email.includes('.')) {
     return res.status(400).json({ error: 'Invalid email' });
   }
-  if (!['Autotransporter', 'Kofferanhaenger', 'PKW-Plane'].includes(trailerType)) {
+  if (!['Autotransporter', 'Kofferanhaenger', 'PKW-Plane', 'Hochplane', 'Pferdeanhaenger', 'Rueckwaertskipper'].includes(trailerType)) {
     return res.status(400).json({ error: 'Invalid trailer_type' });
   }
 
@@ -55,7 +55,7 @@ module.exports = async (req, res) => {
 
     // Bestaetigungsmail
     try {
-      const labelMap = { Autotransporter: 'Autotransporter', Kofferanhaenger: 'Kofferanhänger', 'PKW-Plane': 'PKW-Anhänger mit Plane' };
+      const labelMap = { Autotransporter: 'Autotransporter', Kofferanhaenger: 'Kofferanhänger', 'PKW-Plane': 'PKW-Anhänger mit Plane', Hochplane: 'Hochplanen-Anhänger', Pferdeanhaenger: 'Pferdeanhänger', Rueckwaertskipper: 'Rückwärtskipper' };
       const label = labelMap[trailerType];
       await resend.emails.send({
         from: 'SimpleTrailer <buchung@simpletrailer.de>',

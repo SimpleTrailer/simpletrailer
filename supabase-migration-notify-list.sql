@@ -8,7 +8,7 @@
 CREATE TABLE IF NOT EXISTS notify_when_available (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email TEXT NOT NULL,
-  trailer_type TEXT NOT NULL CHECK (trailer_type IN ('Autotransporter', 'Kofferanhaenger', 'PKW-Plane')),
+  trailer_type TEXT NOT NULL CHECK (trailer_type IN ('Autotransporter', 'Kofferanhaenger', 'PKW-Plane', 'Hochplane', 'Pferdeanhaenger', 'Rueckwaertskipper')),
   notified BOOLEAN DEFAULT false,
   notified_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
