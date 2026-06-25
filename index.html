@@ -3806,10 +3806,15 @@
       </div>
 
       <form class="contact-form" onsubmit="submitForm(event)">
+        <!-- Honeypot gegen Spam-Bots: für Menschen unsichtbar, niemals ausfüllen -->
+        <div aria-hidden="true" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;">
+          <label>Dieses Feld bitte leer lassen</label>
+          <input type="text" name="hp_field" tabindex="-1" autocomplete="off" />
+        </div>
         <div class="form-row">
           <div class="form-group">
             <p class="field-label" data-i18n="contact.name">Name</p>
-            <input type="text" class="field-input" placeholder="Dein Name" required data-i18n-attr="placeholder:contact.name.ph" />
+            <input type="text" name="name" class="field-input" placeholder="Dein Name" required data-i18n-attr="placeholder:contact.name.ph" />
           </div>
           <div class="form-group">
             <p class="field-label" data-i18n="account.email">E-Mail</p>
@@ -4811,9 +4816,10 @@
     e.preventDefault();
     const form = e.target;
     const btn  = form.querySelector('button[type=submit]');
-    const name    = form.querySelector('input[name="name"], #contactName')?.value || form.querySelector('input[type="text"]')?.value || '';
+    const name    = form.querySelector('input[name="name"], #contactName')?.value || form.querySelector('input.field-input[type="text"]')?.value || '';
     const email   = form.querySelector('input[type="email"]')?.value || '';
     const message = form.querySelector('textarea')?.value || '';
+    const hp_field = form.querySelector('input[name="hp_field"]')?.value || ''; // Honeypot
 
     btn.disabled = true;
     btn.textContent = 'Wird gesendet…';
@@ -4821,7 +4827,7 @@
       const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, message })
+        body: JSON.stringify({ name, email, message, hp_field })
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || 'Senden fehlgeschlagen.');
