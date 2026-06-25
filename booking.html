@@ -1360,7 +1360,7 @@
     const grid   = document.getElementById(gridId);
     const curVal = document.getElementById(inputId).value;
     grid.innerHTML = '';
-    for (let h = 6; h <= 21; h++) {
+    for (let h = 0; h <= 23; h++) {   // 24/7: alle Stunden buchbar (kontaktlos per Code-Schloss)
       const hStr    = `${String(h).padStart(2,'0')}:00`;
       const blocked = h < minH || h > maxH || isHourBlocked(dateStr, h);
       const sel     = curVal === hStr;
