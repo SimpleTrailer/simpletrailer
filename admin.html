@@ -191,6 +191,7 @@
 
   <main>
     <div class="tabpane" id="pane-heute"></div>
+    <div class="tabpane" id="pane-cockpit"></div>
     <div class="tabpane" id="pane-buchungen"></div>
     <div class="tabpane" id="pane-kunden"></div>
     <div class="tabpane" id="pane-flotte"></div>
@@ -217,7 +218,7 @@
   const SESSION_KEY   = 'st_admin_session';
 
   let authToken = null, _refreshTimer = null;
-  const ST = { bookings:[], users:[], notify:[], trailers:[], stats:{}, payCache:{} };
+  const ST = { bookings:[], users:[], notify:[], trailers:[], stats:{}, payCache:{}, analytics:null };
   let currentTab = 'heute';
 
   /* ── HELPERS ── */
@@ -298,6 +299,7 @@
       ST.bookings=data.bookings||[]; ST.stats=data.stats||{};
       ST.users=usersRes.users||[]; ST.notify=usersRes.notify||[];
       ST.trailers=trailersRes.trailers||trailersRes||[];
+      ST.analytics=null; // Cockpit beim nächsten Öffnen frisch laden
       renderTab(currentTab); updateBadges();
     }catch(e){ console.error(e); }
   }
@@ -307,6 +309,7 @@
   /* ── NAV ── */
   const TABS=[
     {id:'heute',label:'Heute',ic:'◉'},
+    {id:'cockpit',label:'Cockpit',ic:'◎'},
     {id:'buchungen',label:'Buchungen',ic:'▤'},
     {id:'kunden',label:'Kunden',ic:'☻'},
     {id:'flotte',label:'Flotte',ic:'▣'},
@@ -334,7 +337,7 @@
     document.getElementById('pane-'+id).classList.add('active');
     renderTab(id); window.scrollTo({top:0});
   }
-  function renderTab(id){ ({heute:renderHeute,buchungen:renderBuchungen,kunden:renderKunden,flotte:renderFlotte,finanzen:renderFinanzen,statistik:renderStatistik,aistab:renderAistab,rechner:renderRechner}[id]||(()=>{}))(); }
+  function renderTab(id){ ({heute:renderHeute,cockpit:renderCockpit,buchungen:renderBuchungen,kunden:renderKunden,flotte:renderFlotte,finanzen:renderFinanzen,statistik:renderStatistik,aistab:renderAistab,rechner:renderRechner}[id]||(()=>{}))(); }
 
   function updateBadges(){
     const now=Date.now();
@@ -543,6 +546,38 @@
     h+=`<div class="sect-title">Buchungen nach Wochentag</div><div class="card" style="padding:14px 16px">${barChart(order.map(i=>[wd[i],wdC[i]]))}</div>`;
     h+=`<div class="sect-title">Anhänger-Auslastung</div><div class="card" style="padding:14px 16px">${barChart(Object.entries(byTrailer))}</div>`;
     document.getElementById('pane-statistik').innerHTML=h;
+  }
+
+  /* ── COCKPIT (Besucher-Trichter + Herkunft) ── */
+  let cockpitPeriod='d30';
+  const SRCLBL={google_ads:'Google Ads',kleinanzeigen:'Kleinanzeigen',google_organic:'Google (organisch)',suche:'Andere Suche',social:'Social Media',ratgeber:'Ratgeber',direkt:'Direkt',unbekannt:'Unbekannt'};
+  async function renderCockpit(){
+    const pane=document.getElementById('pane-cockpit');
+    if(!ST.analytics){
+      pane.innerHTML='<div class="empty">Lädt…</div>';
+      try{ ST.analytics=await api('analytics'); }
+      catch(e){ pane.innerHTML='<div class="empty">Konnte Cockpit-Daten nicht laden.</div>'; return; }
+    }
+    if(ST.analytics.missing){
+      pane.innerHTML=`<div class="card" style="padding:16px 18px;line-height:1.6"><strong>⚙️ Cockpit fast fertig — ein Schritt fehlt.</strong><br><span style="color:var(--dim);font-size:.86rem">Führe einmalig die SQL-Migration <code>supabase-migration-analytics-events.sql</code> im Supabase-SQL-Editor aus (wie bei der Notify-Liste). Danach füllt sich das Cockpit automatisch mit jedem Besuch.</span></div>`;
+      return;
+    }
+    const d=ST.analytics[cockpitPeriod]||{}; const f=d.funnel||{}; const vis=d.visitors||0;
+    const pc=n=>vis?Math.min(100,Math.round(n/vis*100)):0;
+    const steps=[['Besucher',vis],['Buchung gestartet',f.start||0],['Schritt 3 erreicht',f.step3||0],['Führerschein-Check',f.dl||0],['Bezahlen geklickt',f.pay||0],['Buchung abgeschlossen',f.done||0]];
+    let worst=-1,wd=0; for(let i=1;i<steps.length;i++){const drop=steps[i-1][1]-steps[i][1]; if(drop>wd){wd=drop;worst=i;}}
+    const mx=Math.max(1,vis);
+    const funnel=steps.map((s,i)=>`<div class="bar-row"><div class="bl">${esc(s[0])}${i===worst&&wd>0?' <span style="color:var(--yellow);font-size:.74rem">← größter Absprung</span>':''}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.min(100,Math.round(s[1]/mx*100))}%"></div></div><div class="bv">${s[1]} · ${pc(s[1])}%</div></div>`).join('');
+    const lbl=s=>SRCLBL[s]||s;
+    let h=`<div class="toolbar"><button class="chip ${cockpitPeriod==='d7'?'active':''}" onclick="cockpitPeriod='d7';renderCockpit()">7 Tage</button><button class="chip ${cockpitPeriod==='d30'?'active':''}" onclick="cockpitPeriod='d30';renderCockpit()">30 Tage</button></div>`;
+    if(ST.analytics.truncated) h+=`<div class="card" style="padding:10px 14px;color:var(--yellow);font-size:.78rem">⚠ Sehr viele Events — Zahlen evtl. gekürzt. Sag Bescheid, dann stelle ich auf SQL-Aggregation um.</div>`;
+    if(!vis) h+=`<div class="card" style="padding:14px 16px;color:var(--dim)">Noch keine Besucher-Daten im Zeitraum — füllt sich automatisch, sobald Leute die Seite besuchen.</div>`;
+    h+=`<div class="sect-title">Trichter — wo brechen Besucher ab?</div><div class="card" style="padding:14px 16px">${funnel}</div>`;
+    h+=`<div class="sect-title">Woher kamen die Besucher?</div><div class="card" style="padding:14px 16px">${barChart((d.sources||[]).map(s=>[lbl(s[0]),s[1]]))}</div>`;
+    h+=`<div class="sect-title">Buchungen nach Quelle</div><div class="card" style="padding:14px 16px">${barChart((d.bookingSources||[]).map(s=>[lbl(s[0]),s[1]]))}</div>`;
+    h+=`<div class="sect-title">Anmeldungen</div><div class="card" style="padding:14px 16px">${barChart([['Notify (warme Leads)',d.notify||0],['Newsletter',d.newsletter||0]])}</div>`;
+    h+=`<div style="color:var(--dim);font-size:.78rem;margin-top:12px;padding:0 4px">💡 Zählt seit Einbau (neu) · „Besucher" serverseitig gezählt (Adblocker-resistent) · für Detail-Videos einzelner Besuche weiterhin Microsoft Clarity.</div>`;
+    pane.innerHTML=h;
   }
   function barChart(rows,fmt){
     const max=Math.max(1,...rows.map(r=>r[1]));

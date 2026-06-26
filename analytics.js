@@ -18,6 +18,57 @@
   'use strict';
 
   // ────────────────────────────────────────────────────────────
+  // 0) HELFER: anonyme Session-ID + grobe Herkunft (für Cockpit)
+  // ────────────────────────────────────────────────────────────
+  // Session-ID: zufällig pro Browser-Tab, kein Cookie, keine IP.
+  function stSid() {
+    try {
+      var k = 'st_sid';
+      var v = sessionStorage.getItem(k);
+      if (!v) {
+        v = 'sid_' + ((window.crypto && crypto.randomUUID)
+          ? crypto.randomUUID()
+          : (Math.random().toString(36).slice(2) + Date.now().toString(36)));
+        sessionStorage.setItem(k, v);
+      }
+      return v;
+    } catch (e) { return null; }
+  }
+  // Herkunft EINMAL pro Session bestimmen (First-Touch) und merken.
+  function stSource() {
+    try {
+      var cached = sessionStorage.getItem('st_src');
+      if (cached) return cached;
+      var p = new URLSearchParams(location.search);
+      var src;
+      if (p.get('gclid') || p.get('gad_source') || p.get('gclsrc') || p.get('gbraid') || p.get('wbraid')) {
+        src = 'google_ads';
+      } else if (p.get('utm_source')) {
+        src = p.get('utm_source').toLowerCase().slice(0, 40);
+      } else if (/^\/ratgeber/.test(location.pathname)) {
+        // Einstieg direkt auf einer Ratgeber-Seite = „über den Ratgeber gekommen"
+        src = 'ratgeber';
+      } else {
+        var ref = document.referrer || '';
+        var host = '';
+        try { host = new URL(ref).hostname.replace(/^www\./, ''); } catch (e) {}
+        if (!host || host === location.hostname) src = 'direkt';
+        else if (/kleinanzeigen/.test(host)) src = 'kleinanzeigen';
+        else if (/google\./.test(host)) src = 'google_organic';
+        else if (/(bing\.|duckduckgo|ecosia|yahoo)/.test(host)) src = 'suche';
+        else if (/(instagram|facebook|fb\.|t\.co|twitter|x\.com|tiktok|youtube|linkedin)/.test(host)) src = 'social';
+        else src = host.slice(0, 40);
+      }
+      sessionStorage.setItem('st_src', src);
+      return src;
+    } catch (e) { return 'unbekannt'; }
+  }
+  function stOnProd() {
+    return location.hostname === 'simpletrailer.de'
+        || location.hostname.endsWith('.vercel.app');
+  }
+
+  // ────────────────────────────────────────────────────────────
   // 1) MICROSOFT CLARITY
   // ────────────────────────────────────────────────────────────
   // SimpleTrailer Clarity-Projekt: clarity.microsoft.com/projects/view/wiy9ow3sje
@@ -65,6 +116,18 @@
         Object.keys(props).forEach(k => {
           try { window.clarity('set', k, String(props[k])); } catch (e) {}
         });
+      }
+      // First-Party-Speicher fürs Admin-Cockpit (adblocker-resistent, da serverseitig)
+      if (stOnProd()) {
+        fetch('/api/track', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          keepalive: true,
+          body: JSON.stringify({
+            name: eventName, props: props,
+            session_id: stSid(), source: stSource(), path: location.pathname
+          })
+        }).catch(function () {});
       }
     } catch (e) { /* ignore */ }
   };
@@ -245,6 +308,9 @@
   // ────────────────────────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', function () {
     const path = location.pathname;
+
+    // Jeder Seitenaufruf → Besucher + Herkunft fürs Cockpit zählen
+    window.stcTrack('pageview');
 
     // booking.html: Schritt sichtbar machen
     if (path.includes('booking.html') || path === '/booking') {

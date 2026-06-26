@@ -29,6 +29,59 @@ module.exports = async (req, res) => {
   const section = req.query.section || 'data';
 
   try {
+    // ── COCKPIT: Funnel + Herkunft aus analytics_events (First-Party) ──
+    if (section === 'analytics') {
+      const since = new Date(Date.now() - 30 * 86400000).toISOString();
+      const { data: ev, error: evErr } = await supabase
+        .from('analytics_events')
+        .select('name, session_id, source, created_at')
+        .gte('created_at', since)
+        .order('created_at', { ascending: false })
+        .limit(50000);
+      if (evErr) {
+        if (/relation .* does not exist/i.test(evErr.message || '')) {
+          return res.status(200).json({ missing: true });
+        }
+        throw evErr;
+      }
+      const now = Date.now();
+      const agg = (days) => {
+        const from = now - days * 86400000;
+        const rows = (ev || []).filter(e => new Date(e.created_at).getTime() >= from);
+        const sessWith = (name) => {
+          const s = new Set();
+          for (const e of rows) if (e.name === name && e.session_id) s.add(e.session_id);
+          return s.size;
+        };
+        const visitors = new Set(rows.filter(e => e.session_id).map(e => e.session_id)).size;
+        // First-Touch-Quelle je Session (rows sind absteigend sortiert → letzte Zuweisung = früheste)
+        const srcBySession = {};
+        for (const e of rows) if (e.session_id && e.source) srcBySession[e.session_id] = e.source;
+        const srcCount = {};
+        for (const s of Object.values(srcBySession)) srcCount[s] = (srcCount[s] || 0) + 1;
+        const doneSrc = {};
+        const doneSessions = new Set(rows.filter(e => e.name === 'booking_funnel_completed' && e.session_id).map(e => e.session_id));
+        for (const s of doneSessions) { const src = srcBySession[s] || 'unbekannt'; doneSrc[src] = (doneSrc[src] || 0) + 1; }
+        const cnt = (name) => rows.filter(e => e.name === name).length;
+        return {
+          visitors,
+          funnel: {
+            start: sessWith('booking_funnel_start'),
+            step3: sessWith('booking_step_3'),
+            dl:    sessWith('booking_dl_verify_start'),
+            pay:   sessWith('booking_pay_clicked'),
+            done:  sessWith('booking_funnel_completed'),
+          },
+          sources:        Object.entries(srcCount).sort((a, b) => b[1] - a[1]),
+          bookingSources: Object.entries(doneSrc).sort((a, b) => b[1] - a[1]),
+          notify:    cnt('notify_signup'),
+          newsletter: cnt('newsletter_signup'),
+        };
+      };
+      const truncated = (ev || []).length >= 50000;
+      return res.status(200).json({ d7: agg(7), d30: agg(30), truncated });
+    }
+
     if (section === 'users') {
       const { data: usersData, error: usersError } = await supabase.auth.admin.listUsers({ perPage: 1000 });
       if (usersError) throw usersError;
