@@ -97,6 +97,15 @@ h1 {
 }
 .lead strong { font-weight: 800; }
 
+/* ── ARTIKEL-BILD (dezent, mittig, nicht zu groß) ─────────── */
+.r-figure { max-width: 560px; margin: 28px auto 34px; }
+.r-figure picture { display: block; }
+.r-figure img {
+  width: 100%; height: auto; display: block;
+  border-radius: 16px; border: 1px solid var(--line); box-shadow: var(--shadow);
+}
+.r-figure figcaption { margin-top: 10px; font-size: .82rem; color: var(--muted); text-align: center; line-height: 1.5; }
+
 /* ── FLIESSTEXT (nur im Artikel) ──────────────────────────── */
 article h2, article h3, article p, article ul, article ol { max-width: 100%; }
 h2 {
