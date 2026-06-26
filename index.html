@@ -976,6 +976,40 @@
     .swipe-hint-arrow { display: inline-flex; align-items: center; gap: 4px; animation: swipe-bounce 1.4s ease-in-out infinite; }
     @keyframes swipe-bounce { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(5px); } }
 
+    /* Desktop-Karussell: Pfeil-Navigation für die Anhänger-Reihe */
+    .trailers-carousel { position: relative; }
+    .trailer-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 52px; height: 52px;
+      display: none;                 /* nur Desktop (siehe Media-Query) */
+      align-items: center; justify-content: center;
+      background: #fff;
+      border: 1.5px solid var(--border);
+      border-radius: 50%;
+      color: var(--white);
+      cursor: pointer;
+      z-index: 6;
+      box-shadow: 0 6px 22px rgba(17,18,19,0.13);
+      transition: transform .2s ease, border-color .2s ease, color .2s ease, opacity .25s ease, visibility .25s, box-shadow .2s ease;
+    }
+    .trailer-nav svg { width: 22px; height: 22px; }
+    .trailer-nav.prev { left: -24px; }
+    .trailer-nav.next { right: -24px; }
+    .trailer-nav:hover {
+      border-color: var(--orange);
+      color: var(--orange);
+      transform: translateY(-50%) scale(1.08);
+      box-shadow: 0 10px 28px rgba(232,93,0,0.24);
+    }
+    .trailer-nav:active { transform: translateY(-50%) scale(0.95); }
+    .trailer-nav.is-hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+    @media (min-width: 1000px) {
+      .trailer-nav { display: flex; }
+      #swipeHint { display: none; }   /* am Desktop führen die Pfeile, nicht das Wischen */
+    }
+
     .trailer-card-img {
       width: 100%; aspect-ratio: 4/3;
       background: #111;
@@ -3128,6 +3162,10 @@
       </div>
     </div>
 
+    <div class="trailers-carousel" id="trailersCarousel">
+    <button type="button" class="trailer-nav prev is-hidden" id="trailerPrev" aria-label="Vorherige Anhänger anzeigen" onclick="scrollTrailers(-1)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
     <div class="trailers-grid-wrapper" id="trailersWrapper">
     <div class="trailers-grid">
 
@@ -3283,6 +3321,10 @@
 
     </div>
     </div><!-- end trailers-grid-wrapper -->
+    <button type="button" class="trailer-nav next" id="trailerNext" aria-label="Weitere Anhänger anzeigen" onclick="scrollTrailers(1)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+    </div><!-- end trailers-carousel -->
   </div>
 </section>
 
@@ -5434,6 +5476,33 @@
       hint.style.opacity = '0';
       hint.style.transition = 'opacity .4s';
     }, { once: true, passive: true });
+  })();
+
+  // TRAILER DESKTOP-KARUSSELL – Pfeil-Navigation + Rand-Erkennung
+  (function() {
+    const wrap = document.getElementById('trailersWrapper');
+    const prev = document.getElementById('trailerPrev');
+    const next = document.getElementById('trailerNext');
+    if (!wrap || !prev || !next) return;
+
+    function cardStep() {
+      const card = wrap.querySelector('.trailer-card');
+      const gap  = 24;
+      return card ? card.getBoundingClientRect().width + gap : wrap.clientWidth * 0.8;
+    }
+    window.scrollTrailers = function(dir) {
+      const amount = Math.max(cardStep(), wrap.clientWidth * 0.8);
+      wrap.scrollBy({ left: dir * amount, behavior: 'smooth' });
+    };
+    function updateNav() {
+      const max = wrap.scrollWidth - wrap.clientWidth - 2;
+      prev.classList.toggle('is-hidden', wrap.scrollLeft <= 2);
+      next.classList.toggle('is-hidden', wrap.scrollLeft >= max);
+    }
+    wrap.addEventListener('scroll', updateNav, { passive: true });
+    window.addEventListener('resize', updateNav);
+    window.addEventListener('load', updateNav);
+    updateNav();
   })();
 </script>
 
