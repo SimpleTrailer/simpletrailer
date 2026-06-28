@@ -2049,6 +2049,7 @@
         insurance: selectedInsurance,
         cp:        cancellationProtection,
         ff:        selectedFreeFloating,
+        discountMeta: appliedDiscountMeta,   // vor Login eingelösten Rabattcode mitnehmen
       }));
     } catch(e) {}
   }
@@ -2069,6 +2070,14 @@
       selectedFreeFloating = state.ff;
       const rh = document.getElementById('ret-home'), rf = document.getElementById('ret-free');
       if (rh && rf) { rh.classList.toggle('selected', !state.ff); rf.classList.toggle('selected', state.ff); }
+    }
+    // Vor dem Login eingelösten Rabattcode wiederherstellen (überlebt E-Mail-Bestätigung)
+    if (state.discountMeta && state.discountMeta.code) {
+      appliedDiscountMeta = state.discountMeta;
+      appliedDiscountCode = state.discountMeta.code;
+      const di = document.getElementById('discountInput');
+      if (di) di.value = state.discountMeta.code;
+      refreshDiscountUI();
     }
   }
 
@@ -2673,6 +2682,13 @@
       let msg = err.message;
       if (msg === 'Failed to fetch') msg = 'Verbindung fehlgeschlagen. Bitte Seite neu laden.';
       if (msg.includes('No API key')) msg = 'Zahlungssystem nicht konfiguriert. Bitte Betreiber kontaktieren.';
+      // Lehnt der Server den Rabattcode ab (z.B. zwischenzeitlich abgelaufen): Code entfernen,
+      // damit kein Stillstand entsteht und der nächste Versuch ohne Code durchläuft.
+      if (/Rabattcode/i.test(msg)) {
+        appliedDiscountCode = ''; appliedDiscountMeta = null;
+        refreshDiscountUI();
+        msg = msg.replace(/^Rabattcode:\s*/, '') + ' — der Rabattcode wurde entfernt, bitte erneut „Jetzt buchen" klicken.';
+      }
       showPaymentError(msg);
       payBtn.textContent = 'Erneut versuchen';
       payBtn.disabled = false;
