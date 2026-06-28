@@ -4,19 +4,10 @@ const { createClient } = require('@supabase/supabase-js');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
-// ── Rabattcodes (serverseitig = Single Source of Truth) ──────────────────
-// percent: Prozent-Rabatt auf den Gesamtbetrag. validUntil: letzter gültiger Moment (inkl., Berlin-Zeit).
-const DISCOUNT_CODES = {
-  WILLKOMMEN20: { percent: 20, validUntil: '2026-06-25T23:59:59+02:00' },
-};
-function resolveDiscount(raw) {
-  const code = String(raw || '').trim().toUpperCase();
-  if (!code) return { code: null, percent: 0 };
-  const def = DISCOUNT_CODES[code];
-  if (!def) return { error: 'Code ungültig' };
-  if (Date.now() > new Date(def.validUntil).getTime()) return { error: 'Code abgelaufen' };
-  return { code, percent: def.percent };
-}
+// ── Rabattcodes (verbindliche Berechnung) ────────────────────────────────
+// Definition zentral in ./_discounts.js, damit die Vorab-Prüfung
+// (api/validate-discount.js) exakt dieselben Codes/Regeln nutzt.
+const { resolveDiscount } = require('./_discounts');
 
 const rateLimit = new Map();
 function isRateLimited(ip) {
@@ -177,7 +168,10 @@ module.exports = async (req, res) => {
     if (disc.error) return res.status(400).json({ error: `Rabattcode: ${disc.error}` });
     const discountCode    = disc.code || null;
     const discountPercent = disc.percent || 0;
-    const discountAmount  = discountPercent ? Math.round(amount * discountPercent) / 100 : 0;
+    const discountScope   = disc.scope || 'total';
+    // scope 'rent' = Rabatt nur auf den Mietpreis; Schutzpaket/Storno/Free-Floating bleiben voll.
+    const discountBasis   = discountScope === 'rent' ? baseAmount : amount;
+    const discountAmount  = discountPercent ? Math.round(discountBasis * discountPercent) / 100 : 0;
     const finalAmount     = Math.round((amount - discountAmount) * 100) / 100;
     if (finalAmount < 0.50) return res.status(400).json({ error: 'Betrag nach Rabatt zu niedrig.' });
 
@@ -219,7 +213,7 @@ module.exports = async (req, res) => {
       },
       receipt_email: customer_email,
       description: `SimpleTrailer – ${trailer.name} – ${pricing_type}`,
-      metadata: { trailer_id, pricing_type, start_time, end_time, customer_name, customer_email, customer_phone: customer_phone || '', customer_address: customer_address || '', insurance_type: insType, insurance_amount: String(insAmount), user_id: effectiveUserId, agb_version: agb_version || '2026-06-05', free_floating: freeFloating ? '1' : '0', free_floating_fee: String(freeFloatingFee), cancellation_protection: cancellationProtection ? '1' : '0', cancellation_protection_fee: String(cancellationProtectionFee), discount_code: discountCode || '', discount_percent: String(discountPercent), discount_amount: String(discountAmount) }
+      metadata: { trailer_id, pricing_type, start_time, end_time, customer_name, customer_email, customer_phone: customer_phone || '', customer_address: customer_address || '', insurance_type: insType, insurance_amount: String(insAmount), user_id: effectiveUserId, agb_version: agb_version || '2026-06-05', free_floating: freeFloating ? '1' : '0', free_floating_fee: String(freeFloatingFee), cancellation_protection: cancellationProtection ? '1' : '0', cancellation_protection_fee: String(cancellationProtectionFee), discount_code: discountCode || '', discount_percent: String(discountPercent), discount_scope: discountScope, discount_amount: String(discountAmount) }
     };
     let paymentIntent;
     try {
@@ -251,7 +245,7 @@ module.exports = async (req, res) => {
       payment_intent_id: paymentIntent.id,
       amount, base_amount: baseAmount, insurance_amount: insAmount, insurance_type: insType,
       free_floating: freeFloating, free_floating_fee: freeFloatingFee,
-      discount_code: discountCode, discount_percent: discountPercent, discount_amount: discountAmount, total_amount: finalAmount,
+      discount_code: discountCode, discount_percent: discountPercent, discount_scope: discountScope, discount_amount: discountAmount, total_amount: finalAmount,
       trailer_name: trailer.name
     });
 

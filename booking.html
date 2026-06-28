@@ -925,6 +925,17 @@
       </div>
     </div>
 
+    <!-- Rabattcode — schon hier eingebbar (vor Konto & Führerschein-Verifizierung) -->
+    <div id="discountBox" style="margin:0 0 16px;">
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="discountInput" placeholder="Rabattcode (optional)" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();applyDiscount();}"
+          style="flex:1;min-width:0;padding:9px 12px;border:1px solid var(--border);border-radius:8px;background:var(--s2);color:inherit;font-size:.9rem;text-transform:uppercase;" />
+        <button type="button" id="discountBtn" onclick="applyDiscount()"
+          style="flex:none;padding:9px 16px;border:1px solid var(--border);border-radius:8px;background:var(--s2);color:inherit;font-weight:700;cursor:pointer;font-size:.85rem;">Einlösen</button>
+      </div>
+      <div id="discountMsg" style="font-size:.78rem;margin-top:6px;display:none;"></div>
+    </div>
+
     <!-- Live-Gesamtpreis mit allen gewählten Optionen -->
     <div class="card" id="step4TotalCard">
       <p class="field-label" style="margin-bottom:12px;">Dein Preis</p>
@@ -932,6 +943,7 @@
       <div class="summary-row" id="s4InsRow" style="display:none"><span class="label" id="s4InsLabel">Schutzpaket</span><span id="s4Ins">–</span></div>
       <div class="summary-row" id="s4CpRow" style="display:none"><span class="label">Kostenlose Stornierung</span><span id="s4Cp">–</span></div>
       <div class="summary-row" id="s4FfRow" style="display:none"><span class="label">Rückgabe egal-wo</span><span id="s4Ff">–</span></div>
+      <div class="summary-row" id="s4DiscRow" style="display:none"><span class="label" id="s4DiscLabel">Rabatt</span><span id="s4Disc" style="color:#16a34a;font-weight:700">–</span></div>
       <div class="summary-total"><span>Gesamt</span><span class="amount" id="s4Total">–</span></div>
       <div style="text-align:right;font-size:.7rem;color:var(--gray);margin-top:6px;">inkl. 19 % USt.</div>
     </div>
@@ -955,16 +967,6 @@
       <div class="summary-row" id="sumFreeFloatRow" style="display:none"><span class="label">Rückgabe egal-wo</span><span id="sumFreeFloat">–</span></div>
       <div class="summary-row"><span class="label">Von</span><span id="sumVon">–</span></div>
       <div class="summary-row"><span class="label">Bis</span><span id="sumBis">–</span></div>
-
-      <div id="discountBox" style="margin:12px 0 4px;">
-        <div style="display:flex;gap:8px;">
-          <input type="text" id="discountInput" placeholder="Rabattcode" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();applyDiscount();}"
-            style="flex:1;min-width:0;padding:9px 12px;border:1px solid var(--border);border-radius:8px;background:var(--s2);color:inherit;font-size:.9rem;text-transform:uppercase;" />
-          <button type="button" id="discountBtn" onclick="applyDiscount()"
-            style="flex:none;padding:9px 16px;border:1px solid var(--border);border-radius:8px;background:var(--s2);color:inherit;font-weight:700;cursor:pointer;font-size:.85rem;">Einlösen</button>
-        </div>
-        <div id="discountMsg" style="font-size:.78rem;margin-top:6px;display:none;"></div>
-      </div>
 
       <div class="summary-row" id="sumDiscRow" style="display:none"><span class="label" id="sumDiscLabel">Rabatt</span><span id="sumDisc" style="color:#16a34a;font-weight:700">–</span></div>
       <div class="summary-total"><span>Gesamt</span><span class="amount" id="sumTotal">–</span></div>
@@ -1142,6 +1144,19 @@
     setRow('s4CpRow', 's4Cp', cancellationProtection && getCancellationProtectionFee() > 0, getCancellationProtectionFee());
     setRow('s4FfRow', 's4Ff', selectedFreeFloating, FREE_FLOATING_FEE);
     document.getElementById('s4Total').textContent = fmt(getTotalPrice());
+    // Rabatt-Vorschau (lokal; Server bestätigt den Betrag final beim Bezahlen)
+    appliedDiscount = computeDiscount();
+    const dRow = document.getElementById('s4DiscRow');
+    if (dRow) {
+      if (appliedDiscount && appliedDiscount.amount > 0) {
+        dRow.style.display = 'flex';
+        document.getElementById('s4DiscLabel').textContent = `Rabatt (${appliedDiscount.code}${appliedDiscount.scope === 'rent' ? ' · nur Miete' : ''})`;
+        document.getElementById('s4Disc').textContent  = '−' + fmt(appliedDiscount.amount);
+        document.getElementById('s4Total').textContent = fmt(appliedDiscount.total);
+      } else {
+        dRow.style.display = 'none';
+      }
+    }
   }
 
   function selectInsurance(type) {
@@ -1619,27 +1634,54 @@
     m.style.color = ok ? '#16a34a' : '#dc2626';
   }
 
-  // Rabattcode anwenden: löst eine PaymentIntent-Neuerstellung MIT Code aus.
-  // Validierung + Abzug passieren ausschließlich serverseitig in create-payment-intent.js.
+  // Lokale Rabatt-Vorschau (Server bestätigt den Betrag final beim Bezahlen). null = kein Rabatt.
+  function computeDiscount() {
+    if (!appliedDiscountMeta || !appliedDiscountMeta.percent) return null;
+    const p = calcPrice(getStartMs(), getEndMs()); if (!p) return null;
+    const total = getTotalPrice();
+    const basis = appliedDiscountMeta.scope === 'rent' ? p.base : total;   // 'rent' = nur Mietpreis
+    const amount = Math.round(basis * appliedDiscountMeta.percent) / 100;
+    if (!(amount > 0)) return null;
+    return { code: appliedDiscountMeta.code, percent: appliedDiscountMeta.percent,
+             scope: appliedDiscountMeta.scope, amount, total: Math.round((total - amount) * 100) / 100 };
+  }
+
+  function refreshDiscountUI() {
+    updateStep4Total();
+    if (document.getElementById('step5')?.classList.contains('active')) updateSummary();
+  }
+
+  // Rabattcode prüfen über /api/validate-discount — KEIN Login/Führerschein nötig, daher schon
+  // im Optionen-Schritt nutzbar. Der verbindliche Abzug passiert beim Bezahlen serverseitig
+  // in create-payment-intent.js (Single Source of Truth für den Stripe-Betrag).
   async function applyDiscount() {
     const code = (document.getElementById('discountInput')?.value || '').trim().toUpperCase();
     const btn  = document.getElementById('discountBtn');
-    if (!code) { showDiscountMsg('Bitte einen Code eingeben.', false); return; }
-    const prev = appliedDiscountCode;
-    appliedDiscountCode = code;
+    if (!code) {
+      appliedDiscountCode = ''; appliedDiscountMeta = null;
+      refreshDiscountUI();
+      showDiscountMsg('Rabattcode entfernt.', true);
+      return;
+    }
     if (btn) { btn.disabled = true; btn.textContent = '…'; }
     try {
-      await initStripe();   // Server validiert + zieht ab; setzt appliedDiscount
-      if (appliedDiscount && appliedDiscount.code) {
-        showDiscountMsg(`✓ Code „${appliedDiscount.code}" aktiv – ${appliedDiscount.percent}% Rabatt`, true);
+      const res  = await fetch('/api/validate-discount', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ discount_code: code })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.valid) {
+        appliedDiscountCode = data.code;
+        appliedDiscountMeta = { code: data.code, percent: data.percent, scope: data.scope };
+        refreshDiscountUI();
+        showDiscountMsg(`✓ Code „${data.code}" aktiv – ${data.percent}% ${data.scope === 'rent' ? 'auf den Mietpreis' : 'Rabatt'}`, true);
       } else {
-        appliedDiscountCode = prev;
-        showDiscountMsg('Code konnte nicht angewendet werden.', false);
+        appliedDiscountCode = ''; appliedDiscountMeta = null;
+        refreshDiscountUI();
+        showDiscountMsg((data.error || 'Code ungültig').replace(/^Rabattcode:\s*/, ''), false);
       }
     } catch (e) {
-      appliedDiscountCode = prev;   // zurück auf vorigen Stand
-      showDiscountMsg((e.message || 'Code ungültig').replace(/^Rabattcode:\s*/, ''), false);
-      try { await initStripe(); } catch (_) {}   // PI ohne ungültigen Code wiederherstellen
+      showDiscountMsg('Code konnte nicht geprüft werden — bitte erneut versuchen.', false);
     } finally {
       if (btn) { btn.disabled = false; btn.textContent = 'Einlösen'; }
     }
@@ -2514,12 +2556,13 @@
         cpRow.style.display = 'none';
       }
     }
-    // Rabatt-Zeile + rabattierter Gesamtpreis (Server = Single Source of Truth)
+    // Rabatt-Zeile + rabattierter Gesamtpreis (lokale Vorschau; Server bestätigt beim Bezahlen)
+    appliedDiscount = computeDiscount();
     const discRow = document.getElementById('sumDiscRow');
     if (discRow) {
       if (appliedDiscount && appliedDiscount.amount > 0) {
         discRow.style.display = 'flex';
-        document.getElementById('sumDiscLabel').textContent = `Rabatt (${appliedDiscount.code}, −${appliedDiscount.percent}%)`;
+        document.getElementById('sumDiscLabel').textContent = `Rabatt (${appliedDiscount.code}, −${appliedDiscount.percent}%${appliedDiscount.scope === 'rent' ? ' auf Miete' : ''})`;
         document.getElementById('sumDisc').textContent = '−' + appliedDiscount.amount.toFixed(2).replace('.',',') + ' €';
         document.getElementById('sumTotal').textContent = appliedDiscount.total.toFixed(2).replace('.',',') + ' €';
       } else {
@@ -2541,7 +2584,8 @@
 
   let stripePaymentElement = null;
   let lastStripeSignature  = null;
-  let appliedDiscount      = null;   // vom Server bestätigter Rabatt (nur Anzeige)
+  let appliedDiscount      = null;   // aktuelle Rabatt-Anzeige {code,percent,scope,amount,total}
+  let appliedDiscountMeta  = null;   // geprüfter Code {code,percent,scope} — schon vor Login/Führerschein
   let appliedDiscountCode  = '';     // Code, der an den Server gesendet wird
 
   async function initStripe() {
@@ -2597,10 +2641,7 @@
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Fehler beim Laden der Zahlung');
 
-      // Rabatt-Ergebnis vom Server übernehmen (Single Source of Truth)
-      appliedDiscount = data.discount_code
-        ? { code: data.discount_code, percent: data.discount_percent, amount: data.discount_amount, total: data.total_amount }
-        : null;
+      // Server hat den Code verbindlich geprüft + Betrag gesetzt; Anzeige neu rechnen (lokal = identisch).
       updateSummary();
 
       stripeElements = stripeClient.elements({ clientSecret: data.client_secret, appearance: {
