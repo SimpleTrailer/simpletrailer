@@ -29,6 +29,13 @@ module.exports = async (req, res) => {
   if (isRateLimited(ip)) return res.status(429).json({ error: 'Zu viele Anfragen — bitte kurz warten.' });
 
   try {
+    // Honeypot: echte Nutzer füllen dieses Feld nie aus → Spam-Bot, still verwerfen
+    // (200 ok, damit der Bot zufrieden ist und nicht erneut probiert — aber keine Mail)
+    if (String(req.body?.hp_field || '').trim()) {
+      console.log('contact: honeypot hit', ip);
+      return res.status(200).json({ ok: true });
+    }
+
     const name    = String(req.body?.name || '').trim().slice(0, 120);
     const email   = String(req.body?.email || '').trim().slice(0, 200);
     const phone   = String(req.body?.phone || '').trim().slice(0, 40);

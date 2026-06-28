@@ -50,7 +50,7 @@
   <!-- PWA Manifest + Apple-Touch-Icon -->
   <link rel="manifest" href="/manifest.webmanifest" />
   <script src="/native-bridge.js?v=9" defer></script>
-  <script src="/analytics.js?v=11" defer></script>
+  <script src="/analytics.js?v=12" defer></script>
   <script src="/i18n.js?v=2" defer></script>
 
   <!-- Strukturierte Daten: Lokales Geschäft (für Google Maps + Knowledge Panel + Rich Snippets) -->
@@ -975,6 +975,40 @@
     }
     .swipe-hint-arrow { display: inline-flex; align-items: center; gap: 4px; animation: swipe-bounce 1.4s ease-in-out infinite; }
     @keyframes swipe-bounce { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(5px); } }
+
+    /* Desktop-Karussell: Pfeil-Navigation für die Anhänger-Reihe */
+    .trailers-carousel { position: relative; }
+    .trailer-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 52px; height: 52px;
+      display: none;                 /* nur Desktop (siehe Media-Query) */
+      align-items: center; justify-content: center;
+      background: #fff;
+      border: 1.5px solid var(--border);
+      border-radius: 50%;
+      color: var(--white);
+      cursor: pointer;
+      z-index: 6;
+      box-shadow: 0 6px 22px rgba(17,18,19,0.13);
+      transition: transform .2s ease, border-color .2s ease, color .2s ease, opacity .25s ease, visibility .25s, box-shadow .2s ease;
+    }
+    .trailer-nav svg { width: 22px; height: 22px; }
+    .trailer-nav.prev { left: -24px; }
+    .trailer-nav.next { right: -24px; }
+    .trailer-nav:hover {
+      border-color: var(--orange);
+      color: var(--orange);
+      transform: translateY(-50%) scale(1.08);
+      box-shadow: 0 10px 28px rgba(232,93,0,0.24);
+    }
+    .trailer-nav:active { transform: translateY(-50%) scale(0.95); }
+    .trailer-nav.is-hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+    @media (min-width: 1000px) {
+      .trailer-nav { display: flex; }
+      #swipeHint { display: none; }   /* am Desktop führen die Pfeile, nicht das Wischen */
+    }
 
     .trailer-card-img {
       width: 100%; aspect-ratio: 4/3;
@@ -3128,6 +3162,10 @@
       </div>
     </div>
 
+    <div class="trailers-carousel" id="trailersCarousel">
+    <button type="button" class="trailer-nav prev is-hidden" id="trailerPrev" aria-label="Vorherige Anhänger anzeigen" onclick="scrollTrailers(-1)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
     <div class="trailers-grid-wrapper" id="trailersWrapper">
     <div class="trailers-grid">
 
@@ -3283,6 +3321,10 @@
 
     </div>
     </div><!-- end trailers-grid-wrapper -->
+    <button type="button" class="trailer-nav next" id="trailerNext" aria-label="Weitere Anhänger anzeigen" onclick="scrollTrailers(1)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+    </div><!-- end trailers-carousel -->
   </div>
 </section>
 
@@ -3806,10 +3848,15 @@
       </div>
 
       <form class="contact-form" onsubmit="submitForm(event)">
+        <!-- Honeypot gegen Spam-Bots: für Menschen unsichtbar, niemals ausfüllen -->
+        <div aria-hidden="true" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;">
+          <label>Dieses Feld bitte leer lassen</label>
+          <input type="text" name="hp_field" tabindex="-1" autocomplete="off" />
+        </div>
         <div class="form-row">
           <div class="form-group">
             <p class="field-label" data-i18n="contact.name">Name</p>
-            <input type="text" class="field-input" placeholder="Dein Name" required data-i18n-attr="placeholder:contact.name.ph" />
+            <input type="text" name="name" class="field-input" placeholder="Dein Name" required data-i18n-attr="placeholder:contact.name.ph" />
           </div>
           <div class="form-group">
             <p class="field-label" data-i18n="account.email">E-Mail</p>
@@ -4811,9 +4858,10 @@
     e.preventDefault();
     const form = e.target;
     const btn  = form.querySelector('button[type=submit]');
-    const name    = form.querySelector('input[name="name"], #contactName')?.value || form.querySelector('input[type="text"]')?.value || '';
+    const name    = form.querySelector('input[name="name"], #contactName')?.value || form.querySelector('input.field-input[type="text"]')?.value || '';
     const email   = form.querySelector('input[type="email"]')?.value || '';
     const message = form.querySelector('textarea')?.value || '';
+    const hp_field = form.querySelector('input[name="hp_field"]')?.value || ''; // Honeypot
 
     btn.disabled = true;
     btn.textContent = 'Wird gesendet…';
@@ -4821,7 +4869,7 @@
       const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, message })
+        body: JSON.stringify({ name, email, message, hp_field })
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || 'Senden fehlgeschlagen.');
@@ -5428,6 +5476,33 @@
       hint.style.opacity = '0';
       hint.style.transition = 'opacity .4s';
     }, { once: true, passive: true });
+  })();
+
+  // TRAILER DESKTOP-KARUSSELL – Pfeil-Navigation + Rand-Erkennung
+  (function() {
+    const wrap = document.getElementById('trailersWrapper');
+    const prev = document.getElementById('trailerPrev');
+    const next = document.getElementById('trailerNext');
+    if (!wrap || !prev || !next) return;
+
+    function cardStep() {
+      const card = wrap.querySelector('.trailer-card');
+      const gap  = 24;
+      return card ? card.getBoundingClientRect().width + gap : wrap.clientWidth * 0.8;
+    }
+    window.scrollTrailers = function(dir) {
+      const amount = Math.max(cardStep(), wrap.clientWidth * 0.8);
+      wrap.scrollBy({ left: dir * amount, behavior: 'smooth' });
+    };
+    function updateNav() {
+      const max = wrap.scrollWidth - wrap.clientWidth - 2;
+      prev.classList.toggle('is-hidden', wrap.scrollLeft <= 2);
+      next.classList.toggle('is-hidden', wrap.scrollLeft >= max);
+    }
+    wrap.addEventListener('scroll', updateNav, { passive: true });
+    window.addEventListener('resize', updateNav);
+    window.addEventListener('load', updateNav);
+    updateNav();
   })();
 </script>
 

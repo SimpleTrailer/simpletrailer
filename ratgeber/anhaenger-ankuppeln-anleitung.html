@@ -27,7 +27,7 @@
   <meta property="og:locale" content="de_DE" />
 
   <script src="/native-bridge.js?v=9" defer></script>
-  <script src="/analytics.js?v=11" defer></script>
+  <script src="/analytics.js?v=12" defer></script>
 
   <script type="application/ld+json">
   {
@@ -54,7 +54,8 @@
   }
   </script>
 
-  <style>
+  <!-- Altes dunkles Inline-Theme deaktiviert — ersetzt durch /ratgeber/ratgeber.css -->
+  <style media="not all">
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
       --bg: #0D0D0D; --s1: #161616; --s2: #1E1E1E; --card: #1A1A1A;
@@ -200,12 +201,15 @@
       .step-item::before { left: 18px; }
     }
   </style>
-  <link rel="stylesheet" href="/light-theme.css?v=2">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Hanken+Grotesk:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="/ratgeber/ratgeber.css?v=2">
 </head>
 <body>
 
 <nav>
-  <a href="/" class="logo" aria-label="SimpleTrailer Startseite"><img src="/logo.png?v=6" alt="SimpleTrailer - Anhängervermietung Bremen" style="height:36px;width:auto;display:block;" /></a>
+  <a href="/" class="logo" aria-label="SimpleTrailer Startseite"><img src="/logo.png?v=6" alt="SimpleTrailer - Anhängervermietung Bremen" class="logo-img" /></a>
   <div class="nav-actions">
     <a href="/ratgeber" class="nav-back">← Ratgeber</a>
     <a href="/booking" class="nav-cta">Anhänger buchen</a>
@@ -227,6 +231,14 @@
   <p class="lead">
     <strong>Ankuppeln ist nicht schwer</strong> — wenn du die Reihenfolge kennst. Mit etwas Übung kriegst du das in unter 3 Minuten hin. In dieser Anleitung gehen wir 7 Schritte durch, von "Auto rückwärts ranfahren" bis "Sicherheits-Check". Plus ein paar Tipps, die du beim ersten Mal froh sein wirst zu wissen.
   </p>
+
+  <figure class="r-figure">
+    <picture>
+      <source srcset="/ratgeber/bild-ankuppeln.webp" type="image/webp">
+      <img src="/ratgeber/bild-ankuppeln.jpg" alt="SimpleTrailer-Anhänger an einen PKW angekuppelt – Kupplung, Deichsel und Stützrad" loading="lazy" decoding="async" width="1000" height="667">
+    </picture>
+    <figcaption>Sitzt die Kupplung auf dem Kugelkopf und ist das Stützrad oben, ist der Anhänger fahrbereit.</figcaption>
+  </figure>
 
   <h2>Bevor du startest: Diese Checkliste</h2>
   <ul>
