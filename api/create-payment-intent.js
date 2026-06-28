@@ -104,6 +104,27 @@ module.exports = async (req, res) => {
       week:      trailer.price_week      || 119,
     };
 
+    // ── Wochen-Mengenrabatt ──────────────────────────────────────────────
+    // Je laenger gemietet, desto guenstiger jeder weitere Tag. Tag 1 = voller
+    // Tagespreis. Der Extra-Tag-Satz sinkt mit jeder erreichten Woche:
+    //   Tag 2–7  : extra_day (Kurzmiete) — Gesamtpreis aber gedeckelt auf den Wochenpreis
+    //   Tag 8–14 : WEEK2_DAY  (2. Woche)
+    //   Tag 15–21: WEEK3_DAY  (3. Woche)
+    //   ab Tag 22: WEEK4_DAY  (4. Woche und weiter)
+    // ACHTUNG: 1:1 IDENTISCH zu booking.html calcPrice() — beide muessen gleich rechnen.
+    const WEEK2_DAY = 14, WEEK3_DAY = 12, WEEK4_DAY = 10;
+    function daysPrice(totalDays) {
+      if (totalDays <= 7) {
+        // Kurzmiete: Tag 1 voll + jeder weitere Tag, nie teurer als eine ganze Woche.
+        return Math.min(prices.day + (totalDays - 1) * prices.extra_day, prices.week);
+      }
+      let sum = prices.week; // 1. Woche = Wochenpreis (119 €)
+      for (let d = 8; d <= totalDays; d++) {
+        sum += d <= 14 ? WEEK2_DAY : d <= 21 ? WEEK3_DAY : WEEK4_DAY;
+      }
+      return sum;
+    }
+
     function calcBaseAmount(start, end) {
       const hours = (new Date(end) - new Date(start)) / 3600000;
       if (hours <= 0)      return 0;
@@ -118,17 +139,10 @@ module.exports = async (req, res) => {
       if      (remainH <= 0) remainPrice = 0;
       else if (remainH <= 3) remainPrice = prices.kurztrip;
       else if (remainH <= 6) remainPrice = prices.halftag;
-      else                   remainPrice = prices.extra_day;
+      // > 6h Rest zaehlt als ein ganzer weiterer Tag (steckt in extraDays).
       const extraDays = fullExtra + (remainH > 6 ? 1 : 0);
-      // Wochentarif automatisch: ab 7 Tagen Wochenpreis + Extra-Tage (IDENTISCH zu booking.html calcPrice).
       const totalDays = extraDays + 1;
-      let weeks   = Math.floor(totalDays / 7);
-      let remDays = totalDays - weeks * 7;
-      if (weeks >= 1 && remDays > 0 && remDays * prices.extra_day >= prices.week) { weeks += 1; remDays = 0; }
-      const baseDays = weeks === 0
-        ? prices.day + extraDays * prices.extra_day
-        : weeks * prices.week + remDays * prices.extra_day;
-      return baseDays + (remainH > 0 && remainH <= 6 ? remainPrice : 0);
+      return daysPrice(totalDays) + (remainH > 0 && remainH <= 6 ? remainPrice : 0);
     }
 
     let baseAmount;
