@@ -256,11 +256,19 @@ info@simpletrailer.de · simpletrailer.de`;
       const insLabels = { none: 'Ohne Schutzpaket', basis: 'Basis-Schutz (500 € SB)', premium: 'Premium-Schutz (50 € SB)' };
       const tariffLabels = { '3h': '3 Stunden', '6h': '6 Stunden', day: 'Ganzer Tag', weekend: 'Wochenende (Fr-So)', week: '1 Woche', flexible: 'Individuell' };
       const freeFloatingFee = parseFloat(meta.free_floating_fee || '0') || 0;
-      const baseAmount = Math.max(0, amount - insAmount - cancellationProtectionFee - freeFloatingFee);
+      // Rabatt (optional): volle Miete + volle Add-ons werden ausgewiesen, der Rabatt als eigene
+      // (negative) Position. Summe aller Positionen = tatsächlich gezahlter Betrag (amount).
+      const discountAmount  = parseFloat(meta.discount_amount  || '0') || 0;
+      const discountCode    = meta.discount_code || '';
+      const discountPercent = parseFloat(meta.discount_percent || '0') || 0;
+      const discountScope   = meta.discount_scope || 'total';
+      // Volle (unrabattierte) Miete: Rabatt wieder herausrechnen, damit die Rabatt-Zeile sichtbar wird.
+      const baseAmount = Math.max(0, amount - insAmount - cancellationProtectionFee - freeFloatingFee + discountAmount);
       const items = [{ label: `Anhängermiete · ${tariffLabels[meta.pricing_type] || meta.pricing_type}`, gross: baseAmount }];
       if (insAmount > 0) items.push({ label: insType === 'basis' ? 'Basis-Schutz (Selbstbeteiligung 500 €)' : 'Premium-Schutz (Selbstbeteiligung 50 €)', gross: insAmount });
       if (cancellationProtectionFee > 0) items.push({ label: 'Kostenlose Stornierung (Storno bis zum Mietbeginn)', gross: cancellationProtectionFee });
       if (freeFloatingFee > 0) items.push({ label: 'Rückgabe egal-wo in Bremen (Flexrückgabe)', gross: freeFloatingFee });
+      if (discountAmount > 0) items.push({ label: `Rabatt ${discountCode}${discountScope === 'rent' ? ' (nur auf Miete)' : ''} -${discountPercent} %`, gross: -discountAmount });
 
       const pdfPayload = {
         bookingShort: booking.id.slice(0,8).toUpperCase(),
