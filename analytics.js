@@ -64,7 +64,7 @@
     } catch (e) { return 'unbekannt'; }
   }
   function stOnProd() {
-    return location.hostname === 'simpletrailer.de'
+    return /^(www\.)?simpletrailer\.de$/.test(location.hostname)
         || location.hostname.endsWith('.vercel.app');
   }
 
@@ -89,7 +89,7 @@
   // ────────────────────────────────────────────────────────────
   // Auto-aktiv auf Vercel-Production. Auf localhost / file:// passiert nichts.
   try {
-    const onVercel = location.hostname === 'simpletrailer.de'
+    const onVercel = /^(www\.)?simpletrailer\.de$/.test(location.hostname)
                   || location.hostname.endsWith('.vercel.app');
     if (onVercel) {
       window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
@@ -139,7 +139,7 @@
   // Admin-Dashboard zeigt damit "X Besucher gerade auf der Seite" in Echtzeit.
   // DSGVO: keine IP, keine Cookies, keine personenbezogenen Daten.
   try {
-    const onProd = location.hostname === 'simpletrailer.de'
+    const onProd = /^(www\.)?simpletrailer\.de$/.test(location.hostname)
                 || location.hostname.endsWith('.vercel.app');
     if (onProd) {
       let sid = sessionStorage.getItem('st_sid');
@@ -200,7 +200,7 @@
 
   if (SENTRY_DSN) {
     try {
-      const onProd = location.hostname === 'simpletrailer.de'
+      const onProd = /^(www\.)?simpletrailer\.de$/.test(location.hostname)
                   || location.hostname.endsWith('.vercel.app');
       if (onProd) {
         const s = document.createElement('script');
@@ -248,7 +248,7 @@
 
   try {
     const anyId = GOOGLE_ADS_CONVERSION_ID || GA4_MEASUREMENT_ID;
-    const onProd = location.hostname === 'simpletrailer.de'
+    const onProd = /^(www\.)?simpletrailer\.de$/.test(location.hostname)
                 || location.hostname.endsWith('.vercel.app');
     if (!anyId && onProd) {
       console.info('[analytics] Google-Ads-/GA4-IDs noch nicht gesetzt — Conversion-Tracking inaktiv. Siehe analytics.js Section 7.');
