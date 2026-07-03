@@ -37,6 +37,25 @@ module.exports = async (req, res) => {
   const email = String(body.email || '').trim().toLowerCase().slice(0, 254);
   const source = String(body.source || 'website').slice(0, 50);
 
+  // ── Spamschutz (stille Ablehnung: Bot bekommt Fake-Erfolg, aber KEINE Mail/DB) ──
+  // Die Double-Opt-In-Bestätigung hält Bots aus der bestätigten Liste, aber jede
+  // pending-Anmeldung löste bisher eine Resend-Mail an Fake-Adressen aus → Bounces
+  // schaden der Zustellbarkeit echter Buchungsmails. Diese drei Checks stoppen das.
+  const fakeOk = () => res.status(200).json({ ok: true, confirmation_sent: true });
+
+  // 1) Honeypot: Feld "company" ist im Formular für Menschen unsichtbar.
+  if (String(body.company || '').trim() !== '') return fakeOk();
+
+  // 2) Zeit-Falle: echte Nutzer brauchen >2s bis zum Absenden. `elapsed` = ms seit
+  //    Seiten-Load. Fehlt der Wert (direkter API-Bot) ODER ist er absurd klein → Bot.
+  const elapsed = Number(body.elapsed);
+  if (!Number.isFinite(elapsed) || elapsed < 2000) return fakeOk();
+
+  // 3) Herkunft: echte Anmeldung kommt per fetch() von simpletrailer.de (Origin/Referer
+  //    wird vom Browser bei POST immer gesetzt). Direkte Bot-POSTs haben das meist nicht.
+  const origin = String(req.headers.origin || req.headers.referer || '');
+  if (!/^https?:\/\/([a-z0-9-]+\.)?simpletrailer\.de(?:[:/]|$)/i.test(origin)) return fakeOk();
+
   if (!email || !email.includes('@') || !email.includes('.')) {
     return res.status(400).json({ error: 'Invalid email' });
   }
