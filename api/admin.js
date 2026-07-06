@@ -580,6 +580,25 @@ module.exports = async (req, res) => {
         // Leerer String → NULL (sauberer in DB als '')
         updates[k] = (body[k] === '' || body[k] === null) ? null : body[k];
       }
+
+      // ── Preis-Felder: nur als valide, nicht-negative Zahlen zulassen ──
+      // Diese Werte steuern DIREKT die Live-Buchungsbeträge (booking.js + create-payment-intent.js
+      // laden dieselben Spalten). Fehleingabe = kaputte Preise → hart validieren.
+      const PRICE_FIELDS = [
+        'price_kurztrip', 'price_halftag', 'price_day',
+        'price_extra_day', 'price_weekend', 'price_week', 'late_fee_per_hour'
+      ];
+      for (const k of PRICE_FIELDS) {
+        if (body[k] === undefined || body[k] === '' || body[k] === null) continue;
+        const n = Number(body[k]);
+        // > 0 erzwingen: Buchung/Rückgabe lesen die Preise mit `|| Default`, d.h. 0 würde
+        // STILL auf den Hardcode-Default zurückfallen (Admin sieht 0, Kunde zahlt Default).
+        if (!Number.isFinite(n) || n <= 0 || n > 100000) {
+          return res.status(400).json({ error: `Ungültiger Preis für ${k} (muss größer 0 sein)` });
+        }
+        updates[k] = Math.round(n * 100) / 100;
+      }
+
       if (!Object.keys(updates).length) {
         return res.status(400).json({ error: 'Keine Felder zum Updaten' });
       }
@@ -918,7 +937,7 @@ SimpleTrailer GbR · Waltjenstr. 96, 28237 Bremen · info@simpletrailer.de`;
         const r = await supabase.from('trailers').select(
           'id, name, type, is_available, image_url, access_code, license_plate, chassis_number, ' +
           'next_tuev_date, next_maintenance_date, insurance_until, purchase_date, internal_notes, ' +
-          'price_3h, price_day, price_weekend, late_fee_per_hour, ' +
+          'price_kurztrip, price_halftag, price_day, price_extra_day, price_weekend, price_week, late_fee_per_hour, ' +
           'last_lat, last_lng, last_seen_at, last_battery_percent, last_speed_kmh, ' +
           'created_at'
         );
@@ -926,11 +945,16 @@ SimpleTrailer GbR · Waltjenstr. 96, 28237 Bremen · info@simpletrailer.de`;
       } catch (e) { error = e; }
 
       if (error && /column .* does not exist/i.test(error.message || '')) {
-        // Fallback: nur garantierte Spalten (Migration noch ausstehend)
+        // Fallback: ohne die Fleet-Migration-Spalten (access_code/Kennzeichen/…).
+        // Die Preis-Spalten gehören NICHT zur Fleet-Migration und existieren unabhängig davon.
         const r2 = await supabase.from('trailers').select(
           'id, name, type, is_available, image_url, next_tuev_date, next_maintenance_date, ' +
-          'price_3h, price_day, price_weekend, last_lat, last_lng, last_seen_at, created_at'
+          'price_kurztrip, price_halftag, price_day, price_extra_day, price_weekend, price_week, ' +
+          'late_fee_per_hour, last_lat, last_lng, last_seen_at, created_at'
         );
+        // r2.error NICHT verschlucken — sonst käme bei einem echten Fehler eine leere
+        // Liste + irreführende „trailer-fleet"-Warnung statt eines sichtbaren 500.
+        if (r2.error) return res.status(500).json({ error: r2.error.message });
         return res.status(200).json({
           trailers: r2.data || [],
           warning: 'Migration trailer-fleet noch nicht gelaufen — Code/Kennzeichen/etc. fehlen.'
@@ -1220,6 +1244,7 @@ SimpleTrailer GbR · Waltjenstr. 96, 28237 Bremen · info@simpletrailer.de`;
       late_fee_amount, late_fee_payment_intent_id,
       stripe_payment_intent_id, created_at,
       return_photo_url, ladeflaeche_photo_url, precheck_photo_url, insurance_type, insurance_amount,
+      free_floating, cancellation_protection, cancellation_protection_fee,
       trailers(name)
     `).order('created_at', { ascending: false });
     if (error) throw error;
@@ -1240,6 +1265,12 @@ SimpleTrailer GbR · Waltjenstr. 96, 28237 Bremen · info@simpletrailer.de`;
       insurance_basis_count:   paid.filter(b=>b.insurance_type==='basis').length,
       insurance_premium_count: paid.filter(b=>b.insurance_type==='premium').length,
       insurance_none_count:    paid.filter(b=>!b.insurance_type||b.insurance_type==='none').length,
+      // Zusatz-Optionen (nur bezahlte Buchungen)
+      cancellation_protection_count: paid.filter(b=>b.cancellation_protection).length,
+      cancellation_protection_revenue: Math.round(paid.reduce((s,b)=>s+(b.cancellation_protection_fee||0),0)*100)/100,
+      free_floating_count: paid.filter(b=>b.free_floating).length,
+      // Stornierungen (widerrufen/erstattet) — für Storno-Quote
+      cancelled_count: bookings.filter(b=>b.status==='cancelled').length,
     };
     return res.status(200).json({ bookings, stats });
   } catch (err) {

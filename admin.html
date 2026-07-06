@@ -115,6 +115,18 @@
     .bar-track{flex:1;height:10px;background:var(--s3);border-radius:6px;overflow:hidden;}
     .bar-fill{height:100%;background:linear-gradient(90deg,var(--orange),#ff8a3d);border-radius:6px;transition:width .6s ease;}
     .bar-row .bv{width:54px;text-align:right;font-size:.78rem;font-weight:700;font-variant-numeric:tabular-nums;flex-shrink:0;}
+    .bar-row .bv.wide{width:96px;}
+    .bar-row[title]{cursor:default;}
+    .bar-row .bl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .bar-row .bl.wideL{width:112px;}
+    /* charts */
+    .chart-svg{width:100%;height:auto;display:block;overflow:visible;}
+    .viz-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:10px;}
+    .donut-legend{display:flex;flex-direction:column;gap:2px;}
+    .lg-item{display:flex;align-items:center;gap:8px;padding:3px 0;font-size:.84rem;}
+    .lg-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0;}
+    .lg-name{flex:1;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .lg-val{font-weight:700;font-variant-numeric:tabular-nums;}
 
     /* ── DETAIL PANEL (slide-in) ── */
     #scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .25s;z-index:90;}
@@ -506,6 +518,7 @@
 
   /* ── FINANZEN ── */
   let finPeriod='monat';
+  let statPeriod='monat';
   function finFrom(p){ const n=new Date(); if(p==='heute')return new Date(n.getFullYear(),n.getMonth(),n.getDate()); if(p==='woche'){const f=new Date(n);f.setDate(n.getDate()-6);f.setHours(0,0,0,0);return f;} if(p==='monat')return new Date(n.getFullYear(),n.getMonth(),1); if(p==='jahr')return new Date(n.getFullYear(),0,1); return new Date(0); }
   function renderFinanzen(){
     const periods=[['heute','Heute'],['woche','7 Tage'],['monat','Monat'],['jahr','Jahr'],['gesamt','Gesamt']];
@@ -526,25 +539,95 @@
       <div class="row"><div class="main"><div class="t1">Stripe-Gebühren (ca.)</div><div class="t2">~1,5 % + 0,25 €/Buchung</div></div><div class="right amt" style="color:var(--red)">−${eur(fee)}</div></div>
     </div>`;
     const ib=paid.filter(b=>b.insurance_type==='basis').length, ip=paid.filter(b=>b.insurance_type==='premium').length, inone=paid.filter(b=>!b.insurance_type||b.insurance_type==='none').length;
+    // Zusatz-Umsätze (Storno-Schutz + Free-Floating) — jetzt aus echten DB-Feldern
+    const cpCount=paid.filter(b=>b.cancellation_protection).length, cpRev=paid.reduce((s,b)=>s+(b.cancellation_protection_fee||0),0);
+    const ffCount=paid.filter(b=>b.free_floating).length, ffRev=ffCount*15;
+    const pct=n=>txns?Math.round(n/txns*100):0;
+    h+=`<div class="sect-title">Zusatz-Umsätze</div><div class="card">
+      <div class="row"><div class="main"><div class="t1">Schutzpaket (Versicherung)</div><div class="t2">${ib+ip} von ${txns} · ${pct(ib+ip)}% mit Paket</div></div><div class="right amt" style="color:var(--green)">${eur(insRev)}</div></div>
+      <div class="row"><div class="main"><div class="t1">Storno-Schutz</div><div class="t2">${cpCount} von ${txns} · ${pct(cpCount)}% mit Schutz</div></div><div class="right amt" style="color:var(--green)">${eur(cpRev)}</div></div>
+      <div class="row"><div class="main"><div class="t1">Free-Floating</div><div class="t2">${ffCount} von ${txns} · ${pct(ffCount)}%</div></div><div class="right amt" style="color:var(--green)">${eur(ffRev)}</div></div>
+    </div>`;
     h+=`<div class="sect-title">Schutzpaket-Wahl</div><div class="card" style="padding:14px 16px">${barChart([['Basis',ib],['Premium',ip],['Keins',inone]])}</div>`;
     h+=`<div style="color:var(--dim);font-size:.78rem;margin-top:12px;padding:0 4px">💡 Zeitraum: ${periods.find(p=>p[0]===finPeriod)[1]} · Zahlart pro Buchung im Detail (live aus Stripe). MwSt/Gebühr = Schätzwerte.</div>`;
     document.getElementById('pane-finanzen').innerHTML=h;
   }
 
-  /* ── STATISTIK ── */
+  /* ── STATISTIK (Umsatz & Buchungs-Analyse) ── */
+  const TARIFF_LBL={'3h':'Kurztrip','6h':'Halber Tag',day:'Ganzer Tag',weekend:'Wochenende',week:'1 Woche',flexible:'Individuell'};
+  // Reine Miete = bezahlter Betrag ohne Schutzpaket/Storno/Free-Floating (Free-Float pauschal 15 €)
+  function rentOf(b){ return Math.max(0,(b.total_amount||0)-(b.insurance_amount||0)-(b.cancellation_protection_fee||0)-(b.free_floating?15:0)); }
   function renderStatistik(){
-    const paid=ST.bookings.filter(b=>['confirmed','active','returned'].includes(b.status));
-    const wd=['So','Mo','Di','Mi','Do','Fr','Sa'], wdC=[0,0,0,0,0,0,0];
+    const periods=[['woche','7 Tage'],['monat','Monat'],['jahr','Jahr'],['gesamt','Gesamt']];
+    const from=finFrom(statPeriod);
+    const rangeAll=ST.bookings.filter(b=>new Date(b.created_at)>=from);
+    const paid=rangeAll.filter(b=>['confirmed','active','returned'].includes(b.status));
+    const cancelled=rangeAll.filter(b=>b.status==='cancelled');
+    const txns=paid.length;
+    const rev=paid.reduce((s,b)=>s+(b.total_amount||0)+(b.late_fee_amount||0),0);
+    const avg=txns?rev/txns:0;
+    // Zusatz-Optionen & Quoten
+    const cpCount=paid.filter(b=>b.cancellation_protection).length;
+    const cpRate=txns?Math.round(cpCount/txns*100):0;
+    const cpRev=paid.reduce((s,b)=>s+(b.cancellation_protection_fee||0),0);
+    const insBasis=paid.filter(b=>b.insurance_type==='basis').length;
+    const insPrem=paid.filter(b=>b.insurance_type==='premium').length;
+    const insNone=txns-insBasis-insPrem;
+    const insRev=paid.reduce((s,b)=>s+(b.insurance_amount||0),0);
+    const ffCount=paid.filter(b=>b.free_floating).length;
+    const ffRev=ffCount*15;
+    const addonRev=cpRev+insRev+ffRev;
+    const cancelRate=(txns+cancelled.length)?Math.round(cancelled.length/(txns+cancelled.length)*100):0;
+
+    let h=`<div class="toolbar">`+periods.map(([k,l])=>`<button class="chip ${statPeriod===k?'active':''}" onclick="statPeriod='${k}';renderStatistik()">${l}</button>`).join('')+`</div>`;
+    h+=`<div class="grid kpis">
+      <div class="kpi"><div class="label">💶 Umsatz (brutto)</div><div class="val">${eur(rev)}</div><div class="sub">${txns} bezahlte Buchungen</div></div>
+      <div class="kpi"><div class="label">Ø Buchungswert</div><div class="val sm">${eur(avg)}</div></div>
+      <div class="kpi"><div class="label">🛡️ Storno-Schutz-Quote</div><div class="val sm">${cpRate}%</div><div class="sub">${cpCount} mit Schutz · ${eur(cpRev)}</div></div>
+      <div class="kpi"><div class="label">➕ Zusatz-Umsatz</div><div class="val sm">${eur(addonRev)}</div><div class="sub">Schutzpaket + Storno + Free-Float</div></div>
+      <div class="kpi"><div class="label">↩︎ Storno-Quote</div><div class="val sm">${cancelRate}%</div><div class="sub">${cancelled.length} storniert im Zeitraum</div></div>
+    </div>`;
+
+    // Umsatz-Verlauf (adaptiv: 14 Tage bei „7 Tage", sonst 6 Monate) — Trend über die Zeit, unabhängig vom Filter
+    const trendDaily=(statPeriod==='woche');
+    const paidAll=ST.bookings.filter(b=>['confirmed','active','returned'].includes(b.status));
+    const buckets=[]; const nowM=new Date();
+    if(trendDaily){
+      for(let i=13;i>=0;i--){const d=new Date(nowM.getFullYear(),nowM.getMonth(),nowM.getDate()-i);buckets.push({key:d.toDateString(),label:d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'}),value:0});}
+      paidAll.forEach(b=>{const bk=buckets.find(x=>x.key===new Date(b.created_at).toDateString());if(bk)bk.value+=(b.total_amount||0)+(b.late_fee_amount||0);});
+    } else {
+      for(let i=5;i>=0;i--){const d=new Date(nowM.getFullYear(),nowM.getMonth()-i,1);buckets.push({key:d.getFullYear()+'-'+d.getMonth(),label:d.toLocaleDateString('de-DE',{month:'short'}),value:0});}
+      paidAll.forEach(b=>{const c=new Date(b.created_at);const bk=buckets.find(x=>x.key===c.getFullYear()+'-'+c.getMonth());if(bk)bk.value+=(b.total_amount||0)+(b.late_fee_amount||0);});
+    }
+    h+=`<div class="sect-title">Umsatz-Verlauf ${trendDaily?'· 14 Tage':'· 6 Monate'}</div><div class="card" style="padding:16px 16px 10px">${areaChart(buckets.map(b=>({label:b.label,value:Math.round(b.value)})),v=>eur(v))}</div>`;
+
+    // Was buchen die Kunden? (Tarif-Verteilung: Anzahl + reine Miete)
+    const byTariff={}; paid.forEach(b=>{const k=b.pricing_type||'?';(byTariff[k]=byTariff[k]||{c:0,r:0}).c++;byTariff[k].r+=rentOf(b);});
+    const tariffRows=Object.entries(byTariff).sort((a,b)=>b[1].c-a[1].c).map(([k,v])=>[TARIFF_LBL[k]||k,v.c,eur(v.r)]);
+    h+=`<div class="sect-title">Was buchen die Kunden? · Tarif</div><div class="card" style="padding:14px 16px">${barChart(tariffRows,v=>v+'×',{wide:true,labelWide:true,color:'var(--blue)'})}</div>`;
+
+    // Zusatz-Optionen — Quoten als Donuts
+    h+=`<div class="sect-title">Zusatz-Optionen — Quoten</div>
+      <div class="viz-grid">
+        <div class="card" style="padding:15px 16px"><div style="font-size:.82rem;color:var(--muted);margin-bottom:12px;font-weight:600">🛡️ Storno-Schutz</div>${donut([{name:'Mit Schutz',value:cpCount,color:'var(--green)'},{name:'Ohne',value:Math.max(0,txns-cpCount),color:'var(--border2)'}],cpRate+'%','mit Schutz')}</div>
+        <div class="card" style="padding:15px 16px"><div style="font-size:.82rem;color:var(--muted);margin-bottom:12px;font-weight:600">🧾 Schutzpaket</div>${donut([{name:'Basis',value:insBasis,color:'var(--blue)'},{name:'Premium',value:insPrem,color:'var(--orange)'},{name:'Keins',value:Math.max(0,insNone),color:'var(--border2)'}],(txns?Math.round((insBasis+insPrem)/txns*100):0)+'%','mit Paket')}</div>
+        <div class="card" style="padding:15px 16px"><div style="font-size:.82rem;color:var(--muted);margin-bottom:12px;font-weight:600">📍 Free-Floating</div>${donut([{name:'Ja',value:ffCount,color:'var(--yellow)'},{name:'Nein',value:Math.max(0,txns-ffCount),color:'var(--border2)'}],(txns?Math.round(ffCount/txns*100):0)+'%','Free-Float')}</div>
+      </div>`;
+
+    // Anhänger-Auslastung (Anzahl + Umsatz)
+    const byTrailer={}; paid.forEach(b=>{const n=b.trailers?.name||'?';(byTrailer[n]=byTrailer[n]||{c:0,r:0}).c++;byTrailer[n].r+=(b.total_amount||0);});
+    const trailerRows=Object.entries(byTrailer).sort((a,b)=>b[1].c-a[1].c).map(([n,v])=>[n,v.c,eur(v.r)]);
+    h+=`<div class="sect-title">Anhänger-Auslastung</div><div class="card" style="padding:14px 16px">${barChart(trailerRows,v=>v+'×',{wide:true,labelWide:true,color:'var(--orange)'})}</div>`;
+
+    // Wochentag + Tageszeit (nach Buchungs-Start)
+    const wd=['So','Mo','Di','Mi','Do','Fr','Sa'], wdC=[0,0,0,0,0,0,0], order=[1,2,3,4,5,6,0];
     paid.forEach(b=>{if(b.start_time)wdC[new Date(b.start_time).getDay()]++;});
-    const order=[1,2,3,4,5,6,0];
-    const byTrailer={}; paid.forEach(b=>{const n=b.trailers?.name||'?';byTrailer[n]=(byTrailer[n]||0)+1;});
-    // Umsatz letzte 6 Monate
-    const months=[]; const nowM=new Date();
-    for(let i=5;i>=0;i--){const d=new Date(nowM.getFullYear(),nowM.getMonth()-i,1);months.push([d,0]);}
-    paid.forEach(b=>{const c=new Date(b.created_at);months.forEach(m=>{if(c.getFullYear()===m[0].getFullYear()&&c.getMonth()===m[0].getMonth())m[1]+=(b.total_amount||0);});});
-    let h=`<div class="sect-title">Umsatz – letzte 6 Monate</div><div class="card" style="padding:14px 16px">${barChart(months.map(m=>[m[0].toLocaleDateString('de-DE',{month:'short'}),m[1]]),v=>eur(v))}</div>`;
-    h+=`<div class="sect-title">Buchungen nach Wochentag</div><div class="card" style="padding:14px 16px">${barChart(order.map(i=>[wd[i],wdC[i]]))}</div>`;
-    h+=`<div class="sect-title">Anhänger-Auslastung</div><div class="card" style="padding:14px 16px">${barChart(Object.entries(byTrailer))}</div>`;
+    h+=`<div class="sect-title">Buchungen nach Wochentag</div><div class="card" style="padding:14px 16px">${barChart(order.map(i=>[wd[i],wdC[i]]),null,{color:'var(--green)'})}</div>`;
+    const slots=[['Nacht · 0–6',0],['Morgen · 6–10',0],['Mittag · 10–14',0],['Nachm. · 14–18',0],['Abend · 18–24',0]];
+    paid.forEach(b=>{if(!b.start_time)return;const hr=new Date(b.start_time).getHours();slots[hr<6?0:hr<10?1:hr<14?2:hr<18?3:4][1]++;});
+    h+=`<div class="sect-title">Buchungen nach Tageszeit</div><div class="card" style="padding:14px 16px">${barChart(slots,null,{labelWide:true,color:'var(--blue)'})}</div>`;
+
+    h+=`<div style="color:var(--dim);font-size:.78rem;margin-top:16px;padding:0 4px;line-height:1.5">💡 Der Zeitraum-Filter wirkt auf KPIs, Tarife & Quoten. Der Umsatz-Verlauf zeigt immer den Trend (14 Tage bzw. 6 Monate). „Miete" = Betrag ohne Schutzpaket/Storno/Free-Float. Balken/Segmente zeigen Details beim Drüberfahren.</div>`;
     document.getElementById('pane-statistik').innerHTML=h;
   }
 
@@ -568,20 +651,95 @@
     let worst=-1,wd=0; for(let i=1;i<steps.length;i++){const drop=steps[i-1][1]-steps[i][1]; if(drop>wd){wd=drop;worst=i;}}
     const mx=Math.max(1,vis);
     const funnel=steps.map((s,i)=>`<div class="bar-row"><div class="bl">${esc(s[0])}${i===worst&&wd>0?' <span style="color:var(--yellow);font-size:.74rem">← größter Absprung</span>':''}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.min(100,Math.round(s[1]/mx*100))}%"></div></div><div class="bv">${s[1]} · ${pc(s[1])}%</div></div>`).join('');
+    // ── Auto-Analyse: wo verlierst du die Leute, DIE buchen wollen? ──
+    // Größter PROZENTUALER Absprung ab "Buchung gestartet" — aber nur Schritte mit
+    // genug Stichprobe (Vorgänger ≥5), sonst ist die %-Zahl Rauschen. Der absolute
+    // Besucher→Start-Absprung ist immer am größten (nie buchen alle) → wäre irreführend.
+    const _done=steps[5][1], _started=steps[1][1];
+    const _conv=vis?Math.round(_done/vis*1000)/10:0;
+    const _sconv=vis?Math.round(_started/vis*1000)/10:0;
+    let _wi=-1,_wp=0,_wlost=0;
+    for(let i=2;i<steps.length;i++){
+      const prev=steps[i-1][1]; if(prev<5) continue;
+      const lost=prev-steps[i][1]; if(lost<=0) continue;
+      const p=lost/prev; if(p>_wp){_wp=p;_wi=i;_wlost=lost;}
+    }
+    const COCKPIT_TIPS={
+      1:'Die meisten Besucher starten gar keine Buchung. → Ist der „Buchen"-Button sofort sichtbar (Hero + Nav)? Schafft die Startseite genug Vertrauen (Preise, Bewertungen, „so funktioniert\'s")? Teste einen klareren Haupt-CTA.',
+      2:'Leute starten, springen aber vor dem Konto ab (Datum/Optionen/Preis). → Preis-Schock? Schutzpakete zu kompliziert? Schritt zu lang — vor allem mobil? Sieh dir Recordings genau dieses Schritts an und kürze, wo es geht.',
+      3:'Der Konto-Schritt ist die größte Hürde. → Registrierung muss in einem Rutsch gehen (E-Mail-Bestätigung ist jetzt aus ✓). Bleibt der Absprung hoch → „als Gast buchen" (Konto optional) erwägen.',
+      4:'Die Führerschein-Verifizierung (Ausweis + Selfie) schreckt ab. → Erklär den Schritt VORHER kurz („dauert 1 Min, gesetzlich vorgeschrieben, Daten sicher"). Vertrauen senkt den Absprung hier am stärksten.',
+      5:'Leute klicken auf „Bezahlen", schließen aber nicht ab. → Stripe-Fehler? Zu wenige Zahlarten (Apple/Google Pay aktiv)? Versteckte Kosten, die erst hier auftauchen? Prüf die Stripe-Logs.'
+    };
+    let advice;
+    if(!vis){ advice='<div style="color:var(--dim)">Noch keine Besucher-Daten — füllt sich automatisch.</div>'; }
+    else{
+      advice=`<div style="margin-bottom:10px;font-size:.92rem"><b style="font-size:1.05rem">${_done}</b> von <b>${vis}</b> Besuchern haben gebucht — Conversion <b style="color:${_conv>=2?'var(--green)':'var(--yellow)'}">${_conv}%</b>. ${_started} starteten die Buchung (${_sconv}% der Besucher).</div>`;
+      if(_wi>0){
+        const dp=Math.round(_wp*100);
+        advice+=`<div style="margin-bottom:10px;font-size:.92rem">🔻 <b>Größter Absprung im Buchungs-Trichter:</b> ${esc(steps[_wi-1][0])} → ${esc(steps[_wi][0])} — hier verlierst du <b style="color:var(--red)">${dp}%</b> (${_wlost} Leute).</div>`;
+        advice+=`<div style="background:var(--s2);border-left:3px solid var(--orange);padding:11px 13px;border-radius:8px;font-size:.9rem;line-height:1.55">👉 ${COCKPIT_TIPS[_wi]}</div>`;
+        if(_sconv<20) advice+=`<div style="margin-top:10px;font-size:.86rem;color:var(--muted)">Außerdem: nur ${_sconv}% der Besucher starten überhaupt eine Buchung. ${COCKPIT_TIPS[1]}</div>`;
+      } else if(_started<5){
+        advice+=`<div style="background:var(--s2);border-left:3px solid var(--orange);padding:11px 13px;border-radius:8px;font-size:.9rem;line-height:1.55">👉 ${COCKPIT_TIPS[1]}</div>`;
+      } else {
+        advice+='<div style="color:var(--dim);font-size:.86rem">Kein klarer Engpass mit ausreichender Stichprobe — der Trichter läuft bislang gleichmäßig durch.</div>';
+      }
+      if(vis<30) advice+=`<div style="color:var(--dim);font-size:.78rem;margin-top:8px">⚠ Noch wenig Daten (&lt;30 Besucher) — die Empfehlung wird belastbarer, je mehr Besuche reinkommen.</div>`;
+    }
     const lbl=s=>SRCLBL[s]||s;
     let h=`<div class="toolbar"><button class="chip ${cockpitPeriod==='d7'?'active':''}" onclick="cockpitPeriod='d7';renderCockpit()">7 Tage</button><button class="chip ${cockpitPeriod==='d30'?'active':''}" onclick="cockpitPeriod='d30';renderCockpit()">30 Tage</button></div>`;
     if(ST.analytics.truncated) h+=`<div class="card" style="padding:10px 14px;color:var(--yellow);font-size:.78rem">⚠ Sehr viele Events — Zahlen evtl. gekürzt. Sag Bescheid, dann stelle ich auf SQL-Aggregation um.</div>`;
     if(!vis) h+=`<div class="card" style="padding:14px 16px;color:var(--dim)">Noch keine Besucher-Daten im Zeitraum — füllt sich automatisch, sobald Leute die Seite besuchen.</div>`;
     h+=`<div class="sect-title">Trichter — wo brechen Besucher ab?</div><div class="card" style="padding:14px 16px">${funnel}</div>`;
+    h+=`<div class="sect-title">💡 Analyse & Empfehlung</div><div class="card" style="padding:14px 16px">${advice}</div>`;
     h+=`<div class="sect-title">Woher kamen die Besucher?</div><div class="card" style="padding:14px 16px">${barChart((d.sources||[]).map(s=>[lbl(s[0]),s[1]]))}</div>`;
     h+=`<div class="sect-title">Buchungen nach Quelle</div><div class="card" style="padding:14px 16px">${barChart((d.bookingSources||[]).map(s=>[lbl(s[0]),s[1]]))}</div>`;
     h+=`<div class="sect-title">Anmeldungen</div><div class="card" style="padding:14px 16px">${barChart([['Notify (warme Leads)',d.notify||0],['Newsletter',d.newsletter||0]])}</div>`;
     h+=`<div style="color:var(--dim);font-size:.78rem;margin-top:12px;padding:0 4px">💡 Zählt seit Einbau (neu) · „Besucher" serverseitig gezählt (Adblocker-resistent) · für Detail-Videos einzelner Besuche weiterhin Microsoft Clarity.</div>`;
     pane.innerHTML=h;
   }
-  function barChart(rows,fmt){
+  function barChart(rows,fmt,opts){
+    opts=opts||{};
     const max=Math.max(1,...rows.map(r=>r[1]));
-    return rows.map(([l,v])=>`<div class="bar-row"><div class="bl">${esc(l)}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/max*100)}%"></div></div><div class="bv">${fmt?fmt(v):v}</div></div>`).join('')||'<div class="empty">Keine Daten.</div>';
+    const wide=opts.wide?' wide':'';
+    const lw=opts.labelWide?' wideL':'';
+    return rows.map(([l,v,sub])=>`<div class="bar-row" title="${esc(l)}: ${fmt?fmt(v):v}${sub?' · '+esc(sub):''}"><div class="bl${lw}">${esc(l)}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/max*100)}%${opts.color?';background:'+opts.color:''}"></div></div><div class="bv${wide}">${fmt?fmt(v):v}${sub?`<span style="color:var(--dim);font-weight:600"> · ${esc(sub)}</span>`:''}</div></div>`).join('')||'<div class="empty">Keine Daten.</div>';
+  }
+  // ── Donut (Anteile) ── segs:[{name,value,color}]
+  function donut(segs,centerVal,centerSub){
+    const total=segs.reduce((s,x)=>s+x.value,0);
+    const r=52,cx=64,cy=64,C=2*Math.PI*r,sw=17; let off=0;
+    const arcs = total ? segs.filter(s=>s.value>0).map(s=>{
+      const frac=s.value/total, len=Math.max(0,frac*C-3);
+      const el=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${s.color}" stroke-width="${sw}" stroke-linecap="butt" stroke-dasharray="${len} ${C-len}" stroke-dashoffset="${-off}" transform="rotate(-90 ${cx} ${cy})"><title>${esc(s.name)}: ${s.value} (${Math.round(frac*100)}%)</title></circle>`;
+      off+=frac*C; return el;
+    }).join('') : `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--s3)" stroke-width="${sw}"/>`;
+    return `<div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
+      <svg width="128" height="128" viewBox="0 0 128 128" style="flex-shrink:0">${arcs}
+        <text x="64" y="61" text-anchor="middle" fill="var(--text)" font-size="23" font-weight="800">${esc(String(centerVal))}</text>
+        <text x="64" y="80" text-anchor="middle" fill="var(--muted)" font-size="10" style="text-transform:uppercase;letter-spacing:.06em">${esc(centerSub||'')}</text>
+      </svg>
+      <div class="donut-legend" style="flex:1;min-width:130px">${segs.map(s=>`<div class="lg-item"><span class="lg-dot" style="background:${s.color}"></span><span class="lg-name">${esc(s.name)}</span><span class="lg-val">${s.value}${total?` · ${Math.round(s.value/total*100)}%`:''}</span></div>`).join('')}</div>
+    </div>`;
+  }
+  // ── Fläche/Linie (Umsatz über Zeit) ── pts:[{label,value}]
+  function areaChart(pts,fmt){
+    const n=pts.length; if(!n) return '<div class="empty">Keine Daten.</div>';
+    const W=680,H=190,padL=6,padR=6,padT=16,padB=30, plotW=W-padL-padR, plotH=H-padT-padB;
+    const max=Math.max(1,...pts.map(p=>p.value));
+    const X=i=>padL+(n===1?plotW/2:(i/(n-1))*plotW);
+    const Y=v=>padT+plotH-(v/max)*plotH;
+    const line=pts.map((p,i)=>`${X(i).toFixed(1)},${Y(p.value).toFixed(1)}`).join(' ');
+    const area=`${X(0).toFixed(1)},${(padT+plotH).toFixed(1)} ${line} ${X(n-1).toFixed(1)},${(padT+plotH).toFixed(1)}`;
+    let grid=''; for(let g=0;g<=2;g++){const gv=max*g/2, gy=Y(gv);grid+=`<line x1="${padL}" y1="${gy.toFixed(1)}" x2="${W-padR}" y2="${gy.toFixed(1)}" stroke="var(--border)" stroke-width="1"/><text x="${padL}" y="${(gy-4).toFixed(1)}" fill="var(--dim)" font-size="10">${fmt?fmt(gv):Math.round(gv)}</text>`;}
+    const dots=pts.map((p,i)=>`<g><circle cx="${X(i).toFixed(1)}" cy="${Y(p.value).toFixed(1)}" r="4" fill="var(--orange)" stroke="var(--s1)" stroke-width="2"/><circle cx="${X(i).toFixed(1)}" cy="${Y(p.value).toFixed(1)}" r="11" fill="transparent"><title>${esc(p.label)}: ${fmt?fmt(p.value):p.value}</title></circle></g>`).join('');
+    const step=Math.ceil(n/7);
+    const xlabels=pts.map((p,i)=>(i%step===0||i===n-1)?`<text x="${X(i).toFixed(1)}" y="${H-8}" fill="var(--muted)" font-size="10" text-anchor="middle">${esc(p.label)}</text>`:'').join('');
+    return `<svg class="chart-svg" viewBox="0 0 ${W} ${H}" role="img">
+      <defs><linearGradient id="stRevGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--orange)" stop-opacity="0.28"/><stop offset="100%" stop-color="var(--orange)" stop-opacity="0.02"/></linearGradient></defs>
+      ${grid}<polygon points="${area}" fill="url(#stRevGrad)"/><polyline points="${line}" fill="none" stroke="var(--orange)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>${dots}${xlabels}
+    </svg>`;
   }
 
   /* ── MEHR ── */
@@ -721,6 +879,26 @@
     h+=`<div class="dlabel">Buchungen (${tb.length})</div>`;
     h+= tb.length ? `<div class="card">`+tb.slice(0,30).map(b=>`<button class="row clickable" onclick="openBooking('${b.id}')"><div class="main"><div class="t1">${esc(b.customer_name||'–')}</div><div class="t2">${fmtDay(b.start_time)}</div></div><div class="right">${statusPill(b.status)}</div></button>`).join('')+`</div>` : `<div class="card"><div class="empty">Keine Buchungen.</div></div>`;
     h+=`<div class="dlabel">Offene Schäden</div><div id="trDamages"><div class="empty">lädt…</div></div>`;
+    // ── Preise & Tarife (editierbar) — steuern die Live-Buchungsbeträge ──
+    if(t.id){
+      const pf=(k,def)=>{const v=t[k]; return (v==null||v==='')?def:v;};
+      const priceRow=(k,lbl,def)=>`<label style="font-size:.7rem;color:var(--muted);display:block">${lbl}<div style="display:flex;align-items:center;gap:5px;margin-top:3px"><input type="number" step="0.5" min="0" id="trP_${k}" value="${pf(k,def)}" style="flex:1;min-width:0;background:var(--s3);border:1px solid var(--border2);color:var(--text);border-radius:8px;padding:8px;font-variant-numeric:tabular-nums"><span style="color:var(--dim);font-size:.8rem">€</span></div></label>`;
+      const hHalf=Number(pf('price_halftag',18)), hKurz=Number(pf('price_kurztrip',9)), hDay=Number(pf('price_day',29));
+      const warn=(hHalf<hKurz||hHalf>=hDay)?`<div style="color:var(--red);font-size:.76rem;margin-top:9px;line-height:1.45">⚠ „Halber Tag" (${eur(hHalf)}) wirkt unplausibel — sollte zwischen Kurztrip (${eur(hKurz)}) und Ganzer Tag (${eur(hDay)}) liegen.</div>`:'';
+      h+=`<div class="dlabel">Preise & Tarife</div><div class="dblock" style="padding:14px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          ${priceRow('price_kurztrip','Kurztrip · bis 3 Std.',9)}
+          ${priceRow('price_halftag','Halber Tag · bis 6 Std.',18)}
+          ${priceRow('price_day','Ganzer Tag · 24 Std.',29)}
+          ${priceRow('price_extra_day','Jeder weitere Tag',24)}
+          ${priceRow('price_weekend','Wochenende · Fr–So',59)}
+          ${priceRow('price_week','1 Woche · 7 Tage',119)}
+          ${priceRow('late_fee_per_hour','Verspätung / Std.',15)}
+        </div>${warn}
+        <button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="saveTrailerPrices('${esc(t.id)}')">Preise speichern</button>
+        <div style="color:var(--dim);font-size:.72rem;margin-top:8px;line-height:1.45">Diese Werte gelten sofort für neue Buchungen. „Individuell" rechnet aus Ganzer Tag + jeder weitere Tag (gedeckelt auf 1 Woche).</div>
+      </div>`;
+    }
     h+=`<div class="dlabel">TÜV / Wartung</div><div class="dblock" style="padding:12px 14px">
       <label style="font-size:.74rem;color:var(--muted);display:block;margin-bottom:8px">Nächster TÜV<input type="date" id="trTuev" value="${t.next_tuev_date?String(t.next_tuev_date).slice(0,10):''}" style="width:100%;margin-top:4px;background:var(--s3);border:1px solid var(--border2);color:var(--text);border-radius:8px;padding:8px"></label>
       <label style="font-size:.74rem;color:var(--muted);display:block;margin-bottom:10px">Nächste Wartung<input type="date" id="trMaint" value="${t.next_maintenance_date?String(t.next_maintenance_date).slice(0,10):''}" style="width:100%;margin-top:4px;background:var(--s3);border:1px solid var(--border2);color:var(--text);border-radius:8px;padding:8px"></label>
@@ -751,6 +929,13 @@
   }
   async function saveTrailerDates(tid){
     try{ const r=await fetch('/api/admin?section=update-trailer-dates',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${authToken}`},body:JSON.stringify({trailer_id:tid,next_tuev_date:document.getElementById('trTuev').value||null,next_maintenance_date:document.getElementById('trMaint').value||null})}); const d=await r.json(); if(!r.ok)throw new Error(d.error||'Fehler'); await loadAll(); alert('✓ Gespeichert.'); }catch(e){alert('❌ '+e.message);}
+  }
+  async function saveTrailerPrices(tid){
+    const keys=['price_kurztrip','price_halftag','price_day','price_extra_day','price_weekend','price_week','late_fee_per_hour'];
+    const payload={trailer_id:tid};
+    for(const k of keys){ const el=document.getElementById('trP_'+k); if(el&&el.value!=='') payload[k]=el.value; }
+    if(Object.keys(payload).length<2){ alert('Keine Preise eingegeben.'); return; }
+    try{ const r=await fetch('/api/admin?section=update-trailer',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${authToken}`},body:JSON.stringify(payload)}); const d=await r.json(); if(!r.ok)throw new Error(d.error||'Fehler'); closePanel(); await loadAll(); alert('✓ Preise gespeichert — gelten sofort für neue Buchungen.'); }catch(e){alert('❌ '+e.message);}
   }
 
   /* ── AI-STAB (Agenten-Chat + Inbox) ── */
