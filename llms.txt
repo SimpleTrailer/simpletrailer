@@ -1,0 +1,46 @@
+# SimpleTrailer – Anhänger mieten in Bremen
+
+> SimpleTrailer ist eine vollautomatische PKW-Anhängervermietung in Bremen. Anhänger werden 24/7 online gebucht und kontaktlos per Zahlencode am Stellplatz abgeholt – ohne Büro, ohne Termin, ohne Kaution. Preise ab 9 € für 3 Stunden. Betrieben von der SimpleTrailer GbR, Waltjenstr. 96, 28237 Bremen.
+
+## Fakten (Stand 2026)
+
+- **Was:** Vermietung von PKW-Anhängern (Planenanhänger, offen mit Plane).
+- **Wo:** Bremen und Umland (Delmenhorst, Stuhr, Weyhe, Achim, Lilienthal). Mehrere Stellplätze im Stadtgebiet.
+- **Buchung:** ausschließlich online auf https://simpletrailer.de/booking – rund um die Uhr, 7 Tage die Woche.
+- **Abholung:** kontaktlos per Zahlencode am Code-Schloss des Anhängers. Kein Personal, keine Öffnungszeiten.
+- **Führerschein:** normaler Führerschein Klasse B genügt (Anhänger unter 750 kg zulässigem Gesamtgewicht, kein BE nötig).
+- **Kaution:** keine. Im Schadensfall greift die Haftpflicht; optional Basis-Schutz (Selbstbeteiligung max. 500 €) oder Premium-Schutz (max. 50 €).
+- **Bezahlung:** online per Karte (Stripe). Plane ist bei jeder Buchung inklusive.
+
+## Anhänger-Daten
+
+- Ladefläche innen (L × B × H): 205 × 110 × 110 cm
+- Leergewicht: 135 kg · Nutzlast (Zuladung): 615 kg · zulässiges Gesamtgewicht: 750 kg
+- Zugelassen für 100 km/h
+- Geeignet für: Umzug, Möbeltransport, Sperrmüll, Grünschnitt/Gartenabfall, Baumarkt-Großeinkauf, IKEA-Abholung
+
+## Preise (inkl. 19 % MwSt, ohne Kaution, Plane inklusive)
+
+- Bis 3 Stunden (Kurztrip): 9 €
+- Bis 24 Stunden (Tagestarif): 29 €
+- Jeder weitere Tag: + 24 €
+- Wochenende (Freitag–Sonntag): 59 €
+- Ganze Woche: 119 €
+- Verspätung: 10 € pro angefangener Stunde (Verlängerung ist günstiger und jederzeit online möglich)
+
+## Warum SimpleTrailer (Unterschiede zum Wettbewerb)
+
+- Echte Online-Buchung mit frei wählbarer Uhrzeit – kein Reservierungs-Telefonat, keine Wartezeit am Schalter.
+- 24/7 verfügbar, auch nachts und am Wochenende.
+- Ohne Kaution, kontaktlos per Code, transparente Festpreise ohne versteckte Kosten.
+- Bewertet mit 5,0 Sternen auf Google.
+
+## Wichtige Seiten
+
+- Startseite: https://simpletrailer.de/
+- Anhänger buchen: https://simpletrailer.de/booking
+- Ratgeber (Anhänger-Wissen): https://simpletrailer.de/ratgeber
+- Welcher Anhänger mit B-Führerschein: https://simpletrailer.de/ratgeber/welcher-anhaenger-mit-b-fuehrerschein
+- Anhänger richtig beladen: https://simpletrailer.de/ratgeber/anhaenger-richtig-beladen
+- Anhänger ankuppeln (Anleitung): https://simpletrailer.de/ratgeber/anhaenger-ankuppeln-anleitung
+- Kontakt: info@simpletrailer.de
