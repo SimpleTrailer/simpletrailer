@@ -883,18 +883,20 @@
     if(t.id){
       const pf=(k,def)=>{const v=t[k]; return (v==null||v==='')?def:v;};
       const priceRow=(k,lbl,def)=>`<label style="font-size:.7rem;color:var(--muted);display:block">${lbl}<div style="display:flex;align-items:center;gap:5px;margin-top:3px"><input type="number" step="0.5" min="0" id="trP_${k}" value="${pf(k,def)}" style="flex:1;min-width:0;background:var(--s3);border:1px solid var(--border2);color:var(--text);border-radius:8px;padding:8px;font-variant-numeric:tabular-nums"><span style="color:var(--dim);font-size:.8rem">€</span></div></label>`;
-      const warn='';
+      const hHalf=Number(pf('price_halftag',18)), hKurz=Number(pf('price_kurztrip',9)), hDay=Number(pf('price_day',29));
+      const warn=(hHalf<hKurz||hHalf>=hDay)?`<div style="color:var(--red);font-size:.76rem;margin-top:9px;line-height:1.45">⚠ „Halber Tag" (${eur(hHalf)}) wirkt unplausibel — sollte zwischen Kurztrip (${eur(hKurz)}) und Ganzer Tag (${eur(hDay)}) liegen.</div>`:'';
       h+=`<div class="dlabel">Preise & Tarife</div><div class="dblock" style="padding:14px">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-          ${priceRow('price_kurztrip','Mindestmiete · 2 Std.',9)}
-          ${priceRow('price_halftag','Stundenpreis · je weitere Std.',3.5)}
-          ${priceRow('price_day','Ganzer Tag · ab ~7,5 Std.',29)}
-          ${priceRow('price_weekend','Wochenende · Fr 0–So 24 (fest)',59)}
-          ${priceRow('price_week','7-Tage-Paket',119)}
-          ${priceRow('late_fee_per_hour','Verspätung / Std.',10)}
+          ${priceRow('price_kurztrip','Kurztrip · bis 3 Std.',9)}
+          ${priceRow('price_halftag','Halber Tag · bis 6 Std.',18)}
+          ${priceRow('price_day','Ganzer Tag · 24 Std.',29)}
+          ${priceRow('price_extra_day','Jeder weitere Tag',24)}
+          ${priceRow('price_weekend','Wochenende · Fr–So',59)}
+          ${priceRow('price_week','1 Woche · 7 Tage',119)}
+          ${priceRow('late_fee_per_hour','Verspätung / Std.',15)}
         </div>${warn}
         <button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="saveTrailerPrices('${esc(t.id)}')">Preise speichern</button>
-        <div style="color:var(--dim);font-size:.72rem;margin-top:8px;line-height:1.45">Diese Werte gelten sofort für neue Buchungen. Modell: 2 Std = Mindestmiete, je weitere Std + Stundenpreis, ab ~7,5 Std Tages-Deckel; ab Tag 2 degressive Staffel. Wochenende & 7-Tage-Paket sind Festpreise. Hinweis: „Stundenpreis" liegt in der DB-Spalte price_halftag, „Wochenende" ist ein Festpreis (nicht mehr 1,8×Tag).</div>
+        <div style="color:var(--dim);font-size:.72rem;margin-top:8px;line-height:1.45">Diese Werte gelten sofort für neue Buchungen. „Individuell" rechnet aus Ganzer Tag + jeder weitere Tag (gedeckelt auf 1 Woche).</div>
       </div>`;
     }
     h+=`<div class="dlabel">TÜV / Wartung</div><div class="dblock" style="padding:12px 14px">

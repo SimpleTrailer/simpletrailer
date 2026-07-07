@@ -81,7 +81,7 @@
       </div>
 
       <table style="margin-bottom:20px;">
-        <tr><td data-i18n="confirm.trailer">Anhänger</td><td data-i18n="trailers.plane.name">PKW-Anhänger mit Plane</td></tr>
+        <tr><td data-i18n="confirm.trailer">Anhänger</td><td>PKW-Anhänger mit Plane</td></tr>
         <tr><td data-i18n="confirm.from">Von</td><td id="fromDate">–</td></tr>
         <tr><td data-i18n="confirm.to">Bis</td><td id="toDate">–</td></tr>
         <tr><td data-i18n="confirm.paid">Bezahlt</td><td style="color:var(--orange);font-weight:700;" id="paidAmount">–</td></tr>
@@ -175,9 +175,9 @@
   <!-- Fehler -->
   <div id="errorView" class="error-view">
     <div class="icon">❌</div>
-    <h1 data-i18n="confirm.err.title">Etwas ist schiefgelaufen</h1>
-    <p class="sub" id="errorMsg" data-i18n="confirm.err.msg">Bitte versuche es erneut oder kontaktiere uns.</p>
-    <a href="/booking" class="btn btn-orange" style="display:inline-flex;width:auto;margin-top:20px;" data-i18n="confirm.err.book_again">Erneut buchen</a>
+    <h1>Etwas ist schiefgelaufen</h1>
+    <p class="sub" id="errorMsg">Bitte versuche es erneut oder kontaktiere uns.</p>
+    <a href="/booking" class="btn btn-orange" style="display:inline-flex;width:auto;margin-top:20px;">Erneut buchen</a>
   </div>
 
 </div>
@@ -214,7 +214,7 @@
     const status = params.get('redirect_status');
 
     if (!piId || (status && status !== 'succeeded')) {
-      showError('Die Zahlung wurde abgebrochen oder ist fehlgeschlagen.', { msgKey: 'confirm.err.payment_failed' });
+      showError('Die Zahlung wurde abgebrochen oder ist fehlgeschlagen.');
       return;
     }
 
@@ -228,10 +228,10 @@
 
       if (!res.ok) {
         if (data && data.refunded) {
-          showError(data.error || 'Der Zeitraum wurde leider vergeben. Deine Zahlung wurde vollständig erstattet.', { refunded: true, msgKey: data.error ? null : 'confirm.err.slot_taken' });
+          showError(data.error || 'Der Zeitraum wurde leider vergeben. Deine Zahlung wurde vollständig erstattet.', { refunded: true });
           return;
         }
-        throw new Error(data.error || (window.t ? window.t('confirm.err.confirm_failed', 'Bestätigung fehlgeschlagen') : 'Bestätigung fehlgeschlagen'));
+        throw new Error(data.error || 'Bestätigung fehlgeschlagen');
       }
 
       document.getElementById('bookingNum').textContent  = '#' + data.booking_id.slice(0, 8).toUpperCase();
@@ -273,48 +273,27 @@
     }
   }
 
-  let currentError = null;
-
   function showError(msg, opts) {
-    currentError = { msg: msg, opts: opts || {} };
     document.getElementById('loadingView').style.display = 'none';
     document.getElementById('errorView').style.display   = 'block';
-    renderError();
-  }
-
-  function renderError() {
-    if (!currentError) return;
-    const t = (k, f) => (window.t ? window.t(k, f) : f);
-    const msg  = currentError.msg;
-    const opts = currentError.opts;
-    // Bei bekannter Fehler-Ursache (msgKey) sprachabhängig auflösen, sonst rohen Server-Text zeigen
-    document.getElementById('errorMsg').textContent = opts.msgKey ? t(opts.msgKey, msg) : msg;
+    document.getElementById('errorMsg').textContent      = msg;
     // Standard-Fehler nach Zahlung: NICHT zu erneuter Zahlung einladen —
     // der Endpoint ist idempotent, Neu-laden bestaetigt die bestehende Zahlung.
     const cta = document.querySelector('#errorView a.btn');
-    const oldHint = document.getElementById('errorHint');
-    if (oldHint) oldHint.remove();
     if (cta) {
-      if (opts.refunded) {
-        cta.textContent = t('confirm.err.choose_slot', 'Neuen Zeitraum wählen →');
+      if (opts && opts.refunded) {
+        cta.textContent = 'Neuen Zeitraum wählen →';
         cta.href = '/booking';
       } else {
-        cta.textContent = t('confirm.err.reload', 'Seite neu laden');
+        cta.textContent = 'Seite neu laden';
         cta.href = window.location.href;
         const hint = document.createElement('p');
-        hint.id = 'errorHint';
         hint.style.cssText = 'color:#888;font-size:.82rem;margin-top:10px;';
-        hint.textContent = t('confirm.err.reload_hint', 'Falls deine Zahlung durchgegangen ist, wird sie beim Neuladen automatisch deiner Buchung zugeordnet — es wird nichts doppelt abgebucht.');
+        hint.textContent = 'Falls deine Zahlung durchgegangen ist, wird sie beim Neuladen automatisch deiner Buchung zugeordnet — es wird nichts doppelt abgebucht.';
         cta.parentNode.appendChild(hint);
       }
     }
   }
-
-  // Sprachwechsel: dynamisch gesetzte Fehleransicht neu rendern (Erfolgsansicht
-  // wird von applyTranslations selbst übersetzt; Buchungsnummer/Daten/Betrag sind sprachneutral)
-  document.addEventListener('st-lang-changed', () => {
-    if (currentError) renderError();
-  });
 
   confirm();
 </script>

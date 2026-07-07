@@ -105,13 +105,14 @@ PKW-Anhänger mit Plane (Humbaur Steely Cover Tieflader):
 - zGG 750 kg, Max. Zuladung 615 kg, Höchstgeschwindigkeit 100 km/h
 - Ungebremst (750 kg zGG), Plane inkl. Gestell, Stützrad, Codeschloss
 
-# Tarife (alle inkl. 19% MwSt, keine Kaution)
-- Mindestmiete 2 Std: 9 €
-- Jede weitere angefangene Stunde: +3,50 € (z.B. 4 Std 16 €, 6 Std 23 €)
-- Ab ca. 7,5 Std bis 24 Std = Ganzer Tag: 29 € (Tages-Deckel, nie mehr für 24h)
-- Ab Tag 2 nur noch 17,40 € pro Tag (je länger, desto günstiger)
-- Wochenend-Paket (Fr 0 – So 24 Uhr, 3 Tage ≈ 19,67 €/Tag): 59 €
-- 7-Tage-Paket: 119 € (~17 €/Tag)
+# Tarife
+- Kurztrip (bis 3h): 9 €
+- Halbtag (bis 6h): 18 €
+- Tag-Festpreis (24h): 29 €
+- Bis 24 Std (flexibler Modus): 29 €
+- Jeder weitere Tag: 24 €
+- Wochenende (Fr-So): 59 €
+- Woche (7 Tage): 119 € (~17 €/Tag, spart 54 € ggü Tag-Tarifen)
 
 # Versicherung (optional)
 - Ohne Schutz: volle Mieterhaftung
@@ -123,7 +124,7 @@ PKW-Anhänger mit Plane (Humbaur Steely Cover Tieflader):
 - 30 € Reinigungspauschale bei nicht ordentlich zurückgegeben
 - Mindestalter 18, Klasse B reicht (Anhänger ≤ 750 kg)
 - Stripe-Identity Führerschein-Verifikation einmalig (~5 Min)
-- Stornierung: mit optionalem Stornoschutz (5,5%, min 3 €) bis Mietbeginn kostenlos
+- Stornierung: bis 24h vor Mietbeginn kostenfrei
 
 # 🔧 TOOL: VERFÜGBARKEIT PRÜFEN
 

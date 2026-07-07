@@ -455,7 +455,7 @@
 
 <nav>
   <a href="/" class="logo" aria-label="SimpleTrailer Startseite"><img src="/logo.png?v=7" alt="SimpleTrailer - Anhängervermietung Bremen" style="height:36px;width:auto;display:block;" /></a>
-  <a href="/" class="back-link" data-i18n="nav.back">← Zurück</a>
+  <a href="/" class="back-link">← Zurück</a>
 </nav>
 
 <div class="page">
@@ -504,12 +504,12 @@
             <div class="trailer-name-big" id="trailerNameDisplay" style="margin-bottom:0;">PKW-Anhänger mit Plane</div>
             <button onclick="openInfoModal()" style="background:none;border:1.5px solid var(--border);color:var(--gray);border-radius:20px;padding:3px 10px;font-size:.7rem;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s;flex-shrink:0;white-space:nowrap;"
               onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--orange)'"
-              onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--gray)'" data-i18n="booking.details">ⓘ Details</button>
+              onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--gray)'">ⓘ Details</button>
           </div>
           <div class="trailer-tags">
-            <span class="trailer-tag" data-i18n="booking.tag_750">bis 750 kg</span>
-            <span class="trailer-tag" data-i18n="booking.tag_licenseB">Führerschein B</span>
-            <span class="trailer-tag" data-i18n="booking.tag_tarp">Plane inklusive</span>
+            <span class="trailer-tag">bis 750 kg</span>
+            <span class="trailer-tag">Führerschein B</span>
+            <span class="trailer-tag">Plane inklusive</span>
           </div>
         </div>
       </div>
@@ -532,31 +532,31 @@
         <button type="button" class="mode-option" id="modeWeekend" onclick="setMode('weekend')">
           <div class="mode-name" data-i18n="booking.mode.weekend">Wochenende</div>
           <div class="mode-price">59 €</div>
-          <div class="mode-desc" data-i18n="booking.mode.weekend.desc">Fr 0 – So 24 Uhr · ≈ 19,67 €/Tag</div>
-          <span class="mode-save"><span data-i18n="booking.save">spare</span> 28 €</span>
+          <div class="mode-desc">Fr–So komplett</div>
+          <span class="mode-save"><span data-i18n="booking.save">spare</span> 18 €</span>
         </button>
         <button type="button" class="mode-option" id="modeWeek" onclick="setMode('week')">
           <div class="mode-name" data-i18n="booking.mode.week">1 Woche</div>
           <div class="mode-price">119 €</div>
           <div class="mode-desc">7 <span data-i18n="booking.days">Tage</span> · ≈ 17 €/<span data-i18n="booking.day">Tag</span></div>
-          <span class="mode-save"><span data-i18n="booking.save">spare</span> 84 €</span>
+          <span class="mode-save"><span data-i18n="booking.save">spare</span> 54 €</span>
         </button>
       </div>
 
       <!-- Preisstaffel für Individuell -->
       <div id="flexPriceInfo" style="margin-top:14px;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:block;">
-        <p style="font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gray);margin-bottom:8px;" data-i18n="booking.price_calc_title">So berechnet sich dein Preis</p>
+        <p style="font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gray);margin-bottom:8px;">So berechnet sich dein Preis</p>
         <div style="display:grid;grid-template-columns:1fr auto;gap:4px 16px;font-size:.82rem;">
-          <span style="color:var(--gray);" data-i18n="booking.price_min2h">2 Std. (Mindestmiete)</span><span style="font-weight:700;">9 €</span>
-          <span style="color:var(--gray);" data-i18n="booking.price_per_hour">je weitere Stunde</span><span style="font-weight:700;">+3,50 €</span>
-          <span style="color:var(--gray);" data-i18n="booking.price_full_day">Ganzer Tag (ab ca. 7,5 Std.)</span><span style="font-weight:700;">29 €</span>
-          <span style="color:var(--gray);" data-i18n="booking.price_from_day2">ab Tag 2, je Tag</span><span style="font-weight:700;">+17,40 €</span>
-          <span style="color:var(--gray);" data-i18n="booking.price_week_pkg">7-Tage-Paket</span><span style="font-weight:700;">119 €</span>
-          <span style="color:var(--gray);" data-i18n="booking.price_week2">je Tag in Woche 2</span><span style="font-weight:700;">+12,18 €</span>
-          <span style="color:var(--gray);" data-i18n="booking.price_week3">je Tag in Woche 3</span><span style="font-weight:700;">+8,53 €</span>
-          <span style="color:var(--gray);" data-i18n="booking.price_week4">ab Woche 4 je Tag</span><span style="font-weight:700;">+5,97 €</span>
+          <span style="color:var(--gray);">bis 3 Std.</span><span style="font-weight:700;">9 €</span>
+          <span style="color:var(--gray);">bis 6 Std.</span><span style="font-weight:700;">18 €</span>
+          <span style="color:var(--gray);">1 Tag</span><span style="font-weight:700;">29 €</span>
+          <span style="color:var(--gray);">jeder weitere Tag (Tag 2–4)</span><span style="font-weight:700;">+24 €</span>
+          <span style="color:var(--gray);">1 Woche (7 Tage)</span><span style="font-weight:700;">119 €</span>
+          <span style="color:var(--gray);">je Tag in Woche 2</span><span style="font-weight:700;">+14 €</span>
+          <span style="color:var(--gray);">je Tag in Woche 3</span><span style="font-weight:700;">+12 €</span>
+          <span style="color:var(--gray);">ab Woche 4 je Tag</span><span style="font-weight:700;">+10 €</span>
         </div>
-        <p style="font-size:.7rem;color:var(--gray);margin-top:8px;" data-i18n="booking.price_note">Je länger du mietest, desto günstiger pro Tag. 2 Std Mindestmiete, ab 8 Std nie teurer als der Tagespreis.</p>
+        <p style="font-size:.7rem;color:var(--gray);margin-top:8px;">Je länger du mietest, desto günstiger wird jeder Tag — Mengenrabatt ab 1 Woche.</p>
       </div>
     </div>
 
@@ -595,7 +595,7 @@
 
       <!-- Auto end display (weekend / week) -->
       <div id="endAutoDisplay" style="display:none;margin-top:12px;background:var(--s2);border-radius:8px;padding:12px 14px;">
-        <span style="font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gray);" data-i18n="booking.return_auto">Rückgabe (automatisch)</span>
+        <span style="font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gray);">Rückgabe (automatisch)</span>
         <div style="font-weight:700;font-size:.95rem;margin-top:3px;" id="endAutoText">–</div>
       </div>
 
@@ -605,11 +605,11 @@
     <!-- Availability Calendar (read-only) -->
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-        <p class="field-label" style="margin-bottom:0;" data-i18n="booking.availability">Verfügbarkeit</p>
+        <p class="field-label" style="margin-bottom:0;">Verfügbarkeit</p>
         <div class="cal-legend">
-          <span><span class="legend-dot" style="background:#4ade80;border:1px solid #166534;"></span><span data-i18n="booking.legend_available">Verfügbar</span></span>
-          <span><span class="legend-dot" style="background:#fde047;border:1px solid #713f12;"></span><span data-i18n="booking.legend_partial">Teils frei</span></span>
-          <span><span class="legend-dot" style="background:#ef4444;border:1px solid #b91c1c;"></span><span data-i18n="booking.legend_booked">Gebucht</span></span>
+          <span><span class="legend-dot" style="background:#4ade80;border:1px solid #166534;"></span>Verfügbar</span>
+          <span><span class="legend-dot" style="background:#fde047;border:1px solid #713f12;"></span>Teils frei</span>
+          <span><span class="legend-dot" style="background:#ef4444;border:1px solid #b91c1c;"></span>Gebucht</span>
         </div>
       </div>
       <div class="cal-nav">
@@ -618,10 +618,10 @@
         <button type="button" class="cal-nav-btn" onclick="calNext()">›</button>
       </div>
       <div class="cal-weekdays">
-        <span data-i18n="booking.wd_mon">Mo</span><span data-i18n="booking.wd_tue">Di</span><span data-i18n="booking.wd_wed">Mi</span><span data-i18n="booking.wd_thu">Do</span><span data-i18n="booking.wd_fri">Fr</span><span data-i18n="booking.wd_sat">Sa</span><span data-i18n="booking.wd_sun">So</span>
+        <span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span>
       </div>
       <div class="cal-grid" id="calGrid"></div>
-      <div id="calHint" class="cal-hint" style="display:none;" data-i18n="booking.cal_hint">📅 Jetzt Enddatum im Kalender anklicken</div>
+      <div id="calHint" class="cal-hint" style="display:none;">📅 Jetzt Enddatum im Kalender anklicken</div>
     </div>
     </div><!-- /datetime-cal-grid -->
 
@@ -629,9 +629,9 @@
     <div id="priceBreakdown" style="display:none;margin-bottom:20px;">
       <div class="price-breakdown-box">
         <div class="pb-dates">
-          <div><span class="pb-label" data-i18n="booking.pickup">Abholung</span><span class="pb-val" id="pbStart">–</span></div>
+          <div><span class="pb-label">Abholung</span><span class="pb-val" id="pbStart">–</span></div>
           <div style="color:var(--gray);padding:0 8px;">→</div>
-          <div><span class="pb-label" data-i18n="booking.return">Rückgabe</span><span class="pb-val" id="pbEnd">–</span></div>
+          <div><span class="pb-label">Rückgabe</span><span class="pb-val" id="pbEnd">–</span></div>
         </div>
         <div class="pb-duration" id="pbDuration"></div>
         <div class="pb-divider"></div>
@@ -639,7 +639,7 @@
         <div class="pb-line" id="pbExtraLine" style="display:none;"></div>
         <div class="pb-line" id="pbRemainLine" style="display:none;"></div>
         <div class="pb-divider"></div>
-        <div class="pb-total"><span data-i18n="booking.rent_price">Mietpreis</span><span id="pbTotal">–</span></div>
+        <div class="pb-total"><span>Mietpreis</span><span id="pbTotal">–</span></div>
         <div id="pbSaveRow" style="display:none;align-items:center;justify-content:center;gap:8px;margin-top:12px;background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.35);border-radius:10px;padding:9px 12px;">
           <span style="font-size:1rem;">🎉</span>
           <span style="font-size:.85rem;font-weight:700;color:#16a34a;" id="pbSaveText"></span>
@@ -650,7 +650,7 @@
     <input type="hidden" id="startTime" />
     <input type="hidden" id="endTime" />
 
-    <button class="btn btn-orange" onclick="goStep2()" data-i18n="booking.next">Weiter →</button>
+    <button class="btn btn-orange" onclick="goStep2()">Weiter →</button>
   </div>
 
   <!-- STEP 2: Konto -->
@@ -663,26 +663,26 @@
           <div class="logged-in-name" id="bookingName">–</div>
           <div class="logged-in-detail" id="bookingEmail">–</div>
           <div class="logged-in-detail" id="bookingPhone">–</div>
-          <button class="switch-account" onclick="switchBookingAccount()" data-i18n="booking.use_other_account">Anderes Konto verwenden</button>
+          <button class="switch-account" onclick="switchBookingAccount()">Anderes Konto verwenden</button>
         </div>
         <span style="color:#22c55e;font-size:1.2rem;">✓</span>
       </div>
       <!-- Warnhinweis: an WELCHE Email wird die Bestätigung geschickt? -->
       <div style="background:var(--s2);border:1px solid var(--border);border-left:3px solid #555;padding:11px 14px;border-radius:8px;margin-bottom:14px;font-size:.82rem;color:#ccc;line-height:1.5;">
-        📧 <strong><span data-i18n="booking.contract_invoice_to">Mietvertrag + Rechnung gehen an</span> <span id="confirmEmailHint">–</span></strong><br>
-        <span style="color:#999;font-size:.78rem;" data-i18n="booking.wrong_address_hint">Falsche Adresse? Klick „Anderes Konto verwenden" und meld dich mit der richtigen E-Mail an.</span>
+        📧 <strong>Mietvertrag + Rechnung gehen an <span id="confirmEmailHint">–</span></strong><br>
+        <span style="color:#999;font-size:.78rem;">Falsche Adresse? Klick „Anderes Konto verwenden" und meld dich mit der richtigen E-Mail an.</span>
       </div>
-      <button class="btn btn-orange" onclick="goStep4()" data-i18n="booking.next">Weiter →</button>
+      <button class="btn btn-orange" onclick="goStep4()">Weiter →</button>
     </div>
 
     <!-- Auth Formular -->
     <div id="authFormView">
       <div class="auth-tabs">
-        <button class="auth-tab active" onclick="switchAuthTab('login')" data-i18n="booking.login">Anmelden</button>
-        <button class="auth-tab" onclick="switchAuthTab('register')" data-i18n="booking.register">Registrieren</button>
+        <button class="auth-tab active" onclick="switchAuthTab('login')">Anmelden</button>
+        <button class="auth-tab" onclick="switchAuthTab('register')">Registrieren</button>
       </div>
 
-      <div style="background:rgba(232,93,0,0.07);border:1px solid rgba(232,93,0,0.25);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:.82rem;color:#ccc;line-height:1.5;" data-i18n-html="booking.first_booking_info">
+      <div style="background:rgba(232,93,0,0.07);border:1px solid rgba(232,93,0,0.25);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:.82rem;color:#ccc;line-height:1.5;">
         ℹ️ <strong style="color:#fff;">Nur bei deiner ersten Buchung:</strong> kurzer Führerschein-Check — Foto von Vorder- und Rückseite plus ein kurzes Selfie (ca. 30 Sek., sicher über Stripe). Das ersetzt den Schaltertermin mit Ausweis, den du bei klassischen Vermietern hättest. Bei allen weiteren Buchungen entfällt er komplett.
       </div>
 
@@ -690,17 +690,17 @@
       <div id="authLogin">
         <div class="card">
           <div class="field-group">
-            <label class="field-label" data-i18n="booking.email">E-Mail</label>
-            <input type="email" class="field-input" id="authLoginEmail" placeholder="deine@email.de" autocomplete="email" data-i18n-attr="placeholder:booking.ph_email" />
+            <label class="field-label">E-Mail</label>
+            <input type="email" class="field-input" id="authLoginEmail" placeholder="deine@email.de" autocomplete="email" />
           </div>
           <div class="field-group">
-            <label class="field-label" data-i18n="booking.password">Passwort</label>
+            <label class="field-label">Passwort</label>
             <input type="password" class="field-input" id="authLoginPass" placeholder="••••••••" autocomplete="current-password" />
           </div>
           <div class="error-msg" id="authLoginErr" style="display:none;"></div>
-          <button class="btn btn-orange" style="margin-top:8px;" onclick="doBookingLogin()" data-i18n="booking.login">Anmelden</button>
+          <button class="btn btn-orange" style="margin-top:8px;" onclick="doBookingLogin()">Anmelden</button>
           <div style="text-align:center;margin-top:12px;">
-            <a href="#" onclick="showBookingReset()" style="color:var(--gray);font-size:.82rem;text-decoration:none;" data-i18n="booking.forgot_password">Passwort vergessen?</a>
+            <a href="#" onclick="showBookingReset()" style="color:var(--gray);font-size:.82rem;text-decoration:none;">Passwort vergessen?</a>
           </div>
         </div>
       </div>
@@ -708,16 +708,16 @@
       <!-- RESET (innerhalb Login-Tab) -->
       <div id="authReset" style="display:none;">
         <div class="card">
-          <p style="color:var(--gray);font-size:.85rem;margin-bottom:16px;" data-i18n="booking.reset_intro">Gib deine E-Mail ein – wir schicken dir einen Reset-Link.</p>
+          <p style="color:var(--gray);font-size:.85rem;margin-bottom:16px;">Gib deine E-Mail ein – wir schicken dir einen Reset-Link.</p>
           <div class="field-group">
-            <label class="field-label" data-i18n="booking.email">E-Mail</label>
-            <input type="email" class="field-input" id="authResetEmail" placeholder="deine@email.de" data-i18n-attr="placeholder:booking.ph_email" />
+            <label class="field-label">E-Mail</label>
+            <input type="email" class="field-input" id="authResetEmail" placeholder="deine@email.de" />
           </div>
           <div class="error-msg" id="authResetErr" style="display:none;"></div>
           <div class="auth-success" id="authResetOk"></div>
-          <button class="btn btn-orange" style="margin-top:8px;" onclick="doBookingReset()" data-i18n="booking.send_reset">Reset-Link senden</button>
+          <button class="btn btn-orange" style="margin-top:8px;" onclick="doBookingReset()">Reset-Link senden</button>
           <div style="text-align:center;margin-top:12px;">
-            <a href="#" onclick="showBookingReset(false)" style="color:var(--gray);font-size:.82rem;text-decoration:none;" data-i18n="booking.back_to_login">← Zurück zum Login</a>
+            <a href="#" onclick="showBookingReset(false)" style="color:var(--gray);font-size:.82rem;text-decoration:none;">← Zurück zum Login</a>
           </div>
         </div>
       </div>
@@ -729,42 +729,42 @@
         <div class="card">
           <div class="field-row">
             <div class="field-group">
-              <label class="field-label" data-i18n="booking.first_name">Vorname *</label>
-              <input type="text" class="field-input" id="authRegFirst" placeholder="Max" autocomplete="given-name" data-i18n-attr="placeholder:booking.ph_first" />
+              <label class="field-label">Vorname *</label>
+              <input type="text" class="field-input" id="authRegFirst" placeholder="Max" autocomplete="given-name" />
             </div>
             <div class="field-group">
-              <label class="field-label" data-i18n="booking.last_name">Nachname *</label>
-              <input type="text" class="field-input" id="authRegLast" placeholder="Mustermann" autocomplete="family-name" data-i18n-attr="placeholder:booking.ph_last" />
+              <label class="field-label">Nachname *</label>
+              <input type="text" class="field-input" id="authRegLast" placeholder="Mustermann" autocomplete="family-name" />
             </div>
           </div>
           <div class="field-group">
-            <label class="field-label" data-i18n="booking.email_req">E-Mail *</label>
-            <input type="email" class="field-input" id="authRegEmail" placeholder="deine@email.de" autocomplete="email" data-i18n-attr="placeholder:booking.ph_email" />
+            <label class="field-label">E-Mail *</label>
+            <input type="email" class="field-input" id="authRegEmail" placeholder="deine@email.de" autocomplete="email" />
           </div>
           <div class="field-group">
-            <label class="field-label" data-i18n="booking.phone_req">Telefon *</label>
+            <label class="field-label">Telefon *</label>
             <input type="tel" class="field-input" id="authRegPhone" placeholder="+49 151 12345678" autocomplete="tel" />
           </div>
           <div class="field-group">
-            <label class="field-label" data-i18n-html="booking.birthdate_label">Geburtsdatum * <span style="color:var(--gray);font-weight:400;">(Mindestalter 18 Jahre)</span></label>
+            <label class="field-label">Geburtsdatum * <span style="color:var(--gray);font-weight:400;">(Mindestalter 18 Jahre)</span></label>
             <input type="date" class="field-input" id="authRegBirthdate" autocomplete="bday" />
           </div>
           <div class="field-group">
-            <label class="field-label" data-i18n="booking.address_req">Adresse *</label>
-            <input type="text" class="field-input" id="authRegAddress" placeholder="Musterstraße 1, 28195 Bremen" autocomplete="street-address" data-i18n-attr="placeholder:booking.ph_address" />
+            <label class="field-label">Adresse *</label>
+            <input type="text" class="field-input" id="authRegAddress" placeholder="Musterstraße 1, 28195 Bremen" autocomplete="street-address" />
           </div>
           <div class="field-group">
-            <label class="field-label" data-i18n="booking.password_req">Passwort *</label>
-            <input type="password" class="field-input" id="authRegPass" placeholder="Mindestens 6 Zeichen" autocomplete="new-password" data-i18n-attr="placeholder:booking.ph_password_min" />
+            <label class="field-label">Passwort *</label>
+            <input type="password" class="field-input" id="authRegPass" placeholder="Mindestens 6 Zeichen" autocomplete="new-password" />
           </div>
           <div class="error-msg" id="authRegErr" style="display:none;"></div>
           <div class="auth-success" id="authRegOk"></div>
-          <button class="btn btn-orange" style="margin-top:8px;" onclick="doBookingRegister()" data-i18n="booking.create_account">Konto erstellen & weiter</button>
+          <button class="btn btn-orange" style="margin-top:8px;" onclick="doBookingRegister()">Konto erstellen & weiter</button>
         </div>
       </div>
 
       <div style="text-align:center;margin-top:12px;">
-        <a href="#" onclick="goToStep(2)" style="color:var(--gray);font-size:.85rem;text-decoration:none;" data-i18n="nav.back">← Zurück</a>
+        <a href="#" onclick="goToStep(2)" style="color:var(--gray);font-size:.85rem;text-decoration:none;">← Zurück</a>
       </div>
     </div>
   </div>
@@ -775,74 +775,74 @@
       <div style="display:flex;gap:14px;align-items:flex-start;">
         <div style="width:42px;height:42px;border-radius:50%;background:#22c55e;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;">✓</div>
         <div style="flex:1;min-width:0;">
-          <div style="font-weight:700;font-size:1rem;margin-bottom:4px;color:#14532D;" data-i18n="booking.dl_verified">Führerschein bestätigt</div>
+          <div style="font-weight:700;font-size:1rem;margin-bottom:4px;color:#14532D;">Führerschein bestätigt</div>
           <div style="color:#3f7553;font-size:.84rem;line-height:1.5;" id="dlVerifiedInfo">–</div>
         </div>
       </div>
     </div>
 
     <div class="card" id="dlVerifyBox">
-      <p class="field-label" style="margin-bottom:8px;" data-i18n="booking.dl_verify_title">Führerschein verifizieren</p>
-      <p style="color:var(--gray);font-size:.84rem;line-height:1.55;margin-bottom:18px;" data-i18n-html="booking.dl_verify_desc">
+      <p class="field-label" style="margin-bottom:8px;">Führerschein verifizieren</p>
+      <p style="color:var(--gray);font-size:.84rem;line-height:1.55;margin-bottom:18px;">
         Vor deiner ersten Buchung prüfen wir einmalig deinen Führerschein – sicher über <strong style="color:#fff;">Stripe Identity</strong>. Du fotografierst Vorder- und Rückseite plus ein kurzes Selfie. Die Prüfung dauert ca. 30 Sekunden, danach kannst du jederzeit ohne erneute Verifikation buchen.
       </p>
       <div style="background:#0d0d0d;border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:16px;display:flex;flex-direction:column;gap:8px;font-size:.82rem;color:#aaa;">
-        <span data-i18n="booking.dl_item_class">📄 Führerschein Klasse B (oder höher)</span>
-        <span data-i18n="booking.dl_item_sides">📷 Vorder- und Rückseite</span>
-        <span data-i18n="booking.dl_item_selfie">🤳 Selfie zur Identitätsprüfung</span>
-        <span data-i18n="booking.dl_item_gdpr">🔒 DSGVO-konform · End-to-End verschlüsselt</span>
+        <span>📄 Führerschein Klasse B (oder höher)</span>
+        <span>📷 Vorder- und Rückseite</span>
+        <span>🤳 Selfie zur Identitätsprüfung</span>
+        <span>🔒 DSGVO-konform · End-to-End verschlüsselt</span>
       </div>
 
       <!-- Art. 9 DSGVO Einwilligung biometrischer Gesichtsabgleich -->
       <label class="agb-row" for="biometricCheck" style="margin-bottom:14px;">
         <input type="checkbox" id="biometricCheck" onchange="updateDlStartState()" />
-        <span class="agb-text" data-i18n="booking.biometric_consent">
+        <span class="agb-text">
           Ich willige in die biometrische Verarbeitung meines Gesichts durch Stripe Identity zum Abgleich mit meinem Führerschein-Lichtbild ein (Art. 9 Abs. 2 lit. a DSGVO). Die Einwilligung kann jederzeit widerrufen werden; ohne erfolgreiche Verifikation ist eine Buchung nicht möglich.
         </span>
       </label>
 
-      <button class="btn btn-orange" id="dlStartBtn" onclick="startIdentityVerification()" disabled data-i18n="booking.verify_now">Jetzt verifizieren →</button>
+      <button class="btn btn-orange" id="dlStartBtn" onclick="startIdentityVerification()" disabled>Jetzt verifizieren →</button>
       <span class="error-msg" id="errDl" style="margin-top:10px;display:none;"></span>
     </div>
 
     <div class="card" id="dlPendingBox" style="display:none;text-align:center;">
       <div class="spinner" style="margin:8px auto 16px;width:36px;height:36px;border:3px solid #2a2a2a;border-top-color:var(--orange);border-radius:50%;animation:spin 1s linear infinite;"></div>
-      <p style="font-weight:600;margin-bottom:4px;" data-i18n="booking.verifying">Verifizierung läuft …</p>
-      <p style="color:var(--gray);font-size:.82rem;" data-i18n="booking.verifying_desc">Stripe prüft dein Dokument. Das dauert meist 5–30 Sekunden.</p>
+      <p style="font-weight:600;margin-bottom:4px;">Verifizierung läuft …</p>
+      <p style="color:var(--gray);font-size:.82rem;">Stripe prüft dein Dokument. Das dauert meist 5–30 Sekunden.</p>
     </div>
 
     <div style="text-align:center;margin-top:12px;">
-      <a href="#" onclick="goToStep(3)" style="color:var(--gray);font-size:.85rem;text-decoration:none;" data-i18n="nav.back">← Zurück</a>
+      <a href="#" onclick="goToStep(3)" style="color:var(--gray);font-size:.85rem;text-decoration:none;">← Zurück</a>
     </div>
   </div>
 
   <!-- STEP 4: Schutzpaket + Rückgabe-Option -->
   <div class="step-content" id="step4" style="max-width:560px;margin-left:auto;margin-right:auto;">
     <div class="card">
-      <p class="field-label" style="margin-bottom:4px;"><span data-i18n="booking.protection">Schutzpaket wählen</span><button type="button" class="ins-info-btn" onclick="openInsInfo()" aria-label="Was bedeuten die Schutzpakete?" data-i18n-attr="aria-label:booking.protection_info_aria">i</button></p>
-      <p style="color:var(--gray);font-size:.78rem;margin-bottom:14px;" data-i18n-html="booking.protection_desc">Begrenze deine Haftung bei Schäden am Anhänger. Vorausgewählt: <strong style="color:#fff;">Basis Schutz</strong>.</p>
+      <p class="field-label" style="margin-bottom:4px;"><span data-i18n="booking.protection">Schutzpaket wählen</span><button type="button" class="ins-info-btn" onclick="openInsInfo()" aria-label="Was bedeuten die Schutzpakete?">i</button></p>
+      <p style="color:var(--gray);font-size:.78rem;margin-bottom:14px;">Begrenze deine Haftung bei Schäden am Anhänger. Vorausgewählt: <strong style="color:#fff;">Basis Schutz</strong>.</p>
       <div class="insurance-grid">
         <div class="insurance-option selected" id="ins-basis" onclick="selectInsurance('basis')">
           <div class="ins-radio"></div>
           <div class="ins-body">
-            <div class="ins-name"><span data-i18n="booking.ins_basis_name">Basis Schutz</span> <span class="ins-badge" data-i18n="booking.badge_recommended">Empfohlen</span></div>
-            <div class="ins-desc" data-i18n="booking.ins_basis_desc">Selbstbeteiligung auf 500 € begrenzt · +15% vom Mietpreis</div>
+            <div class="ins-name">Basis Schutz <span class="ins-badge">Empfohlen</span></div>
+            <div class="ins-desc">Selbstbeteiligung auf 500 € begrenzt · +15% vom Mietpreis</div>
           </div>
           <div class="ins-price" id="ins-basis-price">–</div>
         </div>
         <div class="insurance-option" id="ins-premium" onclick="selectInsurance('premium')">
           <div class="ins-radio"></div>
           <div class="ins-body">
-            <div class="ins-name" data-i18n="booking.ins_premium_name">Premium Schutz</div>
-            <div class="ins-desc" data-i18n="booking.ins_premium_desc">Selbstbeteiligung auf 50 € begrenzt · +30% vom Mietpreis</div>
+            <div class="ins-name">Premium Schutz</div>
+            <div class="ins-desc">Selbstbeteiligung auf 50 € begrenzt · +30% vom Mietpreis</div>
           </div>
           <div class="ins-price" id="ins-premium-price">–</div>
         </div>
         <div class="insurance-option" id="ins-none" onclick="selectInsurance('none')">
           <div class="ins-radio"></div>
           <div class="ins-body">
-            <div class="ins-name" data-i18n="booking.ins_none_name">Kein Schutz</div>
-            <div class="ins-desc" data-i18n="booking.ins_none_desc">Volle Mieterhaftung bis zur Schadenshöhe</div>
+            <div class="ins-name">Kein Schutz</div>
+            <div class="ins-desc">Volle Mieterhaftung bis zur Schadenshöhe</div>
           </div>
           <div class="ins-price free">0,00 €</div>
         </div>
@@ -850,16 +850,16 @@
 
       <!-- Warnung wenn "Kein Schutz" gewählt -->
       <div id="noShieldWarning" style="display:none;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.25);border-left:3px solid #b91c1c;border-radius:10px;padding:14px 16px;margin-top:14px;">
-        <div style="display:flex;align-items:center;gap:8px;font-size:.9rem;font-weight:700;color:#f3a5a5;margin-bottom:8px;letter-spacing:-.01em;" data-i18n="booking.noshield_title">
+        <div style="display:flex;align-items:center;gap:8px;font-size:.9rem;font-weight:700;color:#f3a5a5;margin-bottom:8px;letter-spacing:-.01em;">
           Wichtig: volle Haftung ohne Schutzpaket
         </div>
-        <div style="font-size:.84rem;color:#fecaca;line-height:1.55;margin-bottom:12px;" data-i18n-html="booking.noshield_body">
+        <div style="font-size:.84rem;color:#fecaca;line-height:1.55;margin-bottom:12px;">
           Bei Schäden, Unfall oder Diebstahl haftest du in voller Höhe.<br>
           Im schlimmsten Fall können <strong style="color:#fff;">bis zu 5.000 €</strong> auf dich zukommen (Wiederbeschaffungswert + Gutachter + Wertminderung + Mietausfall + Bergung).
         </div>
         <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:10px;background:#141414;border-radius:8px;border:1px solid #333;">
           <input type="checkbox" id="noShieldConfirm" onchange="updateStep4ContinueState()" style="margin-top:3px;flex-shrink:0;width:18px;height:18px;accent-color:#dc2626;">
-          <span style="font-size:.84rem;color:#fff;line-height:1.5;" data-i18n-html="booking.noshield_confirm">
+          <span style="font-size:.84rem;color:#fff;line-height:1.5;">
             Ich habe verstanden und buche bewusst <strong>ohne Schutzpaket</strong>. Mir ist klar, dass ich im Schadensfall den vollen Betrag selbst trage.
           </span>
         </label>
@@ -869,21 +869,21 @@
     <!-- KOSTENLOSE STORNIERUNG — Add-On bis zum Buchungsbeginn -->
     <div class="card">
       <p class="field-label" style="margin-bottom:4px;" data-i18n="booking.cancellation">Kostenlose Stornierung</p>
-      <p style="color:var(--gray);font-size:.78rem;margin-bottom:14px;" data-i18n="booking.cancellation_desc">Pläne ändern sich — flexibel buchen oder zum festen Preis.</p>
+      <p style="color:var(--gray);font-size:.78rem;margin-bottom:14px;">Pläne ändern sich — flexibel buchen oder zum festen Preis.</p>
       <div class="insurance-grid">
         <div class="insurance-option selected" id="cp-yes" onclick="selectCancellationProtection(true)">
           <div class="ins-radio"></div>
           <div class="ins-body">
-            <div class="ins-name"><span data-i18n="booking.cp_yes_name">Mit kostenloser Stornierung</span> <span class="ins-badge" data-i18n="booking.badge_recommended">Empfohlen</span></div>
-            <div class="ins-desc" data-i18n-html="booking.cp_yes_desc">Storno <strong style="color:#fff;">bis zum Buchungsbeginn</strong> ohne Verlust. Mietpreis wird voll erstattet, die Storno-Schutz-Prämie selbst nicht.</div>
+            <div class="ins-name">Mit kostenloser Stornierung <span class="ins-badge">Empfohlen</span></div>
+            <div class="ins-desc">Storno <strong style="color:#fff;">bis zum Buchungsbeginn</strong> ohne Verlust. Mietpreis wird voll erstattet, die Storno-Schutz-Prämie selbst nicht.</div>
           </div>
           <div class="ins-price" id="cp-yes-price">–</div>
         </div>
         <div class="insurance-option" id="cp-no" onclick="selectCancellationProtection(false)">
           <div class="ins-radio"></div>
           <div class="ins-body">
-            <div class="ins-name" data-i18n="booking.cp_no_name">Ohne kostenlose Stornierung</div>
-            <div class="ins-desc" data-i18n-html="booking.cp_no_desc">Bei Stornierung fallen <strong style="color:#f87171;">90 % des Mietpreises</strong> als Storno-Gebühr an (AGB § 6).</div>
+            <div class="ins-name">Ohne kostenlose Stornierung</div>
+            <div class="ins-desc">Bei Stornierung fallen <strong style="color:#f87171;">90 % des Mietpreises</strong> als Storno-Gebühr an (AGB § 6).</div>
           </div>
           <div class="ins-price free">0,00 €</div>
         </div>
@@ -893,34 +893,34 @@
     <!-- RÜCKGABE-OPTION: Heimat-Stellplatz (frei) vs. Egal-wo in Bremen (+15€) -->
     <div class="card">
       <p class="field-label" style="margin-bottom:4px;" data-i18n="booking.return_option">Rückgabe-Option</p>
-      <p style="color:var(--gray);font-size:.78rem;margin-bottom:14px;" data-i18n="booking.return_desc">Wo gibst du den Anhänger zurück? Die erlaubte Zone siehst du unten auf der Karte.</p>
+      <p style="color:var(--gray);font-size:.78rem;margin-bottom:14px;">Wo gibst du den Anhänger zurück? Die erlaubte Zone siehst du unten auf der Karte.</p>
       <div class="insurance-grid">
         <div class="insurance-option selected" id="ret-home" onclick="selectReturnMode(false)">
           <div class="ins-radio"></div>
           <div class="ins-body">
-            <div class="ins-name" data-i18n="booking.ret_home_name">Zurück zum Stellplatz</div>
-            <div class="ins-desc" data-i18n="booking.ret_home_desc">Du bringst den Anhänger zurück, wo du ihn abgeholt hast (Toleranz ca. 500 m).</div>
+            <div class="ins-name">Zurück zum Stellplatz</div>
+            <div class="ins-desc">Du bringst den Anhänger zurück, wo du ihn abgeholt hast (Toleranz ca. 500 m).</div>
           </div>
           <div class="ins-price free">0,00 €</div>
         </div>
         <div class="insurance-option" id="ret-free" onclick="selectReturnMode(true)">
           <div class="ins-radio"></div>
           <div class="ins-body">
-            <div class="ins-name"><span data-i18n="booking.ret_free_name">Egal-wo in Bremen</span> <span class="ins-badge" data-i18n="booking.badge_flexible">Flexibel</span></div>
-            <div class="ins-desc" data-i18n="booking.ret_free_desc">Stell ihn an einem legalen Parkplatz im Stadtgebiet Bremen ab — kein Halteverbot, kein Privatgrund.</div>
+            <div class="ins-name">Egal-wo in Bremen <span class="ins-badge">Flexibel</span></div>
+            <div class="ins-desc">Stell ihn an einem legalen Parkplatz im Stadtgebiet Bremen ab — kein Halteverbot, kein Privatgrund.</div>
           </div>
-          <div class="ins-price">+9,90 €</div>
+          <div class="ins-price">+15,00 €</div>
         </div>
       </div>
-      <p style="font-size:.7rem;color:var(--gray);margin-top:8px;text-align:right;" data-i18n="booking.prices_incl_vat">Alle Preise inkl. 19 % USt.</p>
+      <p style="font-size:.7rem;color:var(--gray);margin-top:8px;text-align:right;">Alle Preise inkl. 19 % USt.</p>
 
       <!-- Karte: Heimat-Kreis ODER Bremen-Polygon -->
       <div id="returnZoneMap" style="height:240px;margin-top:14px;border-radius:10px;overflow:hidden;border:1px solid var(--border);background:#0a0a0a;"></div>
 
       <!-- Warnhinweis: 50€ bei Fehlrückgabe + Halteverbot-Konsequenzen -->
       <div style="background:var(--s2);border:1px solid var(--border);border-left:3px solid #555;padding:12px 14px;border-radius:8px;margin-top:14px;">
-        <div style="font-size:.8rem;font-weight:700;color:#aaa;margin-bottom:4px;" data-i18n="booking.return_zone_title">Gut zu wissen: Rückgabe-Zone</div>
-        <div id="returnZoneWarning" style="font-size:.78rem;color:#ddd;line-height:1.5;" data-i18n-html="booking.return_zone_warning">
+        <div style="font-size:.8rem;font-weight:700;color:#aaa;margin-bottom:4px;">Gut zu wissen: Rückgabe-Zone</div>
+        <div id="returnZoneWarning" style="font-size:.78rem;color:#ddd;line-height:1.5;">
           Wird der Anhänger nicht innerhalb der erlaubten Zone abgestellt, berechnen wir eine Rückführungspauschale von <strong style="color:#ddd;">50,00 €</strong> (siehe <a href="#" onclick="openLegalModal('agb');return false;" style="color:#aaa;">AGB §13.6</a>). Dir bleibt der Nachweis vorbehalten, dass kein oder ein geringerer Schaden entstanden ist. Zusätzlich gilt: keine Halteverbote, kein Privatgrund, nicht verkehrsbehindernd — sonst trägst Du Bußgelder und Abschleppkosten (AGB §13.5).
         </div>
       </div>
@@ -929,9 +929,9 @@
     <!-- Rabattcode — schon hier eingebbar (vor Konto & Führerschein-Verifizierung) -->
     <div id="discountBox" style="margin:0 0 16px;">
       <div style="display:flex;gap:8px;">
-        <input type="text" id="discountInput" placeholder="Rabattcode (optional)" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();applyDiscount();}" data-i18n-attr="placeholder:booking.ph_discount"
+        <input type="text" id="discountInput" placeholder="Rabattcode (optional)" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();applyDiscount();}"
           style="flex:1;min-width:0;padding:9px 12px;border:1px solid var(--border);border-radius:8px;background:var(--s2);color:inherit;font-size:.9rem;text-transform:uppercase;" />
-        <button type="button" id="discountBtn" onclick="applyDiscount()" data-i18n="booking.redeem"
+        <button type="button" id="discountBtn" onclick="applyDiscount()"
           style="flex:none;padding:9px 16px;border:1px solid var(--border);border-radius:8px;background:var(--s2);color:inherit;font-weight:700;cursor:pointer;font-size:.85rem;">Einlösen</button>
       </div>
       <div id="discountMsg" style="font-size:.78rem;margin-top:6px;display:none;"></div>
@@ -939,19 +939,19 @@
 
     <!-- Live-Gesamtpreis mit allen gewählten Optionen -->
     <div class="card" id="step4TotalCard">
-      <p class="field-label" style="margin-bottom:12px;" data-i18n="booking.your_price">Dein Preis</p>
-      <div class="summary-row"><span class="label" data-i18n="booking.rent_price">Mietpreis</span><span id="s4Base">–</span></div>
-      <div class="summary-row" id="s4InsRow" style="display:none"><span class="label" id="s4InsLabel" data-i18n="booking.protection_pkg">Schutzpaket</span><span id="s4Ins">–</span></div>
-      <div class="summary-row" id="s4CpRow" style="display:none"><span class="label" data-i18n="booking.cancellation">Kostenlose Stornierung</span><span id="s4Cp">–</span></div>
-      <div class="summary-row" id="s4FfRow" style="display:none"><span class="label" data-i18n="booking.return_anywhere">Rückgabe egal-wo</span><span id="s4Ff">–</span></div>
-      <div class="summary-row" id="s4DiscRow" style="display:none"><span class="label" id="s4DiscLabel" data-i18n="booking.discount">Rabatt</span><span id="s4Disc" style="color:#16a34a;font-weight:700">–</span></div>
-      <div class="summary-total"><span data-i18n="booking.total">Gesamt</span><span class="amount" id="s4Total">–</span></div>
-      <div style="text-align:right;font-size:.7rem;color:var(--gray);margin-top:6px;" data-i18n="booking.incl_vat_ust">inkl. 19 % USt.</div>
+      <p class="field-label" style="margin-bottom:12px;">Dein Preis</p>
+      <div class="summary-row"><span class="label">Mietpreis</span><span id="s4Base">–</span></div>
+      <div class="summary-row" id="s4InsRow" style="display:none"><span class="label" id="s4InsLabel">Schutzpaket</span><span id="s4Ins">–</span></div>
+      <div class="summary-row" id="s4CpRow" style="display:none"><span class="label">Kostenlose Stornierung</span><span id="s4Cp">–</span></div>
+      <div class="summary-row" id="s4FfRow" style="display:none"><span class="label">Rückgabe egal-wo</span><span id="s4Ff">–</span></div>
+      <div class="summary-row" id="s4DiscRow" style="display:none"><span class="label" id="s4DiscLabel">Rabatt</span><span id="s4Disc" style="color:#16a34a;font-weight:700">–</span></div>
+      <div class="summary-total"><span>Gesamt</span><span class="amount" id="s4Total">–</span></div>
+      <div style="text-align:right;font-size:.7rem;color:var(--gray);margin-top:6px;">inkl. 19 % USt.</div>
     </div>
 
-    <button class="btn btn-orange" onclick="goStep3()" data-i18n="booking.next_to_account">Weiter zum Konto →</button>
+    <button class="btn btn-orange" onclick="goStep3()">Weiter zum Konto →</button>
     <div style="text-align:center;margin-top:12px;">
-      <a href="#" onclick="goToStep(1)" style="color:var(--gray);font-size:.85rem;text-decoration:none;" data-i18n="nav.back">← Zurück</a>
+      <a href="#" onclick="goToStep(1)" style="color:var(--gray);font-size:.85rem;text-decoration:none;">← Zurück</a>
     </div>
   </div>
 
@@ -959,23 +959,23 @@
   <div class="step-content" id="step5" style="max-width:560px;margin-left:auto;margin-right:auto;">
     <div class="card" id="orderSummary">
       <p class="field-label" style="margin-bottom:16px;" data-i18n="booking.summary">Zusammenfassung</p>
-      <div class="summary-row"><span class="label" data-i18n="booking.customer">Kunde</span><span id="sumName">–</span></div>
-      <div class="summary-row"><span class="label" data-i18n="booking.trailer">Anhänger</span><span data-i18n="booking.trailer_name">PKW-Anhänger mit Plane</span></div>
-      <div class="summary-row"><span class="label" data-i18n="booking.tarif">Tarif</span><span id="sumTarif">–</span></div>
-      <div class="summary-row"><span class="label" data-i18n="booking.rent_price">Mietpreis</span><span id="sumBase">–</span></div>
-      <div class="summary-row" id="sumInsRow" style="display:none"><span class="label" id="sumInsLabel" data-i18n="booking.protection_pkg">Schutzpaket</span><span id="sumIns">–</span></div>
-      <div class="summary-row" id="sumCpRow" style="display:none"><span class="label" data-i18n="booking.cancellation">Kostenlose Stornierung</span><span id="sumCp">–</span></div>
-      <div class="summary-row" id="sumFreeFloatRow" style="display:none"><span class="label" data-i18n="booking.return_anywhere">Rückgabe egal-wo</span><span id="sumFreeFloat">–</span></div>
-      <div class="summary-row"><span class="label" data-i18n="booking.from_label">Von</span><span id="sumVon">–</span></div>
-      <div class="summary-row"><span class="label" data-i18n="booking.to_label">Bis</span><span id="sumBis">–</span></div>
+      <div class="summary-row"><span class="label">Kunde</span><span id="sumName">–</span></div>
+      <div class="summary-row"><span class="label">Anhänger</span><span>PKW-Anhänger mit Plane</span></div>
+      <div class="summary-row"><span class="label">Tarif</span><span id="sumTarif">–</span></div>
+      <div class="summary-row"><span class="label">Mietpreis</span><span id="sumBase">–</span></div>
+      <div class="summary-row" id="sumInsRow" style="display:none"><span class="label" id="sumInsLabel">Schutzpaket</span><span id="sumIns">–</span></div>
+      <div class="summary-row" id="sumCpRow" style="display:none"><span class="label">Kostenlose Stornierung</span><span id="sumCp">–</span></div>
+      <div class="summary-row" id="sumFreeFloatRow" style="display:none"><span class="label">Rückgabe egal-wo</span><span id="sumFreeFloat">–</span></div>
+      <div class="summary-row"><span class="label">Von</span><span id="sumVon">–</span></div>
+      <div class="summary-row"><span class="label">Bis</span><span id="sumBis">–</span></div>
 
-      <div class="summary-row" id="sumDiscRow" style="display:none"><span class="label" id="sumDiscLabel" data-i18n="booking.discount">Rabatt</span><span id="sumDisc" style="color:#16a34a;font-weight:700">–</span></div>
-      <div class="summary-total"><span data-i18n="booking.total">Gesamt</span><span class="amount" id="sumTotal">–</span></div>
+      <div class="summary-row" id="sumDiscRow" style="display:none"><span class="label" id="sumDiscLabel">Rabatt</span><span id="sumDisc" style="color:#16a34a;font-weight:700">–</span></div>
+      <div class="summary-total"><span>Gesamt</span><span class="amount" id="sumTotal">–</span></div>
       <div id="sumSaveRow" style="display:none;align-items:center;justify-content:center;gap:8px;margin-top:10px;background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.35);border-radius:10px;padding:10px 14px;">
         <span style="font-size:1.05rem;">🎉</span>
         <span style="font-size:.9rem;font-weight:700;color:#16a34a;" id="sumSaveText"></span>
       </div>
-      <div style="text-align:right;font-size:.7rem;color:var(--gray);margin-top:6px;" data-i18n="booking.incl_vat_mwst">inkl. 19 % MwSt</div>
+      <div style="text-align:right;font-size:.7rem;color:var(--gray);margin-top:6px;">inkl. 19 % MwSt</div>
     </div>
 
     <div class="card">
@@ -994,10 +994,10 @@
 
       <!-- WIDERRUFSBELEHRUNG — sichtbar vor Pay-Button (§ 312g Abs. 2 Nr. 9 BGB) -->
       <div style="background:var(--s2);border:1px solid var(--border);border-left:3px solid #555;padding:12px 14px;border-radius:8px;margin-bottom:14px;">
-        <div style="font-size:.8rem;font-weight:700;color:#aaa;margin-bottom:4px;" data-i18n="booking.no_withdrawal_title">
+        <div style="font-size:.8rem;font-weight:700;color:#aaa;margin-bottom:4px;">
           Hinweis: kein Widerrufsrecht
         </div>
-        <div style="font-size:.78rem;color:#ddd;line-height:1.5;" data-i18n-html="booking.no_withdrawal_body">
+        <div style="font-size:.78rem;color:#ddd;line-height:1.5;">
           Da es sich um die Vermietung eines Beförderungsmittels für einen bestimmten Zeitraum handelt, besteht <strong>kein Widerrufsrecht</strong> (§ 312g Abs. 2 Nr. 9 BGB). Stornierungs-Regelungen siehe AGB § 6.
         </div>
       </div>
@@ -1026,7 +1026,7 @@
     </div>
 
     <div style="text-align:center;margin-top:12px;">
-      <a href="#" onclick="goToStep(4)" style="color:var(--gray);font-size:.85rem;text-decoration:none;" data-i18n="nav.back">← Zurück</a>
+      <a href="#" onclick="goToStep(4)" style="color:var(--gray);font-size:.85rem;text-decoration:none;">← Zurück</a>
     </div>
   </div>
 
@@ -1037,7 +1037,7 @@
   <div class="legal-modal">
     <div class="legal-header">
       <strong id="legalTitle" style="font-size:1rem;letter-spacing:-.02em;">AGB</strong>
-      <button onclick="closeLegalModal()" aria-label="Schließen" data-i18n-attr="aria-label:booking.legal_close_aria" style="background:none;border:none;color:#666;font-size:1.6rem;cursor:pointer;line-height:1;padding:0 4px;">×</button>
+      <button onclick="closeLegalModal()" aria-label="Schließen" style="background:none;border:none;color:#666;font-size:1.6rem;cursor:pointer;line-height:1;padding:0 4px;">×</button>
     </div>
     <iframe id="legalIframe" src="about:blank" style="border:0;width:100%;flex:1;background:#fff;"></iframe>
   </div>
@@ -1047,37 +1047,37 @@
 <div id="infoOverlay" class="info-overlay" onclick="if(event.target===this)closeInfoModal()">
   <div class="info-modal-inner">
     <div style="padding:18px 22px;border-bottom:1px solid #383838;display:flex;justify-content:space-between;align-items:center;">
-      <strong style="font-size:1rem;letter-spacing:-.02em;" data-i18n="booking.trailer_details">Anhänger-Details</strong>
-      <button onclick="closeInfoModal()" aria-label="Schließen" data-i18n-attr="aria-label:booking.legal_close_aria" style="background:none;border:none;color:#666;font-size:1.6rem;cursor:pointer;line-height:1;padding:0 4px;">×</button>
+      <strong style="font-size:1rem;letter-spacing:-.02em;">Anhänger-Details</strong>
+      <button onclick="closeInfoModal()" style="background:none;border:none;color:#666;font-size:1.6rem;cursor:pointer;line-height:1;padding:0 4px;">×</button>
     </div>
     <div style="padding:20px 22px;overflow-y:auto;max-height:80vh;">
-      <p class="info-section-title" data-i18n="booking.dims_weights">Maße & Gewichte</p>
+      <p class="info-section-title">Maße & Gewichte</p>
       <div style="background:#111;border-radius:10px;padding:12px 14px;margin-bottom:18px;">
-        <div class="info-spec-row"><span class="lbl" data-i18n="booking.spec_loadarea">Ladefläche innen (L × B × H)</span><span class="val">205 × 110 × 110 cm</span></div>
-        <div class="info-spec-row"><span class="lbl" data-i18n="booking.spec_empty">Leergewicht</span><span class="val">135 kg</span></div>
-        <div class="info-spec-row"><span class="lbl" data-i18n="booking.spec_gross">Zul. Gesamtgewicht</span><span class="val">750 kg</span></div>
-        <div class="info-spec-row"><span class="lbl" data-i18n="booking.spec_payload">Max. Zuladung</span><span class="val">615 kg</span></div>
-        <div class="info-spec-row"><span class="lbl" data-i18n="booking.spec_maxspeed">Höchstgeschwindigkeit</span><span class="val">100 km/h</span></div>
-        <div class="info-spec-row"><span class="lbl" data-i18n="booking.spec_brake">Bremse</span><span class="val" data-i18n="booking.spec_brake_val">Nein (ungebremst)</span></div>
-        <div class="info-spec-row"><span class="lbl" data-i18n="booking.spec_axles">Achsenanzahl</span><span class="val">1</span></div>
+        <div class="info-spec-row"><span class="lbl">Ladefläche innen (L × B × H)</span><span class="val">205 × 110 × 110 cm</span></div>
+        <div class="info-spec-row"><span class="lbl">Leergewicht</span><span class="val">135 kg</span></div>
+        <div class="info-spec-row"><span class="lbl">Zul. Gesamtgewicht</span><span class="val">750 kg</span></div>
+        <div class="info-spec-row"><span class="lbl">Max. Zuladung</span><span class="val">615 kg</span></div>
+        <div class="info-spec-row"><span class="lbl">Höchstgeschwindigkeit</span><span class="val">100 km/h</span></div>
+        <div class="info-spec-row"><span class="lbl">Bremse</span><span class="val">Nein (ungebremst)</span></div>
+        <div class="info-spec-row"><span class="lbl">Achsenanzahl</span><span class="val">1</span></div>
       </div>
-      <p class="info-section-title" data-i18n="booking.equipment">Ausstattung</p>
+      <p class="info-section-title">Ausstattung</p>
       <div style="background:#111;border-radius:10px;padding:12px 14px;margin-bottom:18px;display:flex;flex-direction:column;gap:7px;font-size:.84rem;color:#aaa;">
-        <span data-i18n="booking.equip_tarp">✓ Plane inkl. Gestell</span>
-        <span data-i18n="booking.equip_jockey">✓ Stützrad</span>
-        <span data-i18n="booking.equip_lock">✓ Diebstahlsicherung (Codeschloss)</span>
-        <span data-i18n="booking.equip_plug">✓ 13-poliger Stecker</span>
+        <span>✓ Plane inkl. Gestell</span>
+        <span>✓ Stützrad</span>
+        <span>✓ Diebstahlsicherung (Codeschloss)</span>
+        <span>✓ 13-poliger Stecker</span>
       </div>
-      <p class="info-section-title" data-i18n="booking.license_calc">Führerscheinrechner</p>
+      <p class="info-section-title">Führerscheinrechner</p>
       <div style="background:#111;border-radius:10px;padding:14px;">
-        <p style="font-size:.78rem;color:var(--gray);margin-bottom:12px;" data-i18n="booking.license_calc_intro">Wähle dein Fahrzeug – wir zeigen dir welchen Führerschein du brauchst.</p>
+        <p style="font-size:.78rem;color:var(--gray);margin-bottom:12px;">Wähle dein Fahrzeug – wir zeigen dir welchen Führerschein du brauchst.</p>
         <div class="fs-cars">
-          <button class="fs-car-btn" onclick="setFsCar(this,1100)"><div class="fs-car-icon">🚗</div><span class="fs-car-label" data-i18n="booking.car_small">Kleinwagen</span><span class="fs-car-kg">~1.100 kg</span></button>
-          <button class="fs-car-btn active" onclick="setFsCar(this,1500)"><div class="fs-car-icon">🚙</div><span class="fs-car-label" data-i18n="booking.car_mid">Mittelklasse</span><span class="fs-car-kg">~1.500 kg</span></button>
-          <button class="fs-car-btn" onclick="setFsCar(this,2000)"><div class="fs-car-icon">🚐</div><span class="fs-car-label" data-i18n="booking.car_large">Großes Fzg.</span><span class="fs-car-kg">~2.000 kg</span></button>
+          <button class="fs-car-btn" onclick="setFsCar(this,1100)"><div class="fs-car-icon">🚗</div><span class="fs-car-label">Kleinwagen</span><span class="fs-car-kg">~1.100 kg</span></button>
+          <button class="fs-car-btn active" onclick="setFsCar(this,1500)"><div class="fs-car-icon">🚙</div><span class="fs-car-label">Mittelklasse</span><span class="fs-car-kg">~1.500 kg</span></button>
+          <button class="fs-car-btn" onclick="setFsCar(this,2000)"><div class="fs-car-icon">🚐</div><span class="fs-car-label">Großes Fzg.</span><span class="fs-car-kg">~2.000 kg</span></button>
         </div>
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <label style="font-size:.75rem;color:var(--gray);white-space:nowrap;flex-shrink:0;" data-i18n="booking.own_weight">Eigenes Gewicht:</label>
+          <label style="font-size:.75rem;color:var(--gray);white-space:nowrap;flex-shrink:0;">Eigenes Gewicht:</label>
           <div class="input-wrap" style="flex:1;"><input type="number" class="field-input" id="fsCarWeight" value="1500" min="400" max="5000" oninput="calcFs()" /></div>
           <span style="font-size:.78rem;color:var(--gray);flex-shrink:0;">kg</span>
         </div>
@@ -1092,16 +1092,6 @@
   const SUPABASE_ANON = 'sb_publishable_cX1r2GLuIkxEPIpkFKdXaQ_RtP7eDOf';
   const STRIPE_PK     = 'pk_live_51TOehmPgNvYcKGtMbHXSssYCRGba5FXzM6BMwApWD25Fc3KSKruD95WbTQplHTtQldVfrWQduFXJvEGHziITWOqN00mwmamOpK';
 
-  // i18n-Helfer: nutzt window.t (aus i18n.js). Faellt bei Fehlen von i18n auf den deutschen Originaltext zurueck.
-  function T(key, fallback) { return (typeof window.t === 'function') ? window.t(key, fallback) : fallback; }
-  // Sprachwechsel: dynamisch gerenderte Texte (Preis-Aufschluesselung, Zusammenfassung) neu aufbauen
-  document.addEventListener('st-lang-changed', () => {
-    try { if (typeof calcDates === 'function') calcDates(); } catch (e) {}
-    try { if (typeof updateSummary === 'function') updateSummary(); } catch (e) {}
-    try { if (typeof updatePriceDisplay === 'function') updatePriceDisplay(); } catch (e) {}
-  });
-  function STLANG() { try { return window.stI18n && window.stI18n.getLang ? window.stI18n.getLang() : 'de'; } catch (e) { return 'de'; } }
-
   let bookingUser    = null;
   let bookingToken   = null;
   let bookedRanges   = [];
@@ -1109,9 +1099,9 @@
   let selectedInsurance     = 'basis';
   let insuranceRate         = 0.15;
   let cancellationProtection = true;  // default: vorausgewählt
-  const CP_RATE   = 0.055;  // 5,5% vom Mietpreis
-  const CP_MIN    = 3.00;    // Mindestgebühr (bleibt bei 3 €)
-  const CP_MAX    = Infinity; // kein Deckel mehr
+  const CP_RATE   = 0.10;   // 10% vom Mietpreis
+  const CP_MIN    = 3.00;    // Mindestgebühr
+  const CP_MAX    = 9.90;    // Deckel (max. Stornoschutz-Gebühr)
   let bookingMode       = 'flexible'; // 'flexible' | 'weekend' | 'week'
   let calClickState     = 'start';   // 'start' | 'end' — for flexible mode only
 
@@ -1119,11 +1109,9 @@
 
   let trailerId      = null;
   let trailerPickup  = { lat: null, lng: null, name: '' }; // Heimat-Stellplatz für Rückgabe-Zone
-  let selectedFreeFloating = false; // false = Heimat-Rückgabe (frei), true = irgendwo in Bremen (+9,90€)
+  let selectedFreeFloating = false; // false = Heimat-Rückgabe (frei), true = irgendwo in Bremen (+15€)
   let stripeElements = null;
-  // Preis-Grundwerte (RentMyTrailer-Logik): p2h = Mindestmiete 2h, day = Tagespreis,
-  // week = 7-Tage-Paket, pStd = abgeleiteter Stundenpreis (day - p2h)/6.
-  let trailerPrices  = { p2h: 9, day: 29, week: 119, pStd: 3.50, weekend: 59 };
+  let trailerPrices  = { kurztrip: 9, halftag: 18, day: 29, extra_day: 24, weekend: 59, week: 119 };
 
   function getStartMs() { return new Date(document.getElementById('startTime').value).getTime() || 0; }
   function getEndMs()   { return new Date(document.getElementById('endTime').value).getTime()   || 0; }
@@ -1153,7 +1141,7 @@
     const insAmt = getInsuranceAmount();
     const showIns = selectedInsurance !== 'none' && insAmt > 0;
     setRow('s4InsRow', 's4Ins', showIns, insAmt);
-    if (showIns) document.getElementById('s4InsLabel').textContent = selectedInsurance === 'premium' ? T('booking.ins_premium_name','Premium Schutz') : T('booking.ins_basis_name','Basis Schutz');
+    if (showIns) document.getElementById('s4InsLabel').textContent = selectedInsurance === 'premium' ? 'Premium Schutz' : 'Basis Schutz';
     setRow('s4CpRow', 's4Cp', cancellationProtection && getCancellationProtectionFee() > 0, getCancellationProtectionFee());
     setRow('s4FfRow', 's4Ff', selectedFreeFloating, FREE_FLOATING_FEE);
     document.getElementById('s4Total').textContent = fmt(getTotalPrice());
@@ -1163,7 +1151,7 @@
     if (dRow) {
       if (appliedDiscount && appliedDiscount.amount > 0) {
         dRow.style.display = 'flex';
-        document.getElementById('s4DiscLabel').textContent = `${T('booking.discount','Rabatt')} (${appliedDiscount.code}${appliedDiscount.scope === 'rent' ? T('booking.rent_only',' · nur Miete') : ''})`;
+        document.getElementById('s4DiscLabel').textContent = `Rabatt (${appliedDiscount.code}${appliedDiscount.scope === 'rent' ? ' · nur Miete' : ''})`;
         document.getElementById('s4Disc').textContent  = '−' + fmt(appliedDiscount.amount);
         document.getElementById('s4Total').textContent = fmt(appliedDiscount.total);
       } else {
@@ -1218,7 +1206,7 @@
     [52.998, 8.798], [53.008, 8.700], [53.075, 8.598], [53.110, 8.580],
     [53.137, 8.598], [53.165, 8.620], [53.187, 8.620]
   ];
-  const FREE_FLOATING_FEE = 9.90;
+  const FREE_FLOATING_FEE = 15.00;
   const RETURN_PENALTY    = 50.00;
 
   let zoneMap = null, zoneHomeCircle = null, zoneHomeMarker = null, zoneBremenPoly = null;
@@ -1262,7 +1250,7 @@
           html: '<div style="width:22px;height:22px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#E85D00;border:3px solid #ff8a3d;box-shadow:0 2px 8px rgba(0,0,0,.6);"></div>',
           iconSize: [22, 22], iconAnchor: [11, 22]
         })
-      }).addTo(zoneMap).bindTooltip(T('booking.home_spot','Heimat-Stellplatz'), { direction: 'top', offset: [0, -20] });
+      }).addTo(zoneMap).bindTooltip('Heimat-Stellplatz', { direction: 'top', offset: [0, -20] });
     }
 
     updateZoneMap();
@@ -1306,9 +1294,9 @@
         document.querySelector('.page').innerHTML = `
           <div style="text-align:center;padding:60px 20px;">
             <div style="font-size:2rem;margin-bottom:16px;">😔</div>
-            <h2 style="margin-bottom:12px;">${T('booking.unavailable_title','Aktuell nicht verfügbar')}</h2>
-            <p style="color:var(--gray);margin-bottom:24px;">${T('booking.unavailable_desc','Der Anhänger ist gerade gebucht. Schau später wieder vorbei.')}</p>
-            <a href="/" class="btn btn-orange" style="display:inline-flex;width:auto;">${T('booking.back_home','Zurück zur Startseite')}</a>
+            <h2 style="margin-bottom:12px;">Aktuell nicht verfügbar</h2>
+            <p style="color:var(--gray);margin-bottom:24px;">Der Anhänger ist gerade gebucht. Schau später wieder vorbei.</p>
+            <a href="/" class="btn btn-orange" style="display:inline-flex;width:auto;">Zurück zur Startseite</a>
           </div>`;
         return;
       }
@@ -1321,13 +1309,14 @@
         name: t.name || 'PKW-Anhänger',
       };
       trailerPrices = {
-        p2h:  Number(t.price_kurztrip)  || 9,    // Mindestmiete 2h (Spalte umgewidmet)
-        day:  Number(t.price_day)       || 29,   // Tagespreis (bis 24h)
-        week: Number(t.price_week)      || 119,  // 7-Tage-Paket
-        pStd: Number(t.price_halftag)   || 3.50, // FESTER Stundenpreis (Spalte umgewidmet)
-        weekend: Number(t.price_weekend)|| 59,   // fester Wochenendpreis
+        kurztrip:  t.price_kurztrip  || 9,
+        halftag:   t.price_halftag   || 18,
+        day:       t.price_day       || 29,
+        extra_day: t.price_extra_day || 24,
+        weekend:   t.price_weekend   || 59,
+        week:      t.price_week      || 119,
       };
-      document.getElementById('trailerNameDisplay').textContent = t.name || T('booking.trailer_name','PKW-Anhänger mit Plane');
+      document.getElementById('trailerNameDisplay').textContent = t.name || 'PKW-Anhänger mit Plane';
     } catch(e) {
       console.error('loadTrailer:', e);
     }
@@ -1445,8 +1434,8 @@
     const textEl  = document.getElementById('fsResultText');
     resEl.className = `fs-result ${ok ? 'ok' : 'warn'}`;
     textEl.innerHTML = ok
-      ? `✅ <strong>${T('booking.fs_class_b_ok','Führerschein Klasse B reicht')}</strong><br><span style="color:var(--gray);font-size:.77rem;">${T('booking.fs_vehicle','Fahrzeug')} ${car.toLocaleString()} kg + ${T('booking.trailer','Anhänger')} ${trailer} kg = ${total.toLocaleString()} kg ≤ 3.500 kg</span>`
-      : `⚠️ <strong>${T('booking.fs_class_be','Führerschein Klasse BE erforderlich')}</strong><br><span style="color:var(--gray);font-size:.77rem;">${T('booking.fs_vehicle','Fahrzeug')} ${car.toLocaleString()} kg + ${T('booking.trailer','Anhänger')} ${trailer} kg = ${total.toLocaleString()} kg ${T('booking.fs_over','(über 3.500 kg)')}</span>`;
+      ? `✅ <strong>Führerschein Klasse B reicht</strong><br><span style="color:var(--gray);font-size:.77rem;">Fahrzeug ${car.toLocaleString()} kg + Anhänger ${trailer} kg = ${total.toLocaleString()} kg ≤ 3.500 kg</span>`
+      : `⚠️ <strong>Führerschein Klasse BE erforderlich</strong><br><span style="color:var(--gray);font-size:.77rem;">Fahrzeug ${car.toLocaleString()} kg + Anhänger ${trailer} kg = ${total.toLocaleString()} kg (über 3.500 kg)</span>`;
   }
 
   /* ── TIME CONSTRAINTS (verhindert Doppelbuchungen + vergangene Uhrzeiten) ─ */
@@ -1558,70 +1547,57 @@
     if (endD && bookingMode === 'flexible') { const c = getHourRange(endD, 'end'); rebuildSelect('endHourInput', c.min, c.max); }
   }
 
-  /* ── PRICE CALC (1:1 IDENTISCH zu api/_pricing.js — beide MÜSSEN gleich rechnen) ── */
-  // Grundwerte: trailerPrices.p2h (Mindestmiete 2h), .day (Tagespreis), .week (7-Tage-Paket),
-  // .pStd (Stundenpreis = (day - p2h)/6). Wochenende = day × 1,8. Degressive Mehrtages-Staffel.
-  const stRound2 = n => Math.round(n * 100) / 100;
-  function stTierFactor(day) {
-    if (day <= 7)  return 0.60;
-    if (day <= 14) return 0.42;
-    if (day <= 21) return 0.294;
-    if (day <= 28) return 0.2058;
-    if (day <= 56) return 0.14406;
-    return 0.100842;
-  }
-  function stTagessatz(day) { return stRound2(trailerPrices.day * stTierFactor(day)); }
-  // Stundentreppe innerhalb eines (Rest-)Tages, gedeckelt auf cap (unrundiert!)
-  function stHoursPrice(h, cap) {
-    if (h <= 0) return 0;
-    const val = trailerPrices.p2h + Math.ceil(Math.max(0, h - 2)) * trailerPrices.pStd;
-    return Math.min(val, cap);
-  }
-  // Preis für D ganze Miettage (>=1), inkl. optionalem 7-Tage-Paket-Deckel
-  function daysPrice(D) {
-    if (D <= 1) return trailerPrices.day;
-    let sum;
-    if (trailerPrices.week > 0 && D >= 7) {
-      sum = trailerPrices.week;                        // Tag 1–7 = Paketpreis
-      for (let n = 8; n <= D; n++) sum += stTagessatz(n);
-    } else {
-      sum = trailerPrices.day;                         // Tag 1
-      for (let n = 2; n <= D; n++) sum += stTagessatz(n);
+  /* ── PRICE CALC ───────────────────────────────── */
+  // ── Wochen-Mengenrabatt (1:1 IDENTISCH zu api/create-payment-intent.js daysPrice) ──
+  // Tag 1 = voller Tagespreis. Jeder weitere Tag wird je erreichter Woche guenstiger:
+  //   Tag 2–7  : extra_day (Kurzmiete) — Gesamtpreis gedeckelt auf den Wochenpreis
+  //   Tag 8–14 : 14 €  ·  Tag 15–21 : 12 €  ·  ab Tag 22 : 10 €
+  const WEEK2_DAY = 14, WEEK3_DAY = 12, WEEK4_DAY = 10;
+  function daysPrice(totalDays) {
+    if (totalDays <= 7) {
+      return Math.min(trailerPrices.day + (totalDays - 1) * trailerPrices.extra_day, trailerPrices.week);
     }
-    return stRound2(sum);
+    let sum = trailerPrices.week; // 1. Woche
+    for (let d = 8; d <= totalDays; d++) sum += d <= 14 ? WEEK2_DAY : d <= 21 ? WEEK3_DAY : WEEK4_DAY;
+    return sum;
   }
 
   function calcPrice(startMs, endMs) {
-    const P = trailerPrices;
-    if (bookingMode === 'weekend') { const base = P.weekend;    return { base, label: T('booking.label_weekend','Wochenend-Paket (Fr–So)'), key: 'weekend', isWeekend: true, savings: Math.max(0, stRound2(P.day * 3 - base)) }; }
-    if (bookingMode === 'week')    { const base = daysPrice(7); return { base, label: T('booking.price_week_pkg','7-Tage-Paket'),            key: 'week',    isWeek:    true, savings: Math.max(0, stRound2(P.day * 7 - base)) }; }
-    if (bookingMode === 'day')     return { base: P.day, label: T('booking.mode.day','Ganzer Tag'), key: 'day', isDay: true, savings: 0 };
+    if (bookingMode === 'weekend') return { base: trailerPrices.weekend, extraDays: 0, label: 'Wochenende (Fr–So)', key: 'weekend', isWeekend: true, savings: (trailerPrices.day + 2 * trailerPrices.extra_day) - trailerPrices.weekend };
+    if (bookingMode === 'week')    return { base: trailerPrices.week,    extraDays: 0, label: '1 Woche (7 Tage)',   key: 'week',    isWeek:    true, savings: (trailerPrices.day + 6 * trailerPrices.extra_day) - trailerPrices.week };
+    if (bookingMode === 'day')     return { base: trailerPrices.day,     extraDays: 0, label: 'Ganzer Tag',         key: 'day',     isDay:     true };
     const hours = (endMs - startMs) / 3600000;
-    if (!(hours > 0)) return null;
+    if (hours <= 0)       return null;
+    if (hours <= 3)       return { base: trailerPrices.kurztrip, extraDays: 0, label: 'Kurztrip (bis 3 Std.)',   key: '3h' };
+    if (hours <= 6)       return { base: trailerPrices.halftag,  extraDays: 0, label: 'Halber Tag (bis 6 Std.)', key: '6h' };
+    if (hours <= 24 + 2)  return { base: trailerPrices.day,      extraDays: 0, label: 'Ganzer Tag',              key: 'day' };
 
-    // Bis 24h: Stundentreppe (2h Mindestmiete, ab 8h Tages-Deckel)
-    if (hours <= 24) {
-      const base = stRound2(stHoursPrice(hours, P.day));
-      let label;
-      if (hours <= 2)          label = T('booking.label_min2h','Mindestmiete (2 Std.)');
-      else if (base >= P.day)  label = T('booking.price_full_day','Ganzer Tag (ab ca. 7,5 Std.)');
-      else                     label = `${Math.ceil(hours)} ${T('booking.hours_unit','Std.')}`;
-      return { base, label, key: 'hours', savings: 0 };
-    }
+    // Mehr als 26h: erster Tag + volle Extra-Tage + Restzeitstaffel
+    const GRACE        = 2;
+    const extraHours   = hours - 24 - GRACE;           // Stunden nach erstem Tag+Grace
+    const fullExtra    = Math.floor(extraHours / 24);  // volle 24h-Blöcke
+    const remainH      = extraHours % 24;              // verbleibende Reststunden
 
-    // Mehr als 24h: ganze Tage (degressiv) + Reststunden (gedeckelt auf nächsten Tagessatz)
-    const D          = Math.floor(hours / 24);
-    const remH       = hours - D * 24;
-    const daysBase   = daysPrice(D);
-    const rawRemain  = remH > 0 ? stHoursPrice(remH, stTagessatz(D + 1)) : 0;
-    const base       = stRound2(daysBase + rawRemain);   // identisch zum Server (einmal runden)
-    const remainPrice = stRound2(rawRemain);
-    const remainLabel = remH > 0 ? `+ ${Math.ceil(remH)} ${T('booking.hours_unit','Std.')}` : null;
-    const avgPerDay  = stRound2((base - remainPrice) / D);
-    const label      = `${D} ${T('booking.days','Tage')}` + (remainLabel ? ' ' + remainLabel : '');
-    const savings    = Math.max(0, stRound2(P.day * Math.ceil(hours / 24) - base));
+    let remainPrice = 0, remainLabel = null;
+    if      (remainH <= 0) { remainPrice = 0; }
+    else if (remainH <= 3) { remainPrice = trailerPrices.kurztrip; remainLabel = 'Kurztrip'; }
+    else if (remainH <= 6) { remainPrice = trailerPrices.halftag;  remainLabel = 'Halber Tag'; }
+    // > 6h Rest → zählt als ein ganzer weiterer Tag (steckt in extraDays)
 
-    return { base, totalDays: D, remainLabel, remainPrice, avgPerDay, label, savings, key: 'flexible' };
+    const extraDays = fullExtra + (remainH > 6 ? 1 : 0);
+    const totalDays = extraDays + 1;
+
+    const daysBase = daysPrice(totalDays);
+    const base     = daysBase + (remainLabel ? remainPrice : 0);
+    const avgPerDay = daysBase / totalDays;
+    const label    = `${totalDays} Tage` + (remainLabel ? ' + ' + remainLabel : '');
+
+    // Ersparnis ggü. reinem Tagespreis (für die "Du sparst X €"-Anzeige)
+    const dailyRef = trailerPrices.day + (totalDays - 1) * trailerPrices.extra_day + (remainLabel ? remainPrice : 0);
+    const savings  = Math.max(0, dailyRef - base);
+
+    return { base, totalDays, extraDays, remainLabel, remainPrice: remainLabel ? remainPrice : 0,
+             label, avgPerDay, savings, key: 'flexible' };
   }
 
   function getInsuranceAmount() {
@@ -1685,7 +1661,7 @@
     if (!code) {
       appliedDiscountCode = ''; appliedDiscountMeta = null;
       refreshDiscountUI();
-      showDiscountMsg(T('booking.discount_removed_msg','Rabattcode entfernt.'), true);
+      showDiscountMsg('Rabattcode entfernt.', true);
       return;
     }
     if (btn) { btn.disabled = true; btn.textContent = '…'; }
@@ -1699,16 +1675,16 @@
         appliedDiscountCode = data.code;
         appliedDiscountMeta = { code: data.code, percent: data.percent, scope: data.scope };
         refreshDiscountUI();
-        showDiscountMsg(`✓ ${T('booking.code','Code')} „${data.code}" ${T('booking.active','aktiv')} – ${data.percent}% ${data.scope === 'rent' ? T('booking.on_rent_price','auf den Mietpreis') : T('booking.discount','Rabatt')}`, true);
+        showDiscountMsg(`✓ Code „${data.code}" aktiv – ${data.percent}% ${data.scope === 'rent' ? 'auf den Mietpreis' : 'Rabatt'}`, true);
       } else {
         appliedDiscountCode = ''; appliedDiscountMeta = null;
         refreshDiscountUI();
-        showDiscountMsg((data.error || T('booking.err_code_invalid','Code ungültig')).replace(/^Rabattcode:\s*/, ''), false);
+        showDiscountMsg((data.error || 'Code ungültig').replace(/^Rabattcode:\s*/, ''), false);
       }
     } catch (e) {
-      showDiscountMsg(T('booking.err_code_check','Code konnte nicht geprüft werden — bitte erneut versuchen.'), false);
+      showDiscountMsg('Code konnte nicht geprüft werden — bitte erneut versuchen.', false);
     } finally {
-      if (btn) { btn.disabled = false; btn.textContent = T('booking.redeem','Einlösen'); }
+      if (btn) { btn.disabled = false; btn.textContent = 'Einlösen'; }
     }
   }
 
@@ -1748,7 +1724,7 @@
     refreshTimeDropdowns();
     const startH = document.getElementById('startHourInput').value || '08:00';
 
-    let   startMs = new Date(`${startD}T${startH}:00`).getTime();
+    const startMs = new Date(`${startD}T${startH}:00`).getTime();
     let   endMs, endLabel;
 
     if (bookingMode === 'weekend') {
@@ -1757,16 +1733,15 @@
       const dow = fri.getDay();
       const toFri = dow <= 5 ? (5 - dow + 7) % 7 : 6;
       fri.setDate(fri.getDate() + toFri);
-      fri.setHours(0,0,0,0);                                    // Fr 00:00
-      startMs = fri.getTime();                                 // Buchung startet Fr 00:00
-      const sun = new Date(fri); sun.setDate(fri.getDate() + 3); sun.setHours(0,0,0,0); // So 24:00 (= Mo 00:00)
+      const sun = new Date(fri); sun.setDate(fri.getDate() + 2); sun.setHours(20,0,0,0);
+      fri.setHours(8,0,0,0);
       endMs = sun.getTime();
-      const sunLbl = new Date(fri); sunLbl.setDate(fri.getDate() + 2);
-      endLabel = sunLbl.toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'}) + ', 24:00 Uhr';
+      const endStr = toDateStr(sun);
+      endLabel = fmtShort(sun.getTime());
       document.getElementById('endAutoText').textContent = endLabel;
       document.getElementById('endAutoDisplay').style.display = 'block';
       document.getElementById('startDateInput').value = toDateStr(fri);
-      document.getElementById('startHourInput').value = '00:00';
+      document.getElementById('startHourInput').value = '08:00';
     } else if (bookingMode === 'day') {
       endMs = new Date(`${startD}T${startH}:00`).getTime() + 24 * 3600000;
       document.getElementById('endAutoText').textContent = fmtShort(endMs);
@@ -1786,7 +1761,7 @@
       if (!endD) { document.getElementById('priceBreakdown').style.display = 'none'; renderCalendar(); return; }
       endMs = new Date(`${endD}T${endH}:00`).getTime();
       if (endMs <= startMs) {
-        errEl.textContent = T('booking.err_end_after_start','Enddatum muss nach Startdatum liegen.'); errEl.style.display = 'block';
+        errEl.textContent = 'Enddatum muss nach Startdatum liegen.'; errEl.style.display = 'block';
         document.getElementById('priceBreakdown').style.display = 'none'; renderCalendar(); return;
       }
     }
@@ -1796,7 +1771,7 @@
       new Date(r.start_time) < new Date(endMs) && new Date(r.end_time) > new Date(startMs)
     );
     if (overlap) {
-      errEl.textContent = T('booking.err_already_booked','Der Anhänger ist in diesem Zeitraum bereits gebucht.');
+      errEl.textContent = 'Der Anhänger ist in diesem Zeitraum bereits gebucht.';
       errEl.style.display = 'block';
       document.getElementById('priceBreakdown').style.display = 'none'; return;
     }
@@ -1812,42 +1787,37 @@
     const remH  = Math.round(hours % 24);
     document.getElementById('pbStart').textContent    = fmtShort(startMs);
     document.getElementById('pbEnd').textContent      = fmtShort(endMs);
-    document.getElementById('pbDuration').textContent = T('booking.duration','Dauer:') + ' ' + (days > 0 ? `${days} ${days>1?T('booking.days','Tage'):T('booking.day','Tag')}${remH>0?', '+remH+' '+T('booking.hours_unit','Std.'):''}` : `${Math.round(hours)} ${T('booking.hours_unit','Std.')}`);
+    document.getElementById('pbDuration').textContent = 'Dauer: ' + (days > 0 ? `${days} Tag${days>1?'e':''}${remH>0?', '+remH+' Std.':''}` : `${Math.round(hours)} Std.`);
 
     const hideExtra = () => { document.getElementById('pbExtraLine').style.display = 'none'; document.getElementById('pbRemainLine').style.display = 'none'; };
-    const eur = v => v.toFixed(2).replace('.', ',') + ' €';
     if (p.isDay) {
-      document.getElementById('pbDay1Line').innerHTML = `<span>${T('booking.fullday_upto24','Ganzer Tag (bis 24 Std.)')}</span><span>${eur(p.base)}</span>`; hideExtra();
+      document.getElementById('pbDay1Line').innerHTML = `<span>Ganzer Tag (24 Std.)</span><span>29,00 €</span>`; hideExtra();
     } else if (p.isWeekend) {
-      document.getElementById('pbDay1Line').innerHTML = `<span>${T('booking.label_weekend','Wochenend-Paket (Fr–So)')}</span><span>${eur(p.base)}</span>`;
-      document.getElementById('pbExtraLine').innerHTML = `<span style="color:var(--gray);font-size:.78rem;">≈ ${eur(p.base / 3)} ${T('booking.per_day','pro Tag')}</span>`;
+      document.getElementById('pbDay1Line').innerHTML = `<span>Wochenende Festpreis (Fr–So)</span><span>59,00 €</span>`;
+      document.getElementById('pbExtraLine').innerHTML = `<span style="color:var(--gray);font-size:.78rem;">≈ 19,67 € pro Tag</span>`;
       document.getElementById('pbExtraLine').style.display = 'flex'; document.getElementById('pbRemainLine').style.display = 'none';
     } else if (p.isWeek) {
-      document.getElementById('pbDay1Line').innerHTML = `<span>🔥 ${T('booking.price_week_pkg','7-Tage-Paket')}</span><span>${eur(p.base)}</span>`;
-      document.getElementById('pbExtraLine').innerHTML = `<span style="color:var(--gray);font-size:.78rem;">≈ ${eur(p.base / 7)} ${T('booking.per_day','pro Tag')}</span>`;
-      document.getElementById('pbExtraLine').style.display = 'flex'; document.getElementById('pbRemainLine').style.display = 'none';
-    } else if (p.key === 'hours') {
-      // Bis 24h: Stundentreppe (2h Mindestmiete, ab 8h Tages-Deckel)
-      document.getElementById('pbDay1Line').innerHTML = `<span>${p.label}</span><span>${eur(p.base)}</span>`;
-      const hint = p.base < trailerPrices.day
-        ? `${T('booking.hint_2h','2 Std.')} ${eur(trailerPrices.p2h)} + ${T('booking.hint_per_h','je Std.')} ${eur(trailerPrices.pStd)} · ${T('booking.hint_from75','ab ca. 7,5 Std. = Tagespreis')}`
-        : `${T('booking.cap_reached','Tages-Deckel erreicht · nie teurer als der Tagespreis')}`;
-      document.getElementById('pbExtraLine').innerHTML = `<span style="color:var(--gray);font-size:.78rem;">${hint}</span>`;
+      document.getElementById('pbDay1Line').innerHTML = `<span>🔥 1 Woche Festpreis (7 Tage)</span><span>119,00 €</span>`;
+      document.getElementById('pbExtraLine').innerHTML = `<span style="color:var(--gray);font-size:.78rem;">≈ 17,00 € pro Tag</span>`;
       document.getElementById('pbExtraLine').style.display = 'flex'; document.getElementById('pbRemainLine').style.display = 'none';
     } else if (p.key === 'flexible') {
-      // Individuell > 24h: ganze Tage mit Mengenrabatt + evtl. Reststunden
+      // Individuell ≥ 2 Tage: ein Mietpreis mit Mengenrabatt (je länger, desto günstiger pro Tag)
       const daysBase = p.base - (p.remainLabel ? p.remainPrice : 0);
-      document.getElementById('pbDay1Line').innerHTML = `<span>${p.totalDays >= 7 ? '🔥 ' : ''}${T('booking.rent','Miete')} · ${p.totalDays} ${T('booking.days','Tage')}</span><span>${eur(daysBase)}</span>`;
-      document.getElementById('pbExtraLine').innerHTML = `<span style="color:var(--gray);font-size:.78rem;">${p.totalDays >= 7 ? T('booking.volume_discount','Mengenrabatt') + ' · ' : ''}Ø ${eur(p.avgPerDay)} ${T('booking.per_day','pro Tag')}</span>`;
+      document.getElementById('pbDay1Line').innerHTML = `<span>${p.totalDays >= 7 ? '🔥 ' : ''}Miete · ${p.totalDays} Tage</span><span>${daysBase.toFixed(2).replace('.', ',')} €</span>`;
+      document.getElementById('pbExtraLine').innerHTML = `<span style="color:var(--gray);font-size:.78rem;">${p.totalDays >= 7 ? 'Mengenrabatt · ' : ''}Ø ${p.avgPerDay.toFixed(2).replace('.', ',')} € pro Tag</span>`;
       document.getElementById('pbExtraLine').style.display = 'flex';
       if (p.remainLabel) {
-        document.getElementById('pbRemainLine').innerHTML = `<span>${p.remainLabel}</span><span>${eur(p.remainPrice)}</span>`;
+        document.getElementById('pbRemainLine').innerHTML = `<span>${p.remainLabel}</span><span>${p.remainPrice.toFixed(2).replace('.', ',')} €</span>`;
         document.getElementById('pbRemainLine').style.display = 'flex';
       } else {
         document.getElementById('pbRemainLine').style.display = 'none';
       }
+    } else if (hours <= 3) {
+      document.getElementById('pbDay1Line').innerHTML = `<span>Kurztrip (bis 3 Std.)</span><span>9,00 €</span>`; hideExtra();
+    } else if (hours <= 6) {
+      document.getElementById('pbDay1Line').innerHTML = `<span>Halber Tag (bis 6 Std.)</span><span>18,00 €</span>`; hideExtra();
     } else {
-      document.getElementById('pbDay1Line').innerHTML = `<span>${T('booking.rent_price','Mietpreis')}</span><span>${eur(p.base)}</span>`;
+      document.getElementById('pbDay1Line').innerHTML = `<span>Erster Tag</span><span>29,00 €</span>`;
       document.getElementById('pbExtraLine').style.display  = 'none';
       document.getElementById('pbRemainLine').style.display = 'none';
     }
@@ -1858,7 +1828,7 @@
       const sav = p && p.savings ? p.savings : 0;
       if (sav > 0) {
         pbSaveRow.style.display = 'flex';
-        document.getElementById('pbSaveText').textContent = `${T('booking.you_save_prefix','Du sparst')} ${sav.toFixed(2).replace('.', ',')} € ${T('booking.you_save_suffix','gegenüber dem Tagespreis')}`;
+        document.getElementById('pbSaveText').textContent = `Du sparst ${sav.toFixed(2).replace('.', ',')} € gegenüber dem Tagespreis`;
       } else {
         pbSaveRow.style.display = 'none';
       }
@@ -1920,10 +1890,9 @@
           const pb = bookedRanges.find(r => new Date(r.start_time) < d1 && new Date(r.end_time) > d0);
           if (pb) {
             const fmtT = dt => new Date(dt).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Berlin'});
-            const _clock = STLANG() === 'de' ? ' Uhr' : '';
             const info = new Date(pb.start_time) <= d0
-              ? `${T('booking.free_from','Frei ab')} ${fmtT(pb.end_time)}${_clock}`
-              : `${T('booking.free_until','Frei bis')} ${fmtT(pb.start_time)}${_clock}`;
+              ? `Frei ab ${fmtT(pb.end_time)} Uhr`
+              : `Frei bis ${fmtT(pb.start_time)} Uhr`;
             cell.dataset.info   = info;
             cell.dataset.freeAt = info;
           }
@@ -1954,7 +1923,7 @@
   function calNext() { calMonth++; if (calMonth>11){calMonth=0;calYear++;} renderCalendar(); }
 
   function handleCalDayClick(d, freeAt) {
-    if (freeAt) updateCalHint(true, `⚠️ ${freeAt} – ${T('booking.choose_time_accordingly','Uhrzeit entsprechend wählen')}`);
+    if (freeAt) updateCalHint(true, `⚠️ ${freeAt} – Uhrzeit entsprechend wählen`);
     if (bookingMode === 'day') {
       document.getElementById('startDateInput').value = toDateStr(d);
       if (!document.getElementById('startHourInput').value)
@@ -1997,7 +1966,7 @@
     const el = document.getElementById('calHint');
     if (!el) return;
     if (text) el.textContent = text;
-    else el.textContent = T('booking.cal_hint','📅 Jetzt Enddatum im Kalender anklicken');
+    else el.textContent = '📅 Jetzt Enddatum im Kalender anklicken';
     el.style.display = show ? 'block' : 'none';
   }
 
@@ -2145,17 +2114,17 @@
     const errEl = document.getElementById('authResetErr');
     const okEl  = document.getElementById('authResetOk');
     errEl.style.display = 'none'; okEl.style.display = 'none';
-    if (!email) { errEl.textContent = T('booking.err_enter_email','Bitte E-Mail eingeben.'); errEl.style.display = 'block'; return; }
+    if (!email) { errEl.textContent = 'Bitte E-Mail eingeben.'; errEl.style.display = 'block'; return; }
     try {
       await fetch(`${SUPABASE_URL}/auth/v1/recover`, {
         method: 'POST',
         headers: { apikey: SUPABASE_ANON, 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })
       });
-      okEl.textContent = T('booking.reset_sent','Link gesendet! Schau in dein Postfach.');
+      okEl.textContent = 'Link gesendet! Schau in dein Postfach.';
       okEl.style.display = 'block';
     } catch(e) {
-      errEl.textContent = T('booking.err_send','Fehler beim Senden.'); errEl.style.display = 'block';
+      errEl.textContent = 'Fehler beim Senden.'; errEl.style.display = 'block';
     }
   }
 
@@ -2171,7 +2140,7 @@
     const pass  = document.getElementById('authLoginPass').value;
     const errEl = document.getElementById('authLoginErr');
     errEl.style.display = 'none';
-    if (!email || !pass) { errEl.textContent = T('booking.err_fill_all','Bitte alle Felder ausfüllen.'); errEl.style.display = 'block'; return; }
+    if (!email || !pass) { errEl.textContent = 'Bitte alle Felder ausfüllen.'; errEl.style.display = 'block'; return; }
     try {
       const res  = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
         method: 'POST',
@@ -2179,7 +2148,7 @@
         body: JSON.stringify({ email, password: pass })
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error_description || T('booking.err_login_failed','Anmeldung fehlgeschlagen'));
+      if (!res.ok) throw new Error(data.error_description || 'Anmeldung fehlgeschlagen');
       bookingUser  = data.user;
       bookingToken = data.access_token;
       // Refresh-Token mitspeichern — Access-Token lebt nur 1h, mit Refresh-Token können wir ihn erneuern
@@ -2192,7 +2161,7 @@
       if (e.message === 'Invalid login credentials') {
         // Supabase verrät aus Sicherheitsgründen nicht, ob die Mail existiert →
         // kombinierte Meldung + Direkt-Link zur Registrierung.
-        errEl.innerHTML = T('booking.err_login_wrong', 'E-Mail oder Passwort falsch. Noch kein Konto? <a href="#" onclick="switchAuthTab(\'register\');return false;" style="color:var(--orange);font-weight:700;">Jetzt registrieren →</a>');
+        errEl.innerHTML = 'E-Mail oder Passwort falsch. Noch kein Konto? <a href="#" onclick="switchAuthTab(\'register\');return false;" style="color:var(--orange);font-weight:700;">Jetzt registrieren →</a>';
       } else {
         errEl.textContent = e.message;
       }
@@ -2212,26 +2181,26 @@
     const okEl      = document.getElementById('authRegOk');
     errEl.style.display = 'none'; okEl.style.display = 'none';
     if (!first || !last || !email || !phone || !birthdate || !address || !pass) {
-      errEl.textContent = T('booking.err_fill_all','Bitte alle Felder ausfüllen.'); errEl.style.display = 'block'; return;
+      errEl.textContent = 'Bitte alle Felder ausfüllen.'; errEl.style.display = 'block'; return;
     }
     const phoneDigits = phone.replace(/[\s\-\(\)\+]/g, '');
     if (!/^\d{7,15}$/.test(phoneDigits)) {
-      errEl.textContent = T('booking.err_phone','Bitte gültige Telefonnummer eingeben (z.B. +49 151 12345678).'); errEl.style.display = 'block'; return;
+      errEl.textContent = 'Bitte gültige Telefonnummer eingeben (z.B. +49 151 12345678).'; errEl.style.display = 'block'; return;
     }
     // Alters-Check: min 18 Jahre (laut AGB)
     const birth = new Date(birthdate);
-    if (isNaN(birth.getTime())) { errEl.textContent = T('booking.err_birthdate','Bitte gültiges Geburtsdatum eingeben.'); errEl.style.display = 'block'; return; }
+    if (isNaN(birth.getTime())) { errEl.textContent = 'Bitte gültiges Geburtsdatum eingeben.'; errEl.style.display = 'block'; return; }
     const ageMs = Date.now() - birth.getTime();
     const ageYears = ageMs / (365.25 * 24 * 60 * 60 * 1000);
     if (ageYears < 18) {
-      errEl.textContent = T('booking.err_min_age','Du musst mindestens 18 Jahre alt sein, um einen Anhänger zu mieten.');
+      errEl.textContent = 'Du musst mindestens 18 Jahre alt sein, um einen Anhänger zu mieten.';
       errEl.style.display = 'block'; return;
     }
     if (ageYears > 110) {
-      errEl.textContent = T('booking.err_birthdate_invalid','Geburtsdatum scheint nicht zu stimmen. Bitte prüfen.');
+      errEl.textContent = 'Geburtsdatum scheint nicht zu stimmen. Bitte prüfen.';
       errEl.style.display = 'block'; return;
     }
-    if (pass.length < 6) { errEl.textContent = T('booking.err_password_min','Passwort mind. 6 Zeichen.'); errEl.style.display = 'block'; return; }
+    if (pass.length < 6) { errEl.textContent = 'Passwort mind. 6 Zeichen.'; errEl.style.display = 'block'; return; }
     try {
       const res  = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
         method: 'POST',
@@ -2242,10 +2211,10 @@
       if (!res.ok) {
         const msg = data.error_description || data.msg || data.error || '';
         if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already been registered')) {
-          errEl.innerHTML = T('booking.err_email_registered', 'Diese E-Mail ist bereits registriert. <a href="#" onclick="switchAuthTab(\'login\')" style="color:var(--orange)">Jetzt anmelden →</a>');
+          errEl.innerHTML = 'Diese E-Mail ist bereits registriert. <a href="#" onclick="switchAuthTab(\'login\')" style="color:var(--orange)">Jetzt anmelden →</a>';
           errEl.style.display = 'block'; return;
         }
-        throw new Error(msg || T('booking.err_register_failed','Registrierung fehlgeschlagen'));
+        throw new Error(msg || 'Registrierung fehlgeschlagen');
       }
       if (data.access_token) {
         bookingUser  = data.user;
@@ -2258,7 +2227,20 @@
       } else {
         saveBookingState();
         const enteredEmail = document.getElementById('authRegEmail').value.trim();
-        okEl.innerHTML = T('booking.confirm_email_html', `<div style="font-weight:700;font-size:1rem;margin-bottom:8px;color:#86efac;">✅ Bestätigungs-E-Mail gesendet!</div><div style="font-size:.86rem;color:#ddd;margin-bottom:14px;line-height:1.55;">An <strong style="color:#fff;">{email}</strong> haben wir eine Mail mit einem Bestätigungs-Link geschickt. Klick auf den Link — du kommst automatisch zurück zu deiner Buchung und sie läuft weiter.</div><div style="background:#0d0d0d;border:1px solid #383838;border-radius:10px;padding:14px 16px;font-size:.84rem;color:#bbb;line-height:1.6;"><div style="font-weight:700;color:#fbbf24;margin-bottom:6px;">📭 Keine Mail bekommen?</div><ul style="padding-left:18px;margin:0;"><li>Schau im <strong style="color:#fff;">Junk- / Spam-Ordner</strong> nach</li><li>Warte 1–2 Minuten — manchmal dauert es</li><li>Tippfehler in der Mail? <a href="#" onclick="document.getElementById('authRegOk').style.display='none';document.getElementById('authRegEmail').focus();return false;" style="color:#E85D00;font-weight:700;text-decoration:underline;">Mail-Adresse ändern</a></li></ul></div>`).replace('{email}', enteredEmail);
+        okEl.innerHTML = `
+          <div style="font-weight:700;font-size:1rem;margin-bottom:8px;color:#86efac;">✅ Bestätigungs-E-Mail gesendet!</div>
+          <div style="font-size:.86rem;color:#ddd;margin-bottom:14px;line-height:1.55;">
+            An <strong style="color:#fff;">${enteredEmail}</strong> haben wir eine Mail mit einem Bestätigungs-Link geschickt.
+            Klick auf den Link — du kommst automatisch zurück zu deiner Buchung und sie läuft weiter.
+          </div>
+          <div style="background:#0d0d0d;border:1px solid #383838;border-radius:10px;padding:14px 16px;font-size:.84rem;color:#bbb;line-height:1.6;">
+            <div style="font-weight:700;color:#fbbf24;margin-bottom:6px;">📭 Keine Mail bekommen?</div>
+            <ul style="padding-left:18px;margin:0;">
+              <li>Schau im <strong style="color:#fff;">Junk- / Spam-Ordner</strong> nach</li>
+              <li>Warte 1–2 Minuten — manchmal dauert es</li>
+              <li>Tippfehler in der Mail? <a href="#" onclick="document.getElementById('authRegOk').style.display='none';document.getElementById('authRegEmail').focus();return false;" style="color:#E85D00;font-weight:700;text-decoration:underline;">Mail-Adresse ändern</a></li>
+            </ul>
+          </div>`;
         okEl.style.display = 'block';
       }
     } catch(e) {
@@ -2356,10 +2338,10 @@
     const startMs = new Date(document.getElementById('startTime').value).getTime();
     const endMs   = new Date(document.getElementById('endTime').value).getTime();
     if (!startMs || !endMs || isNaN(startMs) || isNaN(endMs)) {
-      errEl.textContent = T('booking.err_choose_period','Bitte Zeitraum im Kalender wählen.'); errEl.style.display = 'block'; return;
+      errEl.textContent = 'Bitte Zeitraum im Kalender wählen.'; errEl.style.display = 'block'; return;
     }
     if (endMs <= startMs) {
-      errEl.textContent = T('booking.err_end_after_start','Enddatum muss nach Startdatum liegen.'); errEl.style.display = 'block'; return;
+      errEl.textContent = 'Enddatum muss nach Startdatum liegen.'; errEl.style.display = 'block'; return;
     }
     goToStep(2);
     updatePriceDisplay();
@@ -2388,7 +2370,7 @@
   }
 
   async function goStep5() {
-    if (!trailerId) { alert(T('booking.err_load_trailer','Anhänger konnte nicht geladen werden. Bitte Seite neu laden.')); return; }
+    if (!trailerId) { alert('Anhänger konnte nicht geladen werden. Bitte Seite neu laden.'); return; }
     if (!bookingUser) { goToStep(3); return; }
     if (currentDlStatus !== 'verified') { goToStep(4); return; }
     goToStep(5);
@@ -2442,7 +2424,7 @@
       const expires = info.dl_expires_at ? new Date(info.dl_expires_at).toLocaleDateString('de-DE') : '–';
       const klass   = (info.dl_classes || []).join(', ') || 'B';
       document.getElementById('dlVerifiedInfo').innerHTML =
-        T('booking.dl_verified_info_html', 'Klasse <strong style="color:#14532D;">{klass}</strong> · gültig bis <strong style="color:#14532D;">{expires}</strong>').replace('{klass}', klass).replace('{expires}', expires);
+        `Klasse <strong style="color:#14532D;">${klass}</strong> · gültig bis <strong style="color:#14532D;">${expires}</strong>`;
       // Auto-weiter zur Zahlung nach kurzer Bestätigung
       setTimeout(() => { if (currentDlStatus === 'verified') goStep5(); }, 900);
       return;
@@ -2457,7 +2439,7 @@
     verifyBox.style.display = 'block';
     if (status === 'failed' && info.dl_failure_reason) {
       const err = document.getElementById('errDl');
-      err.textContent = T('booking.dl_failed_reason', 'Letzte Verifizierung fehlgeschlagen: {reason}. Bitte erneut versuchen.').replace('{reason}', info.dl_failure_reason);
+      err.textContent = `Letzte Verifizierung fehlgeschlagen: ${info.dl_failure_reason}. Bitte erneut versuchen.`;
       err.style.display = 'block';
     }
   }
@@ -2474,37 +2456,37 @@
     const consent = document.getElementById('biometricCheck')?.checked;
     if (!consent) {
       const err = document.getElementById('errDl');
-      err.textContent = T('booking.err_biometric','Bitte willige in die biometrische Verarbeitung ein.');
+      err.textContent = 'Bitte willige in die biometrische Verarbeitung ein.';
       err.style.display = 'block';
       return;
     }
     const btn = document.getElementById('dlStartBtn');
     btn.disabled = true;
-    btn.textContent = T('booking.starting','Wird gestartet …');
+    btn.textContent = 'Wird gestartet …';
 
     try {
       const res = await authedFetch('/api/identity', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
-      if (!res) throw new Error(T('booking.session_expired','Sitzung abgelaufen — bitte erneut anmelden.'));
+      if (!res) throw new Error('Sitzung abgelaufen — bitte erneut anmelden.');
       if (res.status === 401) {
         // Auch nach Refresh nicht autorisiert → User muss neu einloggen
         switchBookingAccount();
         goToStep(3);
-        throw new Error(T('booking.session_expired','Sitzung abgelaufen — bitte erneut anmelden.'));
+        throw new Error('Sitzung abgelaufen — bitte erneut anmelden.');
       }
       const data = await res.json();
-      if (!res.ok || !data.client_secret) throw new Error(data.error || T('booking.verify_start_failed','Verifikation konnte nicht gestartet werden'));
+      if (!res.ok || !data.client_secret) throw new Error(data.error || 'Verifikation konnte nicht gestartet werden');
 
       const result = await stripeClient.verifyIdentity(data.client_secret);
 
       btn.disabled = false;
-      btn.textContent = T('booking.verify_now','Jetzt verifizieren →');
+      btn.textContent = 'Jetzt verifizieren →';
 
       if (result.error) {
         const err = document.getElementById('errDl');
-        err.textContent = result.error.message || T('booking.verify_cancelled','Verifikation abgebrochen.');
+        err.textContent = result.error.message || 'Verifikation abgebrochen.';
         err.style.display = 'block';
         return;
       }
@@ -2515,10 +2497,10 @@
       startStatusPolling();
     } catch (err) {
       const errEl = document.getElementById('errDl');
-      errEl.textContent = err.message || T('booking.verify_start_error','Fehler beim Start der Verifikation.');
+      errEl.textContent = err.message || 'Fehler beim Start der Verifikation.';
       errEl.style.display = 'block';
       btn.disabled = false;
-      btn.textContent = T('booking.verify_now','Jetzt verifizieren →');
+      btn.textContent = 'Jetzt verifizieren →';
     }
   }
 
@@ -2535,7 +2517,7 @@
       } else if (elapsed >= 90) {
         clearInterval(dlPollTimer); dlPollTimer = null;
         const err = document.getElementById('errDl');
-        err.textContent = T('booking.verify_too_long','Verifizierung dauert ungewöhnlich lange. Bitte später nochmal probieren.');
+        err.textContent = 'Verifizierung dauert ungewöhnlich lange. Bitte später nochmal probieren.';
         err.style.display = 'block';
         document.getElementById('dlPendingBox').style.display = 'none';
         document.getElementById('dlVerifyBox').style.display  = 'block';
@@ -2548,7 +2530,7 @@
     const endMs   = new Date(document.getElementById('endTime').value).getTime()   || 0;
     const p       = calcPrice(startMs, endMs);
     const insAmt  = getInsuranceAmount();
-    const insLabels = { basis: T('booking.ins_basis_label_pct','Basis Schutz (+15%)'), premium: T('booking.ins_premium_label_pct','Premium Schutz (+30%)') };
+    const insLabels = { basis: 'Basis Schutz (+15%)', premium: 'Premium Schutz (+30%)' };
     const meta    = bookingUser?.user_metadata || {};
     // Verifizierte DL-Daten haben Vorrang (Stripe Identity = Master)
     const name    = (meta.dl_first_name && meta.dl_last_name)
@@ -2596,7 +2578,7 @@
     if (discRow) {
       if (appliedDiscount && appliedDiscount.amount > 0) {
         discRow.style.display = 'flex';
-        document.getElementById('sumDiscLabel').textContent = `${T('booking.discount','Rabatt')} (${appliedDiscount.code}, −${appliedDiscount.percent}%${appliedDiscount.scope === 'rent' ? T('booking.on_rent',' auf Miete') : ''})`;
+        document.getElementById('sumDiscLabel').textContent = `Rabatt (${appliedDiscount.code}, −${appliedDiscount.percent}%${appliedDiscount.scope === 'rent' ? ' auf Miete' : ''})`;
         document.getElementById('sumDisc').textContent = '−' + appliedDiscount.amount.toFixed(2).replace('.',',') + ' €';
         document.getElementById('sumTotal').textContent = appliedDiscount.total.toFixed(2).replace('.',',') + ' €';
       } else {
@@ -2609,7 +2591,7 @@
       const sav = p && p.savings ? p.savings : 0;
       if (sav > 0) {
         saveRow.style.display = 'flex';
-        document.getElementById('sumSaveText').textContent = `${T('booking.you_save_prefix','Du sparst')} ${sav.toFixed(2).replace('.', ',')} € ${T('booking.you_save_suffix','gegenüber dem Tagespreis')}`;
+        document.getElementById('sumSaveText').textContent = `Du sparst ${sav.toFixed(2).replace('.', ',')} € gegenüber dem Tagespreis`;
       } else {
         saveRow.style.display = 'none';
       }
@@ -2631,7 +2613,7 @@
       document.getElementById('endTime').value, selectedInsurance, bookingMode,
       selectedFreeFloating, cancellationProtection, appliedDiscountCode].join('|');
     if (stripeElements && stripePaymentElement && lastStripeSignature === signature) {
-      payBtn.textContent = T('booking.book_pay','Jetzt buchen & bezahlen');
+      payBtn.textContent = 'Jetzt buchen & bezahlen';
       payBtn.dataset.stripeReady = '1';
       updatePayBtnState();
       return;
@@ -2642,7 +2624,7 @@
     }
 
     payBtn.disabled = true;
-    payBtn.textContent = T('booking.preparing_payment','Zahlung wird vorbereitet...');
+    payBtn.textContent = 'Zahlung wird vorbereitet...';
 
     try {
       const res = await authedFetch('/api/create-payment-intent', {
@@ -2671,9 +2653,9 @@
         })
       });
 
-      if (!res) throw new Error(T('booking.session_expired_login','Anmeldung abgelaufen — bitte neu einloggen.'));
+      if (!res) throw new Error('Anmeldung abgelaufen — bitte neu einloggen.');
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || T('booking.err_load_payment','Fehler beim Laden der Zahlung'));
+      if (!res.ok) throw new Error(data.error || 'Fehler beim Laden der Zahlung');
 
       // Server hat den Code verbindlich geprüft + Betrag gesetzt; Anzeige neu rechnen (lokal = identisch).
       updateSummary();
@@ -2695,7 +2677,7 @@
       stripePaymentElement = pe;
       lastStripeSignature  = signature;
 
-      payBtn.textContent = T('booking.book_pay','Jetzt buchen & bezahlen');
+      payBtn.textContent = 'Jetzt buchen & bezahlen';
       payBtn.dataset.stripeReady = '1';
       updatePayBtnState();   // enabled nur wenn AGB-Checkbox an
 
@@ -2705,17 +2687,17 @@
 
     } catch (err) {
       let msg = err.message;
-      if (msg === 'Failed to fetch') msg = T('booking.err_connection','Verbindung fehlgeschlagen. Bitte Seite neu laden.');
-      if (msg.includes('No API key')) msg = T('booking.err_payment_config','Zahlungssystem nicht konfiguriert. Bitte Betreiber kontaktieren.');
+      if (msg === 'Failed to fetch') msg = 'Verbindung fehlgeschlagen. Bitte Seite neu laden.';
+      if (msg.includes('No API key')) msg = 'Zahlungssystem nicht konfiguriert. Bitte Betreiber kontaktieren.';
       // Lehnt der Server den Rabattcode ab (z.B. zwischenzeitlich abgelaufen): Code entfernen,
       // damit kein Stillstand entsteht und der nächste Versuch ohne Code durchläuft.
       if (/Rabattcode/i.test(msg)) {
         appliedDiscountCode = ''; appliedDiscountMeta = null;
         refreshDiscountUI();
-        msg = msg.replace(/^Rabattcode:\s*/, '') + T('booking.discount_removed_suffix',' — der Rabattcode wurde entfernt, bitte erneut „Jetzt buchen" klicken.');
+        msg = msg.replace(/^Rabattcode:\s*/, '') + ' — der Rabattcode wurde entfernt, bitte erneut „Jetzt buchen" klicken.';
       }
       showPaymentError(msg);
-      payBtn.textContent = T('booking.retry','Erneut versuchen');
+      payBtn.textContent = 'Erneut versuchen';
       payBtn.disabled = false;
     }
   }
@@ -2732,8 +2714,8 @@
   }
 
   function openLegalModal(type) {
-    const titles = { agb: T('booking.legal_title_agb','Allgemeine Geschäftsbedingungen'), datenschutz: T('booking.legal_title_datenschutz','Datenschutzerklärung'), impressum: T('booking.legal_title_impressum','Impressum') };
-    document.getElementById('legalTitle').textContent = titles[type] || T('booking.legal_title_default','Rechtliches');
+    const titles = { agb: 'Allgemeine Geschäftsbedingungen', datenschutz: 'Datenschutzerklärung', impressum: 'Impressum' };
+    document.getElementById('legalTitle').textContent = titles[type] || 'Rechtliches';
     document.getElementById('legalIframe').src = '/' + type;
     document.getElementById('legalOverlay').classList.add('open');
   }
@@ -2844,26 +2826,26 @@
 <div id="insInfoOverlay" class="info-overlay" onclick="if(event.target===this)closeInsInfo()">
   <div class="info-modal-inner" style="padding:22px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-      <strong style="font-size:1.05rem;letter-spacing:-.01em;" data-i18n="booking.ins_info_title">Schutzpakete erklärt</strong>
-      <button onclick="closeInsInfo()" aria-label="Schließen" data-i18n-attr="aria-label:booking.legal_close_aria" style="background:var(--s2);border:1px solid var(--border);color:var(--gray);width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1rem;">×</button>
+      <strong style="font-size:1.05rem;letter-spacing:-.01em;">Schutzpakete erklärt</strong>
+      <button onclick="closeInsInfo()" style="background:var(--s2);border:1px solid var(--border);color:var(--gray);width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1rem;">×</button>
     </div>
-    <p style="color:var(--gray);font-size:.85rem;line-height:1.6;margin-bottom:14px;" data-i18n="booking.ins_info_intro">Das Schutzpaket begrenzt, was du im Schadensfall maximal selbst zahlst (Selbstbeteiligung) — egal wie hoch der Schaden ist.</p>
+    <p style="color:var(--gray);font-size:.85rem;line-height:1.6;margin-bottom:14px;">Das Schutzpaket begrenzt, was du im Schadensfall maximal selbst zahlst (Selbstbeteiligung) — egal wie hoch der Schaden ist.</p>
     <div style="display:grid;gap:10px;">
       <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;">
-        <strong style="font-size:.88rem;" data-i18n="booking.ins_basis_name">Basis Schutz</strong>
-        <p style="color:var(--gray);font-size:.8rem;line-height:1.55;margin-top:4px;" data-i18n-html="booking.ins_info_basis_desc">Du zahlst maximal <strong style="color:#fff;">500 €</strong> selbst, den Rest übernehmen wir.</p>
+        <strong style="font-size:.88rem;">Basis Schutz</strong>
+        <p style="color:var(--gray);font-size:.8rem;line-height:1.55;margin-top:4px;">Du zahlst maximal <strong style="color:#fff;">500 €</strong> selbst, den Rest übernehmen wir.</p>
       </div>
       <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;">
-        <strong style="font-size:.88rem;" data-i18n="booking.ins_premium_name">Premium Schutz</strong>
-        <p style="color:var(--gray);font-size:.8rem;line-height:1.55;margin-top:4px;" data-i18n-html="booking.ins_info_premium_desc">Du zahlst maximal <strong style="color:#fff;">50 €</strong> selbst — der Sorglos-Tarif.</p>
+        <strong style="font-size:.88rem;">Premium Schutz</strong>
+        <p style="color:var(--gray);font-size:.8rem;line-height:1.55;margin-top:4px;">Du zahlst maximal <strong style="color:#fff;">50 €</strong> selbst — der Sorglos-Tarif.</p>
       </div>
       <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;">
-        <strong style="font-size:.88rem;" data-i18n="booking.ins_none_name">Kein Schutz</strong>
-        <p style="color:var(--gray);font-size:.8rem;line-height:1.55;margin-top:4px;" data-i18n="booking.ins_info_none_desc">Du haftest in voller Höhe — im Extremfall mehrere tausend Euro.</p>
+        <strong style="font-size:.88rem;">Kein Schutz</strong>
+        <p style="color:var(--gray);font-size:.8rem;line-height:1.55;margin-top:4px;">Du haftest in voller Höhe — im Extremfall mehrere tausend Euro.</p>
       </div>
       <div style="background:rgba(232,93,0,.06);border:1px solid rgba(232,93,0,.25);border-radius:10px;padding:12px 14px;">
-        <strong style="font-size:.82rem;color:var(--orange);" data-i18n="booking.ins_info_example">Beispiel</strong>
-        <p style="color:#ccc;font-size:.8rem;line-height:1.6;margin-top:4px;" data-i18n-html="booking.ins_info_example_body">Beim Rangieren entsteht ein Schaden von <strong style="color:#fff;">800 €</strong>:<br>· Basis Schutz → du zahlst 500 €<br>· Premium Schutz → du zahlst 50 €<br>· Kein Schutz → du zahlst 800 €</p>
+        <strong style="font-size:.82rem;color:var(--orange);">Beispiel</strong>
+        <p style="color:#ccc;font-size:.8rem;line-height:1.6;margin-top:4px;">Beim Rangieren entsteht ein Schaden von <strong style="color:#fff;">800 €</strong>:<br>· Basis Schutz → du zahlst 500 €<br>· Premium Schutz → du zahlst 50 €<br>· Kein Schutz → du zahlst 800 €</p>
       </div>
     </div>
   </div>

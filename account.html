@@ -125,7 +125,7 @@
 
 <nav>
   <a href="/" class="logo" aria-label="SimpleTrailer Startseite"><img src="/logo.png?v=7" alt="SimpleTrailer - Anhängervermietung Bremen" style="height:36px;width:auto;display:block;" /></a>
-  <a href="/" class="back-link" data-i18n="account.back_home">← Startseite</a>
+  <a href="/" class="back-link">← Startseite</a>
 </nav>
 
 <div class="page">
@@ -250,7 +250,7 @@
           <span style="color:var(--gray);" data-i18n="account.birthdate">Geburtsdatum</span><span id="profBirthdate">–</span>
           <span style="color:var(--gray);" data-i18n="account.address">Adresse</span><span id="profAddress">–</span>
         </div>
-        <div id="profileMissingHint" data-i18n-html="account.profile.missing_hint" style="display:none;background:#1a0d00;border:1.5px solid var(--orange);border-radius:10px;padding:12px 14px;margin-top:14px;font-size:.84rem;line-height:1.5;">
+        <div id="profileMissingHint" style="display:none;background:#1a0d00;border:1.5px solid var(--orange);border-radius:10px;padding:12px 14px;margin-top:14px;font-size:.84rem;line-height:1.5;">
           ⚠ <strong>Geburtsdatum fehlt.</strong> Pflicht-Angabe für die Vermietung — bitte ergänzen über "Bearbeiten".
         </div>
       </div>
@@ -258,37 +258,37 @@
       <!-- Edit-Modus -->
       <div id="profileEdit" style="display:none;">
         <div class="field-group">
-          <label class="field-label" data-i18n="account.phone">Telefon</label>
+          <label class="field-label">Telefon</label>
           <input type="tel" class="field-input" id="profEditPhone" autocomplete="tel" />
         </div>
         <div class="field-group">
-          <label class="field-label"><span data-i18n="account.birthdate">Geburtsdatum</span> <span style="color:var(--gray);font-weight:400;" data-i18n="account.birthdate.minage">(Mindestalter 18)</span></label>
+          <label class="field-label">Geburtsdatum <span style="color:var(--gray);font-weight:400;">(Mindestalter 18)</span></label>
           <input type="date" class="field-input" id="profEditBirthdate" autocomplete="bday" />
         </div>
         <div class="field-group">
-          <label class="field-label" data-i18n="account.address">Adresse</label>
+          <label class="field-label">Adresse</label>
           <input type="text" class="field-input" id="profEditAddress" autocomplete="street-address" />
         </div>
         <div id="profileEditErr" class="error-msg" style="margin-bottom:10px;"></div>
-        <button class="btn btn-orange" onclick="saveProfile()" id="profileSaveBtn" data-i18n="account.save">Speichern</button>
-        <button class="logout-btn" onclick="cancelProfileEdit()" style="margin-top:8px;" data-i18n="account.cancel">Abbrechen</button>
+        <button class="btn btn-orange" onclick="saveProfile()" id="profileSaveBtn">Speichern</button>
+        <button class="logout-btn" onclick="cancelProfileEdit()" style="margin-top:8px;">Abbrechen</button>
       </div>
     </div>
 
     <!-- Konto-Loeschen-Modal (Apple-Pflicht fuer App-Submission) -->
     <div id="deleteOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:9999;align-items:center;justify-content:center;padding:20px;">
       <div style="background:#1A1A1A;border:1px solid #383838;border-radius:14px;max-width:480px;width:100%;padding:28px;">
-        <h3 style="margin:0 0 14px;font-size:1.1rem;" data-i18n="account.delete.title">Konto wirklich löschen?</h3>
-        <p style="color:var(--gray);font-size:.9rem;line-height:1.55;margin:0 0 12px;" data-i18n-html="account.delete.body">
+        <h3 style="margin:0 0 14px;font-size:1.1rem;">Konto wirklich löschen?</h3>
+        <p style="color:var(--gray);font-size:.9rem;line-height:1.55;margin:0 0 12px;">
           Dein Konto wird unwiderruflich gelöscht. Bezahlte Buchungs-Daten werden aus steuerrechtlichen Gründen <strong>10 Jahre anonymisiert aufbewahrt</strong> (§ 147 AO), aber nicht mehr mit deinem Namen verknüpft.
         </p>
-        <p style="color:#f87171;font-size:.85rem;margin:0 0 18px;" data-i18n="account.delete.warn">
+        <p style="color:#f87171;font-size:.85rem;margin:0 0 18px;">
           ⚠ Aktive oder zukünftige Buchungen müssen erst beendet sein.
         </p>
         <div id="deleteAccountErr" style="display:none;color:#f87171;background:#2a0a0a;border:1px solid #5c1a1a;border-radius:8px;padding:10px 12px;font-size:.85rem;margin-bottom:14px;"></div>
         <div style="display:flex;gap:10px;">
-          <button onclick="closeDeleteAccountModal()" style="flex:1;background:transparent;border:1.5px solid var(--border);color:var(--gray);padding:11px;border-radius:8px;cursor:pointer;font-family:var(--font);font-size:.88rem;" data-i18n="account.cancel">Abbrechen</button>
-          <button id="deleteConfirmBtn" onclick="confirmDeleteAccount()" style="flex:1;background:#7f1d1d;color:#fff;border:none;padding:11px;border-radius:8px;cursor:pointer;font-family:var(--font);font-weight:700;font-size:.88rem;" data-i18n="account.delete.confirm">Endgültig löschen</button>
+          <button onclick="closeDeleteAccountModal()" style="flex:1;background:transparent;border:1.5px solid var(--border);color:var(--gray);padding:11px;border-radius:8px;cursor:pointer;font-family:var(--font);font-size:.88rem;">Abbrechen</button>
+          <button id="deleteConfirmBtn" onclick="confirmDeleteAccount()" style="flex:1;background:#7f1d1d;color:#fff;border:none;padding:11px;border-radius:8px;cursor:pointer;font-family:var(--font);font-weight:700;font-size:.88rem;">Endgültig löschen</button>
         </div>
       </div>
     </div>
@@ -296,7 +296,7 @@
     <!-- Führerschein -->
     <div class="card" id="dlCard">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
-        <div style="font-weight:700;letter-spacing:-.02em;" data-i18n="account.license">Führerschein</div>
+        <div style="font-weight:700;letter-spacing:-.02em;">Führerschein</div>
         <span id="dlBadge" style="font-size:.7rem;font-weight:700;padding:4px 10px;border-radius:999px;letter-spacing:.05em;text-transform:uppercase;">–</span>
       </div>
       <div id="dlBody"></div>
@@ -322,22 +322,9 @@
   let currentUser = null;
   let authToken   = null;
 
-  // i18n-Helper: window.t existiert erst nach dem deferred i18n.js — im Zweifel Fallback nutzen
-  const T = (k, f) => (window.t ? window.t(k, f) : f);
-
-  // Getter → bei jedem Zugriff (also bei jedem Re-Render nach Sprachwechsel) neu übersetzt
-  const statusLabel = {
-    get confirmed() { return T('account.status.confirmed', 'Bestätigt'); },
-    get returned()  { return T('account.status.returned', 'Zurückgegeben'); },
-    get active()    { return T('account.status.active', 'Aktiv'); },
-    get pending()   { return T('account.status.pending', 'Ausstehend'); }
-  };
+  const statusLabel = { confirmed: 'Bestätigt', returned: 'Zurückgegeben', active: 'Aktiv', pending: 'Ausstehend' };
   const statusClass = { confirmed: 'status-confirmed', returned: 'status-returned', active: 'status-active', pending: 'status-confirmed' };
-  const pricingLabel = {
-    get '3h'()    { return T('account.pricing.3h', '3 Stunden'); },
-    get day()     { return T('account.pricing.day', 'Ganzer Tag'); },
-    get weekend() { return T('account.pricing.weekend', 'Wochenende'); }
-  };
+  const pricingLabel = { '3h': '3 Stunden', day: 'Ganzer Tag', weekend: 'Wochenende' };
 
   function fmt(d) {
     return new Date(d).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -520,14 +507,14 @@
     if (birthdate) {
       const ageYears = (Date.now() - new Date(birthdate).getTime()) / (365.25 * 24 * 60 * 60 * 1000);
       if (ageYears < 18) {
-        errEl.textContent = T('account.err.minage18', 'Mindestalter 18 Jahre.'); errEl.style.display = 'block'; return;
+        errEl.textContent = 'Mindestalter 18 Jahre.'; errEl.style.display = 'block'; return;
       }
       if (ageYears > 110) {
-        errEl.textContent = T('account.err.birthdate_invalid', 'Geburtsdatum scheint nicht zu stimmen.'); errEl.style.display = 'block'; return;
+        errEl.textContent = 'Geburtsdatum scheint nicht zu stimmen.'; errEl.style.display = 'block'; return;
       }
     }
 
-    btn.disabled = true; btn.textContent = T('account.saving', 'Speichert…');
+    btn.disabled = true; btn.textContent = 'Speichert…';
     try {
       // Existierende Metadata erhalten + neue Werte mergen
       const existing = currentUser.user_metadata || {};
@@ -538,14 +525,14 @@
         body: JSON.stringify({ data: newMeta })
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error_description || data.msg || T('account.err.save_failed', 'Speichern fehlgeschlagen'));
+      if (!res.ok) throw new Error(data.error_description || data.msg || 'Speichern fehlgeschlagen');
       currentUser.user_metadata = data.user_metadata || newMeta;
       renderProfile();
       cancelProfileEdit();
     } catch (e) {
       errEl.textContent = e.message; errEl.style.display = 'block';
     } finally {
-      btn.disabled = false; btn.textContent = T('account.save', 'Speichern');
+      btn.disabled = false; btn.textContent = 'Speichern';
     }
   }
 
@@ -559,14 +546,14 @@
   async function loadLicenseStatus() {
     const body  = document.getElementById('dlBody');
     const badge = document.getElementById('dlBadge');
-    body.innerHTML = `<div style="color:#888;font-size:.85rem;">${T('account.loading', 'Wird geladen…')}</div>`;
+    body.innerHTML = '<div style="color:#888;font-size:.85rem;">Wird geladen…</div>';
     try {
       const res = await fetch('/api/identity', { headers: { Authorization: `Bearer ${authToken}` } });
       if (!res.ok) throw new Error();
       const info = await res.json();
       renderLicense(info);
     } catch(e) {
-      body.innerHTML = `<div style="color:#f87171;font-size:.85rem;">${T('account.license.load_error', 'Status konnte nicht geladen werden.')}</div>`;
+      body.innerHTML = '<div style="color:#f87171;font-size:.85rem;">Status konnte nicht geladen werden.</div>';
       badge.style.display = 'none';
     }
   }
@@ -577,7 +564,7 @@
     const status = info.dl_status || 'unverified';
 
     if (status === 'verified') {
-      badge.textContent = T('account.license.verified', '✓ Verifiziert');
+      badge.textContent = '✓ Verifiziert';
       badge.style.cssText = 'font-size:.7rem;font-weight:700;padding:4px 10px;border-radius:999px;letter-spacing:.05em;text-transform:uppercase;background:rgba(34,197,94,.12);color:#15803D;border:1px solid rgba(34,197,94,.3);';
       const expires = info.dl_expires_at ? new Date(info.dl_expires_at).toLocaleDateString('de-DE') : null;
       const dob     = info.dl_dob        ? new Date(info.dl_dob).toLocaleDateString('de-DE')        : null;
@@ -588,19 +575,19 @@
       const expiringSoon = expiryDate && (expiryDate.getTime() - Date.now()) / (1000*60*60*24) < 90;
       const expiredAlready = expiryDate && expiryDate.getTime() < Date.now();
       const expiryNote = expiredAlready
-        ? `<div style="color:#f87171;font-size:.78rem;margin-top:10px;">${T('account.license.expired', '⚠ Führerschein abgelaufen – bitte neu verifizieren um buchen zu können.')}</div>`
-        : (expiringSoon ? `<div style="color:#facc15;font-size:.78rem;margin-top:10px;">${T('account.license.expiring', '⚠ Läuft bald ab – ggf. neu verifizieren.')}</div>` : '');
+        ? '<div style="color:#f87171;font-size:.78rem;margin-top:10px;">⚠ Führerschein abgelaufen – bitte neu verifizieren um buchen zu können.</div>'
+        : (expiringSoon ? '<div style="color:#facc15;font-size:.78rem;margin-top:10px;">⚠ Läuft bald ab – ggf. neu verifizieren.</div>' : '');
       const row = (label, val) => val
         ? `<div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid #1f1f1f;"><span style="color:var(--gray);">${label}</span><span style="font-weight:600;text-align:right;">${val}</span></div>`
         : '';
       body.innerHTML = `
         <div style="font-size:.85rem;">
-          ${row(T('account.license.name_row', 'Name lt. Führerschein'), fname)}
-          ${row(T('account.birthdate', 'Geburtsdatum'), dob)}
-          ${row(T('account.license.class', 'Klasse'), klass)}
-          ${row(T('account.license.valid_until', 'Gültig bis'), expires)}
-          ${row(T('account.license.country', 'Ausstellungsland'), info.dl_issuing_country)}
-          ${row(T('account.license.verified_on', 'Verifiziert am'), verified)}
+          ${row('Name lt. Führerschein', fname)}
+          ${row('Geburtsdatum', dob)}
+          ${row('Klasse', klass)}
+          ${row('Gültig bis', expires)}
+          ${row('Ausstellungsland', info.dl_issuing_country)}
+          ${row('Verifiziert am', verified)}
           ${expiryNote}
         </div>
       `;
@@ -608,57 +595,57 @@
     }
 
     if (status === 'pending') {
-      badge.textContent = T('account.license.pending', '⏳ In Prüfung');
+      badge.textContent = '⏳ In Prüfung';
       badge.style.cssText = 'font-size:.7rem;font-weight:700;padding:4px 10px;border-radius:999px;letter-spacing:.05em;text-transform:uppercase;background:rgba(234,179,8,.12);color:#A16207;border:1px solid rgba(234,179,8,.3);';
       body.innerHTML = `
         <div style="display:flex;align-items:center;gap:12px;color:#aaa;font-size:.85rem;">
           <div style="width:24px;height:24px;border:3px solid #2a2a2a;border-top-color:var(--orange);border-radius:50%;animation:spin 1s linear infinite;flex-shrink:0;"></div>
-          ${T('account.license.checking', 'Stripe prüft dein Dokument. Das dauert meist 5–30 Sekunden.')}
+          Stripe prüft dein Dokument. Das dauert meist 5–30 Sekunden.
         </div>
       `;
       pollLicense();
       return;
     }
 
-    badge.textContent = status === 'failed' ? T('account.license.failed', '✗ Fehlgeschlagen') : T('account.license.unverified', '○ Nicht verifiziert');
+    badge.textContent = status === 'failed' ? '✗ Fehlgeschlagen' : '○ Nicht verifiziert';
     badge.style.cssText = `font-size:.7rem;font-weight:700;padding:4px 10px;border-radius:999px;letter-spacing:.05em;text-transform:uppercase;${
       status === 'failed'
         ? 'background:rgba(248,113,113,.12);color:#B91C1C;border:1px solid rgba(248,113,113,.3);'
         : 'background:rgba(17,18,19,.05);color:#6B6862;border:1px solid var(--border);'
     }`;
     const failNote = status === 'failed' && info.dl_failure_reason
-      ? `<div style="color:#f87171;font-size:.8rem;margin-bottom:12px;">${T('account.license.last_attempt', 'Letzte Verifizierung:')} ${info.dl_failure_reason}</div>`
+      ? `<div style="color:#f87171;font-size:.8rem;margin-bottom:12px;">Letzte Verifizierung: ${info.dl_failure_reason}</div>`
       : '';
     body.innerHTML = `
       <div style="color:#aaa;font-size:.85rem;line-height:1.55;margin-bottom:14px;">
-        ${T('account.license.intro_html', 'Lade deinen Führerschein einmalig hoch – sicher über <strong style="color:#fff;">Stripe Identity</strong>. Vorder-, Rückseite und ein Selfie. Danach kannst du jederzeit ohne erneute Verifikation buchen.')}
+        Lade deinen Führerschein einmalig hoch – sicher über <strong style="color:#fff;">Stripe Identity</strong>. Vorder-, Rückseite und ein Selfie. Danach kannst du jederzeit ohne erneute Verifikation buchen.
       </div>
       ${failNote}
-      <button class="btn btn-orange" id="dlAccBtn" onclick="startAccountIdentity()">${T('account.license.verify_btn', 'Jetzt verifizieren →')}</button>
+      <button class="btn btn-orange" id="dlAccBtn" onclick="startAccountIdentity()">Jetzt verifizieren →</button>
     `;
   }
 
   async function startAccountIdentity() {
     const btn = document.getElementById('dlAccBtn');
     btn.disabled = true;
-    btn.textContent = T('account.license.starting', 'Wird gestartet …');
+    btn.textContent = 'Wird gestartet …';
     try {
       const res = await fetch('/api/identity', {
         method: 'POST',
         headers: { Authorization: `Bearer ${authToken}`, 'Content-Type': 'application/json' }
       });
       const data = await res.json();
-      if (!res.ok || !data.client_secret) throw new Error(data.error || T('account.license.start_failed', 'Verifikation konnte nicht gestartet werden'));
+      if (!res.ok || !data.client_secret) throw new Error(data.error || 'Verifikation konnte nicht gestartet werden');
 
       const result = await getStripeAcc().verifyIdentity(data.client_secret);
       btn.disabled = false;
-      btn.textContent = T('account.license.verify_btn', 'Jetzt verifizieren →');
+      btn.textContent = 'Jetzt verifizieren →';
       if (result.error) return; // Nutzer abgebrochen
       loadLicenseStatus();
     } catch(e) {
       btn.disabled = false;
-      btn.textContent = T('account.license.verify_btn', 'Jetzt verifizieren →');
-      alert(e.message || T('account.license.start_error', 'Fehler beim Start der Verifikation.'));
+      btn.textContent = 'Jetzt verifizieren →';
+      alert(e.message || 'Fehler beim Start der Verifikation.');
     }
   }
 
@@ -677,11 +664,7 @@
     }, 3000);
   }
 
-  const INS_LABEL = {
-    get none()    { return T('account.ins.none', 'Kein Schutz'); },
-    get basis()   { return T('account.ins.basis', 'Basis Schutz (500 € SB)'); },
-    get premium() { return T('account.ins.premium', 'Premium Schutz (50 € SB)'); }
-  };
+  const INS_LABEL = { none: 'Kein Schutz', basis: 'Basis Schutz (500 € SB)', premium: 'Premium Schutz (50 € SB)' };
   const siteUrl = 'https://simpletrailer.de';
 
   // Reverse-Geocoding via Nominatim (kostenlos, DSGVO-konform — OpenStreetMap).
@@ -709,7 +692,7 @@
       if (el) el.textContent = text;
     } catch (e) {
       const el = document.getElementById(targetId);
-      if (el) el.textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)} ${T('account.addr.unavailable', '(Adresse nicht verfügbar)')}`;
+      if (el) el.textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)} (Adresse nicht verfügbar)`;
     }
   }
 
@@ -731,7 +714,7 @@
       }
 
       if (!bookings.length) {
-        list.innerHTML = `<div class="empty-state"><div class="icon">📋</div><p>${T('account.no_bookings', 'Noch keine Buchungen.')}</p><a href="/booking" class="btn btn-orange" style="width:auto;padding:11px 24px;">${T('account.book_now', 'Jetzt buchen')}</a></div>`;
+        list.innerHTML = `<div class="empty-state"><div class="icon">📋</div><p>Noch keine Buchungen.</p><a href="/booking" class="btn btn-orange" style="width:auto;padding:11px 24px;">Jetzt buchen</a></div>`;
         return;
       }
 
@@ -742,17 +725,17 @@
             <span class="booking-status ${statusClass[b.status] || 'status-confirmed'}">${statusLabel[b.status] || b.status}</span>
           </div>
           <div class="booking-detail">
-            <span>🚛 <strong>${b.trailers?.name || T('account.trailer_fallback', 'Anhänger')}</strong></span>
+            <span>🚛 <strong>${b.trailers?.name || 'Anhänger'}</strong></span>
             <span>📅 <strong>${pricingLabel[b.pricing_type] || b.pricing_type}</strong></span>
-            <span>▶ ${T('account.booking.from', 'Von:')} <strong>${fmt(b.start_time)}</strong></span>
-            <span>⏹ ${T('account.booking.to', 'Bis:')} <strong>${fmt(b.end_time)}</strong></span>
+            <span>▶ Von: <strong>${fmt(b.start_time)}</strong></span>
+            <span>⏹ Bis: <strong>${fmt(b.end_time)}</strong></span>
             <span>🛡 <strong>${INS_LABEL[b.insurance_type || 'none']}</strong></span>
           </div>
           <div class="booking-amount">${(b.total_amount + (b.late_fee_amount || 0)).toFixed(2).replace('.',',')} €</div>
         </div>
       `).join('');
     } catch(e) {
-      list.innerHTML = `<div class="empty-state"><p>${T('account.bookings.load_error', 'Buchungen konnten nicht geladen werden.')}</p></div>`;
+      list.innerHTML = '<div class="empty-state"><p>Buchungen konnten nicht geladen werden.</p></div>';
     }
   }
 
@@ -782,12 +765,12 @@
     if (isBeforeStart) {
       const h = Math.floor((startMs - nowMs) / 3600000);
       const m = Math.floor(((startMs - nowMs) % 3600000) / 60000);
-      const untilStr = h > 0 ? `${h}h ${m}min` : `${m} ${T('account.unit.min', 'Min')}`;
-      statusBlock = `<div style="background:#1a1606;border:1px solid rgba(245,158,11,0.4);border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:.88rem;color:#fbbf24;">${T('account.starts_in', '⏳ Buchung beginnt in')} <strong>${untilStr}</strong></div>`;
+      const untilStr = h > 0 ? `${h}h ${m}min` : `${m} Min`;
+      statusBlock = `<div style="background:#1a1606;border:1px solid rgba(245,158,11,0.4);border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:.88rem;color:#fbbf24;">⏳ Buchung beginnt in <strong>${untilStr}</strong></div>`;
     } else if (b.status === 'confirmed' && !precheckDone) {
-      statusBlock = `<div style="background:#0a1f0a;border:1px solid #22c55e;border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:.88rem;color:#86efac;">${T('account.time_reached', '✅ Buchungszeit erreicht — Vorab-Check kann starten')}</div>`;
+      statusBlock = `<div style="background:#0a1f0a;border:1px solid #22c55e;border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:.88rem;color:#86efac;">✅ Buchungszeit erreicht — Vorab-Check kann starten</div>`;
     } else if (isOverdue) {
-      statusBlock = `<div style="background:#1a0808;border:1px solid #dc2626;border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:.88rem;color:#fca5a5;">${T('account.overdue', '⚠ Rückgabe überfällig — 10 €/h Verspätungsgebühr läuft')}</div>`;
+      statusBlock = `<div style="background:#1a0808;border:1px solid #dc2626;border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:.88rem;color:#fca5a5;">⚠ Rückgabe überfällig — 10 €/h Verspätungsgebühr läuft</div>`;
     }
 
     // "So findest du den Anhaenger"-Block — Foto + Kennzeichen.
@@ -798,10 +781,10 @@
     if (plate || photo) {
       appearanceHtml = `
         <div style="background:#0a1a0a;border:1.5px solid #22c55e;border-radius:12px;padding:14px 16px;margin-bottom:14px;">
-          <div style="font-weight:700;font-size:.92rem;margin-bottom:10px;color:#86efac;">${T('account.find_trailer_title', '🔍 So findest du deinen Anhänger')}</div>
-          ${photo ? `<img src="${photo}" alt="${T('account.trailer_preview_alt', 'Anhänger-Vorschau')}" style="width:100%;border-radius:8px;display:block;margin-bottom:10px;" />` : ''}
-          ${plate ? `<div style="display:flex;justify-content:space-between;font-size:.86rem;"><span style="color:#aaa;">${T('account.license_plate', 'Kennzeichen')}</span><strong style="color:#fff;font-family:monospace;letter-spacing:.05em;">${plate}</strong></div>` : ''}
-          <div style="font-size:.78rem;color:#86efac;margin-top:6px;">${T('account.grey_note', 'Aktuell grau (Branding folgt).')}</div>
+          <div style="font-weight:700;font-size:.92rem;margin-bottom:10px;color:#86efac;">🔍 So findest du deinen Anhänger</div>
+          ${photo ? `<img src="${photo}" alt="Anhänger-Vorschau" style="width:100%;border-radius:8px;display:block;margin-bottom:10px;" />` : ''}
+          ${plate ? `<div style="display:flex;justify-content:space-between;font-size:.86rem;"><span style="color:#aaa;">Kennzeichen</span><strong style="color:#fff;font-family:monospace;letter-spacing:.05em;">${plate}</strong></div>` : ''}
+          <div style="font-size:.78rem;color:#86efac;margin-top:6px;">Aktuell grau (Branding folgt).</div>
         </div>`;
     }
 
@@ -818,11 +801,11 @@
           <div style="display:flex;align-items:flex-start;gap:12px;">
             <div style="font-size:1.4rem;flex-shrink:0;">📍</div>
             <div style="flex:1;min-width:0;">
-              <div style="font-weight:700;font-size:.9rem;margin-bottom:2px;">${T('account.location.title', 'Standort des Anhängers')}</div>
-              <div id="addr-${b.id}" style="color:#aaa;font-size:.82rem;line-height:1.45;">${T('account.location.loading', 'Adresse wird geladen…')}</div>
+              <div style="font-weight:700;font-size:.9rem;margin-bottom:2px;">Standort des Anhängers</div>
+              <div id="addr-${b.id}" style="color:#aaa;font-size:.82rem;line-height:1.45;">Adresse wird geladen…</div>
               <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
-                <a href="${mapsRoute}" target="_blank" rel="noopener" style="flex:1;min-width:140px;background:var(--orange);color:#fff;text-decoration:none;padding:9px 12px;border-radius:8px;font-weight:700;font-size:.84rem;text-align:center;">${T('account.location.route', '🚗 Route starten')}</a>
-                <a href="${mapsView}" target="_blank" rel="noopener" style="background:#1f1f1f;border:1px solid var(--border);color:#fff;text-decoration:none;padding:9px 12px;border-radius:8px;font-weight:700;font-size:.84rem;text-align:center;">${T('account.location.map', '🗺 Auf Karte')}</a>
+                <a href="${mapsRoute}" target="_blank" rel="noopener" style="flex:1;min-width:140px;background:var(--orange);color:#fff;text-decoration:none;padding:9px 12px;border-radius:8px;font-weight:700;font-size:.84rem;text-align:center;">🚗 Route starten</a>
+                <a href="${mapsView}" target="_blank" rel="noopener" style="background:#1f1f1f;border:1px solid var(--border);color:#fff;text-decoration:none;padding:9px 12px;border-radius:8px;font-weight:700;font-size:.84rem;text-align:center;">🗺 Auf Karte</a>
               </div>
             </div>
           </div>
@@ -837,34 +820,34 @@
     if (precheckDone && b.access_code && (b.status === 'active' || b.status === 'confirmed')) {
       accessCodeHtml = `
         <div style="background:linear-gradient(135deg,#0d2f0d,#0a1f0a);border:2px solid #22c55e;border-radius:14px;padding:18px 20px;margin-bottom:14px;text-align:center;">
-          <div style="color:#86efac;font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px;">${T('account.access_code', '🔑 Zugangscode Zahlenschloss')}</div>
+          <div style="color:#86efac;font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px;">🔑 Zugangscode Zahlenschloss</div>
           <div style="font-size:2.4rem;font-weight:900;letter-spacing:.3em;color:#fff;font-variant-numeric:tabular-nums;margin:6px 0;">${escCode(b.access_code)}</div>
-          <div style="color:#86efac;font-size:.78rem;">${T('account.access_code.hint', 'Diesen Code am Schloss eingeben')}</div>
+          <div style="color:#86efac;font-size:.78rem;">Diesen Code am Schloss eingeben</div>
         </div>`;
     }
 
     // Action-Buttons
     let actionHtml = '';
     if (b.status === 'confirmed' && !precheckDone && precheckUrl) {
-      actionHtml = `<a href="${precheckUrl}" class="action-btn action-btn-green">${T('account.start_precheck', '📷 Vorab-Check starten → Schloss-Code erhalten')}</a>`;
+      actionHtml = `<a href="${precheckUrl}" class="action-btn action-btn-green">📷 Vorab-Check starten → Schloss-Code erhalten</a>`;
     }
     if (returnUrl && (b.status === 'active' || isOverdue)) {
-      actionHtml += `<a href="${returnUrl}" class="action-btn action-btn-orange">${T('account.start_return', 'Rückgabe starten →')}</a>`;
+      actionHtml += `<a href="${returnUrl}" class="action-btn action-btn-orange">Rückgabe starten →</a>`;
     }
     // Anleitung inline als Accordion (statt extra Seite — Lion: "direkt aufklappen")
     const anleitungHtml = `
       <details style="margin-top:14px;background:#0a0a0a;border:1px solid var(--border);border-radius:10px;padding:14px 16px;">
-        <summary style="cursor:pointer;font-weight:700;font-size:.92rem;color:#fff;list-style:none;">${T('account.guide_inline.title', '📖 Anleitung — Abholung & Rückgabe')}</summary>
+        <summary style="cursor:pointer;font-weight:700;font-size:.92rem;color:#fff;list-style:none;">📖 Anleitung — Abholung &amp; Rückgabe</summary>
         <div style="margin-top:14px;display:flex;flex-direction:column;gap:12px;">
           ${[
-            ['1', T('account.guide.step1.title', 'Stellplatz finden'), T('account.guide.step1.desc', 'Stellplatz steht in der Bestätigungs-Mail + im Kundenkonto. Karte zeigt die genaue Position.')],
-            ['2', T('account.guide.step2.title', 'Vorab-Check + Foto'), T('account.guide.step2.desc', '15 Min vor Mietbeginn: 2 Fotos (außen + Ladefläche). Damit ist der Zustand dokumentiert.')],
-            ['3', T('account.guide.step3.title', 'Schloss-Code'), T('account.guide.step3.desc', 'Nach den Fotos bekommst du den 4-stelligen Zugangscode. Im Konto jederzeit sichtbar.')],
-            ['4', T('account.guide.step4.title', 'Ankuppeln'), T('account.guide.step4.desc', 'Anhänger an die Kugelkupplung, sichern. Stützrad hoch. Elektrokabel anschließen.')],
-            ['5', T('account.guide.step5.title', 'Lichttest'), T('account.guide.step5.desc', 'Brems-, Blinker- und Rücklicht prüfen. Wichtig — sonst Bußgeld bei Polizeikontrolle.')],
-            ['6', T('account.guide.step6.title', 'Sicher fahren'), T('account.guide.step6.desc', 'Max. 100 km/h (Tempo-100-Zulassung). Beim Anfahren und Bremsen sanfter sein als sonst.')],
-            ['7', T('account.guide.step7.title', 'Zurück zum Stellplatz'), T('account.guide.step7.desc', 'Anhänger zurückbringen, abkuppeln, Stützrad runter, Unterlegkeile setzen.')],
-            ['8', T('account.guide.step8.title', 'Rückgabe-Foto'), T('account.guide.step8.desc', 'Auf simpletrailer.de/return Foto machen + Rückgabe bestätigen. Fertig.')],
+            ['1', 'Stellplatz finden', 'Stellplatz steht in der Bestätigungs-Mail + im Kundenkonto. Karte zeigt die genaue Position.'],
+            ['2', 'Vorab-Check + Foto', '15 Min vor Mietbeginn: 2 Fotos (außen + Ladefläche). Damit ist der Zustand dokumentiert.'],
+            ['3', 'Schloss-Code', 'Nach den Fotos bekommst du den 4-stelligen Zugangscode. Im Konto jederzeit sichtbar.'],
+            ['4', 'Ankuppeln', 'Anhänger an die Kugelkupplung, sichern. Stützrad hoch. Elektrokabel anschließen.'],
+            ['5', 'Lichttest', 'Brems-, Blinker- und Rücklicht prüfen. Wichtig — sonst Bußgeld bei Polizeikontrolle.'],
+            ['6', 'Sicher fahren', 'Max. 100 km/h (Tempo-100-Zulassung). Beim Anfahren und Bremsen sanfter sein als sonst.'],
+            ['7', 'Zurück zum Stellplatz', 'Anhänger zurückbringen, abkuppeln, Stützrad runter, Unterlegkeile setzen.'],
+            ['8', 'Rückgabe-Foto', 'Auf simpletrailer.de/return Foto machen + Rückgabe bestätigen. Fertig.'],
           ].map(([n, t, d]) => `
             <div style="display:flex;gap:12px;align-items:flex-start;">
               <div style="flex-shrink:0;width:26px;height:26px;border-radius:50%;background:var(--orange);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.82rem;">${n}</div>
@@ -874,7 +857,7 @@
               </div>
             </div>
           `).join('')}
-          <a href="/anleitung" style="margin-top:6px;color:#60a5fa;font-size:.82rem;text-decoration:none;">${T('account.guide_inline.detailed', 'Detaillierte Anleitung mit Skizzen →')}</a>
+          <a href="/anleitung" style="margin-top:6px;color:#60a5fa;font-size:.82rem;text-decoration:none;">Detaillierte Anleitung mit Skizzen →</a>
         </div>
       </details>`;
     actionHtml += anleitungHtml;
@@ -884,41 +867,40 @@
     if (b.status === 'active' && precheckDone && !isOverdue) {
       // Preise aus Trailer-Daten (fallback auf Defaults aus extend-booking.js)
       const tp = b.trailers || {};
-      const p2h  = Number(tp.price_kurztrip) || 9;
-      const pDay = Number(tp.price_day)      || 29;
-      const pStd = (pDay - p2h) / 6;
+      const pKurz = Number(tp.price_kurztrip) || 9;
+      const pHalb = Number(tp.price_halftag)  || 18;
+      const pDay  = Number(tp.price_day)      || 29;
       const fmtEUR = (n) => n.toFixed(2).replace('.', ',') + ' €';
-      // Logik wie in api/_pricing.js calcBase: 2h Mindestmiete, je weitere Std +pStd, ab 8h Tages-Deckel
-      const hourly = (h) => Math.round(Math.min(p2h + Math.ceil(Math.max(0, h - 2)) * pStd, pDay) * 100) / 100;
-      const price1h  = hourly(1);
-      const price3h  = hourly(3);
-      const price6h  = hourly(6);
+      // Logik wie in extend-booking.js: <=3h kurztrip, <=6h halftag, <=24h day
+      const price1h = pKurz; // 1h faellt in kurztrip-Bucket (<=3h)
+      const price3h = pKurz;
+      const price6h = pHalb;
       const price24h = pDay;
       extendHtml = `
         <details style="margin-top:14px;background:#0a0a0a;border:1px solid var(--border);border-radius:10px;padding:14px 16px;">
-          <summary style="cursor:pointer;font-weight:700;font-size:.92rem;color:#60a5fa;">${T('account.extend.title', '⏱ Mietzeit verlängern')}</summary>
+          <summary style="cursor:pointer;font-weight:700;font-size:.92rem;color:#60a5fa;">⏱ Mietzeit verlängern</summary>
           <div style="margin-top:12px;font-size:.84rem;color:#ccc;line-height:1.55;">
-            ${T('account.extend.desc', 'Brauchst du länger? Wähle eine Option — der Aufpreis wird sofort über die hinterlegte Karte abgebucht.')}
+            Brauchst du länger? Wähle eine Option — der Aufpreis wird sofort über die hinterlegte Karte abgebucht.
           </div>
           <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:14px;">
             <button onclick="extendBooking('${b.id}', 1)"  style="background:#1a1a1a;color:#fff;border:1px solid var(--border);padding:12px 14px;border-radius:10px;cursor:pointer;font-family:inherit;text-align:left;">
-              <div style="font-weight:700;font-size:.9rem;">${T('account.extend.plus1h', '+1 Stunde')}</div>
+              <div style="font-weight:700;font-size:.9rem;">+1 Stunde</div>
               <div style="color:#60a5fa;font-weight:800;font-size:1rem;margin-top:2px;">${fmtEUR(price1h)}</div>
             </button>
             <button onclick="extendBooking('${b.id}', 3)"  style="background:#1a1a1a;color:#fff;border:1px solid var(--border);padding:12px 14px;border-radius:10px;cursor:pointer;font-family:inherit;text-align:left;">
-              <div style="font-weight:700;font-size:.9rem;">${T('account.extend.plus3h', '+3 Stunden')}</div>
+              <div style="font-weight:700;font-size:.9rem;">+3 Stunden</div>
               <div style="color:#60a5fa;font-weight:800;font-size:1rem;margin-top:2px;">${fmtEUR(price3h)}</div>
             </button>
             <button onclick="extendBooking('${b.id}', 6)"  style="background:#1a1a1a;color:#fff;border:1px solid var(--border);padding:12px 14px;border-radius:10px;cursor:pointer;font-family:inherit;text-align:left;">
-              <div style="font-weight:700;font-size:.9rem;">${T('account.extend.plus6h', '+6 Stunden')}</div>
+              <div style="font-weight:700;font-size:.9rem;">+6 Stunden</div>
               <div style="color:#60a5fa;font-weight:800;font-size:1rem;margin-top:2px;">${fmtEUR(price6h)}</div>
             </button>
             <button onclick="extendBooking('${b.id}', 24)" style="background:#1a1a1a;color:#fff;border:1px solid var(--border);padding:12px 14px;border-radius:10px;cursor:pointer;font-family:inherit;text-align:left;">
-              <div style="font-weight:700;font-size:.9rem;">${T('account.extend.plus1d', '+1 Tag')}</div>
+              <div style="font-weight:700;font-size:.9rem;">+1 Tag</div>
               <div style="color:#60a5fa;font-weight:800;font-size:1rem;margin-top:2px;">${fmtEUR(price24h)}</div>
             </button>
           </div>
-          <p style="font-size:.74rem;color:var(--gray);margin:10px 0 0;">${T('account.extend.engpass', 'Bei Engpass (Folge-Buchung): nicht möglich — bitte rechtzeitig zurückgeben.')}</p>
+          <p style="font-size:.74rem;color:var(--gray);margin:10px 0 0;">Bei Engpass (Folge-Buchung): nicht möglich — bitte rechtzeitig zurückgeben.</p>
         </details>`;
     }
 
@@ -927,30 +909,30 @@
     if (canCancel) {
       const refundText = refundIfCancelled.toFixed(2).replace('.', ',');
       const cpLabel = cpStillActive
-        ? `<span style="color:#86efac;">${T('account.cancel.cp_active', '✓ Kostenlose Stornierung aktiv')}</span> — ${T('account.cancel.cp_active_note', 'Mietpreis voll erstattet (Add-On-Prämie')} ${cpFee.toFixed(2).replace('.',',')} ${T('account.cancel.cp_active_note2', '€ nicht erstattbar)')}`
+        ? `<span style="color:#86efac;">✓ Kostenlose Stornierung aktiv</span> — Mietpreis voll erstattet (Add-On-Prämie ${cpFee.toFixed(2).replace('.',',')} € nicht erstattbar)`
         : hasCp
-          ? `<span style="color:#fbbf24;">${T('account.cancel.cp_late', '⚠ Mietbeginn bereits erreicht')}</span> — ${T('account.cancel.cp_late_note', 'kostenlose Stornierung war bis Mietbeginn möglich, jetzt nur noch 10 % erstattbar')}`
-          : `<span style="color:#fbbf24;">${T('account.cancel.no_cp', 'Kein Stornoschutz gebucht')}</span> — ${T('account.cancel.no_cp_note', '90 % Storno-Gebühr (10 % refunded)')}`;
+          ? `<span style="color:#fbbf24;">⚠ Mietbeginn bereits erreicht</span> — kostenlose Stornierung war bis Mietbeginn möglich, jetzt nur noch 10 % erstattbar`
+          : `<span style="color:#fbbf24;">Kein Stornoschutz gebucht</span> — 90 % Storno-Gebühr (10 % refunded)`;
       cancelHtml = `
         <details style="margin-top:14px;background:#0a0a0a;border:1px solid var(--border);border-radius:10px;padding:14px 16px;">
-          <summary style="cursor:pointer;font-weight:700;font-size:.92rem;color:#fbbf24;">${T('account.cancel.title', '↩ Buchung stornieren')}</summary>
+          <summary style="cursor:pointer;font-weight:700;font-size:.92rem;color:#fbbf24;">↩ Buchung stornieren</summary>
           <div style="margin-top:12px;font-size:.84rem;color:#ccc;line-height:1.55;">
             ${cpLabel}<br><br>
-            ${T('account.cancel.refund_label', 'Bei Stornierung erstatten wir dir:')} <strong style="color:#22c55e;font-size:1.05rem;">${refundText} €</strong>
+            Bei Stornierung erstatten wir dir: <strong style="color:#22c55e;font-size:1.05rem;">${refundText} €</strong>
           </div>
-          <button onclick="cancelBooking('${b.id}', ${refundIfCancelled.toFixed(2)})" style="margin-top:14px;background:#dc2626;color:#fff;border:none;padding:11px 22px;border-radius:8px;cursor:pointer;font-weight:700;font-size:.88rem;font-family:inherit;">${T('account.cancel.btn', 'Jetzt stornieren')}</button>
+          <button onclick="cancelBooking('${b.id}', ${refundIfCancelled.toFixed(2)})" style="margin-top:14px;background:#dc2626;color:#fff;border:none;padding:11px 22px;border-radius:8px;cursor:pointer;font-weight:700;font-size:.88rem;font-family:inherit;">Jetzt stornieren</button>
         </details>`;
     }
 
     // PDF-Downloads (Mietvertrag + Rechnung) — werden serverseitig vorgehalten, hier Verweis auf die Mail
-    const pdfNote = `<p style="font-size:.78rem;color:var(--gray);margin-top:10px;text-align:center;">${T('account.pdf_note', 'Mietvertrag + Rechnung als PDF: in deiner Buchungs-E-Mail im Anhang.')}</p>`;
+    const pdfNote = `<p style="font-size:.78rem;color:var(--gray);margin-top:10px;text-align:center;">Mietvertrag + Rechnung als PDF: in deiner Buchungs-E-Mail im Anhang.</p>`;
 
     document.getElementById('activeBookingCard').innerHTML = `
-      <div class="active-booking-badge">${T('account.active_booking', '● Aktive Buchung')}</div>
-      <div class="active-booking-ref">#${b.id.slice(0,8).toUpperCase()} · ${b.trailers?.name || T('account.trailer_fallback', 'Anhänger')}</div>
+      <div class="active-booking-badge">● Aktive Buchung</div>
+      <div class="active-booking-ref">#${b.id.slice(0,8).toUpperCase()} · ${b.trailers?.name || 'Anhänger'}</div>
       <div class="active-booking-detail">
-        ${pricingLabel[b.pricing_type] || b.pricing_type} · ${T('account.from_word', 'Von')} ${fmt(b.start_time)} ${T('account.to_word', 'bis')} ${fmt(b.end_time)}<br>
-        ${INS_LABEL[b.insurance_type || 'none']}${b.cancellation_protection ? ' · ' + T('account.free_cancel_tag', '✓ Kostenlose Stornierung') : ''} · <strong style="color:var(--orange)">${(b.total_amount||0).toFixed(2).replace('.',',')} €</strong>
+        ${pricingLabel[b.pricing_type] || b.pricing_type} · Von ${fmt(b.start_time)} bis ${fmt(b.end_time)}<br>
+        ${INS_LABEL[b.insurance_type || 'none']}${b.cancellation_protection ? ' · ✓ Kostenlose Stornierung' : ''} · <strong style="color:var(--orange)">${(b.total_amount||0).toFixed(2).replace('.',',')} €</strong>
       </div>
       ${statusBlock}
       ${appearanceHtml}
@@ -972,8 +954,8 @@
     const btn = event && event.currentTarget;
     const priceEl = btn ? btn.querySelector('div:nth-child(2)') : null;
     const priceText = priceEl ? priceEl.textContent.trim() : '';
-    const lbl = hours === 24 ? '1 ' + T('account.extend.day', 'Tag') : (hours + ' ' + (hours > 1 ? T('account.extend.hours', 'Stunden') : T('account.extend.hour', 'Stunde')));
-    const confirmMsg = `${T('account.extend.confirm_pre', 'Mietzeit um')} ${lbl}${T('account.extend.confirm_post', ' verlängern?')}${priceText ? `\n\n${T('account.extend.surcharge', 'Aufpreis:')} ${priceText}` : ''}\n\n${T('account.extend.confirm_note', 'Der Aufpreis wird sofort über deine hinterlegte Karte abgebucht.')}`;
+    const lbl = hours === 24 ? '1 Tag' : (hours + (hours > 1 ? ' Stunden' : ' Stunde'));
+    const confirmMsg = `Mietzeit um ${lbl} verlängern?${priceText ? `\n\nAufpreis: ${priceText}` : ''}\n\nDer Aufpreis wird sofort über deine hinterlegte Karte abgebucht.`;
     if (!confirm(confirmMsg)) return;
     _mutationInFlight = true;
     try {
@@ -983,12 +965,12 @@
         body: JSON.stringify({ booking_id: bookingId, extra_hours: hours })
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || T('account.err.generic', 'Fehler'));
+      if (!res.ok) throw new Error(data.error || 'Fehler');
       const extraAmount = Number(data.extra_amount || 0).toFixed(2).replace('.', ',');
-      alert(`${T('account.extend.done', '✓ Verlängert um')} ${hours}h\n${T('account.extend.surcharge', 'Aufpreis:')} ${extraAmount} €\n${T('account.extend.new_end', 'Neues Mietende:')} ${new Date(data.new_end_time).toLocaleString('de-DE')}`);
+      alert(`✓ Verlängert um ${hours}h\nAufpreis: ${extraAmount} €\nNeues Mietende: ${new Date(data.new_end_time).toLocaleString('de-DE')}`);
       location.reload();
     } catch (e) {
-      alert(T('account.extend.failed', 'Verlängerung fehlgeschlagen:') + ' ' + e.message);
+      alert('Verlängerung fehlgeschlagen: ' + e.message);
     } finally {
       _mutationInFlight = false;
     }
@@ -996,7 +978,7 @@
 
   async function cancelBooking(bookingId, refundAmount) {
     if (_mutationInFlight) return;
-    if (!confirm(`${T('account.cancel.confirm_q', 'Buchung wirklich stornieren?')}\n\n${T('account.cancel.refund_amount', 'Erstattung:')} ${refundAmount.toFixed(2).replace('.', ',')} €\n\n${T('account.cancel.confirm_note', 'Die Rückzahlung erfolgt automatisch über deine Zahlungsmethode (3-5 Werktage).')}`)) return;
+    if (!confirm(`Buchung wirklich stornieren?\n\nErstattung: ${refundAmount.toFixed(2).replace('.', ',')} €\n\nDie Rückzahlung erfolgt automatisch über deine Zahlungsmethode (3-5 Werktage).`)) return;
     _mutationInFlight = true;
 
     try {
@@ -1006,15 +988,15 @@
         body: JSON.stringify({ booking_id: bookingId })
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || T('account.err.generic', 'Fehler'));
+      if (!res.ok) throw new Error(data.error || 'Fehler');
       const refundAmt = Number(data.refund_amount || 0);
       const msg = refundAmt > 0
-        ? `${T('account.cancel.done', '✓ Storniert.')}\n${T('account.cancel.refund_amount', 'Erstattung:')} ${refundAmt.toFixed(2).replace('.', ',')} €\n\n${data.refund_reason || ''}`
-        : `${T('account.cancel.done', '✓ Storniert.')}\n\n${data.refund_reason || T('account.cancel.no_refund', 'Keine Erstattung möglich.')}`;
+        ? `✓ Storniert.\nErstattung: ${refundAmt.toFixed(2).replace('.', ',')} €\n\n${data.refund_reason || ''}`
+        : `✓ Storniert.\n\n${data.refund_reason || 'Keine Erstattung möglich.'}`;
       alert(msg);
       location.reload();
     } catch (e) {
-      alert(T('account.cancel.failed', 'Stornierung fehlgeschlagen:') + ' ' + e.message);
+      alert('Stornierung fehlgeschlagen: ' + e.message);
     } finally {
       _mutationInFlight = false;
     }
@@ -1042,7 +1024,7 @@
     const errEl    = document.getElementById('loginError');
     errEl.style.display = 'none';
 
-    if (!email || !password) { errEl.textContent = T('account.err.fill_all', 'Bitte alle Felder ausfüllen.'); errEl.style.display = 'block'; return; }
+    if (!email || !password) { errEl.textContent = 'Bitte alle Felder ausfüllen.'; errEl.style.display = 'block'; return; }
 
     try {
       const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
@@ -1051,7 +1033,7 @@
         body: JSON.stringify({ email, password })
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error_description || data.msg || T('account.err.login_failed', 'Anmeldung fehlgeschlagen'));
+      if (!res.ok) throw new Error(data.error_description || data.msg || 'Anmeldung fehlgeschlagen');
 
       authToken   = data.access_token;
       currentUser = data.user;
@@ -1061,7 +1043,7 @@
       if (e.message === 'Invalid login credentials') {
         // Supabase verrät aus Sicherheitsgründen nicht, ob die Mail existiert →
         // kombinierte Meldung + Direkt-Link zur Registrierung.
-        errEl.innerHTML = T('account.err.login_wrong', 'E-Mail oder Passwort falsch. Noch kein Konto?') + ' <a href="#" onclick="switchTab(\'register\');return false;" style="color:var(--orange);font-weight:700;">' + T('account.err.login_register', 'Jetzt registrieren →') + '</a>';
+        errEl.innerHTML = 'E-Mail oder Passwort falsch. Noch kein Konto? <a href="#" onclick="switchTab(\'register\');return false;" style="color:var(--orange);font-weight:700;">Jetzt registrieren →</a>';
       } else {
         errEl.textContent = e.message;
       }
@@ -1080,10 +1062,10 @@
     const okEl      = document.getElementById('regSuccess');
     errEl.style.display = 'none'; okEl.style.display = 'none';
 
-    if (!firstName || !lastName || !email || !phone || !address || !password) { errEl.textContent = T('account.err.fill_all', 'Bitte alle Felder ausfüllen.'); errEl.style.display = 'block'; return; }
+    if (!firstName || !lastName || !email || !phone || !address || !password) { errEl.textContent = 'Bitte alle Felder ausfüllen.'; errEl.style.display = 'block'; return; }
     const phoneDigits = phone.replace(/[\s\-\(\)\+]/g, '');
-    if (!/^\d{7,15}$/.test(phoneDigits)) { errEl.textContent = T('account.err.phone_invalid', 'Bitte gültige Telefonnummer eingeben (z.B. +49 151 12345678).'); errEl.style.display = 'block'; return; }
-    if (password.length < 6) { errEl.textContent = T('account.err.password_short', 'Passwort muss mindestens 6 Zeichen haben.'); errEl.style.display = 'block'; return; }
+    if (!/^\d{7,15}$/.test(phoneDigits)) { errEl.textContent = 'Bitte gültige Telefonnummer eingeben (z.B. +49 151 12345678).'; errEl.style.display = 'block'; return; }
+    if (password.length < 6) { errEl.textContent = 'Passwort muss mindestens 6 Zeichen haben.'; errEl.style.display = 'block'; return; }
 
     try {
       const res = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
@@ -1095,10 +1077,10 @@
       if (!res.ok) {
         const msg = data.error_description || data.msg || data.error || '';
         if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already been registered')) {
-          errEl.innerHTML = T('account.err.email_exists', 'Diese E-Mail ist bereits registriert.') + ' <a href="#" onclick="switchTab(\'login\')" style="color:var(--orange)">' + T('account.err.login_link', 'Jetzt anmelden →') + '</a>';
+          errEl.innerHTML = 'Diese E-Mail ist bereits registriert. <a href="#" onclick="switchTab(\'login\')" style="color:var(--orange)">Jetzt anmelden →</a>';
           errEl.style.display = 'block'; return;
         }
-        throw new Error(msg || T('account.err.register_failed', 'Registrierung fehlgeschlagen'));
+        throw new Error(msg || 'Registrierung fehlgeschlagen');
       }
 
       if (data.access_token) {
@@ -1107,7 +1089,7 @@
         localStorage.setItem('st_session', JSON.stringify({ access_token: data.access_token, refresh_token: data.refresh_token }));
         showAccount();
       } else {
-        okEl.textContent = T('account.register.confirm_email', 'Konto erstellt! Bitte bestätige deine E-Mail und melde dich an.');
+        okEl.textContent = 'Konto erstellt! Bitte bestätige deine E-Mail und melde dich an.';
         okEl.style.display = 'block';
       }
     } catch(e) {
@@ -1122,7 +1104,7 @@
     const okEl   = document.getElementById('resetSuccess');
     errEl.style.display = 'none'; okEl.style.display = 'none';
 
-    if (!email) { errEl.textContent = T('account.err.enter_email', 'Bitte E-Mail eingeben.'); errEl.style.display = 'block'; return; }
+    if (!email) { errEl.textContent = 'Bitte E-Mail eingeben.'; errEl.style.display = 'block'; return; }
 
     try {
       await fetch(`${SUPABASE_URL}/auth/v1/recover`, {
@@ -1130,10 +1112,10 @@
         headers: { apikey: SUPABASE_ANON, 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })
       });
-      okEl.textContent = T('account.reset.sent', 'Link gesendet! Schau in dein Postfach.');
+      okEl.textContent = 'Link gesendet! Schau in dein Postfach.';
       okEl.style.display = 'block';
     } catch(e) {
-      errEl.textContent = T('account.reset.error', 'Fehler beim Senden.'); errEl.style.display = 'block';
+      errEl.textContent = 'Fehler beim Senden.'; errEl.style.display = 'block';
     }
   }
 
@@ -1154,7 +1136,7 @@
   async function confirmDeleteAccount() {
     const btn = document.getElementById('deleteConfirmBtn');
     const errEl = document.getElementById('deleteAccountErr');
-    btn.disabled = true; btn.textContent = T('account.delete.deleting', 'Loesche…');
+    btn.disabled = true; btn.textContent = 'Loesche…';
     errEl.style.display = 'none';
     try {
       const res = await fetch('/api/delete-account', {
@@ -1163,15 +1145,15 @@
         body: JSON.stringify({ confirm: true })
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || T('account.delete.failed', 'Loeschung fehlgeschlagen'));
+      if (!res.ok) throw new Error(data.error || 'Loeschung fehlgeschlagen');
       // Erfolg: Lokal abmelden + Hinweis
       localStorage.removeItem('st_session');
-      alert(T('account.delete.success', 'Konto erfolgreich geloescht.'));
+      alert('Konto erfolgreich geloescht.');
       window.location.href = '/';
     } catch (e) {
       errEl.textContent = e.message;
       errEl.style.display = 'block';
-      btn.disabled = false; btn.textContent = T('account.delete.confirm', 'Endgültig löschen');
+      btn.disabled = false; btn.textContent = 'Endgueltig loeschen';
     }
   }
 
@@ -1196,15 +1178,6 @@
   }
   // Bei jedem Account-Page-Aufruf nach Login pruefen
   setTimeout(savePushTokenIfNative, 1500);
-
-  // Sprachwechsel: dynamisch per JS gerenderte Bereiche neu aufbauen
-  // (statische data-i18n-Elemente übernimmt applyTranslations aus i18n.js selbst)
-  document.addEventListener('st-lang-changed', () => {
-    if (!currentUser) return;
-    renderProfile();
-    loadBookings();
-    loadLicenseStatus();
-  });
 
   init();
 </script>
