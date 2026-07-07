@@ -909,7 +909,7 @@
             <div class="ins-name"><span data-i18n="booking.ret_free_name">Egal-wo in Bremen</span> <span class="ins-badge" data-i18n="booking.badge_flexible">Flexibel</span></div>
             <div class="ins-desc" data-i18n="booking.ret_free_desc">Stell ihn an einem legalen Parkplatz im Stadtgebiet Bremen ab — kein Halteverbot, kein Privatgrund.</div>
           </div>
-          <div class="ins-price">+7,50 €</div>
+          <div class="ins-price">+9,90 €</div>
         </div>
       </div>
       <p style="font-size:.7rem;color:var(--gray);margin-top:8px;text-align:right;" data-i18n="booking.prices_incl_vat">Alle Preise inkl. 19 % USt.</p>
@@ -1119,7 +1119,7 @@
 
   let trailerId      = null;
   let trailerPickup  = { lat: null, lng: null, name: '' }; // Heimat-Stellplatz für Rückgabe-Zone
-  let selectedFreeFloating = false; // false = Heimat-Rückgabe (frei), true = irgendwo in Bremen (+7,50€)
+  let selectedFreeFloating = false; // false = Heimat-Rückgabe (frei), true = irgendwo in Bremen (+9,90€)
   let stripeElements = null;
   // Preis-Grundwerte (RentMyTrailer-Logik): p2h = Mindestmiete 2h, day = Tagespreis,
   // week = 7-Tage-Paket, pStd = abgeleiteter Stundenpreis (day - p2h)/6.
@@ -1218,7 +1218,7 @@
     [52.998, 8.798], [53.008, 8.700], [53.075, 8.598], [53.110, 8.580],
     [53.137, 8.598], [53.165, 8.620], [53.187, 8.620]
   ];
-  const FREE_FLOATING_FEE = 7.50;
+  const FREE_FLOATING_FEE = 9.90;
   const RETURN_PENALTY    = 50.00;
 
   let zoneMap = null, zoneHomeCircle = null, zoneHomeMarker = null, zoneBremenPoly = null;

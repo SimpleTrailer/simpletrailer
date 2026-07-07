@@ -105,10 +105,10 @@ module.exports = async (req, res) => {
     const insRate   = insType === 'basis' ? 0.15 : insType === 'premium' ? 0.30 : 0;
     const insAmount = Math.round(baseAmount * insRate * 100) / 100;
 
-    // Free-Floating-Aufpreis: 7,50€ wenn Mieter irgendwo im Bremen-Stadtgebiet (statt am
+    // Free-Floating-Aufpreis: 9,90€ wenn Mieter irgendwo im Bremen-Stadtgebiet (statt am
     // Heimat-Stellplatz) abstellen darf. Rückgabe am Stellplatz/in der Zone bleibt gratis.
     const freeFloating = !!free_floating;
-    const freeFloatingFee = freeFloating ? 7.50 : 0;
+    const freeFloatingFee = freeFloating ? 9.90 : 0;
 
     // Stornoschutz: 5,5% vom Mietpreis (NETTO = baseAmount ohne Schutz), min. 3 €, kein Deckel.
     // Berechnung serverseitig — Client-Wert ist nur Anzeige, der Server ist Single Source of Truth.
