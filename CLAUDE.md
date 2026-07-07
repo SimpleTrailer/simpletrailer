@@ -209,6 +209,7 @@ Wenn eine Aufgabe **mehrere Domänen** berührt, rufe alle relevanten Agents **P
 
 ## Regeln (HART)
 - **Sprache:** Antworten immer auf Deutsch
+- **💶 GELD-AUSGABEN IMMER ERST FRAGEN (GRUNDREGEL, projektübergreifend):** Claude darf eigenständig alles umsetzen, was besser ist — aber sobald dabei GELD ausgegeben würde (Werbebudget rauf, neue bezahlte Kampagne, Gebote erhöhen die Mehrkosten auslösen, kostenpflichtige Tools/Abos/Domains/APIs buchen, jede Transaktion), IMMER zuerst explizit ankündigen („Ich würde X machen, kostet ~Y €") und Erlaubnis abwarten. Kostenlose/risikofreie Optimierungen (negative Keywords, Anzeigentexte, Erweiterungen, Einstellungen, Code) → einfach machen. Niemals ungefragt Ausgaben starten oder erhöhen.
 - **Buchungssystem TABU:** Webseite läuft LIVE mit echten Stripe-Zahlungen. Änderungen an [booking.html](booking.html), [api/booking.js](api/booking.js), [api/process-return.js](api/process-return.js), [supabase-schema.sql](supabase-schema.sql) NUR mit explizitem User-OK
 - **Native-Bridge ist defensiv:** [native-bridge.js](native-bridge.js) tut im Browser NICHTS (`isNative=false`). Webseite verhält sich für normale Besucher exakt wie ohne Bridge
 - **User ist Anfänger:** Schritt für Schritt erklären, vollständigen Code liefern, fragen wenn unklar

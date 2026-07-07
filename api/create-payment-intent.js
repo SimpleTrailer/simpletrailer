@@ -8,6 +8,8 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SER
 // Definition zentral in ./_discounts.js, damit die Vorab-Prüfung
 // (api/validate-discount.js) exakt dieselben Codes/Regeln nutzt.
 const { resolveDiscount } = require('./_discounts');
+// Preis-Engine (RentMyTrailer-Logik) — 1:1 gespiegelt in booking.html calcPrice().
+const _pricing = require('./_pricing');
 
 const rateLimit = new Map();
 function isRateLimited(ip) {
@@ -85,62 +87,17 @@ module.exports = async (req, res) => {
     });
     if (overlap) return res.status(400).json({ error: 'Anhänger ist in diesem Zeitraum (inkl. Pufferzeit) bereits gebucht' });
 
-    // Preise aus Supabase laden (pro Anhänger unterschiedlich)
-    const prices = {
-      kurztrip:  trailer.price_kurztrip  || 9,
-      halftag:   trailer.price_halftag   || 18,
-      day:       trailer.price_day       || 29,
-      extra_day: trailer.price_extra_day || 24,
-      weekend:   trailer.price_weekend   || 59,
-      week:      trailer.price_week      || 119,
-    };
-
-    // ── Wochen-Mengenrabatt ──────────────────────────────────────────────
-    // Je laenger gemietet, desto guenstiger jeder weitere Tag. Tag 1 = voller
-    // Tagespreis. Der Extra-Tag-Satz sinkt mit jeder erreichten Woche:
-    //   Tag 2–7  : extra_day (Kurzmiete) — Gesamtpreis aber gedeckelt auf den Wochenpreis
-    //   Tag 8–14 : WEEK2_DAY  (2. Woche)
-    //   Tag 15–21: WEEK3_DAY  (3. Woche)
-    //   ab Tag 22: WEEK4_DAY  (4. Woche und weiter)
+    // ── Preisberechnung (RentMyTrailer-Logik, zentral in ./_pricing.js) ──
+    // Grundwerte je Anhänger: price_day (Tagespreis), price_kurztrip (Mindestmiete 2h),
+    // price_week (7-Tage-Paket). Stundenpreis = (Tag - 2h)/6. Wochenende = Tag × 1,8.
     // ACHTUNG: 1:1 IDENTISCH zu booking.html calcPrice() — beide muessen gleich rechnen.
-    const WEEK2_DAY = 14, WEEK3_DAY = 12, WEEK4_DAY = 10;
-    function daysPrice(totalDays) {
-      if (totalDays <= 7) {
-        // Kurzmiete: Tag 1 voll + jeder weitere Tag, nie teurer als eine ganze Woche.
-        return Math.min(prices.day + (totalDays - 1) * prices.extra_day, prices.week);
-      }
-      let sum = prices.week; // 1. Woche = Wochenpreis (119 €)
-      for (let d = 8; d <= totalDays; d++) {
-        sum += d <= 14 ? WEEK2_DAY : d <= 21 ? WEEK3_DAY : WEEK4_DAY;
-      }
-      return sum;
-    }
-
-    function calcBaseAmount(start, end) {
-      const hours = (new Date(end) - new Date(start)) / 3600000;
-      if (hours <= 0)      return 0;
-      if (hours <= 3)      return prices.kurztrip;
-      if (hours <= 6)      return prices.halftag;
-      if (hours <= 24 + 2) return prices.day;
-      // Mehr als 26h: erster Tag + volle Extra-Tage + Restzeitstaffel
-      const extraHours = hours - 24 - 2;
-      const fullExtra  = Math.floor(extraHours / 24);
-      const remainH    = extraHours % 24;
-      let remainPrice  = 0;
-      if      (remainH <= 0) remainPrice = 0;
-      else if (remainH <= 3) remainPrice = prices.kurztrip;
-      else if (remainH <= 6) remainPrice = prices.halftag;
-      // > 6h Rest zaehlt als ein ganzer weiterer Tag (steckt in extraDays).
-      const extraDays = fullExtra + (remainH > 6 ? 1 : 0);
-      const totalDays = extraDays + 1;
-      return daysPrice(totalDays) + (remainH > 0 && remainH <= 6 ? remainPrice : 0);
-    }
-
     let baseAmount;
-    if (booking_mode === 'weekend') baseAmount = prices.weekend;
-    else if (booking_mode === 'week') baseAmount = prices.week;
-    else if (booking_mode === 'day')  baseAmount = prices.day;
-    else baseAmount = calcBaseAmount(start_time, end_time);
+    if (['weekend', 'week', 'day'].includes(booking_mode)) {
+      baseAmount = _pricing.packagePrice(booking_mode, trailer);
+    } else {
+      const hours = (new Date(end_time) - new Date(start_time)) / 3600000;
+      baseAmount = _pricing.calcBase(hours, trailer);
+    }
 
     if (baseAmount <= 0) return res.status(400).json({ error: 'Ungültiger Zeitraum' });
 
@@ -148,16 +105,16 @@ module.exports = async (req, res) => {
     const insRate   = insType === 'basis' ? 0.15 : insType === 'premium' ? 0.30 : 0;
     const insAmount = Math.round(baseAmount * insRate * 100) / 100;
 
-    // Free-Floating-Aufpreis: 15€ wenn Mieter im Bremen-Stadtgebiet (statt am Heimat-Stellplatz)
-    // abstellen darf. Pauschale, deckt Logistik/Re-Positionierung ab.
+    // Free-Floating-Aufpreis: 7,50€ wenn Mieter irgendwo im Bremen-Stadtgebiet (statt am
+    // Heimat-Stellplatz) abstellen darf. Rückgabe am Stellplatz/in der Zone bleibt gratis.
     const freeFloating = !!free_floating;
-    const freeFloatingFee = freeFloating ? 15.00 : 0;
+    const freeFloatingFee = freeFloating ? 7.50 : 0;
 
-    // Stornoschutz: 10% vom Mietpreis (NETTO = baseAmount ohne Schutz), min. 3 €, max. 9,90 € (Deckel).
+    // Stornoschutz: 5,5% vom Mietpreis (NETTO = baseAmount ohne Schutz), min. 3 €, kein Deckel.
     // Berechnung serverseitig — Client-Wert ist nur Anzeige, der Server ist Single Source of Truth.
     const cancellationProtection = !!cancellation_protection;
     const cancellationProtectionFee = cancellationProtection
-      ? Math.min(9.90, Math.max(3.00, Math.round(baseAmount * 0.10 * 100) / 100))
+      ? Math.max(3.00, Math.round(baseAmount * 0.055 * 100) / 100)
       : 0;
 
     const amount    = baseAmount + insAmount + freeFloatingFee + cancellationProtectionFee;

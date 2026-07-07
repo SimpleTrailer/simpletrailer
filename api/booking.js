@@ -254,7 +254,7 @@ info@simpletrailer.de · simpletrailer.de`;
 
       // ─── PDFs generieren (Mietvertrag + Rechnung) ─────────────
       const insLabels = { none: 'Ohne Schutzpaket', basis: 'Basis-Schutz (500 € SB)', premium: 'Premium-Schutz (50 € SB)' };
-      const tariffLabels = { '3h': '3 Stunden', '6h': '6 Stunden', day: 'Ganzer Tag', weekend: 'Wochenende (Fr-So)', week: '1 Woche', flexible: 'Individuell' };
+      const tariffLabels = { '3h': '3 Stunden', '6h': '6 Stunden', hours: 'Stundenmiete', day: 'Ganzer Tag', weekend: 'Wochenend-Paket (Fr–Mo)', week: '7-Tage-Paket', flexible: 'Individuell' };
       const freeFloatingFee = parseFloat(meta.free_floating_fee || '0') || 0;
       // Rabatt (optional): volle Miete + volle Add-ons werden ausgewiesen, der Rabatt als eigene
       // (negative) Position. Summe aller Positionen = tatsächlich gezahlter Betrag (amount).

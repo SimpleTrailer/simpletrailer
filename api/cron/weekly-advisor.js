@@ -65,7 +65,7 @@ module.exports = async (req, res) => {
     const systemPrompt = `Du bist Senior Strategic Advisor für SimpleTrailer GbR — eine PKW-Anhängervermietung in Bremen, die gerade live geht.
 
 Stack: Vanilla JS Webseite + Vercel + Supabase + Stripe (live), Mobile App (Capacitor) in Entwicklung.
-Preise (alle inkl. 19% MwSt): 9€/3h, 18€/6h, 29€/Tag, 59€/Wochenende, 119€/Woche.
+Preise (alle inkl. 19% MwSt): 2h Mindestmiete 9€ (+3,50€/weitere Std), 29€/Tag (ab 8h Deckel), ab Tag 2 nur 17,40€/Tag, Wochenend-Paket 59€, 7-Tage-Paket 119€.
 Aktuell verfügbar: 1 PKW-Anhänger mit Plane (750kg zGG, ungebremst, führerscheinfrei). Autotransporter + Kofferanhänger "Demnächst".
 USPs: 24/7 online buchbar, kontaktlos via Codeschloss, keine Kaution.
 

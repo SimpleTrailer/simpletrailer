@@ -28,7 +28,7 @@ const WEEKDAY_PLAN = {
   2: { type: 'kunde',          theme: 'Use-Case / typische Kunden-Situation in Bremen' },
   3: { type: 'behind-scenes',  theme: 'Behind-the-Scenes: Standort, Vorbereitung, Logistik' },
   4: { type: 'showcase',       theme: 'Anhaenger-Feature im Detail (Plane, Maße, Codeschloss)' },
-  5: { type: 'wochenend-push', theme: 'Direkter Wochenend-CTA: 59€ Wochenend-Tarif, jetzt buchen' },
+  5: { type: 'wochenend-push', theme: 'Direkter Wochenend-CTA: 52,20€ Wochenend-Paket, jetzt buchen' },
   6: { type: 'inspiration',    theme: 'Trip-Inspiration: was kann ich am Wochenende mit Anhaenger machen' },
   0: { type: 'recap',          theme: 'Saison-Tipp / Wochen-Recap / FAQ-Antwort' },
 };
@@ -73,7 +73,7 @@ Brand-Identitaet:
 
 Anhaenger-Specs:
 - PKW-Plane: 250x130x130cm, 750kg zGG (fuehrerscheinfrei B), ungebremst
-- Preise inkl. 19% MwSt: 9€/3h, 18€/6h, 29€/Tag, 59€/Wochenende, 119€/Woche
+- Preise inkl. 19% MwSt: 2h Mindestmiete 9€ (+3,50€/weitere Std), 29€/Tag (ab 8h Deckel), ab Tag 2 nur 17,40€/Tag, Wochenend-Paket 59€, 7-Tage-Paket 119€
 - Standort Bremen, simpletrailer.de
 
 Konkurrenz: HKL (gross/teuer), Boels (Kette/Kaution), Baumaerkte (Wartezeit). Wir sind das digitale Self-Service-Angebot.

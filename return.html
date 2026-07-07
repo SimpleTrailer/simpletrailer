@@ -133,7 +133,7 @@
       <p class="section-tag" data-i18n="return.your_booking">Deine Buchung</p>
       <table>
         <tr><td data-i18n="return.booking_num">Buchungsnummer</td><td id="infoId">–</td></tr>
-        <tr><td data-i18n="return.trailer">Anhänger</td><td>PKW-Anhänger mit Plane</td></tr>
+        <tr><td data-i18n="return.trailer">Anhänger</td><td data-i18n="return.trailer_name">PKW-Anhänger mit Plane</td></tr>
         <tr><td data-i18n="return.expected_return">Gebuchte Rückgabe</td><td id="infoEnd">–</td></tr>
         <tr><td data-i18n="return.amount">Mietbetrag</td><td id="infoAmount">–</td></tr>
       </table>
@@ -184,19 +184,19 @@
         <div class="upload-icon">📷</div>
         <div class="upload-text"><strong id="uploadCta" data-i18n="return.photo.choose">Foto auswählen</strong> <span data-i18n="return.photo.or_drop">oder hierher ziehen</span></div>
         <input type="file" id="photoInput" accept="image/*" capture="environment" onchange="handlePhoto(event)" />
-        <img id="photoPreview" class="upload-preview" alt="Vorschau" />
+        <img id="photoPreview" class="upload-preview" alt="Vorschau" data-i18n-attr="alt:return.photo.preview_alt" />
       </div>
     </div>
 
     <!-- Foto 2: Ladefläche -->
     <div class="card">
-      <p class="section-tag">Foto 2 · Ladefläche</p>
-      <p style="color:var(--gray);font-size:.85rem;margin-bottom:14px;">Mach ein Foto der <strong style="color:var(--white);">Ladefläche</strong> – so halten wir den Zustand bei Rückgabe fest. Schützt dich &amp; uns bei Schäden oder Verschmutzung.</p>
+      <p class="section-tag" data-i18n="return.photo2.title">Foto 2 · Ladefläche</p>
+      <p style="color:var(--gray);font-size:.85rem;margin-bottom:14px;" data-i18n-html="return.photo2.desc">Mach ein Foto der <strong style="color:var(--white);">Ladefläche</strong> – so halten wir den Zustand bei Rückgabe fest. Schützt dich &amp; uns bei Schäden oder Verschmutzung.</p>
       <div class="upload-area" id="uploadAreaLade" onclick="onUploadAreaLadeClick()">
         <div class="upload-icon">📦</div>
-        <div class="upload-text"><strong id="uploadCtaLade">Foto auswählen</strong> oder hierher ziehen</div>
+        <div class="upload-text"><strong id="uploadCtaLade" data-i18n="return.photo.choose">Foto auswählen</strong> <span data-i18n="return.photo.or_drop">oder hierher ziehen</span></div>
         <input type="file" id="photoInputLade" accept="image/*" capture="environment" onchange="handlePhotoLade(event)" />
-        <img id="photoPreviewLade" class="upload-preview" alt="Vorschau Ladefläche" />
+        <img id="photoPreviewLade" class="upload-preview" alt="Vorschau Ladefläche" data-i18n-attr="alt:return.photo2.preview_alt" />
       </div>
     </div>
 
@@ -269,18 +269,18 @@
   });
 
   async function loadBooking() {
-    if (!bookingId || !returnToken) { showError('Ungültiger Link.'); return; }
+    if (!bookingId || !returnToken) { showError(t('return.err.invalid_link','Ungültiger Link.')); return; }
 
     try {
       const res  = await fetch(`/api/booking?id=${bookingId}&token=${returnToken}`);
       const data = await res.json();
 
-      if (!res.ok) { showError(data.error || 'Buchung nicht gefunden'); return; }
+      if (!res.ok) { showError(data.error || t('return.error.title','Buchung nicht gefunden')); return; }
 
       booking = data;
 
       if (booking.status === 'returned') {
-        showError('Diese Buchung wurde bereits abgeschlossen.');
+        showError(t('return.err.already_done','Diese Buchung wurde bereits abgeschlossen.'));
         return;
       }
       if (booking.status === 'pending_position_check') {
@@ -289,8 +289,8 @@
         document.getElementById('mainView').style.display    = 'none';
         document.getElementById('successView').style.display = 'block';
         document.getElementById('successIcon').textContent = '⏳';
-        document.getElementById('successTitle').textContent = 'Rückgabe vermerkt';
-        document.getElementById('successMsg').textContent = 'Wir warten auf die finale Bestätigung vom Tracker.';
+        document.getElementById('successTitle').textContent = t('return.pending.title','Rückgabe vermerkt');
+        document.getElementById('successMsg').textContent = t('return.pending.msg','Wir warten auf die finale Bestätigung vom Tracker.');
         document.getElementById('pendingInfo').style.display = 'block';
         return;
       }
@@ -322,7 +322,7 @@
     if (!booking.pickup_lat || !booking.pickup_lng) {
       // Kein Pickup-Standort hinterlegt — Karte ausblenden, Zone-Status auf "unbekannt"
       document.getElementById('returnMap').style.display = 'none';
-      setZoneStatus('unknown', 'Standort-Prüfung nicht verfügbar', 'Stellplatz-Koordinaten fehlen in dieser Buchung.');
+      setZoneStatus('unknown', t('return.zone.unavailable','Standort-Prüfung nicht verfügbar'), t('return.zone.unavailable_desc','Stellplatz-Koordinaten fehlen in dieser Buchung.'));
       return;
     }
     const pickup = [booking.pickup_lat, booking.pickup_lng];
@@ -337,7 +337,7 @@
 
     pickupMarker = L.marker(pickup, {
       icon: L.divIcon({ html:'🅿', className:'marker-pickup', iconSize:[32,32] })
-    }).addTo(map).bindPopup('Stellplatz');
+    }).addTo(map).bindPopup(t('return.map.pickup','Stellplatz'));
   }
 
   async function refreshTrailerPosition() {
@@ -362,14 +362,14 @@
       if (trailerMarker) trailerMarker.setLatLng(pos);
       else trailerMarker = L.marker(pos, {
         icon: L.divIcon({ html:'🚛', className:'marker-trailer', iconSize:[32,32] })
-      }).addTo(map).bindPopup('Anhänger');
+      }).addTo(map).bindPopup(t('return.trailer','Anhänger'));
     }
     if (meLat && meLng) {
       const pos = [meLat, meLng];
       if (meMarker) meMarker.setLatLng(pos);
       else meMarker = L.marker(pos, {
         icon: L.divIcon({ html:'', className:'marker-me', iconSize:[24,24] })
-      }).addTo(map).bindPopup('Du');
+      }).addTo(map).bindPopup(t('return.map.me','Du'));
     }
   }
 
@@ -384,24 +384,24 @@
   function updateZoneStatus() {
     if (!booking.pickup_lat || !booking.pickup_lng) return;
     if (trailerLat == null) {
-      setZoneStatus('unknown', 'Anhänger meldet sich nicht', 'Tracker hat noch keine Position gesendet. Du kannst trotzdem abgeben — wir prüfen sobald der Tracker sich meldet.');
+      setZoneStatus('unknown', t('return.zone.unknown','Anhänger meldet sich nicht'), t('return.zone.unknown_desc','Tracker hat noch keine Position gesendet. Du kannst trotzdem abgeben — wir prüfen sobald der Tracker sich meldet.'));
       return;
     }
     const dist = distMeters(booking.pickup_lat, booking.pickup_lng, trailerLat, trailerLng);
     const ageMin = trailerSeenAt ? Math.round((Date.now() - new Date(trailerSeenAt).getTime()) / 60000) : null;
-    const ageText = ageMin == null ? '' : (ageMin < 1 ? 'gerade eben' : `vor ${ageMin} Min`);
+    const ageText = ageMin == null ? '' : (ageMin < 1 ? t('return.age.just_now','gerade eben') : t('return.age.min_ago','vor {min} Min').replace('{min}', ageMin));
     const ageStale = ageMin != null && ageMin > 15;
 
     if (dist <= RETURN_RADIUS_M) {
-      setZoneStatus('in-zone', '✓ Anhänger ist in der Zone',
-        `Distanz zum Stellplatz: <strong>${dist} m</strong>${ageText ? ` · Position ${ageText}` : ''}${ageStale ? ' · ⚠ veraltet' : ''}`);
+      setZoneStatus('in-zone', t('return.zone.in_zone','✓ Anhänger ist in der Zone'),
+        `${t('return.dist.prefix','Distanz zum Stellplatz:')} <strong>${dist} m</strong>${ageText ? ` · ${t('return.pos.label','Position')} ${ageText}` : ''}${ageStale ? ` · ${t('return.stale','⚠ veraltet')}` : ''}`);
       // Confirm-Box: in-zone Variante
-      document.getElementById('confirmLabel').textContent = 'Ich bestätige: Der Anhänger steht innerhalb der Rückgabe-Zone (grüner Kreis).';
+      document.getElementById('confirmLabel').textContent = t('return.confirm.in_zone','Ich bestätige: Der Anhänger steht innerhalb der Rückgabe-Zone (grüner Kreis).');
       document.getElementById('confirmBox').classList.remove('warning');
     } else {
-      setZoneStatus('out-zone', `⚠ Anhänger ${dist}m außerhalb der Zone`,
-        `Distanz zum Stellplatz: <strong>${dist} m</strong>${ageText ? ` · Position ${ageText}` : ''}${ageStale ? ' · ⚠ veraltet' : ''}<br>Bei Abgabe außerhalb: <strong>50 € Rückführungspauschale</strong>.`);
-      document.getElementById('confirmLabel').innerHTML = '<strong>Ich gebe außerhalb der Zone ab</strong> und akzeptiere die Rückführungspauschale von <strong>50 €</strong>.';
+      setZoneStatus('out-zone', `${t('return.zone.out_zone_prefix','⚠ Anhänger')} ${dist}m ${t('return.zone.out_zone_suffix','außerhalb der Zone')}`,
+        `${t('return.dist.prefix','Distanz zum Stellplatz:')} <strong>${dist} m</strong>${ageText ? ` · ${t('return.pos.label','Position')} ${ageText}` : ''}${ageStale ? ` · ${t('return.stale','⚠ veraltet')}` : ''}<br>${t('return.zone.out_fee_html','Bei Abgabe außerhalb: <strong>50 € Rückführungspauschale</strong>.')}`);
+      document.getElementById('confirmLabel').innerHTML = t('return.confirm.out_zone','<strong>Ich gebe außerhalb der Zone ab</strong> und akzeptiere die Rückführungspauschale von <strong>50 €</strong>.');
       document.getElementById('confirmBox').classList.add('warning');
     }
   }
@@ -415,11 +415,11 @@
 
   function requestGeolocation() {
     if (!navigator.geolocation) {
-      alert('Dein Browser unterstützt keine Standortabfrage.');
+      alert(t('return.geo.no_support','Dein Browser unterstützt keine Standortabfrage.'));
       return;
     }
     const btn = document.getElementById('geoBtn');
-    btn.textContent = '📍 Lade Standort…';
+    btn.textContent = t('return.geo.loading','📍 Lade Standort…');
     btn.disabled = true;
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -427,13 +427,13 @@
         meLng = pos.coords.longitude;
         updateMapMarkers();
         if (map) map.setView([meLat, meLng], 17);
-        btn.textContent = '✓ Standort geteilt';
+        btn.textContent = t('return.geo.shared','✓ Standort geteilt');
       },
       (err) => {
-        btn.textContent = '📍 Meinen Standort zeigen';
+        btn.textContent = t('return.geo.btn','📍 Meinen Standort zeigen');
         btn.disabled = false;
-        if (err.code === 1) alert('Standort wurde abgelehnt. Du kannst die Rückgabe trotzdem durchführen.');
-        else alert('Standort konnte nicht ermittelt werden: ' + err.message);
+        if (err.code === 1) alert(t('return.geo.denied','Standort wurde abgelehnt. Du kannst die Rückgabe trotzdem durchführen.'));
+        else alert(t('return.geo.error','Standort konnte nicht ermittelt werden: ') + err.message);
       },
       { enableHighAccuracy:true, timeout:8000, maximumAge:0 }
     );
@@ -472,19 +472,19 @@
         // PENDING: Buchung hat noch nicht begonnen
         const diff = startMs - now;
         timeEl.textContent = fmtDHMS(diff);
-        labelEl.textContent = 'Buchung beginnt in';
+        labelEl.textContent = t('return.countdown.starts_in','Buchung beginnt in');
         el.className = 'countdown pending';
       } else if (now <= endMs) {
         // ACTIVE: Buchung läuft, Countdown bis Rückgabe-Frist
         const diff = endMs - now;
         timeEl.textContent = fmtHMS(diff);
-        labelEl.textContent = 'Zeit bis zur Rückgabe';
+        labelEl.textContent = t('return.countdown.until_return','Zeit bis zur Rückgabe');
         el.className = 'countdown ok';
       } else {
         // OVERDUE: Rückgabe-Frist überschritten
         const overMs = now - endMs;
         timeEl.textContent = `+${fmtHMS(overMs)}`;
-        labelEl.textContent = 'Verspätung';
+        labelEl.textContent = t('return.countdown.late','Verspätung');
         el.className = 'countdown late';
       }
     }
@@ -558,7 +558,7 @@
     setTimeout(() => {
       if (window.SimpleTrailerNative && window.SimpleTrailerNative.isNative) {
         const cta = document.getElementById('uploadCta');
-        if (cta) cta.textContent = 'Foto aufnehmen';
+        if (cta) cta.textContent = t('return.photo.take','Foto aufnehmen');
       }
     }, 50);
   });
@@ -608,22 +608,22 @@
   async function submitReturn() {
     // Sicherheitsnetz: Rückgabe nur möglich wenn Buchung bereits begonnen hat
     if (Date.now() < new Date(booking.start_time).getTime()) {
-      alert('Die Buchung hat noch nicht begonnen. Rückgabe ist erst nach Mietbeginn möglich.');
+      alert(t('return.err.not_started','Die Buchung hat noch nicht begonnen. Rückgabe ist erst nach Mietbeginn möglich.'));
       return;
     }
 
     const btn = document.getElementById('returnBtn');
     btn.disabled = true;
-    btn.innerHTML = '<div class="spinner"></div> Foto wird hochgeladen…';
+    btn.innerHTML = '<div class="spinner"></div> ' + t('return.status.uploading_photo','Foto wird hochgeladen…');
 
     try {
       const photoUrl = await uploadPhoto();
       if (!photoUrl) {
-        throw new Error('Foto-Upload fehlgeschlagen — bitte erneut versuchen. Ohne Foto können wir die Rückgabe nicht bestätigen.');
+        throw new Error(t('return.err.photo_upload','Foto-Upload fehlgeschlagen — bitte erneut versuchen. Ohne Foto können wir die Rückgabe nicht bestätigen.'));
       }
 
       // KI-Validierung: zeigt das Foto wirklich einen Anhänger?
-      btn.innerHTML = '<div class="spinner"></div> Foto wird geprüft…';
+      btn.innerHTML = '<div class="spinner"></div> ' + t('return.status.checking_photo','Foto wird geprüft…');
       if (photoUrl) {
         try {
           const ctrl = new AbortController();
@@ -638,20 +638,20 @@
           if (valRes.ok) {
             const val = await valRes.json();
             if (!val.is_trailer && val.confidence !== 'low') {
-              btn.innerHTML = 'Rückgabe bestätigen';
+              btn.innerHTML = t('return.submit','Rückgabe bestätigen');
               btn.disabled = false;
-              alert('Das Foto zeigt offenbar keinen Anhänger.\n\nKI-Hinweis: ' + (val.reason || '') + '\n\nBitte den Anhänger fotografieren und nochmal probieren.');
+              alert(t('return.err.not_trailer_1','Das Foto zeigt offenbar keinen Anhänger.') + '\n\n' + t('return.err.ai_hint','KI-Hinweis: ') + (val.reason || '') + '\n\n' + t('return.err.not_trailer_2','Bitte den Anhänger fotografieren und nochmal probieren.'));
               return;
             }
           }
         } catch (e) { /* fail-open */ }
       }
 
-      btn.innerHTML = '<div class="spinner"></div> Ladeflächen-Foto wird hochgeladen…';
+      btn.innerHTML = '<div class="spinner"></div> ' + t('return.status.uploading_lade','Ladeflächen-Foto wird hochgeladen…');
       const ladeUrl = await uploadLadePhoto();
-      if (!ladeUrl) throw new Error('Ladeflächen-Foto-Upload fehlgeschlagen — bitte erneut versuchen.');
+      if (!ladeUrl) throw new Error(t('return.err.lade_upload','Ladeflächen-Foto-Upload fehlgeschlagen — bitte erneut versuchen.'));
 
-      btn.innerHTML = '<div class="spinner"></div> Wird verarbeitet…';
+      btn.innerHTML = '<div class="spinner"></div> ' + t('return.status.processing','Wird verarbeitet…');
       // Mieter-Bestaetigung + Geolocation mitschicken — Backend nutzt das fuer pending-Logik
       const mieterConfirmedInZone = !document.getElementById('confirmBox').classList.contains('warning');
       const res  = await fetch('/api/process-return', {
@@ -669,7 +669,7 @@
       });
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data.error || 'Fehler bei der Rückgabe');
+      if (!res.ok) throw new Error(data.error || t('return.err.generic','Fehler bei der Rückgabe'));
 
       if (timer) clearInterval(timer);
       if (positionRefreshTimer) clearInterval(positionRefreshTimer);
@@ -680,8 +680,8 @@
       // Pending-Variante: Tracker hat sich noch nicht gemeldet, Bestaetigung folgt per Mail
       if (data.return_status === 'pending_position_check') {
         document.getElementById('successIcon').textContent = '⏳';
-        document.getElementById('successTitle').textContent = 'Rückgabe vermerkt';
-        document.getElementById('successMsg').textContent = 'Wir warten auf die finale Bestätigung vom Tracker.';
+        document.getElementById('successTitle').textContent = t('return.pending.title','Rückgabe vermerkt');
+        document.getElementById('successMsg').textContent = t('return.pending.msg','Wir warten auf die finale Bestätigung vom Tracker.');
         document.getElementById('pendingInfo').style.display = 'block';
       }
 
@@ -689,15 +689,15 @@
         document.getElementById('lateFeeInfo').style.display = 'block';
         document.getElementById('lateFeeAmount').textContent = data.late_fee.toFixed(2).replace('.', ',') + ' €';
         document.getElementById('lateFeeText').textContent   = data.late_fee_charged
-          ? `${data.late_hours} Stunde${data.late_hours > 1 ? 'n' : ''} Verspätung – automatisch abgebucht.`
-          : `Automatische Abbuchung fehlgeschlagen. Wir melden uns per E-Mail.`;
-        document.getElementById('successMsg').textContent = `Rückgabe bestätigt. Du hast ${data.late_hours} Stunde${data.late_hours > 1 ? 'n' : ''} zu spät zurückgebracht.`;
+          ? `${data.late_hours} ${t('return.late.hour','Stunde')}${data.late_hours > 1 ? t('return.late.plural_n','n') : ''} ${t('return.late.auto_charged','Verspätung – automatisch abgebucht.')}`
+          : t('return.late.charge_failed','Automatische Abbuchung fehlgeschlagen. Wir melden uns per E-Mail.');
+        document.getElementById('successMsg').textContent = `${t('return.late.msg_1','Rückgabe bestätigt. Du hast')} ${data.late_hours} ${t('return.late.hour','Stunde')}${data.late_hours > 1 ? t('return.late.plural_n','n') : ''} ${t('return.late.msg_2','zu spät zurückgebracht.')}`;
       }
 
     } catch (err) {
-      btn.innerHTML = 'Rückgabe bestätigen';
+      btn.innerHTML = t('return.submit','Rückgabe bestätigen');
       btn.disabled = false;
-      alert('Fehler: ' + err.message);
+      alert(t('return.err.prefix','Fehler: ') + err.message);
     }
   }
 
@@ -706,6 +706,11 @@
     document.getElementById('errorView').style.display   = 'block';
     document.getElementById('errorMsg').textContent      = msg;
   }
+
+  // Bei Sprachwechsel dynamisch gerenderte Texte (Zonen-Status/Confirm-Label) neu aufbauen.
+  document.addEventListener('st-lang-changed', () => {
+    try { if (booking && booking.pickup_lat && booking.pickup_lng) updateZoneStatus(); } catch (e) {}
+  });
 
   loadBooking();
 </script>

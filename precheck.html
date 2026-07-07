@@ -162,12 +162,12 @@
 
     <!-- BEKANNTE SCHÄDEN — wird per JS gefüllt, zeigt "Keine vorhanden" wenn API leer ist -->
     <div class="card" id="knownDamagesCard">
-      <p style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gray);margin-bottom:8px;" id="knownDamagesHeader">📋 Bekannte Schäden an diesem Anhänger</p>
-      <div id="knownDamagesIntro" style="font-size:.84rem;color:#ccc;line-height:1.55;margin-bottom:12px;display:none;">
+      <p style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gray);margin-bottom:8px;" id="knownDamagesHeader" data-i18n="precheck.damages.header">📋 Bekannte Schäden an diesem Anhänger</p>
+      <div id="knownDamagesIntro" style="font-size:.84rem;color:#ccc;line-height:1.55;margin-bottom:12px;display:none;" data-i18n-html="precheck.damages.intro">
         Diese Schäden sind uns schon bekannt. <strong style="color:#fff;">Bitte NICHT erneut melden</strong> — wenn du NEUE Schäden siehst, melde sie unten.
       </div>
       <div id="knownDamagesList" style="display:flex;flex-direction:column;gap:8px;">
-        <div style="background:#0d0d0d;border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;font-size:.86rem;color:#86efac;">
+        <div style="background:#0d0d0d;border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;font-size:.86rem;color:#86efac;" data-i18n="precheck.damages.loading">
           ✓ Lade…
         </div>
       </div>
@@ -175,39 +175,39 @@
 
     <!-- NEUEN SCHADEN MELDEN — toggleable -->
     <div class="card" style="background:#1a1606;border:1px solid rgba(245,158,11,0.30);">
-      <p style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#fbbf24;margin-bottom:6px;">🛠 NEUEN Schaden gefunden?</p>
-      <p style="font-size:.84rem;color:#ccc;line-height:1.55;margin-bottom:12px;">
+      <p style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#fbbf24;margin-bottom:6px;" data-i18n="precheck.newdamage.title">🛠 NEUEN Schaden gefunden?</p>
+      <p style="font-size:.84rem;color:#ccc;line-height:1.55;margin-bottom:12px;" data-i18n="precheck.newdamage.desc">
         Wenn dir ein Schaden auffällt, der oben NICHT aufgelistet ist — bitte hier kurz melden. Dauert 30 Sek, schützt dich vor falschen Vorwürfen.
       </p>
-      <button onclick="toggleDamageReport()" id="damageReportToggle" type="button" style="background:transparent;border:1px solid rgba(245,158,11,0.50);color:#fbbf24;padding:11px 18px;border-radius:10px;font-family:inherit;font-weight:700;font-size:.88rem;cursor:pointer;width:100%;">
+      <button onclick="toggleDamageReport()" id="damageReportToggle" type="button" style="background:transparent;border:1px solid rgba(245,158,11,0.50);color:#fbbf24;padding:11px 18px;border-radius:10px;font-family:inherit;font-weight:700;font-size:.88rem;cursor:pointer;width:100%;" data-i18n="precheck.newdamage.toggle_open">
         + Schaden melden
       </button>
 
       <div id="damageReportForm" style="display:none;margin-top:14px;">
-        <p style="font-size:.78rem;color:#fbbf24;font-weight:700;margin-bottom:8px;">Wie schwer ist der Schaden?</p>
+        <p style="font-size:.78rem;color:#fbbf24;font-weight:700;margin-bottom:8px;" data-i18n="precheck.newdamage.sev_q">Wie schwer ist der Schaden?</p>
         <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
           <label style="display:flex;align-items:flex-start;gap:10px;padding:12px;background:#0d0d0d;border:1px solid var(--border);border-radius:10px;cursor:pointer;" data-sev="minor">
             <input type="radio" name="damageSev" value="minor" style="margin-top:3px;">
-            <span style="font-size:.86rem;color:#ddd;line-height:1.5;"><strong style="color:#fff;">Klein</strong> — Kratzer, kleine Beule, kosmetisch · <span style="color:#86efac;">fahrbereit</span></span>
+            <span style="font-size:.86rem;color:#ddd;line-height:1.5;" data-i18n-html="precheck.newdamage.sev_minor"><strong style="color:#fff;">Klein</strong> — Kratzer, kleine Beule, kosmetisch · <span style="color:#86efac;">fahrbereit</span></span>
           </label>
           <label style="display:flex;align-items:flex-start;gap:10px;padding:12px;background:#0d0d0d;border:1px solid var(--border);border-radius:10px;cursor:pointer;" data-sev="major">
             <input type="radio" name="damageSev" value="major" style="margin-top:3px;">
-            <span style="font-size:.86rem;color:#ddd;line-height:1.5;"><strong style="color:#fff;">Größer</strong> — sichtbare Beule, gerissene Plane, kleinere Defekte · <span style="color:#fbbf24;">noch fahrbereit, aber dokumentieren!</span></span>
+            <span style="font-size:.86rem;color:#ddd;line-height:1.5;" data-i18n-html="precheck.newdamage.sev_major"><strong style="color:#fff;">Größer</strong> — sichtbare Beule, gerissene Plane, kleinere Defekte · <span style="color:#fbbf24;">noch fahrbereit, aber dokumentieren!</span></span>
           </label>
           <label style="display:flex;align-items:flex-start;gap:10px;padding:12px;background:#1a0808;border:1px solid rgba(220,38,38,0.40);border-radius:10px;cursor:pointer;" data-sev="not_drivable">
             <input type="radio" name="damageSev" value="not_drivable" style="margin-top:3px;">
-            <span style="font-size:.86rem;color:#fecaca;line-height:1.5;"><strong style="color:#fff;">🚫 NICHT FAHRTAUGLICH</strong> — Reifen platt, Beleuchtung kaputt, Bremse defekt · <span style="color:#fca5a5;">Du fährst nicht los, wir erstatten</span></span>
+            <span style="font-size:.86rem;color:#fecaca;line-height:1.5;" data-i18n-html="precheck.newdamage.sev_notdrivable"><strong style="color:#fff;">🚫 NICHT FAHRTAUGLICH</strong> — Reifen platt, Beleuchtung kaputt, Bremse defekt · <span style="color:#fca5a5;">Du fährst nicht los, wir erstatten</span></span>
           </label>
         </div>
 
-        <textarea id="damageDesc" placeholder="Kurz beschreiben: wo ist der Schaden? was siehst du?" rows="3" style="width:100%;background:#0d0d0d;border:1px solid var(--border);border-radius:10px;padding:12px;color:#fff;font-family:inherit;font-size:.88rem;resize:vertical;margin-bottom:10px;"></textarea>
+        <textarea id="damageDesc" placeholder="Kurz beschreiben: wo ist der Schaden? was siehst du?" data-i18n-attr="placeholder:precheck.newdamage.desc_ph" rows="3" style="width:100%;background:#0d0d0d;border:1px solid var(--border);border-radius:10px;padding:12px;color:#fff;font-family:inherit;font-size:.88rem;resize:vertical;margin-bottom:10px;"></textarea>
 
-        <p style="font-size:.78rem;color:var(--gray);margin-bottom:8px;">Foto vom Schaden (Pflicht):</p>
+        <p style="font-size:.78rem;color:var(--gray);margin-bottom:8px;" data-i18n="precheck.newdamage.photo_label">Foto vom Schaden (Pflicht):</p>
         <input type="file" id="damagePhoto" accept="image/*" capture="environment" style="width:100%;margin-bottom:14px;font-size:.84rem;color:#ddd;">
 
         <div id="damageError" style="color:#f87171;font-size:.84rem;margin-bottom:10px;display:none;"></div>
 
-        <button onclick="submitDamage()" id="submitDamageBtn" type="button" style="background:#dc2626;color:#fff;border:none;padding:12px 18px;border-radius:10px;font-family:inherit;font-weight:700;font-size:.9rem;cursor:pointer;width:100%;">
+        <button onclick="submitDamage()" id="submitDamageBtn" type="button" style="background:#dc2626;color:#fff;border:none;padding:12px 18px;border-radius:10px;font-family:inherit;font-weight:700;font-size:.9rem;cursor:pointer;width:100%;" data-i18n="precheck.newdamage.submit">
           Schaden melden
         </button>
       </div>
@@ -312,8 +312,8 @@
   function showPendingCountdown() {
     document.getElementById('loadingView').style.display = 'none';
     document.getElementById('pendingView').style.display = 'block';
-    document.getElementById('pendingStartLabel').textContent   = fmtDate(booking.start_time) + ' Uhr';
-    document.getElementById('pendingTrailerLabel').textContent = booking.trailer_name || 'PKW-Anhänger';
+    document.getElementById('pendingStartLabel').textContent   = fmtDate(booking.start_time) + t('precheck.clock_suffix',' Uhr');
+    document.getElementById('pendingTrailerLabel').textContent = booking.trailer_name || t('precheck.trailer_fallback','PKW-Anhänger');
 
     const tick = () => {
       const unlockMs = new Date(booking.start_time).getTime() - PRECHECK_WINDOW_MS;
@@ -338,15 +338,41 @@
     const timer = setInterval(tick, 1000);
   }
 
+  // Buchungsinfo rendern — als eigene Funktion, damit sie bei Sprachwechsel neu gerendert werden kann
+  function renderBookingInfo() {
+    if (!booking) return;
+    const infoEl = document.getElementById('bookingInfo');
+    if (!infoEl) return;
+
+    // "So findest du den Anhaenger" — Foto + Kennzeichen, nur sichtbar fuer Mieter
+    const appearanceBlock = (booking.appearance_photo_url || booking.license_plate) ? `
+      <div style="background:#0a1a0a;border:1.5px solid #22c55e;border-radius:12px;padding:14px 16px;margin-bottom:14px;">
+        <div style="font-weight:700;font-size:.9rem;margin-bottom:10px;color:#86efac;">${t('precheck.find.title','🔍 So findest du den Anhänger')}</div>
+        ${booking.appearance_photo_url ? `<img src="${esc(booking.appearance_photo_url)}" alt="Anhänger" style="width:100%;max-width:320px;border-radius:8px;display:block;margin-bottom:10px;" />` : ''}
+        ${booking.license_plate ? `<div style="display:flex;justify-content:space-between;font-size:.86rem;"><span style="color:#aaa;">${t('precheck.find.plate','Kennzeichen')}</span><strong style="color:#fff;font-family:monospace;letter-spacing:.05em;">${esc(booking.license_plate)}</strong></div>` : ''}
+        <div style="font-size:.76rem;color:#86efac;margin-top:6px;">${t('precheck.find.grey','Aktuell grau (Branding folgt).')}</div>
+      </div>` : '';
+
+    infoEl.innerHTML = `
+      ${appearanceBlock}
+      <div class="info-row"><span class="key">${t('precheck.info.name','Name')}</span><span class="val">${esc(booking.customer_name)}</span></div>
+      <div class="info-row"><span class="key">${t('precheck.info.tariff','Tarif')}</span><span class="val">${esc(t('precheck.pricing.'+booking.pricing_type, PRICING[booking.pricing_type] || booking.pricing_type))}</span></div>
+      <div class="info-row"><span class="key">${t('precheck.info.from','Von')}</span><span class="val">${fmtDate(booking.start_time)}</span></div>
+      <div class="info-row"><span class="key">${t('precheck.info.to','Bis')}</span><span class="val">${fmtDate(booking.end_time)}</span></div>
+      <div class="info-row"><span class="key">${t('precheck.info.protection','Schutzpaket')}</span><span class="val">${t('precheck.ins.'+(booking.insurance_type || 'none'), INS[booking.insurance_type || 'none'])}</span></div>
+      <div class="info-row"><span class="key">${t('precheck.info.amount','Betrag')}</span><span class="val" style="color:var(--orange)">${(booking.total_amount||0).toFixed(2).replace('.',',')} €</span></div>
+    `;
+  }
+
   async function loadBooking() {
-    if (!bookingId || !precheckToken) return showError('Ungültiger Link.');
+    if (!bookingId || !precheckToken) return showError(t('precheck.err.invalid_link','Ungültiger Link.'));
     try {
       const res  = await fetch(`/api/precheck?id=${bookingId}&token=${precheckToken}`);
       const data = await res.json();
-      if (!res.ok) return showError(data.error || 'Buchung nicht gefunden.');
+      if (!res.ok) return showError(data.error || t('precheck.err.not_found','Buchung nicht gefunden.'));
       booking = data.booking;
 
-      if (booking.status === 'returned') return showError('Diese Buchung ist bereits abgeschlossen.');
+      if (booking.status === 'returned') return showError(t('precheck.err.completed','Diese Buchung ist bereits abgeschlossen.'));
 
       // Wenn Pre-Check noch nicht freigeschaltet → Countdown zeigen, Hauptansicht überspringen
       if (!isPrecheckUnlocked() && !booking.precheck_completed_at) {
@@ -357,24 +383,7 @@
       document.getElementById('loadingView').style.display = 'none';
       document.getElementById('mainView').style.display = 'block';
 
-      // "So findest du den Anhaenger" — Foto + Kennzeichen, nur sichtbar fuer Mieter
-      const appearanceBlock = (booking.appearance_photo_url || booking.license_plate) ? `
-        <div style="background:#0a1a0a;border:1.5px solid #22c55e;border-radius:12px;padding:14px 16px;margin-bottom:14px;">
-          <div style="font-weight:700;font-size:.9rem;margin-bottom:10px;color:#86efac;">🔍 So findest du den Anhänger</div>
-          ${booking.appearance_photo_url ? `<img src="${esc(booking.appearance_photo_url)}" alt="Anhänger" style="width:100%;max-width:320px;border-radius:8px;display:block;margin-bottom:10px;" />` : ''}
-          ${booking.license_plate ? `<div style="display:flex;justify-content:space-between;font-size:.86rem;"><span style="color:#aaa;">Kennzeichen</span><strong style="color:#fff;font-family:monospace;letter-spacing:.05em;">${esc(booking.license_plate)}</strong></div>` : ''}
-          <div style="font-size:.76rem;color:#86efac;margin-top:6px;">Aktuell grau (Branding folgt).</div>
-        </div>` : '';
-
-      document.getElementById('bookingInfo').innerHTML = `
-        ${appearanceBlock}
-        <div class="info-row"><span class="key">Name</span><span class="val">${esc(booking.customer_name)}</span></div>
-        <div class="info-row"><span class="key">Tarif</span><span class="val">${esc(PRICING[booking.pricing_type] || booking.pricing_type)}</span></div>
-        <div class="info-row"><span class="key">Von</span><span class="val">${fmtDate(booking.start_time)}</span></div>
-        <div class="info-row"><span class="key">Bis</span><span class="val">${fmtDate(booking.end_time)}</span></div>
-        <div class="info-row"><span class="key">Schutzpaket</span><span class="val">${INS[booking.insurance_type || 'none']}</span></div>
-        <div class="info-row"><span class="key">Betrag</span><span class="val" style="color:var(--orange)">${(booking.total_amount||0).toFixed(2).replace('.',',')} €</span></div>
-      `;
+      renderBookingInfo();
 
       if (booking.precheck_completed_at) {
         // Bereits erledigt – Code direkt anzeigen
@@ -384,7 +393,7 @@
         loadKnownDamages(booking.trailer_id);
       }
     } catch(e) {
-      showError('Fehler beim Laden der Buchung.');
+      showError(t('precheck.err.load','Fehler beim Laden der Buchung.'));
     }
   }
 
@@ -450,7 +459,7 @@
     setTimeout(() => {
       if (window.SimpleTrailerNative && window.SimpleTrailerNative.isNative) {
         const lbl = document.getElementById('precheckUploadLabel');
-        if (lbl) lbl.textContent = 'Foto aufnehmen';
+        if (lbl) lbl.textContent = t('precheck.photo.take','Foto aufnehmen');
       }
     }, 50);
   });
@@ -464,7 +473,7 @@
     const introEl = document.getElementById('knownDamagesIntro');
     const headerEl = document.getElementById('knownDamagesHeader');
     if (!trailerId) {
-      listEl.innerHTML = '<div style="background:#0d0d0d;border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;font-size:.86rem;color:#86efac;">✓ Keine Schäden vorhanden — der Anhänger ist in Ordnung</div>';
+      listEl.innerHTML = '<div style="background:#0d0d0d;border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;font-size:.86rem;color:#86efac;">' + esc(t('precheck.damages.none_a','✓ Keine Schäden vorhanden — der Anhänger ist in Ordnung')) + '</div>';
       return;
     }
     try {
@@ -474,16 +483,16 @@
 
       if (!knownDamagesCache.length) {
         // Keine Schäden — positive Meldung
-        listEl.innerHTML = '<div style="background:#0a1f0a;border:1px solid rgba(34,197,94,0.30);border-radius:10px;padding:14px;text-align:center;font-size:.88rem;color:#86efac;font-weight:600;">✓ Keine bekannten Schäden — der Anhänger ist in Ordnung</div>';
+        listEl.innerHTML = '<div style="background:#0a1f0a;border:1px solid rgba(34,197,94,0.30);border-radius:10px;padding:14px;text-align:center;font-size:.88rem;color:#86efac;font-weight:600;">' + esc(t('precheck.damages.none_b','✓ Keine bekannten Schäden — der Anhänger ist in Ordnung')) + '</div>';
         return;
       }
 
       // Schäden vorhanden — Header + Intro umfärben
       headerEl.style.color = '#B45309';
-      headerEl.textContent = '⚠ Bereits bekannte Schäden an diesem Anhänger';
+      headerEl.textContent = t('precheck.damages.header_known','⚠ Bereits bekannte Schäden an diesem Anhänger');
       introEl.style.display = 'block';
 
-      const sevLabel = { minor: 'Klein', major: 'Größer', not_drivable: 'Defekt' };
+      const sevLabel = { minor: t('precheck.sev.minor_short','Klein'), major: t('precheck.sev.major_short','Größer'), not_drivable: t('precheck.sev.notdrivable_short','Defekt') };
       const sevColor = { minor: '#fcd34d', major: '#fbbf24', not_drivable: '#f87171' };
       listEl.innerHTML = knownDamagesCache.map(dm => {
         const date = new Date(dm.created_at).toLocaleDateString('de-DE');
@@ -491,20 +500,20 @@
           <span style="background:${sevColor[dm.severity] || '#888'};color:#000;font-size:.7rem;font-weight:800;padding:3px 8px;border-radius:6px;letter-spacing:.04em;flex-shrink:0;">${sevLabel[dm.severity] || dm.severity}</span>
           <div style="flex:1;min-width:0;">
             <div style="font-size:.86rem;color:#ddd;line-height:1.5;">${esc(dm.description)}</div>
-            <div style="font-size:.72rem;color:var(--gray);margin-top:3px;">Seit ${date}</div>
+            <div style="font-size:.72rem;color:var(--gray);margin-top:3px;">${t('precheck.damages.since','Seit ')}${date}</div>
           </div>
-          ${dm.photo_url ? `<a href="${esc(dm.photo_url)}" target="_blank" rel="noopener" style="font-size:.78rem;color:var(--orange);text-decoration:none;flex-shrink:0;">Foto →</a>` : ''}
+          ${dm.photo_url ? `<a href="${esc(dm.photo_url)}" target="_blank" rel="noopener" style="font-size:.78rem;color:var(--orange);text-decoration:none;flex-shrink:0;">${t('precheck.damages.photo_link','Foto →')}</a>` : ''}
         </div>`;
       }).join('');
     } catch (e) {
-      listEl.innerHTML = '<div style="background:#0d0d0d;border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;font-size:.84rem;color:var(--gray);">Schadens-Liste konnte nicht geladen werden.</div>';
+      listEl.innerHTML = '<div style="background:#0d0d0d;border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;font-size:.84rem;color:var(--gray);">' + esc(t('precheck.damages.load_err','Schadens-Liste konnte nicht geladen werden.')) + '</div>';
     }
   }
 
   function toggleDamageReport() {
     damageReportOpen = !damageReportOpen;
     document.getElementById('damageReportForm').style.display = damageReportOpen ? 'block' : 'none';
-    document.getElementById('damageReportToggle').textContent = damageReportOpen ? '× Schließen' : '+ Schaden melden';
+    document.getElementById('damageReportToggle').textContent = damageReportOpen ? t('precheck.newdamage.toggle_close','× Schließen') : t('precheck.newdamage.toggle_open','+ Schaden melden');
   }
 
   async function submitDamage() {
@@ -514,13 +523,13 @@
     const errEl = document.getElementById('damageError');
     errEl.style.display = 'none';
 
-    if (!sev)              { errEl.textContent = 'Bitte Schweregrad wählen.'; errEl.style.display = 'block'; return; }
-    if (desc.length < 5)   { errEl.textContent = 'Bitte kurze Beschreibung (mindestens 5 Zeichen).'; errEl.style.display = 'block'; return; }
-    if (!photoFile)        { errEl.textContent = 'Bitte Foto vom Schaden machen.'; errEl.style.display = 'block'; return; }
+    if (!sev)              { errEl.textContent = t('precheck.dmgerr.severity','Bitte Schweregrad wählen.'); errEl.style.display = 'block'; return; }
+    if (desc.length < 5)   { errEl.textContent = t('precheck.dmgerr.desc','Bitte kurze Beschreibung (mindestens 5 Zeichen).'); errEl.style.display = 'block'; return; }
+    if (!photoFile)        { errEl.textContent = t('precheck.dmgerr.photo','Bitte Foto vom Schaden machen.'); errEl.style.display = 'block'; return; }
 
     const btn = document.getElementById('submitDamageBtn');
     btn.disabled = true;
-    btn.textContent = 'Foto wird hochgeladen…';
+    btn.textContent = t('precheck.status.uploading_photo','Foto wird hochgeladen…');
 
     try {
       // Foto in Supabase Storage hochladen
@@ -531,10 +540,10 @@
         headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}`, 'Content-Type': photoFile.type },
         body: photoFile
       });
-      if (!upRes.ok) throw new Error('Foto-Upload fehlgeschlagen');
+      if (!upRes.ok) throw new Error(t('precheck.err.upload_failed','Foto-Upload fehlgeschlagen'));
       const photoUrl = `${SUPABASE_URL}/storage/v1/object/public/precheck-photos/${path}`;
 
-      btn.textContent = 'Schaden wird gemeldet…';
+      btn.textContent = t('precheck.status.reporting_damage','Schaden wird gemeldet…');
 
       // Damage anlegen
       const res = await fetch('/api/damages', {
@@ -552,7 +561,7 @@
       });
       if (!res.ok) {
         const d = await res.json();
-        throw new Error(d.error || 'Fehler beim Melden');
+        throw new Error(d.error || t('precheck.err.report','Fehler beim Melden'));
       }
 
       // Bei "nicht fahrtauglich": Buchung als pending_refund flaggen + Mail an Admin
@@ -573,20 +582,20 @@
         document.getElementById('mainView').innerHTML = `
           <div style="background:#1a0808;border:2px solid #dc2626;border-radius:16px;padding:32px;text-align:center;">
             <div style="font-size:2.5rem;margin-bottom:12px;">🛑</div>
-            <h2 style="font-size:1.4rem;color:#fff;margin-bottom:10px;">Danke für die Meldung!</h2>
+            <h2 style="font-size:1.4rem;color:#fff;margin-bottom:10px;">${t('precheck.nd.thanks','Danke für die Meldung!')}</h2>
             <p style="color:#fecaca;font-size:.92rem;line-height:1.6;margin-bottom:16px;">
-              Wir haben deine Meldung bekommen. Der Anhänger ist <strong>nicht fahrtauglich</strong> — fahr bitte nicht los.
+              ${t('precheck.nd.body','Wir haben deine Meldung bekommen. Der Anhänger ist <strong>nicht fahrtauglich</strong> — fahr bitte nicht los.')}
             </p>
             <div style="background:#0a0202;border:1px solid #7f1d1d;border-radius:10px;padding:16px;text-align:left;font-size:.86rem;color:#fff;line-height:1.6;">
-              <strong style="color:#86efac;">Was jetzt passiert:</strong>
+              <strong style="color:#86efac;">${t('precheck.nd.whatnow','Was jetzt passiert:')}</strong>
               <ol style="margin:8px 0 0;padding-left:20px;color:#ddd;">
-                <li>Wir prüfen deine Meldung manuell (meist innerhalb 24h)</li>
-                <li>Bei Bestätigung: <strong style="color:#86efac;">volle Erstattung</strong> automatisch über deine Karte</li>
-                <li>Wir melden uns per E-Mail mit dem Status</li>
+                <li>${t('precheck.nd.step1','Wir prüfen deine Meldung manuell (meist innerhalb 24h)')}</li>
+                <li>${t('precheck.nd.step2','Bei Bestätigung: <strong style="color:#86efac;">volle Erstattung</strong> automatisch über deine Karte')}</li>
+                <li>${t('precheck.nd.step3','Wir melden uns per E-Mail mit dem Status')}</li>
               </ol>
             </div>
             <p style="color:var(--gray);font-size:.78rem;margin-top:18px;">
-              Bei Rückfragen: <a href="mailto:info@simpletrailer.de" style="color:var(--orange);">info@simpletrailer.de</a>
+              ${t('precheck.nd.contact','Bei Rückfragen:')} <a href="mailto:info@simpletrailer.de" style="color:var(--orange);">info@simpletrailer.de</a>
             </p>
           </div>
         `;
@@ -596,14 +605,14 @@
       // Bei minor/major: Erfolg im Form anzeigen + Form ausblenden
       document.getElementById('damageReportForm').innerHTML = `
         <div style="background:#0a1f0a;border:1px solid #22c55e;border-radius:10px;padding:14px;color:#86efac;font-size:.88rem;text-align:center;font-weight:600;">
-          ✓ Schaden gemeldet. Danke! Du bist abgesichert.
+          ${t('precheck.dmg.success','✓ Schaden gemeldet. Danke! Du bist abgesichert.')}
         </div>`;
       document.getElementById('damageReportToggle').style.display = 'none';
     } catch (e) {
       errEl.textContent = e.message;
       errEl.style.display = 'block';
       btn.disabled = false;
-      btn.textContent = 'Schaden melden';
+      btn.textContent = t('precheck.newdamage.submit','Schaden melden');
     }
   }
 
@@ -644,7 +653,7 @@
   let precheckAiOverride = false;
 
   window.bypassAiCheck = function() {
-    if (!confirm('Bist du sicher, dass das der Anhänger ist? Wir dokumentieren diese Bestätigung — bei Missbrauch können daraus Konsequenzen entstehen.')) return;
+    if (!confirm(t('precheck.confirm_bypass','Bist du sicher, dass das der Anhänger ist? Wir dokumentieren diese Bestätigung — bei Missbrauch können daraus Konsequenzen entstehen.'))) return;
     precheckAiOverride = true;
     submitPrecheck(false);
   };
@@ -656,13 +665,13 @@
 
     // Beide Fotos sind Pflicht (außer skipUpload für bereits abgeschlossenen Pre-Check)
     if (!skipUpload && (!photoFileOutside || !photoFileInside)) {
-      err.textContent = 'Bitte beide Fotos hochladen (Außen + Ladefläche).';
+      err.textContent = t('precheck.err.both_photos','Bitte beide Fotos hochladen (Außen + Ladefläche).');
       err.style.display = 'block';
       return;
     }
 
     btn.disabled = true;
-    btn.textContent = 'Wird übermittelt…';
+    btn.textContent = t('precheck.status.submitting','Wird übermittelt…');
 
     try {
       let photoUrlOutside = null, photoUrlInside = null;
@@ -672,7 +681,7 @@
           photoUrlOutside = window._precheckPhotoUrls.outside;
           photoUrlInside  = window._precheckPhotoUrls.inside;
         } else {
-          btn.textContent = 'Fotos werden hochgeladen…';
+          btn.textContent = t('precheck.status.uploading_photos','Fotos werden hochgeladen…');
           [photoUrlOutside, photoUrlInside] = await Promise.all([
             uploadOne(photoFileOutside, 'outside'),
             uploadOne(photoFileInside,  'inside')
@@ -680,13 +689,13 @@
 
           // BUGFIX: Wenn Upload fehlschlägt, war der Pre-Check vorher trotzdem durch (mit photo_url=null).
           if (!photoUrlOutside || !photoUrlInside) {
-            throw new Error('Foto-Upload fehlgeschlagen — bitte erneut probieren.');
+            throw new Error(t('precheck.err.upload_retry','Foto-Upload fehlgeschlagen — bitte erneut probieren.'));
           }
         }
 
         // KI-Validierung — nur wenn nicht bereits per Override bestätigt
         if (!precheckAiOverride) {
-          btn.textContent = 'Fotos werden geprüft…';
+          btn.textContent = t('precheck.status.checking','Fotos werden geprüft…');
           const validations = await Promise.all([
             validatePhoto(photoUrlOutside, 'outside'),
             validatePhoto(photoUrlInside,  'inside')
@@ -694,25 +703,25 @@
           console.log('KI-Validierung:', validations);
 
           const failures = [];
-          if (!validations[0].is_trailer && validations[0].confidence !== 'low') failures.push({ which: 'Foto 1 (Außen)', reason: validations[0].reason || 'kein Anhänger erkannt' });
-          if (!validations[1].is_trailer && validations[1].confidence !== 'low') failures.push({ which: 'Foto 2 (Ladefläche)', reason: validations[1].reason || 'keine Anhänger-Ladefläche erkannt' });
+          if (!validations[0].is_trailer && validations[0].confidence !== 'low') failures.push({ which: t('precheck.ai.photo1','Foto 1 (Außen)'), reason: validations[0].reason || t('precheck.ai.no_trailer','kein Anhänger erkannt') });
+          if (!validations[1].is_trailer && validations[1].confidence !== 'low') failures.push({ which: t('precheck.ai.photo2','Foto 2 (Ladefläche)'), reason: validations[1].reason || t('precheck.ai.no_bed','keine Anhänger-Ladefläche erkannt') });
 
           if (failures.length) {
             // Statt nur Fehler: Hinweis + "Trotzdem absenden"-Button
             const failHtml = failures.map(f => `<li><strong>${f.which}:</strong> ${esc(f.reason)}</li>`).join('');
             err.innerHTML = `
               <div style="margin-bottom:14px;">
-                <strong style="color:#fca5a5;">Unsere KI ist sich nicht sicher dass das ein Anhänger ist:</strong>
+                <strong style="color:#fca5a5;">${t('precheck.ai.unsure','Unsere KI ist sich nicht sicher dass das ein Anhänger ist:')}</strong>
                 <ul style="margin:8px 0 0 18px;padding:0;font-size:.88rem;color:#fecaca;">${failHtml}</ul>
               </div>
               <div style="background:#0a0a0a;border:1px solid var(--border);border-radius:10px;padding:14px;color:#ddd;font-size:.86rem;line-height:1.55;">
-                <strong style="color:#fff;">Das passiert manchmal</strong> — z.B. wenn die Plane den Anhänger verdeckt oder das Foto sehr nah dran ist. Falls du sicher bist dass es der Anhänger ist:
-                <button type="button" onclick="bypassAiCheck()" style="margin-top:12px;background:#E85D00;color:#fff;border:none;padding:11px 18px;border-radius:8px;font-family:inherit;font-weight:700;font-size:.88rem;cursor:pointer;width:100%;">Ich bestätige: das ist der Anhänger — trotzdem absenden</button>
+                <strong style="color:#fff;">${t('precheck.ai.sometimes_title','Das passiert manchmal')}</strong>${t('precheck.ai.sometimes_body',' — z.B. wenn die Plane den Anhänger verdeckt oder das Foto sehr nah dran ist. Falls du sicher bist dass es der Anhänger ist:')}
+                <button type="button" onclick="bypassAiCheck()" style="margin-top:12px;background:#E85D00;color:#fff;border:none;padding:11px 18px;border-radius:8px;font-family:inherit;font-weight:700;font-size:.88rem;cursor:pointer;width:100%;">${t('precheck.ai.confirm_btn','Ich bestätige: das ist der Anhänger — trotzdem absenden')}</button>
               </div>
-              <p style="margin-top:10px;font-size:.78rem;color:var(--gray);text-align:center;">Wenn du auf „trotzdem absenden" klickst, dokumentieren wir das. Bei missbräuchlicher Nutzung können daraus Konsequenzen entstehen.</p>`;
+              <p style="margin-top:10px;font-size:.78rem;color:var(--gray);text-align:center;">${t('precheck.ai.disclaimer','Wenn du auf „trotzdem absenden" klickst, dokumentieren wir das. Bei missbräuchlicher Nutzung können daraus Konsequenzen entstehen.')}</p>`;
             err.style.display = 'block';
             btn.disabled = false;
-            btn.textContent = '✓ Bestätigen & Zugangscode erhalten';
+            btn.textContent = t('precheck.submit','✓ Bestätigen & Zugangscode erhalten');
             // URLs cachen damit der Override-Button sie wiederverwenden kann
             window._precheckPhotoUrls = { outside: photoUrlOutside, inside: photoUrlInside };
             return;
@@ -738,7 +747,7 @@
         showPendingCountdown();
         return;
       }
-      if (!res.ok) throw new Error(data.error || 'Fehler');
+      if (!res.ok) throw new Error(data.error || t('precheck.err.generic','Fehler'));
 
       // Formular ausblenden, Success anzeigen
       document.querySelectorAll('.card, #submitBtn, .step-badge, h1, .sub, .error-msg').forEach(el => el.style.display = 'none');
@@ -749,9 +758,17 @@
       err.textContent = e.message;
       err.style.display = 'block';
       btn.disabled = false;
-      btn.textContent = '✓ Bestätigen & Zugangscode erhalten';
+      btn.textContent = t('precheck.submit','✓ Bestätigen & Zugangscode erhalten');
     }
   }
+
+  // Bei Sprachwechsel dynamisch gerenderte Inhalte neu aufbauen
+  document.addEventListener('st-lang-changed', () => {
+    if (booking && document.getElementById('mainView').style.display !== 'none') {
+      renderBookingInfo();
+      if (!booking.precheck_completed_at) loadKnownDamages(booking.trailer_id);
+    }
+  });
 
   loadBooking();
 </script>

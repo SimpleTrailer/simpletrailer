@@ -22,6 +22,7 @@ const supabase     = createClient(process.env.SUPABASE_URL, process.env.SUPABASE
 const supabaseAuth = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
 const resend = new Resend(process.env.RESEND_API_KEY);
 const T = require('./_email-template');
+const _pricing = require('./_pricing'); // gleiche Preis-Engine wie die Buchung
 
 const fmt = d => new Date(d).toLocaleString('de-DE', {
   day: '2-digit', month: '2-digit', year: 'numeric',
@@ -85,19 +86,10 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'Nächste Buchung blockiert die Verlängerung — bitte kürzer wählen oder rechtzeitig zurückgeben.' });
     }
 
-    // Preis ermitteln
+    // Preis ermitteln — gleiche Stundentreppe wie bei der Buchung (RentMyTrailer-Logik):
+    // 2h Mindestmiete, je weitere Std +Stundenpreis, ab 8h Tages-Deckel, Mehrtage degressiv.
     const t = booking.trailers || {};
-    const prices = {
-      kurztrip:  Number(t.price_kurztrip)  || 9,
-      halftag:   Number(t.price_halftag)   || 18,
-      day:       Number(t.price_day)       || 29,
-      extra_day: Number(t.price_extra_day) || 24,
-    };
-    let extraAmount;
-    if (hrs <= 3)       extraAmount = prices.kurztrip;
-    else if (hrs <= 6)  extraAmount = prices.halftag;
-    else if (hrs <= 24) extraAmount = prices.day;
-    else                extraAmount = prices.day + Math.ceil((hrs - 24) / 24) * prices.extra_day;
+    const extraAmount = _pricing.calcBase(hrs, t);
 
     // Off-Session-Charge mit Idempotency-Key — schützt vor Doppel-Abbuchung bei Doppelklick.
     // Key basiert auf Booking-ID + bisheriges end_time + Stunden.
