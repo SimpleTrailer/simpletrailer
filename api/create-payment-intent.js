@@ -7,7 +7,7 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SER
 // ── Rabattcodes (verbindliche Berechnung) ────────────────────────────────
 // Definition zentral in ./_discounts.js, damit die Vorab-Prüfung
 // (api/validate-discount.js) exakt dieselben Codes/Regeln nutzt.
-const { resolveDiscount } = require('./_discounts');
+const { resolveDiscount, isRedeemed } = require('./_discounts');
 
 const rateLimit = new Map();
 function isRateLimited(ip) {
@@ -166,6 +166,11 @@ module.exports = async (req, res) => {
     // Client-Wert ist NUR Anzeige; hier ist die einzige verbindliche Berechnung.
     const disc = resolveDiscount(req.body.discount_code);
     if (disc.error) return res.status(400).json({ error: `Rabattcode: ${disc.error}` });
+    // Single-Use-Codes (z. B. persönliche Entschuldigungs-Gutscheine): nur EINMAL einlösbar.
+    // Prüfung via Stripe (schon eine erfolgreiche Zahlung mit diesem Code?) — fail-open.
+    if (disc.singleUse && await isRedeemed(stripe, disc.code)) {
+      return res.status(400).json({ error: `Rabattcode: Der Code ${disc.code} wurde bereits eingelöst.` });
+    }
     const discountCode    = disc.code || null;
     const discountPercent = disc.percent || 0;
     const discountScope   = disc.scope || 'total';

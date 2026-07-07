@@ -1,4 +1,5 @@
-const { resolveDiscount } = require('./_discounts');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const { resolveDiscount, isRedeemed } = require('./_discounts');
 
 // ── Rabattcode-Vorabprüfung ──────────────────────────────────────────────
 // Leichter Endpoint, damit ein Rabattcode SCHON VOR der Führerschein-Verifizierung
@@ -30,5 +31,9 @@ module.exports = async (req, res) => {
   const disc = resolveDiscount((req.body && req.body.discount_code) || '');
   if (disc.error)  return res.status(200).json({ valid: false, error: disc.error });
   if (!disc.code)  return res.status(200).json({ valid: false, error: 'Bitte einen Code eingeben.' });
+  // Single-Use-Codes schon hier ehrlich melden, damit der Kunde nicht erst beim Bezahlen scheitert.
+  if (disc.singleUse && await isRedeemed(stripe, disc.code)) {
+    return res.status(200).json({ valid: false, error: 'Dieser Code wurde bereits eingelöst.' });
+  }
   return res.status(200).json({ valid: true, code: disc.code, percent: disc.percent, scope: disc.scope });
 };
