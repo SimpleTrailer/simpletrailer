@@ -631,7 +631,7 @@ module.exports = async (req, res) => {
     // ─── REFUND-PENDING: Buchungen die nicht-fahrtauglich gemeldet wurden ───
     if (section === 'refund-pending') {
       const { data } = await supabase.from('bookings')
-        .select('id, customer_name, customer_email, trailer_id, total_amount, start_time, not_drivable_reported_at, not_drivable_photo_url, not_drivable_description, refund_status, stripe_payment_intent_id, trailers(name)')
+        .select('id, customer_name, customer_email, trailer_id, total_amount, start_time, not_drivable_reported_at, not_drivable_photo_url, not_drivable_description, refund_status, trailers(name)')
         .eq('refund_status', 'pending')
         .order('not_drivable_reported_at', { ascending: false });
       return res.status(200).json({ bookings: data || [] });
@@ -646,6 +646,12 @@ module.exports = async (req, res) => {
 
       const { data: booking } = await supabase.from('bookings').select('*, trailers(name)').eq('id', booking_id).maybeSingle();
       if (!booking) return res.status(404).json({ error: 'Buchung nicht gefunden' });
+
+      // Doppel-Verarbeitung verhindern (Doppelklick / paralleler Request):
+      // nur solange die Anfrage wirklich noch 'pending' ist, Refund + Mail auslösen.
+      if (booking.refund_status !== 'pending') {
+        return res.status(200).json({ ok: true, already: booking.refund_status });
+      }
 
       if (action === 'approve') {
         // Stripe-Refund
@@ -697,6 +703,48 @@ Wir bitten den Ausfall zu entschuldigen.
         await supabase.from('bookings').update({ refund_status: 'rejected' }).eq('id', booking.id);
         return res.status(200).json({ ok: true });
       }
+    }
+
+    // ─── SET-BOOKING-STATUS: Admin schaltet Status von Hand (Übergabe/Rückgabe bestätigen) ───
+    // Nur Status/actual_return_time — KEIN Stripe-Eingriff. Enge Whitelist erlaubter Übergänge.
+    if (section === 'set-booking-status' && req.method === 'POST') {
+      const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+      const { booking_id, new_status } = body;
+      if (!booking_id) return res.status(400).json({ error: 'booking_id erforderlich' });
+      // 'returned' ist bewusst TERMINAL — kein Reopen der Rückgabe-/Verspätungs-Charge-Logik
+      // (process-return.js schützt nur über status==='returned'; ein Undo würde Doppel-Abbuchung ermöglichen).
+      const ALLOWED = { confirmed: ['active'], active: ['returned', 'confirmed'] };
+      const { data: b } = await supabase.from('bookings').select('id, status').eq('id', booking_id).maybeSingle();
+      if (!b) return res.status(404).json({ error: 'Buchung nicht gefunden' });
+      if (!ALLOWED[b.status] || !ALLOWED[b.status].includes(new_status)) {
+        return res.status(400).json({ error: `Übergang ${b.status} → ${new_status} nicht erlaubt` });
+      }
+      const upd = { status: new_status };
+      if (new_status === 'returned') upd.actual_return_time = new Date().toISOString();
+      const { error } = await supabase.from('bookings').update(upd).eq('id', booking_id);
+      if (error) return res.status(500).json({ error: error.message });
+      return res.status(200).json({ ok: true, status: new_status });
+    }
+
+    // ─── MARK-NO-SHOW: Kunde nicht erschienen → schließen OHNE Erstattung, Slot frei ───
+    // Setzt cancelled + refund 0, löst KEINEN Stripe-Refund aus (bewusst anders als cancel-booking).
+    if (section === 'mark-no-show' && req.method === 'POST') {
+      const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+      const { booking_id } = body;
+      if (!booking_id) return res.status(400).json({ error: 'booking_id erforderlich' });
+      const { data: b } = await supabase.from('bookings').select('id, status').eq('id', booking_id).maybeSingle();
+      if (!b) return res.status(404).json({ error: 'Buchung nicht gefunden' });
+      // NUR unbezahlte (pending) Buchungen — kein Geld im Spiel, keine Refund-/Rechtsfrage.
+      // Bezahlte (confirmed) No-Shows bewusst NICHT hier: die brauchen eine AGB-gedeckte
+      // Entscheidung (Kulanz-Refund via cancel-booking oder anteilige Gebühr) — nicht per Stillschweigen.
+      if (b.status !== 'pending') {
+        return res.status(400).json({ error: 'No-Show nur bei noch nicht bezahlten (ausstehenden) Buchungen. Bezahlte über „Stornieren & erstatten" behandeln.' });
+      }
+      const { error } = await supabase.from('bookings').update({
+        status: 'cancelled', cancelled_at: new Date().toISOString(), cancellation_refund_amount: 0
+      }).eq('id', booking_id);
+      if (error) return res.status(500).json({ error: error.message });
+      return res.status(200).json({ ok: true });
     }
 
     // ─── CANCEL-BOOKING: Admin storniert eine Buchung (Refund + Slot frei + Mail) ───
@@ -1245,6 +1293,7 @@ SimpleTrailer GbR · Waltjenstr. 96, 28237 Bremen · info@simpletrailer.de`;
       stripe_payment_intent_id, created_at,
       return_photo_url, ladeflaeche_photo_url, precheck_photo_url, insurance_type, insurance_amount,
       free_floating, cancellation_protection, cancellation_protection_fee,
+      cancelled_at, cancellation_refund_amount,
       trailers(name)
     `).order('created_at', { ascending: false });
     if (error) throw error;

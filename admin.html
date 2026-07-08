@@ -105,6 +105,7 @@
 
     .empty{text-align:center;color:var(--dim);padding:30px 16px;font-size:.88rem;}
     .toolbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+    .sel{background:var(--s3);border:1px solid var(--border2);color:var(--text);border-radius:10px;padding:8px 10px;font-size:.82rem;font-weight:600;cursor:pointer;max-width:100%;}
     .search{flex:1;min-width:160px;background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:10px 13px;color:var(--text);font-size:16px;outline:none;}
     .chip{background:var(--s1);border:1px solid var(--border);color:var(--muted);padding:8px 13px;border-radius:10px;font-size:.82rem;font-weight:600;white-space:nowrap;}
     .chip.active{background:var(--orange-soft);border-color:rgba(232,93,0,.4);color:#fff;}
@@ -127,6 +128,33 @@
     .lg-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0;}
     .lg-name{flex:1;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
     .lg-val{font-weight:700;font-variant-numeric:tabular-nums;}
+    /* trend badge (vs. Vorperiode) */
+    .trend{display:inline-flex;align-items:center;gap:3px;font-size:.72rem;font-weight:800;padding:2px 7px;border-radius:20px;font-variant-numeric:tabular-nums;white-space:nowrap;}
+    .trend.up{background:var(--green-soft);color:var(--green);}
+    .trend.down{background:var(--red-soft);color:var(--red);}
+    .trend.flat{background:var(--s3);color:var(--muted);}
+    .kpi .label .trend{margin-left:auto;}
+    /* heatmap (Wochentag × Tageszeit) */
+    .hm{width:100%;border-collapse:separate;border-spacing:3px;}
+    .hm th{font-size:.64rem;font-weight:700;color:var(--dim);padding:2px;text-align:center;}
+    .hm td.hm-row{font-size:.68rem;font-weight:700;color:var(--muted);text-align:right;padding-right:6px;white-space:nowrap;width:1%;}
+    .hm td.hm-cell{height:26px;border-radius:5px;text-align:center;font-size:.64rem;font-weight:700;color:#fff;font-variant-numeric:tabular-nums;transition:transform .1s ease;}
+    .hm td.hm-cell:hover{transform:scale(1.12);outline:1.5px solid var(--orange);}
+    .hm-legend{display:flex;align-items:center;gap:6px;justify-content:flex-end;margin-top:8px;font-size:.68rem;color:var(--dim);}
+    .hm-legend i{width:16px;height:10px;border-radius:2px;display:inline-block;}
+    /* Belegungs-Kalender */
+    .cal{border-collapse:separate;border-spacing:2px;}
+    .cal-name{font-size:.74rem;font-weight:700;color:var(--text);white-space:nowrap;padding-right:8px;text-align:right;position:sticky;left:0;background:var(--s1);z-index:1;}
+    .cal-h{font-size:.66rem;color:var(--dim);text-align:center;min-width:26px;line-height:1.25;padding-bottom:4px;}
+    .cal-h.we{color:var(--orange);}
+    .cal-c{width:26px;height:28px;border-radius:4px;background:var(--s3);}
+    .cal-c.we{background:var(--s2);}
+    .cal-c.busy{cursor:pointer;}
+    .cal-c.busy:hover{outline:2px solid var(--text);outline-offset:-1px;}
+    /* interaktiver Chart-Hover (Crosshair + Tooltip) */
+    .chart-wrap{position:relative;}
+    .chart-tip{position:absolute;pointer-events:none;opacity:0;transform:translate(-50%,-118%);background:var(--s3);border:1px solid var(--border2);border-radius:8px;padding:6px 9px;font-size:.76rem;font-weight:600;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,.45);transition:opacity .1s ease;z-index:5;}
+    .chart-tip .tv{font-weight:800;color:var(--orange);}
 
     /* ── DETAIL PANEL (slide-in) ── */
     #scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .25s;z-index:90;}
@@ -147,8 +175,22 @@
     .drow .v{text-align:right;font-weight:600;word-break:break-word;}
     .dblock{background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:4px 14px;margin:12px 0;}
     .dlabel{font-size:.7rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin:16px 2px 8px;}
-    .photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px;}
-    .photo-grid img{width:100%;height:90px;object-fit:cover;border-radius:10px;border:1px solid var(--border2);cursor:pointer;}
+    .photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;}
+    .photo-cell{margin:0;}
+    .photo-cell img{width:100%;height:110px;object-fit:cover;border-radius:10px;border:1px solid var(--border2);cursor:zoom-in;transition:transform .12s ease,border-color .12s ease;display:block;}
+    .photo-cell img:hover{transform:scale(1.02);border-color:var(--orange);}
+    .photo-cell figcaption{font-size:.66rem;color:var(--dim);margin-top:5px;text-align:center;line-height:1.25;}
+    #lightbox{display:none;position:fixed;inset:0;z-index:200;background:rgba(6,6,8,.94);align-items:center;justify-content:center;padding:24px;}
+    #lightbox.open{display:flex;}
+    .lb-stage{margin:0;max-width:min(960px,94vw);max-height:88vh;display:flex;flex-direction:column;align-items:center;gap:12px;}
+    .lb-stage img{max-width:100%;max-height:78vh;object-fit:contain;border-radius:12px;box-shadow:0 24px 70px rgba(0,0,0,.6);}
+    .lb-stage figcaption{color:#e7e7ea;font-size:.9rem;font-weight:600;text-align:center;}
+    .lb-count{color:var(--dim);font-weight:500;margin-left:6px;}
+    .lb-close{position:absolute;top:16px;right:18px;background:rgba(255,255,255,.1);border:none;color:#fff;width:42px;height:42px;border-radius:50%;font-size:1.1rem;cursor:pointer;}
+    .lb-close:hover{background:rgba(255,255,255,.2);}
+    .lb-nav{position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between;pointer-events:none;padding:0 12px;}
+    .lb-arrow{pointer-events:auto;background:rgba(255,255,255,.1);border:none;color:#fff;width:48px;height:48px;border-radius:50%;font-size:1.8rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+    .lb-arrow:hover{background:rgba(255,255,255,.22);}
     .linkbtn{display:inline-flex;align-items:center;gap:6px;background:var(--s3);border:1px solid var(--border2);color:var(--text);padding:9px 13px;border-radius:10px;font-size:.84rem;font-weight:600;text-decoration:none;margin:4px 6px 4px 0;}
     .linkbtn.orange{background:var(--orange-soft);border-color:rgba(232,93,0,.4);color:#fff;}
 
@@ -194,6 +236,8 @@
     <div class="brand">Simple<span>Trailer</span> · CRM</div>
     <div class="topbar-right">
       <span class="live-dot" id="liveDot"><span class="pulse"></span><span id="liveCount">–</span> live</span>
+      <button class="icon-btn" onclick="openSearch()" title="Suche">⌕</button>
+      <button class="icon-btn" onclick="openAlarms()" title="Alarme" style="position:relative">🔔<span class="badge" id="alarmBadge" style="display:none;position:absolute;top:-2px;right:-2px;background:var(--red);color:#fff"></span></button>
       <button class="icon-btn" onclick="loadAll(true)" title="Aktualisieren">⟳</button>
       <button class="icon-btn" onclick="doLogout()" title="Abmelden">⏻</button>
     </div>
@@ -207,6 +251,7 @@
     <div class="tabpane" id="pane-buchungen"></div>
     <div class="tabpane" id="pane-kunden"></div>
     <div class="tabpane" id="pane-flotte"></div>
+    <div class="tabpane" id="pane-kalender"></div>
     <div class="tabpane" id="pane-finanzen"></div>
     <div class="tabpane" id="pane-statistik"></div>
     <div class="tabpane" id="pane-aistab"></div>
@@ -224,6 +269,19 @@
 </aside>
 <div id="sheet"><div class="sheet-handle"></div><div id="sheetBody"></div></div>
 
+<!-- FOTO-LIGHTBOX -->
+<div id="lightbox" onclick="if(event.target.id==='lightbox')closeLightbox()">
+  <button class="lb-close" onclick="closeLightbox()" aria-label="Schließen">✕</button>
+  <div id="lbNav" class="lb-nav">
+    <button class="lb-arrow" onclick="lbStep(-1)" aria-label="Zurück">‹</button>
+    <button class="lb-arrow" onclick="lbStep(1)" aria-label="Weiter">›</button>
+  </div>
+  <figure class="lb-stage">
+    <img id="lbImg" src="" alt="">
+    <figcaption><span id="lbCap"></span> <span id="lbCount" class="lb-count"></span></figcaption>
+  </figure>
+</div>
+
 <script>
   const SUPABASE_URL  = 'https://zcjlfatuelhkghtdyrqh.supabase.co';
   const SUPABASE_ANON = 'sb_publishable_cX1r2GLuIkxEPIpkFKdXaQ_RtP7eDOf';
@@ -239,6 +297,8 @@
   const eur = n => (Number(n)||0).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
   const fmtDate = iso => iso ? new Date(iso).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}) : '–';
   const fmtDay  = iso => iso ? new Date(iso).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'}) : '–';
+  const telNum = p => String(p||'').replace(/[^\d+]/g,'');
+  const waNum  = p => { let s=telNum(p); if(s.startsWith('+'))s=s.slice(1); else if(s.startsWith('00'))s=s.slice(2); else if(s.startsWith('0'))s='49'+s.slice(1); return s; };
   const fmtTime = iso => iso ? new Date(iso).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}) : '';
   const initial = s => (String(s||'?').trim()[0]||'?').toUpperCase();
   const isSameDay = (a,b) => a&&b&&new Date(a).toDateString()===new Date(b).toDateString();
@@ -325,6 +385,7 @@
     {id:'buchungen',label:'Buchungen',ic:'▤'},
     {id:'kunden',label:'Kunden',ic:'☻'},
     {id:'flotte',label:'Flotte',ic:'▣'},
+    {id:'kalender',label:'Kalender',ic:'⊞'},
     {id:'finanzen',label:'Finanzen',ic:'€'},
     {id:'statistik',label:'Statistik',ic:'▦'},
     {id:'aistab',label:'AI-Stab',ic:'✦'},
@@ -349,7 +410,7 @@
     document.getElementById('pane-'+id).classList.add('active');
     renderTab(id); window.scrollTo({top:0});
   }
-  function renderTab(id){ ({heute:renderHeute,cockpit:renderCockpit,buchungen:renderBuchungen,kunden:renderKunden,flotte:renderFlotte,finanzen:renderFinanzen,statistik:renderStatistik,aistab:renderAistab,rechner:renderRechner}[id]||(()=>{}))(); }
+  function renderTab(id){ ({heute:renderHeute,cockpit:renderCockpit,buchungen:renderBuchungen,kunden:renderKunden,flotte:renderFlotte,kalender:renderKalender,finanzen:renderFinanzen,statistik:renderStatistik,aistab:renderAistab,rechner:renderRechner}[id]||(()=>{}))(); }
 
   function updateBadges(){
     const now=Date.now();
@@ -357,6 +418,33 @@
       + ST.bookings.filter(b=>b.status==='active'&&b.end_time&&new Date(b.end_time).getTime()<now).length
       + ST.bookings.filter(b=>String(b.late_fee_payment_intent_id||'').startsWith('FAILED')).length;
     ['tb-heute','nb-heute'].forEach(eid=>{const el=document.getElementById(eid);if(el){el.style.display=alarms?'inline-block':'none';el.textContent=alarms;}});
+    const ab=document.getElementById('alarmBadge'); if(ab){ab.style.display=alarms?'inline-flex':'none';ab.textContent=alarms;}
+  }
+  function collectAlarms(){
+    const now=Date.now(), a=[];
+    ST.bookings.filter(b=>b.status==='pending'&&(now-new Date(b.created_at).getTime())>3600000).forEach(b=>a.push(['red','Seit >1h ausstehend',b]));
+    ST.bookings.filter(b=>b.status==='active'&&b.end_time&&new Date(b.end_time).getTime()<now).forEach(b=>a.push(['yellow','Überfällige Rückgabe',b]));
+    ST.bookings.filter(b=>String(b.late_fee_payment_intent_id||'').startsWith('FAILED')).forEach(b=>a.push(['red','Verspätungs-Abbuchung fehlgeschlagen',b]));
+    return a;
+  }
+  function openAlarms(){
+    const a=collectAlarms();
+    const h=a.length?`<div class="card">`+a.map(([c,txt,b])=>`<button class="row clickable" onclick="closePanel();openBooking('${b.id}')"><div class="av" style="color:var(--${c})">!</div><div class="main"><div class="t1">${txt}</div><div class="t2">${esc(b.customer_name||'–')} · ${esc(b.trailers?.name||'')}</div></div><span class="chev">›</span></button>`).join('')+`</div>`:`<div class="empty">Keine offenen Alarme 🎉</div>`;
+    openPanel('Alarme ('+a.length+')',h);
+  }
+  function openSearch(){
+    openPanel('Suche','<input class="search" id="globalQ" placeholder="Kunde, Buchung, Anhänger, Telefon…" oninput="doGlobalSearch(this.value)" style="width:100%"><div id="globalRes" style="margin-top:12px"><div class="empty">Tippe, um zu suchen…</div></div>');
+    setTimeout(()=>{const el=document.getElementById('globalQ');if(el)el.focus();},120);
+  }
+  function doGlobalSearch(q){
+    const el=document.getElementById('globalRes'); if(!el)return;
+    q=(q||'').trim().toLowerCase();
+    if(q.length<2){el.innerHTML='<div class="empty">Mindestens 2 Zeichen…</div>';return;}
+    const res=[];
+    ST.users.filter(u=>(`${u.first_name||''} ${u.last_name||''} ${u.email||''} ${u.phone||''}`).toLowerCase().includes(q)).slice(0,8).forEach(u=>res.push(`<button class="row clickable" onclick="closePanel();openCustomer('${esc(u.email)}')"><div class="av">☻</div><div class="main"><div class="t1">${esc(([u.first_name,u.last_name].filter(Boolean).join(' '))||u.email)}</div><div class="t2">${esc(u.email)} · Kunde</div></div><span class="chev">›</span></button>`));
+    ST.bookings.filter(b=>(`${b.customer_name||''} ${b.customer_email||''} ${b.customer_phone||''} ${b.id||''}`).toLowerCase().includes(q)).slice(0,8).forEach(b=>res.push(`<button class="row clickable" onclick="closePanel();openBooking('${b.id}')"><div class="av">▤</div><div class="main"><div class="t1">${esc(b.customer_name||'–')}</div><div class="t2">#${(b.id||'').slice(0,8).toUpperCase()} · ${esc(b.trailers?.name||'')} · Buchung</div></div><span class="chev">›</span></button>`));
+    ST.trailers.filter(t=>(`${t.name||''} ${t.license_plate||''}`).toLowerCase().includes(q)).slice(0,5).forEach(t=>res.push(`<button class="row clickable" onclick="closePanel();openTrailer('${esc(t.id||t.name)}')"><div class="av">▣</div><div class="main"><div class="t1">${esc(t.name||'')}</div><div class="t2">Anhänger</div></div><span class="chev">›</span></button>`));
+    el.innerHTML=res.length?`<div class="card">`+res.join('')+`</div>`:'<div class="empty">Nichts gefunden.</div>';
   }
 
   /* ── HEUTE ── */
@@ -378,6 +466,7 @@
       <div class="kpi"><div class="label">Umsatz Monat</div><div class="val sm">${eur(ST.stats.revenue_month)}</div></div>
     </div>`;
 
+    h+=`<div id="refundPending"></div>`;
     h+=`<div class="sect-title">⚠️ Sofort prüfen (anklickbar)</div>`;
     h+= alarms.length ? `<div class="card">`+alarms.map(([c,txt,b])=>`
         <button class="row clickable" onclick="openBooking('${b.id}')">
@@ -391,7 +480,33 @@
     h+=`<div class="sect-title">↑ Abholungen heute</div>`+todayList(pickups,'start_time','Keine Abholungen heute');
     h+=`<div class="sect-title">↓ Rückgaben heute</div>`+todayList(returns,'end_time','Keine Rückgaben heute');
     document.getElementById('pane-heute').innerHTML=h;
-    loadTodos();
+    loadTodos(); loadRefundPending();
+  }
+  async function loadRefundPending(){
+    const el=document.getElementById('refundPending'); if(!el)return;
+    try{ const d=await api('refund-pending'); const list=d.bookings||[];
+      if(!document.getElementById('refundPending'))return;
+      if(!list.length){ el.innerHTML=''; return; }
+      _lb=list.filter(b=>safeUrl(b.not_drivable_photo_url)).map(b=>({url:safeUrl(b.not_drivable_photo_url),cap:'Nicht fahrtauglich · '+(b.customer_name||'')}));
+      const picIdx=u=>_lb.findIndex(p=>p.url===safeUrl(u));
+      el.innerHTML=`<div class="sect-title" style="color:var(--red)">🛑 Erstattung freigeben (${list.length}) — Kunde wartet auf Geld</div>`+
+        '<div class="card" style="border-color:rgba(255,93,93,.4)">'+list.map(b=>`<div class="row" style="display:block">
+          <div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><strong>${esc(b.customer_name||'–')}</strong><span style="font-size:.72rem;color:var(--dim)">${b.not_drivable_reported_at?fmtDate(b.not_drivable_reported_at):''}</span></div>
+          <div style="font-size:.82rem;color:var(--muted);margin:4px 0">${esc(b.trailers?.name||'')} · ${eur(b.total_amount)} · #${(b.id||'').slice(0,8).toUpperCase()}</div>
+          ${b.not_drivable_description?`<div style="font-size:.86rem;margin:6px 0">„${esc(b.not_drivable_description)}"</div>`:''}
+          ${safeUrl(b.not_drivable_photo_url)?`<img src="${safeUrl(b.not_drivable_photo_url)}" loading="lazy" onclick="openLightbox(${picIdx(b.not_drivable_photo_url)})" style="width:84px;height:84px;object-fit:cover;border-radius:8px;border:1px solid var(--border2);cursor:zoom-in;margin:4px 0">`:''}
+          <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-primary" style="flex:1;min-width:140px" onclick="decideRefund('${b.id}','approve',${b.total_amount||0},this)">✓ Erstatten (${eur(b.total_amount)})</button>
+            <button class="chip" onclick="decideRefund('${b.id}','reject',0,this)">Ablehnen</button>
+          </div>
+        </div>`).join('')+'</div>';
+    }catch(e){ if(el)el.innerHTML=''; }
+  }
+  async function decideRefund(id,action,amount,btn){
+    const msg = action==='approve' ? `Erstattung von ${eur(amount)} FREIGEBEN?\n\nDas Geld wird sofort über Stripe zurückgebucht und der Kunde per Mail informiert.` : 'Erstattungs-Anfrage ABLEHNEN?\n\nDie Buchung bleibt bestehen, kein Geld zurück.';
+    if(!confirm(msg))return;
+    if(btn){ btn.disabled=true; btn.style.opacity=.6; }
+    try{ const r=await fetch('/api/admin?section=approve-refund',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${authToken}`},body:JSON.stringify({booking_id:id,action})}); const d=await r.json(); if(!r.ok)throw new Error(d.error||'Fehler'); await loadAll(); renderHeute(); alert(action==='approve'?'✓ Erstattung freigegeben & Kunde informiert.':'Anfrage abgelehnt.'); }catch(e){ if(btn){ btn.disabled=false; btn.style.opacity=1; } alert('❌ '+e.message);}
   }
   async function loadTodos(){
     const el=document.getElementById('todoList'); if(!el)return;
@@ -420,14 +535,27 @@
   }
 
   /* ── BUCHUNGEN ── */
-  let bookFilter='all', bookSearch='';
+  let bookFilter='all', bookSearch='', bookTrailer='all', bookSort='created';
+  function bookMatches(b){
+    if(bookFilter!=='all'&&b.status!==bookFilter)return false;
+    if(bookTrailer!=='all'&&(b.trailers?.name||'')!==bookTrailer)return false;
+    if(bookSearch){const q=bookSearch.toLowerCase(); if(!((b.customer_name||'').toLowerCase().includes(q)||(b.customer_email||'').toLowerCase().includes(q)||(b.customer_phone||'').toLowerCase().includes(q)||(b.id||'').toLowerCase().includes(q)))return false;}
+    return true;
+  }
   function renderBuchungen(){
     const filters=[['all','Alle'],['pending','Ausstehend'],['confirmed','Bestätigt'],['active','Aktiv'],['returned','Abgeschlossen'],['cancelled','Storniert']];
-    let list=ST.bookings.slice();
-    if(bookFilter!=='all')list=list.filter(b=>b.status===bookFilter);
-    if(bookSearch){const q=bookSearch.toLowerCase();list=list.filter(b=>(b.customer_name||'').toLowerCase().includes(q)||(b.customer_email||'').toLowerCase().includes(q)||(b.id||'').toLowerCase().includes(q));}
-    let h=`<div class="toolbar"><input class="search" placeholder="Suche Name / E-Mail / ID…" value="${esc(bookSearch)}" oninput="bookSearch=this.value;renderBuchungen()"></div>`;
+    let list=ST.bookings.filter(bookMatches);
+    if(bookSort==='start')list.sort((a,b)=>new Date(b.start_time||0)-new Date(a.start_time||0));
+    else if(bookSort==='betrag')list.sort((a,b)=>((b.total_amount||0)+(b.late_fee_amount||0))-((a.total_amount||0)+(a.late_fee_amount||0)));
+    else list.sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));
+    const trailerNames=[...new Set(ST.bookings.map(b=>b.trailers?.name).filter(Boolean))];
+    let h=`<div class="toolbar"><input class="search" placeholder="Suche Name / E-Mail / Telefon / ID…" value="${esc(bookSearch)}" oninput="bookSearch=this.value;renderBuchungen()"></div>`;
     h+=`<div class="toolbar">`+filters.map(([k,l])=>`<button class="chip ${bookFilter===k?'active':''}" onclick="bookFilter='${k}';renderBuchungen()">${l}${k==='all'?` (${ST.bookings.length})`:''}</button>`).join('')+`</div>`;
+    h+=`<div class="toolbar">
+      <select class="sel" onchange="bookTrailer=this.value;renderBuchungen()"><option value="all">Alle Anhänger</option>${trailerNames.map(n=>`<option value="${esc(n)}"${bookTrailer===n?' selected':''}>${esc(n)}</option>`).join('')}</select>
+      <select class="sel" onchange="bookSort=this.value;renderBuchungen()">${[['created','Neueste zuerst'],['start','Nach Startdatum'],['betrag','Höchster Betrag']].map(([k,l])=>`<option value="${k}"${bookSort===k?' selected':''}>${l}</option>`).join('')}</select>
+      <button class="chip" onclick="exportBookingsCsv()">⬇ CSV (${list.length})</button>
+    </div>`;
     h+= list.length ? `<div class="card">`+list.map(b=>`
       <button class="row clickable" onclick="openBooking('${b.id}')">
         <div class="av">${esc(initial(b.customer_name))}</div>
@@ -437,41 +565,92 @@
       : `<div class="card"><div class="empty">Keine Buchungen.</div></div>`;
     document.getElementById('pane-buchungen').innerHTML=h;
   }
+  function exportBookingsCsv(){
+    const list=ST.bookings.filter(bookMatches);
+    if(!list.length){alert('Keine Buchungen im aktuellen Filter.');return;}
+    const q=v=>{v=String(v==null?'':v); if(/^[=+\-@\t\r]/.test(v))v="'"+v; v=v.replace(/"/g,'""'); return /[";\n\r]/.test(v)?`"${v}"`:v;};
+    const de=n=>(Number(n)||0).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2});
+    const head=['Buchung','Kunde','E-Mail','Telefon','Von','Bis','Tarif','Anhänger','Brutto','Netto','MwSt','Schutzpaket','Storno-Gebühr','Verspätung','Status','Stripe-PI'];
+    const rows=list.map(b=>{const brutto=(b.total_amount||0)+(b.late_fee_amount||0), netto=brutto/1.19; return [
+      (b.id||'').slice(0,8).toUpperCase(), b.customer_name, b.customer_email, b.customer_phone,
+      b.start_time?fmtDate(b.start_time):'', b.end_time?fmtDate(b.end_time):'',
+      TARIFF_LBL[b.pricing_type]||b.pricing_type||'', b.trailers?.name||'',
+      de(brutto), de(netto), de(brutto-netto), de(b.insurance_amount), de(b.cancellation_protection_fee), de(b.late_fee_amount),
+      b.status, b.stripe_payment_intent_id||''
+    ].map(q).join(';');});
+    const csv='﻿'+head.join(';')+'\n'+rows.join('\n');
+    const blob=new Blob([csv],{type:'text/csv;charset=utf-8'}), url=URL.createObjectURL(blob), a=document.createElement('a');
+    a.href=url; a.download='simpletrailer-buchungen-'+new Date().toISOString().slice(0,10)+'.csv'; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
 
   /* ── KUNDEN ── */
-  let custFilter='all', custSearch='';
+  let custFilter='all', custSearch='', custSort='neueste';
   function renderKunden(){
+    const spendByEmail={}, countByEmail={};
+    ST.bookings.filter(b=>['confirmed','active','returned'].includes(b.status)).forEach(b=>{const e=(b.customer_email||'').toLowerCase(); if(!e)return; spendByEmail[e]=(spendByEmail[e]||0)+(b.total_amount||0)+(b.late_fee_amount||0); countByEmail[e]=(countByEmail[e]||0)+1;});
+    const lifeOf=u=>spendByEmail[(u.email||'').toLowerCase()]||0;
+    const payingCust=Object.keys(countByEmail).length;
+    const repeaters=Object.values(countByEmail).filter(c=>c>=2).length;
+    const repeatRate=payingCust?Math.round(repeaters/payingCust*100):0;
+    const avgLtv=payingCust?Object.values(spendByEmail).reduce((s,v)=>s+v,0)/payingCust:0;
     let list=ST.users.slice();
     if(custFilter==='leads')list=list.filter(u=>(u.bookings_count||0)===0);
     if(custFilter==='kunden')list=list.filter(u=>(u.bookings_count||0)>0);
     if(custFilter==='unverif')list=list.filter(u=>u.dl_status!=='verified');
-    if(custSearch){const q=custSearch.toLowerCase();list=list.filter(u=>(`${u.first_name} ${u.last_name} ${u.email}`).toLowerCase().includes(q));}
+    if(custSearch){const q=custSearch.toLowerCase();list=list.filter(u=>(`${u.first_name||''} ${u.last_name||''} ${u.email||''} ${u.phone||''}`).toLowerCase().includes(q));}
+    if(custSort==='umsatz')list.sort((a,b)=>lifeOf(b)-lifeOf(a));
+    else if(custSort==='buchungen')list.sort((a,b)=>(b.bookings_count||0)-(a.bookings_count||0));
+    else list.sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));
     const leads=ST.users.filter(u=>(u.bookings_count||0)===0).length;
     let h=`<div class="grid kpis">
       <div class="kpi"><div class="label">Kunden gesamt</div><div class="val">${ST.users.length}</div></div>
-      <div class="kpi"><div class="label">Mit Buchung</div><div class="val">${ST.users.filter(u=>(u.bookings_count||0)>0).length}</div></div>
+      <div class="kpi"><div class="label">🔁 Wiederkehrer-Quote</div><div class="val sm">${repeatRate}%</div><div class="sub">${repeaters} mit ≥2 Buchungen</div></div>
+      <div class="kpi"><div class="label">💎 Ø Kundenwert</div><div class="val sm">${eur(avgLtv)}</div><div class="sub">${payingCust} zahlende Kunden</div></div>
       <div class="kpi"><div class="label">Offene Leads</div><div class="val" style="color:var(--yellow)">${leads}</div></div>
-      <div class="kpi"><div class="label">Notify-Liste</div><div class="val sm">${ST.notify.length}</div></div>
+      <div class="kpi clickable" style="cursor:pointer" onclick="openNotifyList()"><div class="label">🔔 Warteliste ›</div><div class="val sm">${ST.notify.length}</div><div class="sub">wollen benachrichtigt werden</div></div>
     </div>`;
-    h+=`<div class="toolbar"><input class="search" placeholder="Kunde suchen…" value="${esc(custSearch)}" oninput="custSearch=this.value;renderKunden()"></div>`;
+    if(leads>0)h+=`<button class="linkbtn orange" style="margin-bottom:10px" onclick="bulkWinback()">✉️ Rückhol-Mail an alle ${leads} Leads (20 %)</button>`;
+    h+=`<div class="toolbar"><input class="search" placeholder="Name / E-Mail / Telefon…" value="${esc(custSearch)}" oninput="custSearch=this.value;renderKunden()"></div>`;
     h+=`<div class="toolbar">`+[['all','Alle'],['kunden','Kunden'],['leads','Leads'],['unverif','Unverifiziert']].map(([k,l])=>`<button class="chip ${custFilter===k?'active':''}" onclick="custFilter='${k}';renderKunden()">${l}</button>`).join('')+`</div>`;
+    h+=`<div class="toolbar"><span style="font-size:.72rem;color:var(--dim);align-self:center;margin-right:2px">Sortieren:</span>`+[['neueste','Neueste'],['umsatz','Top-Umsatz'],['buchungen','Meiste Buchungen']].map(([k,l])=>`<button class="chip ${custSort===k?'active':''}" onclick="custSort='${k}';renderKunden()">${l}</button>`).join('')+`</div>`;
     h+= list.length ? `<div class="card">`+list.map(u=>`
       <button class="row clickable" onclick="openCustomer('${esc(u.email)}')">
         <div class="av">${esc(initial(u.first_name||u.email))}</div>
         <div class="main"><div class="t1">${esc(([u.first_name,u.last_name].filter(Boolean).join(' '))||u.email)}</div><div class="t2">${esc(u.email)} · ${u.bookings_count||0} Buchung(en)</div></div>
-        <div class="right">${u.dl_status==='verified'?'<span class="pill green">✓ verif.</span>':'<span class="pill grey">○</span>'}</div>
+        <div class="right">${lifeOf(u)>0?`<div class="amt" style="font-size:.82rem">${eur(lifeOf(u))}</div>`:''}<div style="margin-top:2px">${u.dl_status==='verified'?'<span class="pill green">✓ verif.</span>':'<span class="pill grey">○</span>'}</div></div>
       </button>`).join('')+`</div>`
       : `<div class="card"><div class="empty">Keine Kunden.</div></div>`;
     document.getElementById('pane-kunden').innerHTML=h;
+  }
+  function openNotifyList(){
+    const list=ST.notify||[];
+    const h=list.length?`<div class="card">`+list.map(n=>`<div class="row" style="display:block">
+        <div style="display:flex;justify-content:space-between;gap:8px"><strong style="font-size:.88rem">${esc(n.email||'')}</strong><span style="font-size:.7rem;color:var(--dim)">${n.created_at?fmtDay(n.created_at):''}</span></div>
+        <div style="font-size:.76rem;color:var(--muted);margin-top:3px">wartet auf: ${esc(n.trailer_type||'beliebig')}${n.notified?' · <span style="color:var(--green)">✓ benachrichtigt</span>':''}</div>
+      </div>`).join('')+`</div><button class="linkbtn" style="margin-top:10px" onclick="copyNotifyEmails()">📋 Alle E-Mails kopieren</button>`:`<div class="empty">Noch niemand auf der Warteliste.</div>`;
+    openPanel('Warteliste ('+list.length+')',h);
+  }
+  function copyNotifyEmails(){
+    const emails=(ST.notify||[]).map(n=>n.email).filter(Boolean).join(', ');
+    if(!emails){alert('Keine E-Mails.');return;}
+    navigator.clipboard.writeText(emails).then(()=>alert('✓ '+(ST.notify||[]).length+' E-Mails kopiert.')).catch(()=>alert('Kopieren nicht möglich — Adressen:\n\n'+emails));
+  }
+  async function bulkWinback(){
+    const recips=ST.users.filter(u=>(u.bookings_count||0)===0&&u.email).map(u=>({email:u.email,first_name:u.first_name||'',user_id:u.id}));
+    if(!recips.length){alert('Keine offenen Leads.');return;}
+    if(!confirm(`Rückhol-Mail (20 % Willkommensrabatt) an ${recips.length} offene Leads senden?\n\nBereits angeschriebene werden serverseitig übersprungen.`))return;
+    try{ const r=await fetch('/api/admin?section=send-winback',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${authToken}`},body:JSON.stringify({recipients:recips})}); const j=await r.json(); if(!r.ok)throw new Error(j.error||r.status); alert(`Rückhol-Mail → gesendet: ${j.sent} · übersprungen: ${j.skipped} · Fehler: ${j.failed}`); }catch(e){alert('❌ '+e.message);}
   }
 
   /* ── FLOTTE ── */
   function renderFlotte(){
     let h=`<div class="sect-title">📍 Live-Standorte (GPS)</div>`;
     h+=`<div id="theftAlerts"></div>`;
+    h+=`<div id="gpsStatus"></div>`;
     h+=`<div id="flotteMap" style="height:300px;border-radius:14px;overflow:hidden;border:1px solid var(--border);background:var(--s2)"></div>`;
     h+=`<div class="sect-title">Anhänger</div><div id="flotteCards"></div>`;
-    h+=`<div class="sect-title">Offene Schäden (alle)</div><div id="flotteDamages"><div class="card"><div class="empty">lädt…</div></div></div>`;
+    h+=`<div class="sect-title">🛠 Schäden – ganze Flotte</div><div id="flotteDamages"><div class="card"><div class="empty">lädt…</div></div></div>`;
     document.getElementById('pane-flotte').innerHTML=h;
     renderFlotteCards(); loadFlotteGps(); loadFlotteDamages();
   }
@@ -484,13 +663,38 @@
     }).join('') : `<div class="card"><div class="empty">Keine Anhänger geladen.</div></div>`;
   }
   let _fmap=null, _fmapTries=0;
+  function ago(iso){ if(!iso)return null; let s=(Date.now()-new Date(iso).getTime())/1000; if(s<0)return 'gerade eben'; if(s<90)return Math.round(s)+' Sek.'; if(s<5400)return Math.round(s/60)+' Min.'; if(s<172800)return Math.round(s/3600)+' Std.'; return Math.round(s/86400)+' Tg.'; }
+  function trName(id){ return ((ST.trailers||[]).find(t=>String(t.id)===String(id))||{}).name||id; }
   function loadFlotteGps(){
     api('trailer-positions').then(d=>{
       const pos=(d.trailers||[]).filter(t=>t.last_lat&&t.last_lng);
       const ta=d.open_theft_alerts||[]; const taEl=document.getElementById('theftAlerts');
-      if(taEl)taEl.innerHTML = ta.length ? '<div class="card" style="border-color:rgba(255,93,93,.5);margin-bottom:8px">'+ta.map(a=>`<div class="row"><div class="av" style="color:var(--red)">⚠</div><div class="main"><div class="t1">Diebstahl-Alarm: ${esc(a.trailer_name||a.trailer_id||'')}</div><div class="t2">${a.triggered_at?fmtDate(a.triggered_at):''} · ${esc(a.reason||a.type||'')}</div></div></div>`).join('')+'</div>' : '';
+      if(taEl)taEl.innerHTML = ta.length ? '<div class="card" style="border-color:rgba(255,93,93,.5);margin-bottom:8px">'+ta.map(a=>`<div class="row"><div class="av" style="color:var(--red)">⚠</div><div class="main"><div class="t1">🚨 Diebstahl-Alarm: ${esc(a.trailer_name||trName(a.trailer_id)||'')}</div><div class="t2">${a.triggered_at?fmtDate(a.triggered_at):''}${a.distance_meters?' · '+Math.round(a.distance_meters)+' m bewegt':''}</div></div>${a.current_lat?`<a class="linkbtn" href="https://www.google.com/maps?q=${Number(a.current_lat)},${Number(a.current_lng)}" target="_blank" style="margin:0">📍 Karte</a>`:''}</div>`).join('')+'</div>' : '';
+      renderGpsStatus(d);
       initFmap(pos);
-    }).catch(()=>initFmap((ST.trailers||[]).filter(t=>t.last_lat&&t.last_lng)));
+    }).catch(()=>{ const g=document.getElementById('gpsStatus'); if(g)g.innerHTML=''; initFmap((ST.trailers||[]).filter(t=>t.last_lat&&t.last_lng)); });
+  }
+  function renderGpsStatus(d){
+    const el=document.getElementById('gpsStatus'); if(!el)return;
+    const ss=d.sync_state||null, trs=d.trailers||[];
+    const withImei=trs.filter(t=>t.tracker_imei);
+    const syncAgeMin=ss&&ss.last_sync_at?(Date.now()-new Date(ss.last_sync_at).getTime())/60000:null;
+    let ok=false,msg,detail;
+    if(!withImei.length){ msg='Kein Tracker hinterlegt'; detail='Diebstahlschutz ist NICHT aktiv — keinem Anhänger ist eine Tracker-IMEI zugeordnet.'; }
+    else if(!ss||!ss.last_sync_at){ msg='GPS-Abgleich lief noch nie'; detail='Der Standort-Abgleich hat sich nie gemeldet — Traccar-Zugang (Vercel-Umgebung) prüfen.'; }
+    else if(ss.last_error){ msg='GPS-Abgleich meldet Fehler'; detail=ss.last_error; }
+    else if(syncAgeMin>10){ msg='GPS-Abgleich steht'; detail='Letzter erfolgreicher Abgleich vor '+ago(ss.last_sync_at)+' — der Minuten-Job läuft nicht mehr.'; }
+    else { ok=true; msg='Diebstahlschutz scharf'; detail='Standort-Abgleich läuft · letzter Sync vor '+ago(ss.last_sync_at)+' · '+withImei.length+'/'+trs.length+' Anhänger mit Tracker.'; }
+    const rows=withImei.map(t=>{
+      const seenMin=t.last_seen_at?((Date.now()-new Date(t.last_seen_at).getTime())/60000):null;
+      const sig=seenMin==null?'<span class="pill grey">kein Signal</span>':seenMin>90?'<span class="pill yellow">ruht · '+ago(t.last_seen_at)+'</span>':'<span class="pill green">● live · '+ago(t.last_seen_at)+'</span>';
+      return `<div class="drow"><span class="k">${esc(t.name||'Anhänger')}${t.is_moving?' 🚗':''}</span><span class="v">${sig}${t.last_battery_percent!=null?' · 🔋'+t.last_battery_percent+'%':''}</span></div>`;
+    }).join('');
+    el.innerHTML=`<div class="card" style="border-color:${ok?'rgba(52,199,89,.35)':'rgba(255,93,93,.45)'};margin-bottom:10px;padding:14px 16px">
+      <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap"><span class="pill ${ok?'green':'red'}">${ok?'✓ AKTIV':'⚠ INAKTIV'}</span><strong style="font-size:.95rem">${esc(msg)}</strong></div>
+      <div style="font-size:.8rem;color:var(--muted);margin:8px 0 2px;line-height:1.5">${esc(detail)}</div>
+      ${rows?`<div class="dblock" style="margin:10px 0 0;background:var(--s1)">${rows}</div>`:''}
+    </div>`;
   }
   function trailerIcon(t){
     const tr=(ST.trailers||[]).find(x=>String(x.id)===String(t.id)||x.name===t.name)||{};
@@ -508,39 +712,118 @@
     if(markers.length>1){try{_fmap.fitBounds(L.featureGroup(markers).getBounds().pad(0.3));}catch(e){}}
     setTimeout(()=>{try{_fmap&&_fmap.invalidateSize();}catch(e){}},250);
   }
+  let _dmgData=[], dmgFilter='open';
   async function loadFlotteDamages(){
     const el=document.getElementById('flotteDamages'); if(!el)return;
-    try{ const d=await api('damages'); const open=(d.damages||[]).filter(x=>x.status==='open');
+    try{ const d=await api('damages'); _dmgData=d.damages||[];
       if(!document.getElementById('flotteDamages'))return;
-      el.innerHTML = open.length ? '<div class="card">'+open.map(x=>{const tn=(ST.trailers.find(t=>t.id===x.trailer_id)||{}).name||'';return `<button class="row clickable" onclick="openTrailer('${esc(x.trailer_id)}')"><div class="av" style="color:var(--${x.severity==='not_drivable'?'red':x.severity==='major'?'yellow':'muted'})">!</div><div class="main"><div class="t1">${esc((x.description||'').slice(0,70))}</div><div class="t2">${esc(tn)} · ${esc(x.source||'')} · ${x.created_at?fmtDay(x.created_at):''}</div></div><span class="chev">›</span></button>`;}).join('')+'</div>' : '<div class="card"><div class="empty">Keine offenen Schäden 🎉</div></div>';
+      renderFlotteDamages();
     }catch(e){ if(el)el.innerHTML='<div class="card"><div class="empty">Fehler.</div></div>'; }
+  }
+  function renderFlotteDamages(){
+    const el=document.getElementById('flotteDamages'); if(!el)return;
+    const all=_dmgData||[];
+    const open=all.filter(x=>x.status==='open'), resolved=all.filter(x=>x.status!=='open');
+    const wkAgo=Date.now()-7*86400000;
+    const newWk=all.filter(x=>x.created_at&&new Date(x.created_at).getTime()>=wkAgo).length;
+    const list=(dmgFilter==='open'?open:dmgFilter==='done'?resolved:all).slice().sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));
+    const chip=(k,l,n)=>`<button class="chip ${dmgFilter===k?'active':''}" onclick="dmgFilter='${k}';renderFlotteDamages()">${l} · ${n}</button>`;
+    let h=`<div class="grid kpis" style="margin-bottom:10px">
+      <div class="kpi"><div class="label">🔧 Offen</div><div class="val sm" style="color:${open.length?'var(--yellow)':'var(--green)'}">${open.length}</div></div>
+      <div class="kpi"><div class="label">✓ Erledigt</div><div class="val sm">${resolved.length}</div></div>
+      <div class="kpi"><div class="label">🆕 Letzte 7 Tage</div><div class="val sm">${newWk}</div></div>
+    </div>`;
+    h+=`<div class="toolbar">${chip('open','Offen',open.length)}${chip('done','Erledigt',resolved.length)}${chip('all','Alle',all.length)}</div>`;
+    h+= list.length ? '<div class="card">'+list.map(x=>{
+      const tn=(ST.trailers.find(t=>t.id===x.trailer_id)||{}).name||'—';
+      const sevC=x.severity==='not_drivable'?'red':x.severity==='major'?'yellow':'muted';
+      const st=x.status==='open'?'<span class="pill orange">offen</span>':x.status==='resolved'?'<span class="pill green">behoben</span>':'<span class="pill grey">akzeptiert</span>';
+      return `<button class="row clickable" onclick="openTrailer('${esc(x.trailer_id)}')"><div class="av" style="color:var(--${sevC})">!</div><div class="main"><div class="t1">${esc((x.description||'').slice(0,70)||'Schaden')}</div><div class="t2">${esc(tn)} · ${esc(x.source||'')} · ${x.created_at?fmtDay(x.created_at):''}</div></div><div class="right">${st}</div></button>`;
+    }).join('')+'</div>' : `<div class="card"><div class="empty">${dmgFilter==='open'?'Keine offenen Schäden 🎉':'Keine Einträge.'}</div></div>`;
+    el.innerHTML=h;
+  }
+
+  /* ── KALENDER (Belegung) ── */
+  function renderKalender(){
+    const DAYS=21;
+    const t0=new Date(); t0.setHours(0,0,0,0);
+    const days=[]; for(let i=0;i<DAYS;i++){const d=new Date(t0);d.setDate(t0.getDate()+i);days.push(d);}
+    const wd=['So','Mo','Di','Mi','Do','Fr','Sa'];
+    const trailers=ST.trailers.length?ST.trailers:[{name:'—'}];
+    const active=ST.bookings.filter(b=>['confirmed','active'].includes(b.status)&&b.start_time&&b.end_time);
+    const stCol=s=>s==='active'?'var(--green)':'var(--blue)';
+    const head=`<td class="cal-name"></td>`+days.map(d=>{const we=d.getDay()===0||d.getDay()===6;return `<td class="cal-h${we?' we':''}">${d.getDate()}<br><span>${wd[d.getDay()]}</span></td>`;}).join('');
+    const rows=trailers.map(t=>{
+      const cells=days.map(d=>{
+        const ds=d.getTime(), de=ds+86400000, we=d.getDay()===0||d.getDay()===6;
+        const b=active.find(x=>x.trailers&&x.trailers.name===t.name&&new Date(x.start_time).getTime()<de&&new Date(x.end_time).getTime()>=ds);
+        if(b)return `<td class="cal-c busy" style="background:${stCol(b.status)}" title="${esc(b.customer_name||'')} · ${fmtDay(b.start_time)} → ${fmtDay(b.end_time)}" onclick="openBooking('${b.id}')"></td>`;
+        return `<td class="cal-c${we?' we':''}"></td>`;
+      }).join('');
+      return `<tr><td class="cal-name">${esc(t.name||'—')}${t.id&&!t.is_available?' 🔒':''}</td>${cells}</tr>`;
+    }).join('');
+    // Freie-Tage-Zusammenfassung (nächste 7 Tage)
+    let freeSoon=0;
+    trailers.filter(t=>t.id).forEach(t=>{ for(let i=0;i<7;i++){const ds=t0.getTime()+i*86400000,de=ds+86400000; const busy=active.some(x=>x.trailers&&x.trailers.name===t.name&&new Date(x.start_time).getTime()<de&&new Date(x.end_time).getTime()>=ds); if(!busy)freeSoon++;} });
+    const cap7=Math.max(1,trailers.filter(t=>t.id).length*7);
+    const h=`<div class="grid kpis">
+        <div class="kpi"><div class="label">Freie Anhänger-Tage · nächste 7 T.</div><div class="val sm">${freeSoon}</div><div class="sub">von ${cap7} möglich</div></div>
+        <div class="kpi"><div class="label">Vorgebucht · nächste 7 T.</div><div class="val sm">${Math.round((1-freeSoon/cap7)*100)}%</div></div>
+      </div>
+      <div class="sect-title">📅 Belegung · nächste ${DAYS} Tage</div>
+      <div class="card" style="padding:12px;overflow-x:auto"><table class="cal"><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table>
+      <div style="display:flex;gap:14px;margin-top:12px;font-size:.74rem;flex-wrap:wrap;align-items:center"><span class="lg-item" style="padding:0"><span class="lg-dot" style="background:var(--green)"></span>aktiv (läuft)</span><span class="lg-item" style="padding:0"><span class="lg-dot" style="background:var(--blue)"></span>bestätigt (kommt)</span><span style="color:var(--dim)">Klick auf belegten Tag → Buchung öffnen</span></div></div>`;
+    document.getElementById('pane-kalender').innerHTML=h;
   }
 
   /* ── FINANZEN ── */
   let finPeriod='monat';
   let statPeriod='monat';
-  function finFrom(p){ const n=new Date(); if(p==='heute')return new Date(n.getFullYear(),n.getMonth(),n.getDate()); if(p==='woche'){const f=new Date(n);f.setDate(n.getDate()-6);f.setHours(0,0,0,0);return f;} if(p==='monat')return new Date(n.getFullYear(),n.getMonth(),1); if(p==='jahr')return new Date(n.getFullYear(),0,1); return new Date(0); }
   function renderFinanzen(){
-    const periods=[['heute','Heute'],['woche','7 Tage'],['monat','Monat'],['jahr','Jahr'],['gesamt','Gesamt']];
-    const from=finFrom(finPeriod);
-    const paid=ST.bookings.filter(b=>['confirmed','active','returned'].includes(b.status)&&new Date(b.created_at)>=from);
-    const rev=paid.reduce((s,b)=>s+(b.total_amount||0)+(b.late_fee_amount||0),0);
-    const insRev=paid.reduce((s,b)=>s+(b.insurance_amount||0),0);
+    const periods=[['heute','Heute'],['woche','7 Tage'],['monat','Monat'],['quartal','Quartal'],['jahr','Jahr'],['gesamt','Gesamt']];
+    const {from,prevFrom,prevTo}=periodRange(finPeriod);
+    const paidAll=ST.bookings.filter(b=>['confirmed','active','returned'].includes(b.status));
+    const paid=paidAll.filter(b=>new Date(b.created_at)>=from);
+    const prev=prevFrom?paidAll.filter(b=>{const d=new Date(b.created_at);return d>=prevFrom&&d<prevTo;}):null;
+    const sum=(arr,f)=>arr.reduce((s,b)=>s+f(b),0);
+    const bruttoOf=b=>(b.total_amount||0)+(b.late_fee_amount||0);
+    const rev=sum(paid,bruttoOf), insRev=sum(paid,b=>b.insurance_amount||0);
     const txns=paid.length, net=rev/1.19, vat=rev-net, fee=rev*0.015+txns*0.25, avg=txns?rev/txns:0;
+    const keep=net-fee; // was nach MwSt & Stripe übrig bleibt
+    const pRev=prev?sum(prev,bruttoOf):null, pTxns=prev?prev.length:null, pAvg=prev&&prev.length?pRev/prev.length:null, pInsRev=prev?sum(prev,b=>b.insurance_amount||0):null;
     let h=`<div class="toolbar">`+periods.map(([k,l])=>`<button class="chip ${finPeriod===k?'active':''}" onclick="finPeriod='${k}';renderFinanzen()">${l}</button>`).join('')+`</div>`;
+    if(prevFrom)h+=`<div style="font-size:.72rem;color:var(--dim);margin:-4px 2px 10px">▲▼ = Vergleich zur Vorperiode${['heute','woche'].includes(finPeriod)?' · laufende Periode noch nicht abgeschlossen (anteilig)':''}</div>`;
+    const fleetN=Math.max(1,ST.trailers.length);
+    const daysIn=Math.max(1,Math.min((Date.now()-from.getTime())/86400000,366));
+    const revPad=rev/(fleetN*daysIn);
+    const mNow=new Date(), mStart=new Date(mNow.getFullYear(),mNow.getMonth(),1);
+    const mRev=paidAll.filter(b=>new Date(b.created_at)>=mStart).reduce((s,b)=>s+bruttoOf(b),0);
+    const dayOfM=Math.max(1,mNow.getDate()), daysInM=new Date(mNow.getFullYear(),mNow.getMonth()+1,0).getDate();
+    const mProj=mRev/dayOfM*daysInM;
     h+=`<div class="grid kpis">
-      <div class="kpi"><div class="label">Umsatz (brutto)</div><div class="val">${eur(rev)}</div><div class="sub">${txns} bezahlte Buchungen</div></div>
-      <div class="kpi"><div class="label">Ø Buchungswert</div><div class="val sm">${eur(avg)}</div></div>
-      <div class="kpi"><div class="label">Schutzpaket-Umsatz</div><div class="val sm">${eur(insRev)}</div></div>
+      <div class="kpi"><div class="label">Umsatz (brutto) ${trendBadge(rev,pRev)}</div><div class="val">${eur(rev)}</div><div class="sub">${txns} bezahlte Buchungen ${pTxns!=null?trendBadge(txns,pTxns):''}</div></div>
+      <div class="kpi"><div class="label">Ø Buchungswert ${pAvg!=null?trendBadge(avg,pAvg):''}</div><div class="val sm">${eur(avg)}</div></div>
+      <div class="kpi"><div class="label">Umsatz / Anhänger-Tag</div><div class="val sm">${eur(revPad)}</div><div class="sub">${fleetN} Anhänger · ${Math.round(daysIn)} Tage</div></div>
+      <div class="kpi"><div class="label">Schutzpaket-Umsatz ${pInsRev!=null?trendBadge(insRev,pInsRev):''}</div><div class="val sm">${eur(insRev)}</div></div>
     </div>`;
-    h+=`<div class="sect-title">Aufschlüsselung (geschätzt)</div><div class="card">
-      <div class="row"><div class="main"><div class="t1">Netto-Umsatz</div><div class="t2">ohne MwSt</div></div><div class="right amt">${eur(net)}</div></div>
-      <div class="row"><div class="main"><div class="t1">MwSt (19 %)</div><div class="t2">ans Finanzamt</div></div><div class="right amt" style="color:var(--yellow)">${eur(vat)}</div></div>
-      <div class="row"><div class="main"><div class="t1">Stripe-Gebühren (ca.)</div><div class="t2">~1,5 % + 0,25 €/Buchung</div></div><div class="right amt" style="color:var(--red)">−${eur(fee)}</div></div>
+    h+=`<div class="card" style="padding:14px 16px;margin-top:2px"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div><div style="font-size:.78rem;color:var(--muted)">📈 Hochrechnung ${esc(mNow.toLocaleDateString('de-DE',{month:'long'}))}</div><div style="font-size:1.15rem;font-weight:800;margin-top:2px">${eur(mProj)}</div></div><div style="text-align:right;font-size:.78rem;color:var(--dim)">aktuell ${eur(mRev)}<br>Tag ${dayOfM} / ${daysInM}</div></div></div>`;
+    // Wohin geht der Brutto-Umsatz? — gestapelte Aufteilung (behalten / Stripe / MwSt)
+    const segW=v=>rev?Math.max(0,v/rev*100):0;
+    h+=`<div class="sect-title">Wohin geht der Brutto-Umsatz?</div><div class="card" style="padding:15px 16px">
+      <div style="display:flex;height:20px;border-radius:6px;overflow:hidden;gap:2px;background:var(--s3)">
+        <div title="Behalten (nach Stripe & MwSt)" style="width:${segW(keep)}%;background:var(--green)"></div>
+        <div title="Stripe-Gebühren" style="width:${segW(fee)}%;background:var(--red)"></div>
+        <div title="MwSt ans Finanzamt" style="width:${segW(vat)}%;background:var(--yellow)"></div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:14px;margin-top:12px;font-size:.8rem">
+        <span class="lg-item" style="padding:0"><span class="lg-dot" style="background:var(--green)"></span>Behalten <b style="margin-left:4px">${eur(keep)}</b></span>
+        <span class="lg-item" style="padding:0"><span class="lg-dot" style="background:var(--red)"></span>Stripe <b style="margin-left:4px">−${eur(fee)}</b></span>
+        <span class="lg-item" style="padding:0"><span class="lg-dot" style="background:var(--yellow)"></span>MwSt <b style="margin-left:4px">${eur(vat)}</b></span>
+      </div>
+      <div style="color:var(--dim);font-size:.72rem;margin-top:9px">Netto-Umsatz ${eur(net)} · MwSt/Gebühr sind Schätzwerte.</div>
     </div>`;
     const ib=paid.filter(b=>b.insurance_type==='basis').length, ip=paid.filter(b=>b.insurance_type==='premium').length, inone=paid.filter(b=>!b.insurance_type||b.insurance_type==='none').length;
-    // Zusatz-Umsätze (Storno-Schutz + Free-Floating) — jetzt aus echten DB-Feldern
-    const cpCount=paid.filter(b=>b.cancellation_protection).length, cpRev=paid.reduce((s,b)=>s+(b.cancellation_protection_fee||0),0);
+    const cpCount=paid.filter(b=>b.cancellation_protection).length, cpRev=sum(paid,b=>b.cancellation_protection_fee||0);
     const ffCount=paid.filter(b=>b.free_floating).length, ffRev=ffCount*15;
     const pct=n=>txns?Math.round(n/txns*100):0;
     h+=`<div class="sect-title">Zusatz-Umsätze</div><div class="card">
@@ -558,13 +841,16 @@
   // Reine Miete = bezahlter Betrag ohne Schutzpaket/Storno/Free-Floating (Free-Float pauschal 15 €)
   function rentOf(b){ return Math.max(0,(b.total_amount||0)-(b.insurance_amount||0)-(b.cancellation_protection_fee||0)-(b.free_floating?15:0)); }
   function renderStatistik(){
-    const periods=[['woche','7 Tage'],['monat','Monat'],['jahr','Jahr'],['gesamt','Gesamt']];
-    const from=finFrom(statPeriod);
+    const periods=[['woche','7 Tage'],['monat','Monat'],['quartal','Quartal'],['jahr','Jahr'],['gesamt','Gesamt']];
+    const {from,prevFrom,prevTo}=periodRange(statPeriod);
     const rangeAll=ST.bookings.filter(b=>new Date(b.created_at)>=from);
     const paid=rangeAll.filter(b=>['confirmed','active','returned'].includes(b.status));
     const cancelled=rangeAll.filter(b=>b.status==='cancelled');
+    const prevPaid=prevFrom?ST.bookings.filter(b=>{const d=new Date(b.created_at);return d>=prevFrom&&d<prevTo&&['confirmed','active','returned'].includes(b.status);}):null;
     const txns=paid.length;
     const rev=paid.reduce((s,b)=>s+(b.total_amount||0)+(b.late_fee_amount||0),0);
+    const pRev=prevPaid?prevPaid.reduce((s,b)=>s+(b.total_amount||0)+(b.late_fee_amount||0),0):null;
+    const pTxns=prevPaid?prevPaid.length:null;
     const avg=txns?rev/txns:0;
     // Zusatz-Optionen & Quoten
     const cpCount=paid.filter(b=>b.cancellation_protection).length;
@@ -581,7 +867,7 @@
 
     let h=`<div class="toolbar">`+periods.map(([k,l])=>`<button class="chip ${statPeriod===k?'active':''}" onclick="statPeriod='${k}';renderStatistik()">${l}</button>`).join('')+`</div>`;
     h+=`<div class="grid kpis">
-      <div class="kpi"><div class="label">💶 Umsatz (brutto)</div><div class="val">${eur(rev)}</div><div class="sub">${txns} bezahlte Buchungen</div></div>
+      <div class="kpi"><div class="label">💶 Umsatz (brutto) ${pRev!=null?trendBadge(rev,pRev):''}</div><div class="val">${eur(rev)}</div><div class="sub">${txns} bezahlte Buchungen ${pTxns!=null?trendBadge(txns,pTxns):''}</div></div>
       <div class="kpi"><div class="label">Ø Buchungswert</div><div class="val sm">${eur(avg)}</div></div>
       <div class="kpi"><div class="label">🛡️ Storno-Schutz-Quote</div><div class="val sm">${cpRate}%</div><div class="sub">${cpCount} mit Schutz · ${eur(cpRev)}</div></div>
       <div class="kpi"><div class="label">➕ Zusatz-Umsatz</div><div class="val sm">${eur(addonRev)}</div><div class="sub">Schutzpaket + Storno + Free-Float</div></div>
@@ -614,18 +900,26 @@
         <div class="card" style="padding:15px 16px"><div style="font-size:.82rem;color:var(--muted);margin-bottom:12px;font-weight:600">📍 Free-Floating</div>${donut([{name:'Ja',value:ffCount,color:'var(--yellow)'},{name:'Nein',value:Math.max(0,txns-ffCount),color:'var(--border2)'}],(txns?Math.round(ffCount/txns*100):0)+'%','Free-Float')}</div>
       </div>`;
 
-    // Anhänger-Auslastung (Anzahl + Umsatz)
+    // Echte Auslastung je Anhänger: belegte Stunden / verfügbare Stunden im Zeitraum
+    const winFrom=Math.max(from.getTime(), Date.now()-366*86400000);
+    const winHours=Math.max(1,(Date.now()-winFrom)/3600000);
+    const util={}; ST.trailers.forEach(t=>{if(t.name)util[t.name]=0;});
+    paidAll.forEach(b=>{ const n=b.trailers?.name; if(!n||util[n]===undefined||!b.start_time||!b.end_time)return; const s=Math.max(new Date(b.start_time).getTime(),winFrom), e=Math.min(new Date(b.end_time).getTime(),Date.now()); if(e>s)util[n]+=(e-s)/3600000; });
+    const utilRows=Object.entries(util).map(([n,hrs])=>[n,Math.min(100,Math.round(hrs/winHours*100))]).sort((a,b)=>b[1]-a[1]);
+    const fleetUtil=utilRows.length?Math.round(utilRows.reduce((s,r)=>s+r[1],0)/utilRows.length):0;
+    h+=`<div class="sect-title">Auslastung je Anhänger · Flotte Ø ${fleetUtil}%</div><div class="card" style="padding:14px 16px">${barChart(utilRows,v=>v+'%',{wide:true,labelWide:true,color:'var(--orange)'})}<div style="color:var(--dim);font-size:.72rem;margin-top:10px">% der Zeit vermietet im gewählten Fenster (bezahlte Buchungen). Niedrig = Leerstand · dauerhaft &gt;75 % = Zeit für einen weiteren Anhänger.</div></div>`;
+    // Umsatz + Anzahl je Anhänger (Ertrag)
     const byTrailer={}; paid.forEach(b=>{const n=b.trailers?.name||'?';(byTrailer[n]=byTrailer[n]||{c:0,r:0}).c++;byTrailer[n].r+=(b.total_amount||0);});
-    const trailerRows=Object.entries(byTrailer).sort((a,b)=>b[1].c-a[1].c).map(([n,v])=>[n,v.c,eur(v.r)]);
-    h+=`<div class="sect-title">Anhänger-Auslastung</div><div class="card" style="padding:14px 16px">${barChart(trailerRows,v=>v+'×',{wide:true,labelWide:true,color:'var(--orange)'})}</div>`;
+    const trailerRows=Object.entries(byTrailer).sort((a,b)=>b[1].r-a[1].r).map(([n,v])=>[n,v.r,`${v.c}×`]);
+    h+=`<div class="sect-title">Ertrag je Anhänger</div><div class="card" style="padding:14px 16px">${barChart(trailerRows,v=>eur(v),{wide:true,labelWide:true,color:'var(--green)'})}</div>`;
 
-    // Wochentag + Tageszeit (nach Buchungs-Start)
-    const wd=['So','Mo','Di','Mi','Do','Fr','Sa'], wdC=[0,0,0,0,0,0,0], order=[1,2,3,4,5,6,0];
-    paid.forEach(b=>{if(b.start_time)wdC[new Date(b.start_time).getDay()]++;});
-    h+=`<div class="sect-title">Buchungen nach Wochentag</div><div class="card" style="padding:14px 16px">${barChart(order.map(i=>[wd[i],wdC[i]]),null,{color:'var(--green)'})}</div>`;
-    const slots=[['Nacht · 0–6',0],['Morgen · 6–10',0],['Mittag · 10–14',0],['Nachm. · 14–18',0],['Abend · 18–24',0]];
-    paid.forEach(b=>{if(!b.start_time)return;const hr=new Date(b.start_time).getHours();slots[hr<6?0:hr<10?1:hr<14?2:hr<18?3:4][1]++;});
-    h+=`<div class="sect-title">Buchungen nach Tageszeit</div><div class="card" style="padding:14px 16px">${barChart(slots,null,{labelWide:true,color:'var(--blue)'})}</div>`;
+    // Wann wird gebucht? — Heatmap Wochentag × Tageszeit (nach Buchungs-Start)
+    const wdLbl=['Mo','Di','Mi','Do','Fr','Sa','So'], wdMap=[1,2,3,4,5,6,0];
+    const slotLbl=['Nacht','Morgen','Mittag','Nachm.','Abend']; // 0–6 · 6–10 · 10–14 · 14–18 · 18–24
+    const slotOf=hr=>hr<6?0:hr<10?1:hr<14?2:hr<18?3:4;
+    const hm=wdMap.map(()=>[0,0,0,0,0]);
+    paid.forEach(b=>{if(!b.start_time)return;const d=new Date(b.start_time);const ri=wdMap.indexOf(d.getDay());if(ri<0)return;hm[ri][slotOf(d.getHours())]++;});
+    h+=`<div class="sect-title">Wann wird gebucht? · Wochentag × Tageszeit</div><div class="card" style="padding:16px">${heatmap(hm,wdLbl,slotLbl)}</div>`;
 
     h+=`<div style="color:var(--dim);font-size:.78rem;margin-top:16px;padding:0 4px;line-height:1.5">💡 Der Zeitraum-Filter wirkt auf KPIs, Tarife & Quoten. Der Umsatz-Verlauf zeigt immer den Trend (14 Tage bzw. 6 Monate). „Miete" = Betrag ohne Schutzpaket/Storno/Free-Float. Balken/Segmente zeigen Details beim Drüberfahren.</div>`;
     document.getElementById('pane-statistik').innerHTML=h;
@@ -695,6 +989,9 @@
     h+=`<div class="sect-title">💡 Analyse & Empfehlung</div><div class="card" style="padding:14px 16px">${advice}</div>`;
     h+=`<div class="sect-title">Woher kamen die Besucher?</div><div class="card" style="padding:14px 16px">${barChart((d.sources||[]).map(s=>[lbl(s[0]),s[1]]))}</div>`;
     h+=`<div class="sect-title">Buchungen nach Quelle</div><div class="card" style="padding:14px 16px">${barChart((d.bookingSources||[]).map(s=>[lbl(s[0]),s[1]]))}</div>`;
+    const srcMap=Object.fromEntries((d.sources||[]).map(s=>[s[0],s[1]]));
+    const convRows=(d.bookingSources||[]).map(bs=>{const traf=srcMap[bs[0]]||0; return traf>=5?[lbl(bs[0]),Math.round(bs[1]/traf*100)]:null;}).filter(Boolean).sort((a,b)=>b[1]-a[1]);
+    if(convRows.length)h+=`<div class="sect-title">Conversion je Quelle</div><div class="card" style="padding:14px 16px">${barChart(convRows,v=>v+'%',{labelWide:true,color:'var(--green)'})}<div style="color:var(--dim);font-size:.72rem;margin-top:8px">Anteil Besucher je Quelle, der bucht (nur Quellen mit ≥5 Besuchern). Zeigt, welcher Kanal wirklich Kunden bringt.</div></div>`;
     h+=`<div class="sect-title">Anmeldungen</div><div class="card" style="padding:14px 16px">${barChart([['Notify (warme Leads)',d.notify||0],['Newsletter',d.newsletter||0]])}</div>`;
     h+=`<div style="color:var(--dim);font-size:.78rem;margin-top:12px;padding:0 4px">💡 Zählt seit Einbau (neu) · „Besucher" serverseitig gezählt (Adblocker-resistent) · für Detail-Videos einzelner Besuche weiterhin Microsoft Clarity.</div>`;
     pane.innerHTML=h;
@@ -723,7 +1020,8 @@
       <div class="donut-legend" style="flex:1;min-width:130px">${segs.map(s=>`<div class="lg-item"><span class="lg-dot" style="background:${s.color}"></span><span class="lg-name">${esc(s.name)}</span><span class="lg-val">${s.value}${total?` · ${Math.round(s.value/total*100)}%`:''}</span></div>`).join('')}</div>
     </div>`;
   }
-  // ── Fläche/Linie (Umsatz über Zeit) ── pts:[{label,value}]
+  // ── Fläche/Linie mit Crosshair-Hover ── pts:[{label,value}]
+  let _chartSeq=0;
   function areaChart(pts,fmt){
     const n=pts.length; if(!n) return '<div class="empty">Keine Daten.</div>';
     const W=680,H=190,padL=6,padR=6,padT=16,padB=30, plotW=W-padL-padR, plotH=H-padT-padB;
@@ -733,13 +1031,63 @@
     const line=pts.map((p,i)=>`${X(i).toFixed(1)},${Y(p.value).toFixed(1)}`).join(' ');
     const area=`${X(0).toFixed(1)},${(padT+plotH).toFixed(1)} ${line} ${X(n-1).toFixed(1)},${(padT+plotH).toFixed(1)}`;
     let grid=''; for(let g=0;g<=2;g++){const gv=max*g/2, gy=Y(gv);grid+=`<line x1="${padL}" y1="${gy.toFixed(1)}" x2="${W-padR}" y2="${gy.toFixed(1)}" stroke="var(--border)" stroke-width="1"/><text x="${padL}" y="${(gy-4).toFixed(1)}" fill="var(--dim)" font-size="10">${fmt?fmt(gv):Math.round(gv)}</text>`;}
-    const dots=pts.map((p,i)=>`<g><circle cx="${X(i).toFixed(1)}" cy="${Y(p.value).toFixed(1)}" r="4" fill="var(--orange)" stroke="var(--s1)" stroke-width="2"/><circle cx="${X(i).toFixed(1)}" cy="${Y(p.value).toFixed(1)}" r="11" fill="transparent"><title>${esc(p.label)}: ${fmt?fmt(p.value):p.value}</title></circle></g>`).join('');
+    const dots=pts.map((p,i)=>`<circle cx="${X(i).toFixed(1)}" cy="${Y(p.value).toFixed(1)}" r="3.5" fill="var(--orange)" stroke="var(--s1)" stroke-width="2"/>`).join('');
     const step=Math.ceil(n/7);
     const xlabels=pts.map((p,i)=>(i%step===0||i===n-1)?`<text x="${X(i).toFixed(1)}" y="${H-8}" fill="var(--muted)" font-size="10" text-anchor="middle">${esc(p.label)}</text>`:'').join('');
-    return `<svg class="chart-svg" viewBox="0 0 ${W} ${H}" role="img">
-      <defs><linearGradient id="stRevGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--orange)" stop-opacity="0.28"/><stop offset="100%" stop-color="var(--orange)" stop-opacity="0.02"/></linearGradient></defs>
-      ${grid}<polygon points="${area}" fill="url(#stRevGrad)"/><polyline points="${line}" fill="none" stroke="var(--orange)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>${dots}${xlabels}
-    </svg>`;
+    const id='ac'+(++_chartSeq);
+    const meta=pts.map((p,i)=>({x:+(X(i)/W*100).toFixed(2), y:+(Y(p.value)/H*100).toFixed(2), sx:+X(i).toFixed(1), l:p.label, v:fmt?fmt(p.value):String(p.value)}));
+    return `<div class="chart-wrap" id="${id}" data-pts='${esc(JSON.stringify(meta))}' onmousemove="chartHover(event,'${id}')" onmouseleave="chartOut('${id}')">
+      <div class="chart-tip" id="${id}_t"></div>
+      <svg class="chart-svg" viewBox="0 0 ${W} ${H}" role="img">
+        <defs><linearGradient id="stRevGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--orange)" stop-opacity="0.28"/><stop offset="100%" stop-color="var(--orange)" stop-opacity="0.02"/></linearGradient></defs>
+        ${grid}<polygon points="${area}" fill="url(#stRevGrad)"/><polyline points="${line}" fill="none" stroke="var(--orange)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+        <line id="${id}_x" x1="0" y1="${padT}" x2="0" y2="${(padT+plotH).toFixed(1)}" stroke="var(--orange)" stroke-width="1" stroke-dasharray="3 3" opacity="0"/>
+        ${dots}<circle id="${id}_d" r="5" fill="var(--orange)" stroke="var(--s1)" stroke-width="2" opacity="0"/>${xlabels}
+      </svg>
+    </div>`;
+  }
+  function chartHover(e,id){
+    const w=document.getElementById(id); if(!w)return;
+    let meta; try{meta=JSON.parse(w.getAttribute('data-pts'));}catch(_){return;}
+    if(!meta||!meta.length)return;
+    const r=w.getBoundingClientRect(); const px=(e.clientX-r.left)/r.width*100;
+    let bi=0,bd=1e9; meta.forEach((m,i)=>{const d=Math.abs(m.x-px);if(d<bd){bd=d;bi=i;}});
+    const m=meta[bi], tip=document.getElementById(id+'_t');
+    if(tip){ tip.innerHTML=`${esc(m.l)} · <span class="tv">${esc(m.v)}</span>`; tip.style.left=m.x+'%'; tip.style.top=m.y+'%'; tip.style.opacity='1'; }
+    const xl=document.getElementById(id+'_x'); if(xl){ xl.setAttribute('x1',m.sx); xl.setAttribute('x2',m.sx); xl.setAttribute('opacity','1'); }
+    const dt=document.getElementById(id+'_d'); if(dt){ dt.setAttribute('cx',m.sx); dt.setAttribute('cy',(m.y/100*190).toFixed(1)); dt.setAttribute('opacity','1'); }
+  }
+  function chartOut(id){ ['_t','_x','_d'].forEach(s=>{const el=document.getElementById(id+s); if(el){ if(s==='_t')el.style.opacity='0'; else el.setAttribute('opacity','0'); }}); }
+
+  // ── Zeitraum mit Vorperiode (für Trend-Vergleich) ──
+  function periodRange(p){
+    const n=new Date(), y=n.getFullYear(), m=n.getMonth(), day=n.getDate();
+    let from, prevFrom=null, prevTo=null, to=new Date();
+    if(p==='heute'){ from=new Date(y,m,day); prevFrom=new Date(y,m,day-1); prevTo=from; }
+    else if(p==='woche'){ from=new Date(y,m,day-6); from.setHours(0,0,0,0); prevFrom=new Date(y,m,day-13); prevFrom.setHours(0,0,0,0); prevTo=from; }
+    else if(p==='monat'){ from=new Date(y,m,1); prevFrom=new Date(y,m-1,1); prevTo=from; }
+    else if(p==='quartal'){ const q=Math.floor(m/3); from=new Date(y,q*3,1); prevFrom=new Date(y,q*3-3,1); prevTo=from; }
+    else if(p==='jahr'){ from=new Date(y,0,1); prevFrom=new Date(y-1,0,1); prevTo=new Date(y,0,1); }
+    else { from=new Date(0); }
+    return {from,to,prevFrom,prevTo};
+  }
+  // Trend-Badge vs. Vorperiode. invert=true → weniger ist besser (z.B. Storno-Quote).
+  function trendBadge(cur,prev,invert){
+    if(prev==null)return '';
+    if(prev===0)return cur>0?'<span class="trend up">▲ neu</span>':'';
+    const d=Math.round((cur-prev)/Math.abs(prev)*100);
+    if(d===0)return '<span class="trend flat">±0 %</span>';
+    const good=invert?d<0:d>0;
+    return `<span class="trend ${good?'up':'down'}">${d>0?'▲':'▼'} ${Math.abs(d)} %</span>`;
+  }
+  // ── Heatmap (sequentiell, 1 Hue) ── matrix[row][col]=zahl
+  function heatmap(matrix,rowLabels,colLabels){
+    const flat=matrix.flat(), max=Math.max(1,...flat), tot=flat.reduce((a,b)=>a+b,0);
+    if(!tot)return '<div class="empty">Noch keine Buchungen im Zeitraum.</div>';
+    const cell=v=>{const o=v?(0.14+0.82*(v/max)):0;return `<td class="hm-cell" style="background:${v?`rgba(232,93,0,${o.toFixed(3)})`:'var(--s3)'}" title="${v} Buchung(en)">${v||''}</td>`;};
+    let h='<div style="overflow-x:auto"><table class="hm"><thead><tr><th></th>'+colLabels.map(c=>`<th>${esc(c)}</th>`).join('')+'</tr></thead><tbody>';
+    matrix.forEach((row,i)=>{ h+=`<tr><td class="hm-row">${esc(rowLabels[i])}</td>`+row.map(cell).join('')+'</tr>'; });
+    return h+'</tbody></table></div><div class="hm-legend">weniger <i style="background:rgba(232,93,0,.14)"></i><i style="background:rgba(232,93,0,.44)"></i><i style="background:rgba(232,93,0,.72)"></i><i style="background:rgba(232,93,0,.96)"></i> mehr</div>';
   }
 
   /* ── MEHR ── */
@@ -747,33 +1095,83 @@
   function openPanel(title,html){ document.getElementById('panelTitle').textContent=title; document.getElementById('panelBody').innerHTML=html; document.getElementById('scrim').classList.add('open'); document.getElementById('panel').classList.add('open'); }
   function closePanel(){ document.getElementById('scrim').classList.remove('open'); document.getElementById('panel').classList.remove('open'); document.getElementById('sheet').classList.remove('open'); }
 
+  /* ── FOTO-LIGHTBOX ── */
+  let _lb=[], _lbi=0;
+  function openLightbox(i){
+    if(!_lb.length)return; _lbi=(i+_lb.length)%_lb.length;
+    const it=_lb[_lbi], lb=document.getElementById('lightbox');
+    document.getElementById('lbImg').src=it.url;
+    document.getElementById('lbCap').textContent=it.cap||'';
+    document.getElementById('lbCount').textContent=_lb.length>1?`${_lbi+1} / ${_lb.length}`:'';
+    document.getElementById('lbNav').style.display=_lb.length>1?'flex':'none';
+    lb.classList.add('open');
+  }
+  function lbStep(d){ openLightbox(_lbi+d); }
+  function closeLightbox(){ document.getElementById('lightbox').classList.remove('open'); document.getElementById('lbImg').src=''; }
+  document.addEventListener('keydown',e=>{
+    if(!document.getElementById('lightbox')?.classList.contains('open'))return;
+    if(e.key==='Escape')closeLightbox(); else if(e.key==='ArrowRight')lbStep(1); else if(e.key==='ArrowLeft')lbStep(-1);
+  });
+
+  function insLabel(t){
+    return (!t||t==='none') ? '<span class="pill grey">Kein Schutz</span>'
+      : t==='basis' ? '<span class="pill blue">Basis · 500 € SB</span>'
+      : '<span class="pill green">Premium · 50 € SB</span>';
+  }
   function openBooking(id){
     const b=ST.bookings.find(x=>x.id===id); if(!b)return;
     const drow=(k,v)=>`<div class="drow"><span class="k">${k}</span><span class="v">${v}</span></div>`;
     const late=(b.late_fee_amount||0)>0;
-    const photos=[['Vorab',b.precheck_photo_url],['Rückgabe',b.return_photo_url],['Ladefläche',b.ladeflaeche_photo_url]].filter(p=>safeUrl(p[1]));
+    const cpFee=b.cancellation_protection_fee||0;
+    const miete=Math.max(0,(b.total_amount||0)-(b.insurance_amount||0)-cpFee);
+    const photos=[['Vorher · vor Abholung',b.precheck_photo_url],['Rückgabe · Stellplatz',b.return_photo_url],['Rückgabe · Ladefläche',b.ladeflaeche_photo_url]].filter(p=>safeUrl(p[1]));
+    const lateStatus = !late ? ''
+      : !b.late_fee_payment_intent_id ? '<span class="pill yellow">offen</span>'
+      : String(b.late_fee_payment_intent_id).startsWith('FAILED') ? '<span class="pill red">✗ Abbuchung fehlgeschlagen</span>'
+      : '<span class="pill green">✓ abgebucht</span>';
     let h=`<div style="margin-bottom:6px">${statusPill(b.status)} <span class="mono" style="color:var(--dim);font-size:.8rem">#${(b.id||'').slice(0,8).toUpperCase()}</span></div>`;
     h+=`<div class="dblock">
       <div class="drow"><span class="k">Kunde</span><span class="v">${esc(b.customer_name||'–')}</span></div>
       ${b.customer_email?`<div class="drow"><span class="k">Kontakt</span><span class="v">${esc(b.customer_email)}<br>${esc(b.customer_phone||'')}</span></div>`:''}
     </div>`;
     h+=`<button class="linkbtn orange" onclick="openCustomer('${esc(b.customer_email)}')">☻ Zum Kundenprofil ›</button>`;
+    if(b.customer_phone||b.customer_email){ h+=`<div style="display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 4px">
+      ${b.customer_phone?`<a class="linkbtn" href="tel:${esc(telNum(b.customer_phone))}">📞 Anrufen</a>`:''}
+      ${b.customer_phone?`<a class="linkbtn" href="https://wa.me/${esc(waNum(b.customer_phone))}" target="_blank">💬 WhatsApp</a>`:''}
+      ${b.customer_email?`<a class="linkbtn" href="mailto:${esc(b.customer_email)}">✉️ E-Mail</a>`:''}
+    </div>`; }
     h+=`<div class="dblock">
       ${drow('Zeitraum',`${fmtDate(b.start_time)}<br>→ ${fmtDate(b.end_time)}`)}
       ${drow('Anhänger',esc(b.trailers?.name||'–'))}
       ${b.access_code?drow('Zugangscode',`<span class="mono">${esc(b.access_code)}</span>`):''}
       ${b.actual_return_time?drow('Zurückgegeben',fmtDate(b.actual_return_time)):''}
-      ${late?drow('Verspätungsgebühr',`<span style="color:var(--yellow)">${eur(b.late_fee_amount)}</span>`):''}
+    </div>`;
+    h+=`<div class="dlabel">🧾 Gebuchte Leistungen</div><div class="dblock">
+      ${drow('Tarif',esc(TARIFF_LBL[b.pricing_type]||b.pricing_type||'–'))}
+      ${drow('Schutzpaket',insLabel(b.insurance_type))}
+      ${drow('Storno-Schutz',b.cancellation_protection?`<span class="pill green">✓ Ja</span>${cpFee>0?` <span style="color:var(--dim);font-size:.8rem">(${eur(cpFee)})</span>`:''}`:'<span class="pill grey">Nein</span>')}
+      ${drow('Rückgabe',b.free_floating?'<span class="pill yellow">📍 Überall in Bremen</span>':'<span class="pill grey">Nur Heimat-Stellplatz</span>')}
     </div>`;
     h+=`<div class="dlabel">💳 Zahlung</div><div class="dblock" id="payBlock">
-      ${drow('Betrag',`<strong>${eur((b.total_amount||0)+(b.late_fee_amount||0))}</strong> <span style="color:var(--dim);font-size:.78rem">inkl. MwSt</span>`)}
-      ${drow('Miete + Schutz',`${eur((b.total_amount||0)-(b.insurance_amount||0))} + ${eur(b.insurance_amount)}`)}
+      ${drow('Miete',eur(miete))}
+      ${(b.insurance_amount||0)>0?drow('+ Schutzpaket',eur(b.insurance_amount)):''}
+      ${cpFee>0?drow('+ Storno-Schutz',eur(cpFee)):''}
+      ${late?drow('+ Verspätung',`<span style="color:var(--yellow)">${eur(b.late_fee_amount)}</span> ${lateStatus}`):''}
+      ${drow('Gesamt',`<strong>${eur((b.total_amount||0)+(b.late_fee_amount||0))}</strong> <span style="color:var(--dim);font-size:.78rem">inkl. MwSt</span>`)}
       <div class="drow"><span class="k">Methode</span><span class="v" id="payMethod">⏳ lädt…</span></div>
       <div class="drow"><span class="k">Status</span><span class="v" id="payStatus">⏳</span></div>
     </div>`;
-    if(photos.length){ h+=`<div class="dlabel">📸 Fotos</div><div class="photo-grid">`+photos.map(p=>`<a href="${safeUrl(p[1])}" target="_blank"><img src="${safeUrl(p[1])}" alt="${p[0]}" title="${p[0]}"></a>`).join('')+`</div>`; }
-    h+=`<div class="dlabel">Aktionen</div><div>
-      <button class="linkbtn" onclick="sendKulanz('${b.id}')">✉️ Kulanz-Mail</button>
+    if(b.status==='cancelled'){ h+=`<div class="dlabel">⊘ Stornierung</div><div class="dblock">
+      ${b.cancelled_at?drow('Storniert am',fmtDate(b.cancelled_at)):''}
+      ${b.cancellation_refund_amount!=null?drow('Erstattet',`<span style="color:var(--green)">${eur(b.cancellation_refund_amount)}</span>`):''}
+    </div>`; }
+    if(photos.length){ _lb=photos.map(p=>({url:safeUrl(p[1]),cap:p[0]}));
+      h+=`<div class="dlabel">📸 Fotos vom Kunden (${photos.length})</div><div class="photo-grid">`+photos.map((p,i)=>`<figure class="photo-cell"><img src="${safeUrl(p[1])}" alt="${esc(p[0])}" loading="lazy" onclick="openLightbox(${i})"><figcaption>${esc(p[0])}</figcaption></figure>`).join('')+`</div>`; }
+    h+=`<div class="dlabel">Status & Aktionen</div><div>`;
+    if(b.status==='confirmed')h+=`<button class="linkbtn" onclick="setBookingStatus('${b.id}','active')">🚚 Als abgeholt markieren</button>`;
+    if(b.status==='active')h+=`<button class="linkbtn" onclick="setBookingStatus('${b.id}','returned')">✅ Als zurückgegeben markieren</button>`;
+    if(b.status==='pending')h+=`<button class="linkbtn" onclick="markNoShow('${b.id}')">👻 Nicht erschienen</button>`;
+    h+=`<button class="linkbtn" onclick="sendKulanz('${b.id}')">✉️ Kulanz-Mail</button>
       ${b.status!=='cancelled'?`<button class="linkbtn" style="border-color:#7f1d1d;color:#fca5a5" onclick="cancelBooking('${b.id}')">⊘ Stornieren & erstatten</button>`:''}
     </div>`;
     openPanel('Buchung',h);
@@ -830,9 +1228,13 @@
     if(u.dl_status!=='verified')h+=`<button class="linkbtn orange" onclick="verifyManual('${u.id}')">✓ Manuell verifizieren</button>`;
     if((u.bookings_total||0)<=0)h+=`<button class="linkbtn" style="border-color:#7f1d1d;color:#fca5a5" onclick="deleteUser('${u.id}')">🗑 Löschen</button>`;
     if((u.bookings_count||0)===0)h+=`<button class="linkbtn" onclick="sendWinback('${esc(u.email)}')">✉️ Rückhol-Mail (20%)</button>`;
-    // Bilder aus seinen Buchungen
-    const pics=[]; myBookings.forEach(b=>{[b.precheck_photo_url,b.return_photo_url,b.ladeflaeche_photo_url].forEach(p=>{if(safeUrl(p))pics.push(p);});});
-    if(pics.length)h+=`<div class="dlabel">📸 Fotos aus Buchungen</div><div class="photo-grid">`+pics.map(p=>`<a href="${safeUrl(p)}" target="_blank"><img src="${safeUrl(p)}"></a>`).join('')+`</div>`;
+    // Bilder aus seinen Buchungen (mit Buchungs-Datum als Label)
+    const pics=[]; myBookings.forEach(b=>{
+      const tag=fmtDay(b.start_time);
+      [['Vorher',b.precheck_photo_url],['Rückgabe',b.return_photo_url],['Ladefläche',b.ladeflaeche_photo_url]].forEach(([lbl,p])=>{if(safeUrl(p))pics.push({url:safeUrl(p),cap:`${lbl} · ${tag}`});});
+    });
+    if(pics.length){ _lb=pics;
+      h+=`<div class="dlabel">📸 Fotos aus Buchungen (${pics.length})</div><div class="photo-grid">`+pics.map((p,i)=>`<figure class="photo-cell"><img src="${p.url}" alt="${esc(p.cap)}" loading="lazy" onclick="openLightbox(${i})"><figcaption>${esc(p.cap)}</figcaption></figure>`).join('')+`</div>`; }
     h+=`<div class="dlabel">Buchungen</div>`;
     h+= myBookings.length ? `<div class="card">`+myBookings.map(b=>`<button class="row clickable" onclick="openBooking('${b.id}')"><div class="main"><div class="t1">${fmtDay(b.start_time)} · ${esc(b.trailers?.name||'')}</div><div class="t2">#${(b.id||'').slice(0,8).toUpperCase()}</div></div><div class="right"><div class="amt">${eur((b.total_amount||0)+(b.late_fee_amount||0))}</div>${statusPill(b.status)}</div></button>`).join('')+`</div>` : `<div class="card"><div class="empty">Noch keine Buchung (Lead).</div></div>`;
     openPanel('Kundenprofil',h);
@@ -849,6 +1251,15 @@
   async function cancelBooking(id){
     if(!confirm('Buchung wirklich stornieren?\n\nVoller Betrag wird erstattet, Slot freigegeben, Mieter per E-Mail informiert.'))return;
     try{ const r=await fetch('/api/admin?section=cancel-booking',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${authToken}`},body:JSON.stringify({booking_id:id})}); const j=await r.json(); if(!r.ok)throw new Error(j.error||r.status); closePanel(); await loadAll(); alert(j.already_cancelled?'War bereits storniert.':`✓ Storniert.${j.amount?' '+eur(j.amount)+' erstattet.':''} Mieter informiert.`); }catch(e){alert('❌ '+e.message);}
+  }
+  async function setBookingStatus(id,status){
+    const lbl={active:'als ABGEHOLT (aktiv)',returned:'als ZURÜCKGEGEBEN',confirmed:'zurück auf „bestätigt"'}[status]||status;
+    if(!confirm(`Buchung ${lbl} markieren?`))return;
+    try{ const r=await fetch('/api/admin?section=set-booking-status',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${authToken}`},body:JSON.stringify({booking_id:id,new_status:status})}); const d=await r.json(); if(!r.ok)throw new Error(d.error||'Fehler'); closePanel(); await loadAll(); alert('✓ Status aktualisiert.'); }catch(e){alert('❌ '+e.message);}
+  }
+  async function markNoShow(id){
+    if(!confirm('Diese noch nicht bezahlte Buchung als „nicht erschienen" schließen?\n\nDer Anhänger wird wieder frei. Es wurde nichts gezahlt, daher keine Erstattung nötig.'))return;
+    try{ const r=await fetch('/api/admin?section=mark-no-show',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${authToken}`},body:JSON.stringify({booking_id:id})}); const d=await r.json(); if(!r.ok)throw new Error(d.error||'Fehler'); closePanel(); await loadAll(); alert('✓ Als No-Show geschlossen.'); }catch(e){alert('❌ '+e.message);}
   }
   async function sendKulanz(id){
     if(!confirm('Kulanz-Mail an den Kunden senden?\n(Verspätungsgebühr erlassen + Bitte um Google-Bewertung)'))return;
@@ -868,7 +1279,10 @@
     const t=ST.trailers.find(x=>String(x.id)===String(idOrName)||x.name===idOrName)||{name:idOrName};
     const tb=ST.bookings.filter(b=>b.trailers&&b.trailers.name===t.name);
     const drow=(k,v)=>v?`<div class="drow"><span class="k">${k}</span><span class="v">${v}</span></div>`:'';
-    let h=`<div style="margin-bottom:8px">${t.is_available?'<span class="pill green">Verfügbar</span>':'<span class="pill yellow">Belegt/Gesperrt</span>'}</div>`;
+    let h=`<div style="margin-bottom:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      ${t.is_available?'<span class="pill green">✓ Online buchbar</span>':'<span class="pill red">⊘ Gesperrt</span>'}
+      ${t.id?`<button class="chip ${t.is_available?'':'active'}" onclick="toggleAvail('${esc(t.id)}',${t.is_available?'false':'true'})">${t.is_available?'🔒 Für Buchung sperren':'🔓 Wieder freigeben'}</button>`:''}
+    </div>`;
     h+=`<div class="dblock">
       ${drow('Name',esc(t.name||'–'))}
       ${drow('Typ',esc(t.type))}
@@ -878,7 +1292,7 @@
     </div>`;
     h+=`<div class="dlabel">Buchungen (${tb.length})</div>`;
     h+= tb.length ? `<div class="card">`+tb.slice(0,30).map(b=>`<button class="row clickable" onclick="openBooking('${b.id}')"><div class="main"><div class="t1">${esc(b.customer_name||'–')}</div><div class="t2">${fmtDay(b.start_time)}</div></div><div class="right">${statusPill(b.status)}</div></button>`).join('')+`</div>` : `<div class="card"><div class="empty">Keine Buchungen.</div></div>`;
-    h+=`<div class="dlabel">Offene Schäden</div><div id="trDamages"><div class="empty">lädt…</div></div>`;
+    h+=`<div class="dlabel">🛠 Schadenverlauf</div><div id="trDamages"><div class="empty">lädt…</div></div>`;
     // ── Preise & Tarife (editierbar) — steuern die Live-Buchungsbeträge ──
     if(t.id){
       const pf=(k,def)=>{const v=t[k]; return (v==null||v==='')?def:v;};
@@ -904,23 +1318,53 @@
       <label style="font-size:.74rem;color:var(--muted);display:block;margin-bottom:10px">Nächste Wartung<input type="date" id="trMaint" value="${t.next_maintenance_date?String(t.next_maintenance_date).slice(0,10):''}" style="width:100%;margin-top:4px;background:var(--s3);border:1px solid var(--border2);color:var(--text);border-radius:8px;padding:8px"></label>
       ${t.id?`<button class="btn btn-primary" style="width:100%" onclick="saveTrailerDates('${esc(t.id)}')">Speichern</button>`:''}
     </div>`;
-    if(t.last_lat&&t.last_lng)h+=`<a class="linkbtn" href="https://www.google.com/maps?q=${t.last_lat},${t.last_lng}" target="_blank">📍 GPS-Position auf Karte ›</a>`;
+    if(t.id){
+      const inp=(id,val,type)=>`<input type="${type||'text'}" id="${id}" value="${esc(val||'')}" style="width:100%;margin-top:4px;background:var(--s3);border:1px solid var(--border2);color:var(--text);border-radius:8px;padding:8px;font-size:.86rem">`;
+      const lbl=(txt,inner)=>`<label style="font-size:.72rem;color:var(--muted);display:block;margin-bottom:9px">${txt}${inner}</label>`;
+      h+=`<div class="dlabel">🔧 Stammdaten & Betrieb</div><div class="dblock" style="padding:14px">
+        ${lbl('Zugangscode (Schloss)',inp('trAccess',t.access_code))}
+        ${lbl('Kennzeichen',inp('trPlate',t.license_plate))}
+        ${lbl('Fahrgestell-Nr. (FIN)',inp('trChassis',t.chassis_number))}
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          ${lbl('Versicherung bis',inp('trIns',t.insurance_until?String(t.insurance_until).slice(0,10):'','date'))}
+          ${lbl('Kaufdatum',inp('trPurch',t.purchase_date?String(t.purchase_date).slice(0,10):'','date'))}
+        </div>
+        <label style="font-size:.72rem;color:var(--muted);display:block;margin-bottom:9px">Interne Notizen<textarea id="trNotes" rows="3" placeholder="z.B. Blinker links wackelt · Ersatzschlüssel bei Samuel" style="width:100%;margin-top:4px;background:var(--s3);border:1px solid var(--border2);color:var(--text);border-radius:8px;padding:8px;font-size:.86rem;resize:vertical;font-family:inherit">${esc(t.internal_notes||'')}</textarea></label>
+        <button class="btn btn-primary" style="width:100%" onclick="saveTrailerInfo('${esc(t.id)}')">Stammdaten speichern</button>
+      </div>`;
+    }
+    if(t.last_lat&&t.last_lng)h+=`<a class="linkbtn" href="https://www.google.com/maps?q=${Number(t.last_lat)},${Number(t.last_lng)}" target="_blank">📍 GPS-Position auf Karte ›</a>`;
     openPanel('Anhänger',h);
     if(t.id)loadTrDamages(t.id);
   }
+  let _trDmgReq=0;
   async function loadTrDamages(tid){
     const el=document.getElementById('trDamages'); if(!el)return;
+    const req=++_trDmgReq;
     try{
       const d=await api('damages&trailer_id='+encodeURIComponent(tid));
-      const dm=(d.damages||[]).filter(x=>x.status==='open');
-      if(!document.getElementById('trDamages'))return;
-      el.innerHTML = dm.length ? '<div class="card">'+dm.map(x=>`<div class="row" style="display:block">
-        <div style="display:flex;justify-content:space-between;gap:8px"><span class="pill ${x.severity==='not_drivable'?'red':x.severity==='major'?'yellow':'grey'}">${esc(x.severity||'')}</span><span style="font-size:.7rem;color:var(--dim)">${x.created_at?fmtDate(x.created_at):''}</span></div>
+      if(_trDmgReq!==req||!document.getElementById('trDamages'))return; // veraltete Antwort / Panel gewechselt
+      const all=(d.damages||[]).slice().sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));
+      if(!all.length){ el.innerHTML='<div class="card"><div class="empty">Noch keine Schäden erfasst 🎉</div></div>'; return; }
+      const open=all.filter(x=>x.status==='open'), resolved=all.filter(x=>x.status!=='open');
+      const dmgPics=all.filter(x=>safeUrl(x.photo_url)).map(x=>({url:safeUrl(x.photo_url),cap:(x.description||'Schaden').slice(0,60)}));
+      _lb=dmgPics;
+      const picIdx=u=>dmgPics.findIndex(p=>p.url===safeUrl(u));
+      const sevPill=s=>`<span class="pill ${s==='not_drivable'?'red':s==='major'?'yellow':'grey'}">${s==='not_drivable'?'nicht fahrbereit':s==='major'?'größer':esc(s||'Schaden')}</span>`;
+      const stPill=s=>s==='open'?'<span class="pill orange">● offen</span>':s==='resolved'?'<span class="pill green">✓ behoben</span>':'<span class="pill grey">akzeptiert</span>';
+      const card=x=>`<div class="row" style="display:block${x.status!=='open'?';opacity:.72':''}">
+        <div style="display:flex;justify-content:space-between;gap:8px;align-items:center">${sevPill(x.severity)} ${stPill(x.status)}<span style="font-size:.7rem;color:var(--dim);margin-left:auto">${x.created_at?fmtDate(x.created_at):''}</span></div>
         <div style="font-size:.86rem;margin:6px 0">${esc(x.description||'')}</div>
-        <div style="font-size:.74rem;color:var(--dim);margin-bottom:6px">Quelle: ${esc(x.source||'–')}${x.reported_by?' · '+esc(x.reported_by):''}</div>
-        ${safeUrl(x.photo_url)?`<a class="linkbtn" href="${safeUrl(x.photo_url)}" target="_blank">📷 Foto</a>`:''}
-        <div style="margin-top:6px"><button class="chip active" onclick="resolveDmg('${x.id}','resolved','${tid}')">✓ Erledigt</button> <button class="chip" onclick="resolveDmg('${x.id}','wont_fix','${tid}')">akzeptiert</button></div>
-      </div>`).join('')+'</div>' : '<div class="card"><div class="empty">Keine offenen Schäden 🎉</div></div>';
+        <div style="font-size:.74rem;color:var(--dim)">Quelle: ${esc(x.source||'–')}${x.reported_by?' · '+esc(x.reported_by):''}</div>
+        ${x.resolved_note?`<div style="font-size:.74rem;color:var(--green);margin-top:4px">↳ ${esc(x.resolved_note)}${x.resolved_at?' · '+fmtDay(x.resolved_at):''}</div>`:''}
+        ${safeUrl(x.photo_url)?`<div style="margin-top:6px"><img src="${safeUrl(x.photo_url)}" loading="lazy" onclick="openLightbox(${picIdx(x.photo_url)})" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:1px solid var(--border2);cursor:zoom-in"></div>`:''}
+        <div style="margin-top:8px">${x.status==='open'
+          ?`<button class="chip active" onclick="resolveDmg('${x.id}','resolved','${tid}')">✓ Behoben</button> <button class="chip" onclick="resolveDmg('${x.id}','wont_fix','${tid}')">akzeptiert</button>`
+          :`<button class="chip" onclick="resolveDmg('${x.id}','open','${tid}')">↻ wieder öffnen</button>`}</div>
+      </div>`;
+      let html='<div class="card">'+(open.length?open.map(card).join(''):'<div class="empty">Keine offenen Schäden 🎉</div>');
+      if(resolved.length){ html+=`<div style="font-size:.68rem;color:var(--dim);padding:12px 2px 4px;font-weight:800;text-transform:uppercase;letter-spacing:.07em">Verlauf · erledigt (${resolved.length})</div>`+resolved.map(card).join(''); }
+      el.innerHTML=html+'</div>';
     }catch(e){ if(el)el.innerHTML='<div class="card"><div class="empty">Fehler beim Laden.</div></div>'; }
   }
   async function resolveDmg(id,status,tid){
@@ -936,6 +1380,16 @@
     for(const k of keys){ const el=document.getElementById('trP_'+k); if(el&&el.value!=='') payload[k]=el.value; }
     if(Object.keys(payload).length<2){ alert('Keine Preise eingegeben.'); return; }
     try{ const r=await fetch('/api/admin?section=update-trailer',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${authToken}`},body:JSON.stringify(payload)}); const d=await r.json(); if(!r.ok)throw new Error(d.error||'Fehler'); closePanel(); await loadAll(); alert('✓ Preise gespeichert — gelten sofort für neue Buchungen.'); }catch(e){alert('❌ '+e.message);}
+  }
+  async function toggleAvail(tid,next){
+    const txt = next ? 'Anhänger wieder für die Online-Buchung FREIGEBEN?' : 'Anhänger für die Online-Buchung SPERREN?\n\nKunden können ihn dann nicht mehr neu buchen (z.B. bei TÜV/Reparatur). Bereits laufende Buchungen bleiben bestehen.';
+    if(!confirm(txt))return;
+    try{ const r=await fetch('/api/admin?section=update-trailer',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${authToken}`},body:JSON.stringify({trailer_id:tid,is_available:next})}); const d=await r.json(); if(!r.ok)throw new Error(d.error||'Fehler'); await loadAll(); openTrailer(tid); }catch(e){alert('❌ '+e.message);}
+  }
+  async function saveTrailerInfo(tid){
+    const g=id=>{const el=document.getElementById(id);return el?el.value:undefined;};
+    const payload={trailer_id:tid, access_code:g('trAccess'), license_plate:g('trPlate'), chassis_number:g('trChassis'), insurance_until:g('trIns')||null, purchase_date:g('trPurch')||null, internal_notes:g('trNotes')};
+    try{ const r=await fetch('/api/admin?section=update-trailer',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${authToken}`},body:JSON.stringify(payload)}); const d=await r.json(); if(!r.ok)throw new Error(d.error||'Fehler'); await loadAll(); openTrailer(tid); alert('✓ Stammdaten gespeichert.'); }catch(e){alert('❌ '+e.message);}
   }
 
   /* ── AI-STAB (Agenten-Chat + Inbox) ── */
