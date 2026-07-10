@@ -73,6 +73,7 @@
       "url": "https://simpletrailer.de"
     },
     "email": "info@simpletrailer.de",
+    "telephone": "+4915754255876",
     "priceRange": "€",
     "address": {
       "@type": "PostalAddress",
@@ -535,7 +536,7 @@
     .faq-item.reveal:nth-child(3)  { transition-delay: 0.16s; }
     .faq-item.reveal:nth-child(4)  { transition-delay: 0.24s; }
 
-    /* NAV */
+    /* NAV — volle Bildschirmbreite: Logo links außen, Links mittig, Aktionen rechts außen */
     nav {
       position: fixed;
       top: 0; left: 0; right: 0;
@@ -546,17 +547,14 @@
       height: 64px;
       display: flex;
       align-items: center;
-      padding: 0 5%;
+      padding: 0 clamp(20px, 3vw, 56px);
     }
 
     .nav-inner {
       width: 100%;
-      max-width: 1200px;
-      margin: 0 auto;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 32px;
+      gap: 20px;
     }
 
     .logo {
@@ -574,6 +572,9 @@
       align-items: center;
       gap: 32px;
       list-style: none;
+      /* zentriert die Links zwischen Logo und rechter Aktions-Gruppe */
+      margin-left: auto;
+      margin-right: auto;
     }
 
     .nav-links a {
@@ -2434,16 +2435,21 @@
        rem-basiert: html font-size hebt ALLE rem-Groessen proportional an */
     @media (min-width: 1700px) {
       html { font-size: 17.5px; }
-      .nav-inner, .hero-inner, .section-inner, .footer-inner { max-width: 1480px; }
+      .hero-inner, .section-inner, .footer-inner { max-width: 1480px; }
       .usecase-grid { max-width: 1460px; }
       #map { height: 580px; }
+      /* Nav bleibt volle Breite — Logo + Abstände wachsen proportional mit */
+      .logo img { height: 40px !important; }
+      .nav-inner { gap: 24px; }
     }
     @media (min-width: 2200px) {
       html { font-size: 19px; }
-      .nav-inner, .hero-inner, .section-inner, .footer-inner { max-width: 1760px; }
+      .hero-inner, .section-inner, .footer-inner { max-width: 1760px; }
       .usecase-grid { max-width: 1720px; }
       #map { height: 680px; }
       .hero-text h1 { font-size: clamp(2.6rem, 4.2vw, 4.6rem); }
+      .logo img { height: 44px !important; }
+      .nav-inner { gap: 28px; }
     }
 
     /* ===== Hero-Tiefe: kraeftigerer Glow + Vignette ===== */
@@ -3845,6 +3851,10 @@
           <span>info@simpletrailer.de</span>
         </div>
         <div class="contact-detail">
+          <div class="contact-detail-icon">📞</div>
+          <a href="tel:+4915754255876" style="color:inherit;text-decoration:none;">0157 5425 5876</a>
+        </div>
+        <div class="contact-detail">
           <div class="contact-detail-icon">📍</div>
           <span data-i18n="footer.bremen_de">Bremen, Deutschland</span>
         </div>
@@ -4005,6 +4015,7 @@
         <div class="footer-col">
           <h4 data-i18n="footer.contact">Kontakt</h4>
           <a href="mailto:info@simpletrailer.de">info@simpletrailer.de</a>
+          <a href="tel:+4915754255876">0157 5425 5876</a>
           <span style="color:var(--gray);" data-i18n="footer.bremen_de">Bremen, Deutschland</span>
         </div>
       </div>
@@ -4585,34 +4596,77 @@
   // Bei Sprachwechsel die Karten-UI neu rendern (statische Strings macht i18n.js selbst)
   document.addEventListener('st-lang-changed', renderMapI18n);
 
-  async function loadMapTrailers() {
+  // === Trailer-Daten: EIN geteilter Fetch + localStorage-Cache ==============
+  // Vorher: Karte, Hero-Badge und Modal riefen /api/get-trailers jeweils selbst
+  // auf, und die Marker warteten blockierend auf Nominatim-Reverse-Geocoding.
+  // Jetzt: beim Reload sofort aus dem Cache rendern, ein einziger geteilter
+  // Netzwerk-Request, Geocoding läuft nicht-blockierend im Hintergrund.
+  const TRAILER_CACHE_KEY = 'st_trailers_v1';
+  const TRAILER_ADDR_KEY  = 'st_trailer_addr_v1';
+  const TRAILER_CACHE_TTL = 10 * 60 * 1000; // 10 Min
+
+  // HTML-Escape für Fremd-Daten (z.B. Nominatim-Stadtteilnamen) vor innerHTML
+  const escHtml = s => String(s).replace(/[&<>"']/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  let _trailerFetch = null;
+
+  function readTrailerCache() {
     try {
-      const res  = await fetch('/api/get-trailers');
-      const data = await res.json();
-      allTrailers = data.trailers || [];
+      const c = JSON.parse(localStorage.getItem(TRAILER_CACHE_KEY) || 'null');
+      if (c && Array.isArray(c.trailers) && c.trailers.length
+          && (Date.now() - c.ts) < TRAILER_CACHE_TTL) return c.trailers;
+    } catch(e) {}
+    return null;
+  }
+
+  function fetchTrailers() {
+    // Gleichzeitige Aufrufer (Karte, Hero-Badge, Modal) teilen sich EINEN Request
+    if (_trailerFetch) return _trailerFetch;
+    _trailerFetch = fetch('/api/get-trailers')
+      .then(r => r.json())
+      .then(d => {
+        const trailers = (d && d.trailers) || [];
+        if (trailers.length) {
+          try { localStorage.setItem(TRAILER_CACHE_KEY, JSON.stringify({ ts: Date.now(), trailers })); } catch(e) {}
+        }
+        return trailers;
+      })
+      .finally(() => { _trailerFetch = null; });
+    return _trailerFetch;
+  }
+
+  // Ort/Stadtteil via Nominatim — läuft im HINTERGRUND (blockiert die Marker
+  // nicht mehr), Ergebnisse werden pro Koordinate dauerhaft gecacht.
+  function geocodeTrailerAddresses(trailers) {
+    let addrCache = {};
+    try { addrCache = JSON.parse(localStorage.getItem(TRAILER_ADDR_KEY) || '{}'); } catch(e) {}
+    let dirty = false;
+    Promise.all(trailers.map(async t => {
+      if (!t.lat || !t.lng) return;
+      const key = t.lat.toFixed(4) + ',' + t.lng.toFixed(4);
+      if (addrCache[key]) { t._address = addrCache[key]; return; }
+      try {
+        const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${t.lat}&lon=${t.lng}&format=json&accept-language=de`);
+        const d = await r.json();
+        t._address = d.address?.suburb || d.address?.quarter || d.address?.neighbourhood
+                  || d.address?.city_district || d.address?.city || 'Bremen';
+        addrCache[key] = t._address;
+        dirty = true;
+      } catch(e) { t._address = 'Bremen'; }
+    })).then(() => {
+      if (dirty) { try { localStorage.setItem(TRAILER_ADDR_KEY, JSON.stringify(addrCache)); } catch(e) {} }
+    });
+  }
+
+  function renderMapTrailers(trailers) {
+      allTrailers = trailers;
+      // Bei Re-Render (frische Daten nach Cache-Render) alte Marker entfernen
+      allMarkers.forEach(({ marker }) => map.removeLayer(marker));
+      allMarkers = [];
 
       renderMapI18n();
-      const types = [...new Set(allTrailers.map(t => t.type).filter(Boolean))];
-      const filterEl = document.getElementById('trailerFilters');
-      const tFn = window.t || ((k, fb) => fb);
-      const TYPE_KEYS = { 'Planenanhänger': 'map.tarp_trailers', 'Autotransporter': 'map.car_transporters', 'Kofferanhänger': 'map.box_trailers' };
-      const btns = [`<button class="map-filter-btn active" data-type="all" onclick="filterMarkers('all')">${tFn('map.all', 'Alle')}</button>`];
-      types.forEach(type => {
-        const label = TYPE_KEYS[type] ? tFn(TYPE_KEYS[type], type) : type;
-        btns.push(`<button class="map-filter-btn" data-type="${type}" onclick="filterMarkers('${type}')">${label}</button>`);
-      });
-      filterEl.innerHTML = btns.join('');
-
-      // Ort/Stadtteil via Reverse Geocoding laden
-      await Promise.all(allTrailers.map(async t => {
-        if (!t.lat || !t.lng) return;
-        try {
-          const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${t.lat}&lon=${t.lng}&format=json&accept-language=de`);
-          const d = await r.json();
-          t._address = d.address?.suburb || d.address?.quarter || d.address?.neighbourhood
-                    || d.address?.city_district || d.address?.city || 'Bremen';
-        } catch(e) { t._address = 'Bremen'; }
-      }));
+      geocodeTrailerAddresses(allTrailers);
 
       // Auto-Spread: Anhänger am exakt selben Standort leicht versetzen
       // damit sich Marker nicht überlagern und alle sichtbar sind.
@@ -4668,6 +4722,26 @@
       if (!userLocation && markerBounds.isValid()) {
         map.fitBounds(markerBounds, { padding: [80, 80], maxZoom: 14 });
       }
+      // Aktiven Typ-Filter nach Re-Render respektieren
+      if (activeFilter !== 'all') filterMarkers(activeFilter);
+  }
+
+  async function loadMapTrailers() {
+    const cached = readTrailerCache();
+    if (cached) {
+      // Sofort rendern (0 Netzwerk-Wartezeit), frische Daten leise nachziehen
+      try { renderMapTrailers(cached); } catch(e) { console.error('renderMapTrailers(cache):', e); }
+      fetchTrailers().then(fresh => {
+        if (!fresh.length) return;
+        const sameSet = fresh.length === allTrailers.length
+          && fresh.every(t => allTrailers.some(x => x.id === t.id));
+        if (sameSet) applyTrailerUpdates(fresh);
+        else renderMapTrailers(fresh);
+      }).catch(() => {});
+      return;
+    }
+    try {
+      renderMapTrailers(await fetchTrailers());
     } catch(e) {
       document.getElementById('mapBadgeText').textContent = 'Bremen';
       console.error('loadMapTrailers:', e);
@@ -4676,12 +4750,10 @@
 
   loadMapTrailers();
 
-  // Live-Update: alle 60s Marker-Position + Status (Farbe + Popup) aktualisieren
-  setInterval(async () => {
-    try {
-      const r = await fetch('/api/get-trailers');
-      const d = await r.json();
-      (d.trailers || []).forEach(t => {
+  // Marker-Position + Status (Farbe, Tooltip, Badge) in-place aktualisieren —
+  // genutzt vom 60s-Live-Refresh UND vom Hintergrund-Refresh nach Cache-Render
+  function applyTrailerUpdates(list) {
+      (list || []).forEach(t => {
         const entry = allMarkers.find(m => m.trailer.id === t.id);
         if (!entry) return;
         const newLat = t.display_lat ?? t.lat;
@@ -4692,13 +4764,10 @@
         const oldRawLng = entry.trailer.display_lng ?? entry.trailer.lng;
         const moved = newLat && newLng && (newLat !== oldRawLat || newLng !== oldRawLng);
         if (moved) entry.marker.setLatLng([newLat, newLng]);
-        // Trailer-Daten aktualisieren
-        Object.assign(entry.trailer, {
-          display_lat: newLat, display_lng: newLng,
-          is_moving: t.is_moving, position_minutes_ago: t.position_minutes_ago,
-          is_available: t.is_available, currently_booked: t.currently_booked,
-          available_from: t.available_from, position_live: t.position_live,
-        });
+        // Trailer-Daten aktualisieren — ALLE frischen API-Felder übernehmen
+        // (auch name/preise/image_url, sonst bleiben Cache-Werte die ganze
+        // Session stale). _displayLat/_address bleiben erhalten.
+        Object.assign(entry.trailer, t, { display_lat: newLat, display_lng: newLng });
         const lat = newLat, lng = newLng;
         // Icon-Farbe updaten falls Buchungs-Status sich geändert hat
         entry.marker.setIcon(makeIcon(entry.trailer));
@@ -4712,8 +4781,12 @@
       });
       // Badge "X verfügbar" auch updaten
       const badge = document.getElementById('mapBadgeText');
-      if (badge) badge.textContent = buildAvailabilityBadge(d.trailers || []);
-    } catch(e) { /* silent */ }
+      if (badge) badge.textContent = buildAvailabilityBadge(list || []);
+  }
+
+  // Live-Update: alle 60s frische Daten holen und Marker aktualisieren
+  setInterval(async () => {
+    try { applyTrailerUpdates(await fetchTrailers()); } catch(e) { /* silent */ }
   }, 60000);
 
   // HAMBURGER
@@ -5271,7 +5344,7 @@
     const distStr = (userLocation && t.lat && t.lng)
       ? fmtDist(haversineKm(userLocation.lat, userLocation.lng, t.lat, t.lng))
       : null;
-    const locStr = t._address || 'Bremen';
+    const locStr = escHtml(t._address || 'Bremen');
     // 3 Zustände unterscheiden:
     //   - is_available = true                          → "Sofort verfügbar" (grün)
     //   - is_available = false + currently_booked      → "Aktuell belegt — Frei ab X" (orange) — buchbar für später
@@ -5423,9 +5496,9 @@
     modalMapMarkers = [];
 
     try {
-      const res      = await fetch('/api/get-trailers');
-      const data     = await res.json();
-      const trailers = data.trailers || [];
+      // Karten-Daten wiederverwenden wenn schon geladen, sonst geteilter Fetch
+      const base     = allTrailers.length ? allTrailers : await fetchTrailers();
+      const trailers = base.slice();
 
       trailers.forEach(t => {
         if (!t.lat || !t.lng) return;
@@ -5455,7 +5528,7 @@
       list.innerHTML = trailers.map((t, idx) => {
         const distStr  = (userLocation && t.lat && t.lng && t._distKm < 9999)
           ? fmtDist(t._distKm) : null;
-        const locStr   = t._address || 'Bremen';
+        const locStr   = escHtml(t._address || 'Bremen');
         const subLine  = [locStr, distStr ? distStr + ' entfernt' : null, `ab ${t.price_kurztrip || 9} €`]
           .filter(Boolean).join(' · ');
         const thumb    = trailerImg(t, 'modal-trailer-thumb');
@@ -5521,11 +5594,10 @@
 </script>
 
 <script>
-/* Live-Verfuegbarkeit im Hero — echt aus get-trailers, fail-silent */
+/* Live-Verfuegbarkeit im Hero — teilt sich den Trailer-Request mit der Karte, fail-silent */
 (function(){
   try {
-    fetch('/api/get-trailers').then(function(r){ return r.json(); }).then(function(d){
-      var list = Array.isArray(d) ? d : (d.trailers || []);
+    fetchTrailers().then(function(list){
       var avail = list.filter(function(t){ return t.is_available && !t.currently_booked; }).length;
       if (avail > 0) {
         var b = document.getElementById('heroLiveBadge');

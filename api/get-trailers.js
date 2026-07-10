@@ -4,29 +4,38 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SER
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  // Vercel-Edge-Cache: 30s frisch, danach bis 5 Min stale-while-revalidate.
+  // Wiederholte Seiten-Loads treffen den Edge-Cache statt Function+DB
+  // (Browser cached nicht: max-age=0). Client pollt ohnehin alle 60s.
+  res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=30, stale-while-revalidate=300');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
-    // Alle Anhänger holen
-    const { data: trailerData, error } = await supabase
-      .from('trailers')
-      .select('id,name,type,description,lat,lng,is_available,image_url,price_kurztrip,price_halftag,price_day,price_extra_day,price_weekend,price_week,tracker_imei,last_lat,last_lng,last_seen_at,is_moving')
-      .order('type');
-    if (error) throw error;
-
-    const trailerIds = (trailerData || []).map(t => t.id);
     const now = new Date();
     const nowIso = now.toISOString();
 
-    // Aktive + zukünftige Buchungen (status confirmed/active, end_time > now)
-    // Damit wir bestimmen können: gerade gebucht? wann frei?
-    const { data: bookings } = await supabase
-      .from('bookings')
-      .select('trailer_id, start_time, end_time, status')
-      .in('trailer_id', trailerIds.length ? trailerIds : ['00000000-0000-0000-0000-000000000000'])
-      .in('status', ['confirmed', 'active'])
-      .gte('end_time', nowIso)
-      .order('start_time');
+    // Anhänger + relevante Buchungen PARALLEL holen (Buchungs-Query braucht
+    // die Trailer-IDs nicht — Filter über Status + end_time reicht)
+    const [trailersRes, bookingsRes] = await Promise.all([
+      supabase
+        .from('trailers')
+        .select('id,name,type,description,lat,lng,is_available,image_url,price_kurztrip,price_halftag,price_day,price_extra_day,price_weekend,price_week,tracker_imei,last_lat,last_lng,last_seen_at,is_moving')
+        .order('type'),
+      // Aktive + zukünftige Buchungen (status confirmed/active, end_time > now)
+      // Damit wir bestimmen können: gerade gebucht? wann frei?
+      supabase
+        .from('bookings')
+        .select('trailer_id, start_time, end_time, status')
+        .in('status', ['confirmed', 'active'])
+        .gte('end_time', nowIso)
+        .order('start_time'),
+    ]);
+    if (trailersRes.error) throw trailersRes.error;
+    // Bookings-Fehler NICHT verschlucken: sonst würde "alles frei" als 200
+    // in Edge- und Client-Cache landen
+    if (bookingsRes.error) throw bookingsRes.error;
+    const trailerData = trailersRes.data;
+    const bookings = bookingsRes.data;
 
     // Pro Trailer: laufende Buchung jetzt + nächste freie Zeit berechnen
     const bookingsByTrailer = {};
