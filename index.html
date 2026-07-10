@@ -4382,10 +4382,11 @@
       radius: 8, color: '#3b82f6', fillColor: '#60a5fa', fillOpacity: 0.9, weight: 3
     }).addTo(map).bindPopup('<strong style="font-family:system-ui,sans-serif">Dein Standort</strong>');
 
-    // Tooltip-Inhalte mit Entfernung aktualisieren
+    // Tooltip-Inhalte mit Entfernung aktualisieren (zur Live-Position)
     allMarkers.forEach(({ marker, trailer }) => {
-      if (!trailer.lat || !trailer.lng || !marker.getTooltip()) return;
-      const dKm = haversineKm(lat, lng, trailer.lat, trailer.lng);
+      const p = tPos(trailer);
+      if (!p.lat || !p.lng || !marker.getTooltip()) return;
+      const dKm = haversineKm(lat, lng, p.lat, p.lng);
       marker.setTooltipContent(
         `<strong>${trailer.name}</strong><br><span style="opacity:.75">ab ${trailer.price_kurztrip || 9} € · ${fmtDist(dKm)}</span>`
       );
@@ -4393,13 +4394,14 @@
 
     // Nächsten verfügbaren Anhänger ermitteln
     const sortedAvail = allTrailers
-      .filter(t => t.is_available && t.lat && t.lng)
-      .map(t => ({ ...t, _distKm: haversineKm(lat, lng, t.lat, t.lng) }))
+      .map(t => ({ ...t, _pos: tPos(t) }))
+      .filter(t => t.is_available && t._pos.lat && t._pos.lng)
+      .map(t => ({ ...t, _distKm: haversineKm(lat, lng, t._pos.lat, t._pos.lng) }))
       .sort((a, b) => a._distKm - b._distKm);
 
     // Auto-Zoom
     const bounds = L.latLngBounds([[lat, lng]]);
-    sortedAvail.forEach(t => bounds.extend([t.lat, t.lng]));
+    sortedAvail.forEach(t => bounds.extend([t._pos.lat, t._pos.lng]));
     if (bounds.isValid()) map.fitBounds(bounds, { padding: [60, 60], maxZoom: 14 });
 
     // Badge
@@ -4409,7 +4411,7 @@
       : buildAvailabilityBadge(allTrailers);
 
     // Route zur nächsten freien Station
-    if (sortedAvail[0]) drawRoute(lat, lng, sortedAvail[0].lat, sortedAvail[0].lng);
+    if (sortedAvail[0]) drawRoute(lat, lng, sortedAvail[0]._pos.lat, sortedAvail[0]._pos.lng);
 
     // Wenn das Modal bereits offen ist (User hat im Banner Standort eingegeben),
     // nur Liste neu rendern + Banner ausblenden – KEIN erneutes Öffnen.
@@ -4609,6 +4611,11 @@
   const escHtml = s => String(s).replace(/[&<>"']/g, c =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
+  // Effektive Anzeige-Position eines Anhängers: Live-GPS (wenn die API sie
+  // freigibt) sonst statischer Stellplatz. Für ALLE Distanzen/Routen/Geocoding
+  // nutzen — NIEMALS t.lat/t.lng direkt (zeigt sonst den alten Stellplatz).
+  const tPos = t => ({ lat: t.display_lat ?? t.lat, lng: t.display_lng ?? t.lng });
+
   let _trailerFetch = null;
 
   function readTrailerCache() {
@@ -4643,11 +4650,12 @@
     try { addrCache = JSON.parse(localStorage.getItem(TRAILER_ADDR_KEY) || '{}'); } catch(e) {}
     let dirty = false;
     Promise.all(trailers.map(async t => {
-      if (!t.lat || !t.lng) return;
-      const key = t.lat.toFixed(4) + ',' + t.lng.toFixed(4);
+      const p = tPos(t);
+      if (!p.lat || !p.lng) return;
+      const key = p.lat.toFixed(4) + ',' + p.lng.toFixed(4);
       if (addrCache[key]) { t._address = addrCache[key]; return; }
       try {
-        const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${t.lat}&lon=${t.lng}&format=json&accept-language=de`);
+        const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${p.lat}&lon=${p.lng}&format=json&accept-language=de`);
         const d = await r.json();
         t._address = d.address?.suburb || d.address?.quarter || d.address?.neighbourhood
                   || d.address?.city_district || d.address?.city || 'Bremen';
@@ -5148,7 +5156,8 @@
     // Wrap immer sichtbar: enthält entweder die Standort-Eingabe-Card (kein userLocation)
     // oder die Mini-Map mit Route (userLocation gesetzt).
     wrap.style.display = 'block';
-    if (!userLocation || !trailer.lat || !trailer.lng) {
+    const tp = tPos(trailer);
+    if (!userLocation || !tp.lat || !tp.lng) {
       // Keine Location → nur Eingabe-Card zeigen, Mini-Map verstecken
       if (mapEl) mapEl.style.display = 'none';
       return;
@@ -5174,12 +5183,12 @@
     }).addTo(modalDetailMap);
     modalDetailMarkers.push(userM);
 
-    const trailerM = L.circleMarker([trailer.lat, trailer.lng], {
+    const trailerM = L.circleMarker([tp.lat, tp.lng], {
       radius: 9, color: '#E85D00', fillColor: '#E85D00', fillOpacity: 0.95, weight: 2.5
     }).addTo(modalDetailMap);
     modalDetailMarkers.push(trailerM);
 
-    const url = `https://router.project-osrm.org/route/v1/driving/${userLocation.lng},${userLocation.lat};${trailer.lng},${trailer.lat}?overview=full&geometries=geojson`;
+    const url = `https://router.project-osrm.org/route/v1/driving/${userLocation.lng},${userLocation.lat};${tp.lng},${tp.lat}?overview=full&geometries=geojson`;
     fetch(url).then(r => r.json()).then(data => {
       if (data.routes && data.routes[0]) {
         const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
@@ -5187,10 +5196,10 @@
         modalDetailMap.fitBounds(modalDetailRouteLayer.getBounds(), { padding: [30, 30] });
         return { duration: data.routes[0].duration, distance: data.routes[0].distance };
       }
-      const bounds = L.latLngBounds([[userLocation.lat, userLocation.lng], [trailer.lat, trailer.lng]]);
+      const bounds = L.latLngBounds([[userLocation.lat, userLocation.lng], [tp.lat, tp.lng]]);
       modalDetailMap.fitBounds(bounds, { padding: [30, 30] });
     }).catch(() => {
-      const bounds = L.latLngBounds([[userLocation.lat, userLocation.lng], [trailer.lat, trailer.lng]]);
+      const bounds = L.latLngBounds([[userLocation.lat, userLocation.lng], [tp.lat, tp.lng]]);
       modalDetailMap.fitBounds(bounds, { padding: [30, 30] });
     });
   }
@@ -5340,9 +5349,10 @@
       ? `<img src="${imgSrc}" class="modal-detail-img" onerror="this.outerHTML='<div class=&quot;modal-detail-img-placeholder&quot;>🚛</div>'" />`
       : `<div class="modal-detail-img-placeholder">🚛</div>`;
 
-    // Header (Name + Distanz + Status)
-    const distStr = (userLocation && t.lat && t.lng)
-      ? fmtDist(haversineKm(userLocation.lat, userLocation.lng, t.lat, t.lng))
+    // Header (Name + Distanz + Status) — Distanz zur LIVE-Position
+    const pos = tPos(t);
+    const distStr = (userLocation && pos.lat && pos.lng)
+      ? fmtDist(haversineKm(userLocation.lat, userLocation.lng, pos.lat, pos.lng))
       : null;
     const locStr = escHtml(t._address || 'Bremen');
     // 3 Zustände unterscheiden:
@@ -5464,8 +5474,8 @@
     renderModalDetailMap(t);
 
     // Auto-Zeit-Info aus OSRM holen (parallel zur Mini-Map, damit Box gefüllt wird)
-    if (userLocation && t.lat && t.lng) {
-      const routeUrl = `https://router.project-osrm.org/route/v1/driving/${userLocation.lng},${userLocation.lat};${t.lng},${t.lat}?overview=false`;
+    if (userLocation && pos.lat && pos.lng) {
+      const routeUrl = `https://router.project-osrm.org/route/v1/driving/${userLocation.lng},${userLocation.lat};${pos.lng},${pos.lat}?overview=false`;
       fetch(routeUrl).then(r => r.json()).then(data => {
         const infoEl = document.getElementById('modalRouteInfo');
         if (!infoEl || !data.routes?.[0]) return;
@@ -5501,8 +5511,9 @@
       const trailers = base.slice();
 
       trailers.forEach(t => {
-        if (!t.lat || !t.lng) return;
-        const m = L.circleMarker([t.lat, t.lng], {
+        const p = tPos(t);
+        if (!p.lat || !p.lng) return;
+        const m = L.circleMarker([p.lat, p.lng], {
           radius: 11, weight: 2,
           color:       t.is_available ? '#22c55e' : '#f87171',
           fillColor:   t.is_available ? '#22c55e' : '#f87171',
@@ -5511,13 +5522,14 @@
         modalMapMarkers.push(m);
       });
 
-      const withCoords = trailers.filter(t => t.lat && t.lng);
-      if (withCoords.length) modalMap.setView([withCoords[0].lat, withCoords[0].lng], 13);
+      const withCoords = trailers.filter(t => tPos(t).lat && tPos(t).lng);
+      if (withCoords.length) modalMap.setView([tPos(withCoords[0]).lat, tPos(withCoords[0]).lng], 13);
 
       // Nach Entfernung sortieren wenn Standort bekannt
       if (userLocation) {
         trailers.forEach(t => {
-          t._distKm = (t.lat && t.lng) ? haversineKm(userLocation.lat, userLocation.lng, t.lat, t.lng) : 9999;
+          const p = tPos(t);
+          t._distKm = (p.lat && p.lng) ? haversineKm(userLocation.lat, userLocation.lng, p.lat, p.lng) : 9999;
         });
         trailers.sort((a, b) => a._distKm - b._distKm);
       }
@@ -5526,7 +5538,7 @@
       modalTrailers = trailers;
 
       list.innerHTML = trailers.map((t, idx) => {
-        const distStr  = (userLocation && t.lat && t.lng && t._distKm < 9999)
+        const distStr  = (userLocation && t._distKm != null && t._distKm < 9999)
           ? fmtDist(t._distKm) : null;
         const locStr   = escHtml(t._address || 'Bremen');
         const subLine  = [locStr, distStr ? distStr + ' entfernt' : null, `ab ${t.price_kurztrip || 9} €`]

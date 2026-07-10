@@ -706,6 +706,19 @@
       if (!res.ok) throw new Error(data.error);
       const bookings = data.bookings;
 
+      // AKTUELLE Anhänger-Positionen holen (Free-Floating: der Anhänger kann
+      // inzwischen woanders stehen als beim Buchungszeitpunkt). Die öffentliche
+      // get-trailers-API liefert display_lat/lng mit eingebauter Privacy-Logik.
+      // Fail-silent: ohne Antwort greift der pickup-Schnappschuss der Buchung.
+      try {
+        const tr = await fetch('/api/get-trailers').then(r => r.json());
+        window._trailerPos = {};
+        (tr.trailers || []).forEach(t => {
+          const lat = t.display_lat ?? t.lat, lng = t.display_lng ?? t.lng;
+          if (lat && lng) window._trailerPos[t.id] = { lat, lng };
+        });
+      } catch(e) {}
+
       // Aktive/bestätigte Buchung oben anzeigen
       const activeBooking = bookings.find(b => ['confirmed', 'active'].includes(b.status));
       if (activeBooking) {
@@ -790,8 +803,12 @@
 
     // Standort-Block — Adresse + Route in Google Maps. Erscheint bei jeder
     // confirmed/active Buchung damit Mieter weiss wo der Anhaenger steht.
-    const lat = b.pickup_lat;
-    const lng = b.pickup_lng;
+    // Vor Abholung (confirmed): IMMER die aktuelle Live-Position des Anhängers,
+    // nicht den Schnappschuss vom Buchungszeitpunkt. Während aktiver Miete hat
+    // der Mieter den Anhänger selbst → Schnappschuss (Abholort) reicht.
+    const livePos = (b.status === 'confirmed' && window._trailerPos) ? window._trailerPos[b.trailer_id] : null;
+    const lat = livePos?.lat ?? b.pickup_lat;
+    const lng = livePos?.lng ?? b.pickup_lng;
     let locationHtml = '';
     if (lat && lng) {
       const mapsRoute = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
