@@ -536,7 +536,10 @@
     .faq-item.reveal:nth-child(3)  { transition-delay: 0.16s; }
     .faq-item.reveal:nth-child(4)  { transition-delay: 0.24s; }
 
-    /* NAV — volle Bildschirmbreite: Logo links außen, Links mittig, Aktionen rechts außen */
+    /* NAV — volle Bildschirmbreite: Logo links außen, Links mittig, Aktionen rechts außen.
+       Höhe skaliert responsiv mit der Bildschirmbreite (Mobile 64px → 2560er ~92px);
+       der Hero rechnet über --nav-h seinen Abstand automatisch mit. */
+    :root { --nav-h: clamp(64px, 4vw, 92px); }
     nav {
       position: fixed;
       top: 0; left: 0; right: 0;
@@ -544,7 +547,7 @@
       background: rgba(13,13,13,0.94);
       backdrop-filter: blur(14px);
       border-bottom: 1px solid var(--border);
-      height: 64px;
+      height: var(--nav-h);
       display: flex;
       align-items: center;
       padding: 0 clamp(20px, 3vw, 56px);
@@ -566,6 +569,8 @@
     }
     .logo span:first-child { color: var(--white); }
     .logo span:last-child  { color: var(--orange); }
+    /* Logo wächst mit der Bildschirmbreite mit (übersteuert das Inline-height:36px) */
+    .logo img { height: clamp(36px, 2.2vw, 52px) !important; width: auto; }
 
     .nav-links {
       display: flex;
@@ -2438,9 +2443,12 @@
       .hero-inner, .section-inner, .footer-inner { max-width: 1480px; }
       .usecase-grid { max-width: 1460px; }
       #map { height: 580px; }
-      /* Nav bleibt volle Breite — Logo + Abstände wachsen proportional mit */
-      .logo img { height: 40px !important; }
-      .nav-inner { gap: 24px; }
+      /* Nav bleibt volle Breite — alles wächst proportional mit */
+      .nav-inner { gap: 28px; }
+      .nav-links { gap: 40px; }
+      .nav-links a { font-size: .95rem; }
+      .nav-cta { padding: 12px 26px; font-size: .95rem; }
+      .nav-account-icon { width: 38px; height: 38px; }
     }
     @media (min-width: 2200px) {
       html { font-size: 19px; }
@@ -2448,8 +2456,11 @@
       .usecase-grid { max-width: 1720px; }
       #map { height: 680px; }
       .hero-text h1 { font-size: clamp(2.6rem, 4.2vw, 4.6rem); }
-      .logo img { height: 44px !important; }
-      .nav-inner { gap: 28px; }
+      .nav-inner { gap: 36px; }
+      .nav-links { gap: 48px; }
+      .nav-links a { font-size: 1rem; }
+      .nav-cta { padding: 13px 30px; font-size: 1rem; }
+      .nav-account-icon { width: 42px; height: 42px; }
     }
 
     /* ===== Hero-Tiefe: kraeftigerer Glow + Vignette ===== */
@@ -2571,7 +2582,7 @@
       background: #FFFFFF !important;
       height: 100vh; height: 100dvh;
       min-height: 0 !important;
-      padding: 88px 5% 24px !important;
+      padding: calc(var(--nav-h, 64px) + 24px) 5% 24px !important;
       display: flex; align-items: center;
       overflow: hidden;
       border-bottom: 1px solid rgba(17,18,19,0.10);
