@@ -302,7 +302,8 @@
   const fmtTime = iso => iso ? new Date(iso).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}) : '';
   const initial = s => (String(s||'?').trim()[0]||'?').toUpperCase();
   const isSameDay = (a,b) => a&&b&&new Date(a).toDateString()===new Date(b).toDateString();
-  const statusPill = st => {
+  const statusPill = (st, noShow) => {
+    if(noShow) return `<span class="pill red">👻 No-Show</span>`;
     const m = { pending:['orange','Ausstehend'], confirmed:['green','Bestätigt'], active:['blue','Aktiv'], returned:['grey','Abgeschlossen'], cancelled:['red','Storniert'] };
     const [c,l] = m[st]||['grey',st||'–']; return `<span class="pill ${c}">${l}</span>`;
   };
@@ -530,7 +531,7 @@
       <button class="row clickable" onclick="openBooking('${b.id}')">
         <div class="av">${esc(initial(b.customer_name))}</div>
         <div class="main"><div class="t1">${esc(b.customer_name||'–')}</div><div class="t2">${esc(b.trailers?.name||'')} · ${fmtTime(b[tf])} Uhr</div></div>
-        <div class="right">${statusPill(b.status)}</div>
+        <div class="right">${statusPill(b.status,b.no_show)}</div>
       </button>`).join('')+`</div>`;
   }
 
@@ -560,7 +561,7 @@
       <button class="row clickable" onclick="openBooking('${b.id}')">
         <div class="av">${esc(initial(b.customer_name))}</div>
         <div class="main"><div class="t1">${esc(b.customer_name||'–')}</div><div class="t2">${fmtDay(b.start_time)} · ${esc(b.trailers?.name||'')} · #${(b.id||'').slice(0,8).toUpperCase()}</div></div>
-        <div class="right"><div class="amt">${eur((b.total_amount||0)+(b.late_fee_amount||0))}</div><div style="margin-top:3px">${statusPill(b.status)}</div></div>
+        <div class="right"><div class="amt">${eur((b.total_amount||0)+(b.late_fee_amount||0))}</div><div style="margin-top:3px">${statusPill(b.status,b.no_show)}</div></div>
       </button>`).join('')+`</div>`
       : `<div class="card"><div class="empty">Keine Buchungen.</div></div>`;
     document.getElementById('pane-buchungen').innerHTML=h;
@@ -1129,7 +1130,7 @@
       : !b.late_fee_payment_intent_id ? '<span class="pill yellow">offen</span>'
       : String(b.late_fee_payment_intent_id).startsWith('FAILED') ? '<span class="pill red">✗ Abbuchung fehlgeschlagen</span>'
       : '<span class="pill green">✓ abgebucht</span>';
-    let h=`<div style="margin-bottom:6px">${statusPill(b.status)} <span class="mono" style="color:var(--dim);font-size:.8rem">#${(b.id||'').slice(0,8).toUpperCase()}</span></div>`;
+    let h=`<div style="margin-bottom:6px">${statusPill(b.status,b.no_show)} <span class="mono" style="color:var(--dim);font-size:.8rem">#${(b.id||'').slice(0,8).toUpperCase()}</span></div>`;
     h+=`<div class="dblock">
       <div class="drow"><span class="k">Kunde</span><span class="v">${esc(b.customer_name||'–')}</span></div>
       ${b.customer_email?`<div class="drow"><span class="k">Kontakt</span><span class="v">${esc(b.customer_email)}<br>${esc(b.customer_phone||'')}</span></div>`:''}
@@ -1164,6 +1165,10 @@
     if(b.status==='cancelled'){ h+=`<div class="dlabel">⊘ Stornierung</div><div class="dblock">
       ${b.cancelled_at?drow('Storniert am',fmtDate(b.cancelled_at)):''}
       ${b.cancellation_refund_amount!=null?drow('Erstattet',`<span style="color:var(--green)">${eur(b.cancellation_refund_amount)}</span>`):''}
+    </div>`; }
+    if(b.no_show){ h+=`<div class="dlabel">👻 No-Show</div><div class="dblock">
+      ${drow('Nicht abgeholt','Mietzeit lief ab ohne Precheck — automatisch abgeschlossen, Kunde per Mail informiert')}
+      ${drow('Bezahlt',`${eur(b.total_amount||0)} — Kulanz-Erstattung über „Stornieren & erstatten" möglich`)}
     </div>`; }
     if(photos.length){ _lb=photos.map(p=>({url:safeUrl(p[1]),cap:p[0]}));
       h+=`<div class="dlabel">📸 Fotos vom Kunden (${photos.length})</div><div class="photo-grid">`+photos.map((p,i)=>`<figure class="photo-cell"><img src="${safeUrl(p[1])}" alt="${esc(p[0])}" loading="lazy" onclick="openLightbox(${i})"><figcaption>${esc(p[0])}</figcaption></figure>`).join('')+`</div>`; }
@@ -1254,8 +1259,9 @@
   }
   async function setBookingStatus(id,status){
     const lbl={active:'als ABGEHOLT (aktiv)',returned:'als ZURÜCKGEGEBEN',confirmed:'zurück auf „bestätigt"'}[status]||status;
-    if(!confirm(`Buchung ${lbl} markieren?`))return;
-    try{ const r=await fetch('/api/admin?section=set-booking-status',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${authToken}`},body:JSON.stringify({booking_id:id,new_status:status})}); const d=await r.json(); if(!r.ok)throw new Error(d.error||'Fehler'); closePanel(); await loadAll(); alert('✓ Status aktualisiert.'); }catch(e){alert('❌ '+e.message);}
+    const extra=status==='returned'?'\n\nKulanz-Abschluss: keine Verspätungs-/Zusatzgebühren, Mieter bekommt automatisch die Rückgabe-Bestätigung per E-Mail.':'';
+    if(!confirm(`Buchung ${lbl} markieren?${extra}`))return;
+    try{ const r=await fetch('/api/admin?section=set-booking-status',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${authToken}`},body:JSON.stringify({booking_id:id,new_status:status})}); const d=await r.json(); if(!r.ok)throw new Error(d.error||'Fehler'); closePanel(); await loadAll(); alert('✓ Status aktualisiert.'+(d.mail_sent?' Bestätigungs-Mail an den Mieter ist raus.':(status==='returned'?' ⚠ Bestätigungs-Mail konnte nicht gesendet werden.':''))); }catch(e){alert('❌ '+e.message);}
   }
   async function markNoShow(id){
     if(!confirm('Diese noch nicht bezahlte Buchung als „nicht erschienen" schließen?\n\nDer Anhänger wird wieder frei. Es wurde nichts gezahlt, daher keine Erstattung nötig.'))return;

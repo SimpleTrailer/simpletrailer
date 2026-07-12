@@ -16,7 +16,7 @@
   <title>Rückgabe – SimpleTrailer</title>
   <script src="/native-bridge.js?v=9" defer></script>
   <script src="/analytics.js?v=13" defer></script>
-  <script src="/i18n.js?v=2" defer></script>
+  <script src="/i18n.js?v=3" defer></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
@@ -101,6 +101,68 @@
     .confirm-box.warning { background:#1a0d00; border-color:#f97316; }
     .confirm-box.warning label { color:#fed7aa; }
 
+    /* ═══ GEFÜHRTE KAMERA (Ghost-Schablone, Foto 1 → direkt Foto 2) ═══ */
+    #camModal {
+      display:none; position:fixed; inset:0; z-index:9999; background:#000;
+      flex-direction:column; -webkit-user-select:none; user-select:none;
+    }
+    #camModal.open { display:flex; }
+    #camVideo { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+    .cam-ghost {
+      position:absolute; inset:0; width:100%; height:100%; pointer-events:none;
+      display:none; align-items:center; justify-content:center;
+    }
+    .cam-ghost.active { display:flex; }
+    .cam-ghost svg { width:min(86vw,520px); height:auto; opacity:.85; filter:drop-shadow(0 2px 12px rgba(0,0,0,.6)); animation:ghostBreath 2.6s ease-in-out infinite; }
+    @keyframes ghostBreath { 0%,100% { opacity:.85; } 50% { opacity:.55; } }
+    .cam-top {
+      position:relative; z-index:2; display:flex; align-items:center; justify-content:space-between;
+      padding:calc(14px + env(safe-area-inset-top)) 18px 14px;
+      background:linear-gradient(180deg,rgba(0,0,0,.72),rgba(0,0,0,0));
+    }
+    .cam-step-chip {
+      display:inline-flex; align-items:center; gap:8px; background:rgba(0,0,0,.55);
+      border:1px solid rgba(255,255,255,.22); border-radius:999px; padding:8px 16px;
+      font-size:.9rem; font-weight:700; color:#fff; backdrop-filter:blur(6px);
+    }
+    .cam-step-chip .dot-on  { width:8px; height:8px; border-radius:50%; background:var(--orange); }
+    .cam-step-chip .dot-off { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,.35); }
+    .cam-close {
+      background:rgba(0,0,0,.55); border:1px solid rgba(255,255,255,.22); color:#fff;
+      width:42px; height:42px; border-radius:50%; font-size:1.15rem; cursor:pointer; line-height:1;
+    }
+    .cam-hint {
+      position:absolute; left:0; right:0; bottom:calc(132px + env(safe-area-inset-bottom));
+      text-align:center; z-index:2; padding:0 24px; color:#fff; font-size:.95rem; font-weight:600;
+      text-shadow:0 1px 8px rgba(0,0,0,.8); line-height:1.45;
+    }
+    .cam-bottom {
+      position:absolute; left:0; right:0; bottom:0; z-index:2;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:18px 26px calc(22px + env(safe-area-inset-bottom));
+      background:linear-gradient(0deg,rgba(0,0,0,.72),rgba(0,0,0,0));
+    }
+    .cam-shutter {
+      width:74px; height:74px; border-radius:50%; border:4px solid #fff; background:rgba(255,255,255,.25);
+      cursor:pointer; position:relative; transition:transform .12s;
+    }
+    .cam-shutter::after { content:''; position:absolute; inset:6px; border-radius:50%; background:#fff; }
+    .cam-shutter:active { transform:scale(.9); }
+    .cam-side-btn {
+      background:rgba(0,0,0,.55); border:1px solid rgba(255,255,255,.22); color:#fff;
+      padding:11px 16px; border-radius:10px; font-size:.84rem; font-family:var(--font); cursor:pointer;
+      min-width:88px;
+    }
+    #camFlash { position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none; z-index:3; transition:opacity .28s; }
+    #camFlash.go { opacity:.85; transition:opacity 0s; }
+    .cam-check-pop {
+      position:absolute; inset:0; z-index:4; display:none; align-items:center; justify-content:center;
+      flex-direction:column; gap:12px; background:rgba(0,0,0,.55); color:#fff; text-align:center;
+    }
+    .cam-check-pop.show { display:flex; animation:popIn .35s ease; }
+    .cam-check-pop .big { width:84px; height:84px; border-radius:50%; background:var(--green); display:flex; align-items:center; justify-content:center; font-size:2.4rem; }
+    @keyframes popIn { from { opacity:0; transform:scale(.9);} to { opacity:1; transform:scale(1);} }
+
     /* Leaflet dark tweaks */
     .leaflet-container { background:#1a1a1a; font-family:var(--font); }
     .leaflet-popup-content-wrapper { background:#1f1f1f; color:#fff; border-radius:8px; }
@@ -126,7 +188,7 @@
 
   <div id="mainView" style="display:none;">
     <h1 data-i18n="return.title">Anhänger zurückgeben</h1>
-    <p class="sub" id="returnSub" data-i18n="return.sub">Foto machen und Rückgabe bestätigen.</p>
+    <p class="sub" id="returnSub" data-i18n="return.sub">Zwei schnelle Fotos (die Kamera führt dich durch), Häkchen setzen — fertig.</p>
 
     <!-- Buchungsinfo -->
     <div class="card">
@@ -179,10 +241,10 @@
     <!-- Foto Upload -->
     <div class="card">
       <p class="section-tag" data-i18n="return.photo.title">Foto 1 · Anhänger am Stellplatz</p>
-      <p style="color:var(--gray);font-size:.85rem;margin-bottom:14px;" data-i18n="return.photo.desc">Mach ein Foto des Anhängers an seinem Stellplatz – damit bestätigen wir die ordnungsgemäße Rückgabe.</p>
+      <p style="color:var(--gray);font-size:.85rem;margin-bottom:14px;" data-i18n="return.photo.desc">Tippe unten — die Kamera zeigt dir eine durchsichtige Schablone, wie der Anhänger ins Bild soll. Foto 2 (Ladefläche) kommt direkt danach.</p>
       <div class="upload-area" id="uploadArea" onclick="onUploadAreaClick()">
         <div class="upload-icon">📷</div>
-        <div class="upload-text"><strong id="uploadCta" data-i18n="return.photo.choose">Foto auswählen</strong> <span data-i18n="return.photo.or_drop">oder hierher ziehen</span></div>
+        <div class="upload-text"><strong id="uploadCta" data-i18n="return.photo.choose">Foto aufnehmen</strong> <span data-i18n="return.photo.or_drop">oder hierher ziehen</span></div>
         <input type="file" id="photoInput" accept="image/*" capture="environment" onchange="handlePhoto(event)" />
         <img id="photoPreview" class="upload-preview" alt="Vorschau" />
       </div>
@@ -191,10 +253,10 @@
     <!-- Foto 2: Ladefläche -->
     <div class="card">
       <p class="section-tag">Foto 2 · Ladefläche</p>
-      <p style="color:var(--gray);font-size:.85rem;margin-bottom:14px;">Mach ein Foto der <strong style="color:var(--white);">Ladefläche</strong> – so halten wir den Zustand bei Rückgabe fest. Schützt dich &amp; uns bei Schäden oder Verschmutzung.</p>
+      <p style="color:var(--gray);font-size:.85rem;margin-bottom:14px;">Ein Blick von schräg oben in die <strong style="color:var(--white);">Ladefläche</strong> – so ist der Zustand bei Rückgabe festgehalten. Schützt dich &amp; uns bei Schäden oder Verschmutzung.</p>
       <div class="upload-area" id="uploadAreaLade" onclick="onUploadAreaLadeClick()">
         <div class="upload-icon">📦</div>
-        <div class="upload-text"><strong id="uploadCtaLade">Foto auswählen</strong> oder hierher ziehen</div>
+        <div class="upload-text"><strong id="uploadCtaLade">Foto aufnehmen</strong> oder hierher ziehen</div>
         <input type="file" id="photoInputLade" accept="image/*" capture="environment" onchange="handlePhotoLade(event)" />
         <img id="photoPreviewLade" class="upload-preview" alt="Vorschau Ladefläche" />
       </div>
@@ -206,6 +268,13 @@
         <input type="checkbox" id="confirmInZone" onchange="updateSubmitState()" />
         <span id="confirmLabel" data-i18n="return.confirm.in_zone">Ich bestätige: Der Anhänger steht innerhalb der Rückgabe-Zone (grüner Kreis).</span>
       </label>
+    </div>
+
+    <!-- Status-Checkliste: zeigt live, was noch offen ist (beide Fotos + Häkchen = Pflicht) -->
+    <div id="submitChecklist" style="display:flex;flex-direction:column;gap:6px;margin-top:14px;padding:14px 16px;background:var(--s2);border-radius:10px;font-size:.85rem;">
+      <div id="checkPhoto1" style="display:flex;gap:8px;align-items:center;color:var(--gray);"><span>◯</span><span>Foto Anhänger — fehlt noch</span></div>
+      <div id="checkPhoto2" style="display:flex;gap:8px;align-items:center;color:var(--gray);"><span>◯</span><span>Foto Ladefläche — fehlt noch</span></div>
+      <div id="checkZone" style="display:flex;gap:8px;align-items:center;color:var(--gray);"><span>◯</span><span>Standort bestätigen (Häkchen oben)</span></div>
     </div>
 
     <!-- Submit -->
@@ -242,6 +311,72 @@
     <p style="color:var(--gray);" id="errorMsg" data-i18n="return.error.msg">Dieser Rückgabe-Link ist ungültig oder abgelaufen.</p>
   </div>
 
+</div>
+
+<!-- ═══ GEFÜHRTE KAMERA: Ghost-Schablone zeigt den richtigen Winkel, Foto 1 → direkt Foto 2 ═══ -->
+<div id="camModal" role="dialog" aria-modal="true" aria-label="Kamera">
+  <video id="camVideo" autoplay playsinline muted></video>
+
+  <!-- Schablone Foto 1: Anhänger von der Seite -->
+  <div class="cam-ghost" id="camGhost1">
+    <svg viewBox="0 0 520 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Plane/Aufbau -->
+      <rect x="42" y="36" width="330" height="178" rx="12" stroke="#fff" stroke-width="4" stroke-dasharray="14 10" fill="rgba(255,255,255,.06)"/>
+      <!-- Chassis -->
+      <line x1="26" y1="222" x2="402" y2="222" stroke="#fff" stroke-width="4" stroke-dasharray="14 10"/>
+      <!-- Deichsel + Kupplung -->
+      <path d="M402 222 L496 252" stroke="#fff" stroke-width="4" stroke-dasharray="14 10"/>
+      <circle cx="501" cy="254" r="8" stroke="#fff" stroke-width="4" fill="rgba(255,255,255,.1)"/>
+      <!-- Rad -->
+      <circle cx="185" cy="257" r="36" stroke="#fff" stroke-width="4" stroke-dasharray="10 8" fill="rgba(255,255,255,.06)"/>
+      <circle cx="185" cy="257" r="11" stroke="#fff" stroke-width="3" fill="none"/>
+      <!-- Stützrad vorn -->
+      <line x1="452" y1="238" x2="452" y2="278" stroke="#fff" stroke-width="4" stroke-dasharray="8 7"/>
+      <circle cx="452" cy="288" r="11" stroke="#fff" stroke-width="3" fill="none"/>
+    </svg>
+  </div>
+
+  <!-- Schablone Foto 2: Blick von schräg oben in die Ladefläche -->
+  <div class="cam-ghost" id="camGhost2">
+    <svg viewBox="0 0 520 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Ladeflächen-Rahmen in Perspektive -->
+      <path d="M118 52 L402 52 L492 282 L28 282 Z" stroke="#fff" stroke-width="4" stroke-dasharray="14 10" fill="rgba(255,255,255,.06)"/>
+      <!-- Boden-Linien für Tiefenwirkung -->
+      <line x1="166" y1="52" x2="106 " y2="282" stroke="#fff" stroke-width="2.5" stroke-dasharray="8 9" opacity=".55"/>
+      <line x1="260" y1="52" x2="260" y2="282" stroke="#fff" stroke-width="2.5" stroke-dasharray="8 9" opacity=".55"/>
+      <line x1="354" y1="52" x2="414" y2="282" stroke="#fff" stroke-width="2.5" stroke-dasharray="8 9" opacity=".55"/>
+      <line x1="97 " y1="129" x2="432" y2="129" stroke="#fff" stroke-width="2.5" stroke-dasharray="8 9" opacity=".55"/>
+      <line x1="76" y1="196" x2="453" y2="196" stroke="#fff" stroke-width="2.5" stroke-dasharray="8 9" opacity=".55"/>
+    </svg>
+  </div>
+
+  <div id="camFlash"></div>
+
+  <!-- Zwischen-Bestätigung nach Foto 1 -->
+  <div class="cam-check-pop" id="camCheckPop">
+    <div class="big">✓</div>
+    <div class="pop-title" style="font-weight:800;font-size:1.1rem;">Foto 1 gespeichert</div>
+    <div class="pop-sub" style="font-size:.92rem;color:#e5e5e5;">Jetzt Foto 2: von schräg oben in die Ladefläche</div>
+  </div>
+
+  <div class="cam-top">
+    <div class="cam-step-chip">
+      <span id="camDot1" class="dot-on"></span>
+      <span id="camDot2" class="dot-off"></span>
+      <span id="camStepLabel">Foto 1 von 2 · Anhänger</span>
+    </div>
+    <button type="button" class="cam-close" onclick="closeCamera()" aria-label="Kamera schließen">✕</button>
+  </div>
+
+  <div class="cam-hint" id="camHint">Stell dich so hin, dass der Anhänger ungefähr in die Schablone passt — dann auslösen</div>
+
+  <div class="cam-bottom">
+    <button type="button" class="cam-side-btn" onclick="camGallery()">📁 Galerie</button>
+    <button type="button" class="cam-shutter" onclick="camCapture()" aria-label="Foto aufnehmen"></button>
+    <span style="min-width:88px;"></span>
+  </div>
+
+  <canvas id="camCanvas" style="display:none;"></canvas>
 </div>
 
 <script>
@@ -302,6 +437,7 @@
       startCountdown();
       document.getElementById('loadingView').style.display = 'none';
       document.getElementById('mainView').style.display    = 'block';
+      updateSubmitState();
 
       // Initialer Tracker-Stand aus dem booking-Response
       const tr = booking.trailers || {};
@@ -440,10 +576,23 @@
   }
 
   function updateSubmitState() {
+    // Beide Fotos + Standort-Häkchen sind Pflicht. Damit niemand daran scheitert,
+    // führt die geführte Kamera (Ghost-Schablone, Foto 1 → direkt Foto 2) durch den Flow.
     const btn = document.getElementById('returnBtn');
-    const hasPhoto = !!photoFile && !!ladePhotoFile;
     const confirmed = document.getElementById('confirmInZone').checked;
-    btn.disabled = !(hasPhoto && confirmed);
+    btn.disabled = !(photoFile && ladePhotoFile && confirmed);
+    setCheck('checkPhoto1', !!photoFile,     'Foto Anhänger', 'fehlt noch');
+    setCheck('checkPhoto2', !!ladePhotoFile, 'Foto Ladefläche', 'fehlt noch');
+    setCheck('checkZone',   confirmed,       'Standort bestätigen', 'Häkchen oben setzen');
+  }
+
+  function setCheck(id, done, label, hint) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = done
+      ? `<span style="color:var(--green);">✓</span><span style="color:var(--white);">${label}</span>`
+      : `<span>◯</span><span>${label} — ${hint}</span>`;
+    el.style.color = done ? 'var(--white)' : 'var(--gray)';
   }
 
   function startCountdown() {
@@ -497,6 +646,13 @@
     const file = e.target.files[0];
     if (!file) return;
     setPhotoFile(file);
+    // Aus Galerie-/Fallback-Picker: direkt zu Foto 2 führen
+    if (document.getElementById('camModal').classList.contains('open')) {
+      if (!ladePhotoFile) { camStep = 2; updateCamUI(); } else closeCamera();
+    } else if (!ladePhotoFile) {
+      // Fallback ohne Kamera-Modal: sanft zur Foto-2-Karte scrollen
+      document.getElementById('uploadAreaLade').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
   }
 
   function setPhotoFile(file) {
@@ -512,22 +668,134 @@
     if (window.SimpleTrailerNative) window.SimpleTrailerNative.haptic('light');
   }
 
-  // In der Capacitor-App: native Kamera/Galerie-Picker (Apple-Pflicht fuer Native-Feel).
-  // Im Browser: Fallback auf File-Input wie bisher.
-  async function onUploadAreaClick() {
+  // ═══ GEFÜHRTE KAMERA ═══
+  // Im Browser: getUserMedia-Kamera mit Ghost-Schablone, Foto 1 → direkt Foto 2.
+  // In der Capacitor-App: native Kamera (kein Overlay möglich), aber verkettet 1 → 2.
+  // Fallback (kein getUserMedia / Zugriff verweigert): klassischer File-Input.
+  let camStream = null, camStep = 1, camOpening = false;
+
+  async function openCamera(step) {
+    camStep = step;
     const N = window.SimpleTrailerNative;
     if (N && N.isNative) {
-      const file = await N.takePhoto({ source: 'PROMPT' });
-      if (file) setPhotoFile(file);
+      // Native Kette: nach Foto 1 direkt Foto 2 anstoßen
+      if (step === 1) {
+        const f = await N.takePhoto({ source: 'PROMPT' });
+        if (f) { setPhotoFile(f); if (!ladePhotoFile) openCamera(2); }
+      } else {
+        const f = await N.takePhoto({ source: 'PROMPT' });
+        if (f) setLadePhotoFile(f);
+      }
       return;
     }
-    document.getElementById('photoInput').click();
+    // Bereits offen? Nur Schablone wechseln — kein zweiter Stream (Leak, Kamera-LED bliebe an).
+    if (document.getElementById('camModal').classList.contains('open')) { updateCamUI(); return; }
+    if (camOpening) return;
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { camFallbackInput(step); return; }
+    camOpening = true;
+    try {
+      camStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
+        audio: false
+      });
+    } catch (e) { camOpening = false; camFallbackInput(step); return; } // verweigert/nicht verfügbar → File-Input
+    camOpening = false;
+    const v = document.getElementById('camVideo');
+    v.srcObject = camStream;
+    v.play().catch(() => {}); // iOS: autoplay feuert nach srcObject-Reset nicht zuverlässig
+    document.getElementById('camModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    updateCamUI();
   }
+
+  function camFallbackInput(step) {
+    const input = document.getElementById(step === 1 ? 'photoInput' : 'photoInputLade');
+    input.value = ''; // sonst feuert 'change' nicht, wenn dieselbe Datei erneut gewählt wird
+    input.click();
+  }
+
+  function updateCamUI() {
+    document.getElementById('camGhost1').classList.toggle('active', camStep === 1);
+    document.getElementById('camGhost2').classList.toggle('active', camStep === 2);
+    document.getElementById('camDot1').className = camStep === 1 ? 'dot-on' : 'dot-off';
+    document.getElementById('camDot2').className = camStep === 2 ? 'dot-on' : 'dot-off';
+    document.getElementById('camStepLabel').textContent = camStep === 1 ? 'Foto 1 von 2 · Anhänger' : 'Foto 2 von 2 · Ladefläche';
+    document.getElementById('camHint').textContent = camStep === 1
+      ? 'Stell dich so hin, dass der Anhänger ungefähr in die Schablone passt — dann auslösen'
+      : 'Von schräg oben in die Ladefläche fotografieren — Rahmen ungefähr treffen';
+  }
+
+  let camCapturing = false; // Doppeltipp-Schutz: sonst würde Foto 1 auch als Foto 2 gespeichert
+
+  function camCapture() {
+    const v = document.getElementById('camVideo');
+    if (!v.videoWidth || camCapturing) return; // Stream noch nicht bereit / Capture läuft schon
+    camCapturing = true;
+    const c = document.getElementById('camCanvas');
+    c.width = v.videoWidth; c.height = v.videoHeight;
+    c.getContext('2d').drawImage(v, 0, 0);
+    // Kurzer Blitz als Feedback
+    const flash = document.getElementById('camFlash');
+    flash.classList.add('go');
+    setTimeout(() => flash.classList.remove('go'), 60);
+    c.toBlob((blob) => {
+      camCapturing = false;
+      if (!blob) { camFallbackInput(camStep); return; }
+      const f = new File([blob], `cam-${camStep}-${Date.now()}.jpg`, { type: 'image/jpeg' });
+      camAccept(f);
+    }, 'image/jpeg', 0.85);
+  }
+
+  // Foto übernehmen + weiterschalten: nach Foto 1 kommt DIREKT Foto 2, dann schließen.
+  function camAccept(file) {
+    const capturedStep = camStep;
+    if (capturedStep === 1) setPhotoFile(file); else setLadePhotoFile(file);
+    if (window.SimpleTrailerNative) window.SimpleTrailerNative.haptic('medium');
+    const nextStep = !photoFile ? 1 : (!ladePhotoFile ? 2 : null);
+    if (nextStep) {
+      camStep = nextStep;
+      // Zwischen-Bestätigung kurz zeigen, dann Schablone wechseln
+      const pop = document.getElementById('camCheckPop');
+      pop.querySelector('.pop-title').textContent = `Foto ${capturedStep} gespeichert`;
+      pop.querySelector('.pop-sub').textContent = nextStep === 2
+        ? 'Jetzt Foto 2: von schräg oben in die Ladefläche'
+        : 'Jetzt noch Foto 1: der Anhänger von der Seite';
+      pop.classList.add('show');
+      setTimeout(() => { pop.classList.remove('show'); }, 1300);
+      updateCamUI();
+    } else {
+      closeCamera();
+    }
+  }
+
+  function closeCamera() {
+    if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
+    document.getElementById('camVideo').srcObject = null;
+    document.getElementById('camModal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  // Galerie-Auswahl aus der Kamera heraus (capture-Attribut kurz entfernen,
+  // damit der Picker statt der System-Kamera aufgeht)
+  function camGallery() {
+    const input = document.getElementById(camStep === 1 ? 'photoInput' : 'photoInputLade');
+    input.value = ''; // sonst feuert 'change' nicht bei erneuter Wahl derselben Datei
+    input.removeAttribute('capture');
+    input.click();
+    setTimeout(() => input.setAttribute('capture', 'environment'), 1000);
+  }
+
+  async function onUploadAreaClick() { openCamera(1); }
+  async function onUploadAreaLadeClick() { openCamera(2); }
 
   function handlePhotoLade(e) {
     const file = e.target.files[0];
     if (!file) return;
     setLadePhotoFile(file);
+    // Kam die Datei aus dem Galerie-/Fallback-Picker während die Kamera offen ist → weiterschalten
+    if (document.getElementById('camModal').classList.contains('open')) {
+      if (!photoFile) { camStep = 1; updateCamUI(); } else closeCamera();
+    }
   }
   function setLadePhotoFile(file) {
     ladePhotoFile = file;
@@ -539,11 +807,6 @@
     reader.readAsDataURL(file);
     updateSubmitState();
     if (window.SimpleTrailerNative) window.SimpleTrailerNative.haptic('light');
-  }
-  async function onUploadAreaLadeClick() {
-    const N = window.SimpleTrailerNative;
-    if (N && N.isNative) { const file = await N.takePhoto({ source: 'PROMPT' }); if (file) setLadePhotoFile(file); return; }
-    document.getElementById('photoInputLade').click();
   }
   (function(){
     const a = document.getElementById('uploadAreaLade');
@@ -580,6 +843,8 @@
   async function uploadPhoto() {
     if (!photoFile) return null;
     const fileName = `${bookingId}-${Date.now()}.${photoFile.name.split('.').pop()}`;
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 25000); // hängender Upload darf den Flow nicht blockieren
     const res = await fetch(`${SUPABASE_URL}/storage/v1/object/return-photos/${fileName}`, {
       method: 'POST',
       headers: {
@@ -587,8 +852,10 @@
         Authorization: `Bearer ${SUPABASE_ANON}`,
         'Content-Type': photoFile.type
       },
-      body: photoFile
+      body: photoFile,
+      signal: ctrl.signal
     });
+    clearTimeout(t);
     if (!res.ok) return null;
     return `${SUPABASE_URL}/storage/v1/object/public/return-photos/${fileName}`;
   }
@@ -596,14 +863,26 @@
   async function uploadLadePhoto() {
     if (!ladePhotoFile) return null;
     const fileName = `lade-${bookingId}-${Date.now()}.${ladePhotoFile.name.split('.').pop()}`;
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 25000);
     const res = await fetch(`${SUPABASE_URL}/storage/v1/object/return-photos/${fileName}`, {
       method: 'POST',
       headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}`, 'Content-Type': ladePhotoFile.type },
-      body: ladePhotoFile
+      body: ladePhotoFile,
+      signal: ctrl.signal
     });
+    clearTimeout(t);
     if (!res.ok) return null;
     return `${SUPABASE_URL}/storage/v1/object/public/return-photos/${fileName}`;
   }
+
+  // Fotos sind fail-open: auch Netzwerk-Exceptions (Funkloch, Abbruch) dürfen NIE
+  // die Rückgabe blockieren — nur der finale process-return-Call darf Fehler zeigen.
+  async function tryUpload(fn) {
+    try { return await fn(); } catch (e) { return null; }
+  }
+
+  let aiRejectedOnce = false; // KI darf genau 1x zum Neu-Fotografieren auffordern, nie endgültig blocken
 
   async function submitReturn() {
     // Sicherheitsnetz: Rückgabe nur möglich wenn Buchung bereits begonnen hat
@@ -612,19 +891,30 @@
       return;
     }
 
+    // Sicherheitsnetz (Button ist ohne Fotos eh disabled): fehlt doch eins → Kamera öffnen.
+    if (!photoFile || !ladePhotoFile) {
+      openCamera(!photoFile ? 1 : 2);
+      return;
+    }
+
     const btn = document.getElementById('returnBtn');
     btn.disabled = true;
-    btn.innerHTML = '<div class="spinner"></div> Foto wird hochgeladen…';
+    btn.innerHTML = '<div class="spinner"></div> Wird verarbeitet…';
 
     try {
-      const photoUrl = await uploadPhoto();
-      if (!photoUrl) {
-        throw new Error('Foto-Upload fehlgeschlagen — bitte erneut versuchen. Ohne Foto können wir die Rückgabe nicht bestätigen.');
+      // Foto-Uploads sind BEST-EFFORT: schlägt der Upload fehl, geht die Rückgabe
+      // trotzdem durch (Backend akzeptiert null) — der Mieter darf hier nie hängenbleiben.
+      let photoUrl = null, ladeUrl = null;
+      if (photoFile) {
+        btn.innerHTML = '<div class="spinner"></div> Foto wird hochgeladen…';
+        photoUrl = await tryUpload(uploadPhoto);
+        if (!photoUrl) photoUrl = await tryUpload(uploadPhoto); // 1x Retry, dann fail-open
       }
 
-      // KI-Validierung: zeigt das Foto wirklich einen Anhänger?
-      btn.innerHTML = '<div class="spinner"></div> Foto wird geprüft…';
-      if (photoUrl) {
+      // KI-Validierung: zeigt das Foto wirklich einen Anhänger? Fordert höchstens
+      // EINMAL zum Neu-Fotografieren auf — beim zweiten Versuch geht es immer durch.
+      if (photoUrl && !aiRejectedOnce) {
+        btn.innerHTML = '<div class="spinner"></div> Foto wird geprüft…';
         try {
           const ctrl = new AbortController();
           const t = setTimeout(() => ctrl.abort(), 12000);
@@ -638,18 +928,21 @@
           if (valRes.ok) {
             const val = await valRes.json();
             if (!val.is_trailer && val.confidence !== 'low') {
+              aiRejectedOnce = true;
               btn.innerHTML = 'Rückgabe bestätigen';
               btn.disabled = false;
-              alert('Das Foto zeigt offenbar keinen Anhänger.\n\nKI-Hinweis: ' + (val.reason || '') + '\n\nBitte den Anhänger fotografieren und nochmal probieren.');
+              alert('Das Foto zeigt offenbar keinen Anhänger.\n\nKI-Hinweis: ' + (val.reason || '') + '\n\nBitte den Anhänger fotografieren und nochmal auf „Rückgabe bestätigen" tippen. Klappt es wieder nicht, geht die Rückgabe beim nächsten Tippen trotzdem durch.');
               return;
             }
           }
         } catch (e) { /* fail-open */ }
       }
 
-      btn.innerHTML = '<div class="spinner"></div> Ladeflächen-Foto wird hochgeladen…';
-      const ladeUrl = await uploadLadePhoto();
-      if (!ladeUrl) throw new Error('Ladeflächen-Foto-Upload fehlgeschlagen — bitte erneut versuchen.');
+      if (ladePhotoFile) {
+        btn.innerHTML = '<div class="spinner"></div> Ladeflächen-Foto wird hochgeladen…';
+        ladeUrl = await tryUpload(uploadLadePhoto);
+        if (!ladeUrl) ladeUrl = await tryUpload(uploadLadePhoto); // 1x Retry, dann fail-open
+      }
 
       btn.innerHTML = '<div class="spinner"></div> Wird verarbeitet…';
       // Mieter-Bestaetigung + Geolocation mitschicken — Backend nutzt das fuer pending-Logik
@@ -676,6 +969,13 @@
 
       document.getElementById('mainView').style.display   = 'none';
       document.getElementById('successView').style.display = 'block';
+
+      // Ehrlich sein: Foto gemacht, aber Upload 2x fehlgeschlagen → Mieter informieren
+      // (Rückgabe ist trotzdem gültig — er soll nur wissen, dass sein Beweisfoto fehlt).
+      if ((photoFile && !photoUrl) || (ladePhotoFile && !ladeUrl)) {
+        document.getElementById('successMsg').textContent +=
+          ' Hinweis: Dein Foto konnte nicht hochgeladen werden — die Rückgabe ist trotzdem gültig. Du kannst es uns optional an info@simpletrailer.de schicken.';
+      }
 
       // Pending-Variante: Tracker hat sich noch nicht gemeldet, Bestaetigung folgt per Mail
       if (data.return_status === 'pending_position_check') {

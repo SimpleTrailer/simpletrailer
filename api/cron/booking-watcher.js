@@ -12,6 +12,9 @@ const { pushLion } = require('../_lion-push.js');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
+// User-Input (Name/Email aus dem Buchungsformular) darf nie roh ins Mail-HTML
+const esc = s => String(s ?? '').replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
+
 module.exports = async (req, res) => {
   const auth = req.headers.authorization || '';
   const bearerMatch = auth.match(/^Bearer\s+(.+)$/i);
@@ -55,17 +58,17 @@ module.exports = async (req, res) => {
     // Pro Buchung Push
     for (const b of newBookings) {
       const tarifLabels = { flexible: 'Individuell', day: 'Ganzer Tag', weekend: 'Wochenende', week: '1 Woche' };
-      const startStr = new Date(b.start_time).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-      const endStr = new Date(b.end_time).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+      const startStr = new Date(b.start_time).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Berlin' });
+      const endStr = new Date(b.end_time).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Berlin' });
 
       await pushLion({
         severity: 'green',
         category: 'alert',
-        title: `Neue Buchung: ${b.customer_name} · ${(b.total_amount || 0).toFixed(2).replace('.', ',')} €`,
+        title: `Neue Buchung: ${esc(b.customer_name)} · ${(b.total_amount || 0).toFixed(2).replace('.', ',')} €`,
         htmlBody: `
           <table style="width:100%;font-size:.92rem;line-height:1.6;">
-            <tr><td style="color:#888;width:35%;">Mieter</td><td><strong>${b.customer_name}</strong></td></tr>
-            <tr><td style="color:#888;">Email</td><td>${b.customer_email}</td></tr>
+            <tr><td style="color:#888;width:35%;">Mieter</td><td><strong>${esc(b.customer_name)}</strong></td></tr>
+            <tr><td style="color:#888;">Email</td><td>${esc(b.customer_email)}</td></tr>
             <tr><td style="color:#888;">Anhänger</td><td>${b.trailers?.name || 'PKW-Anhänger'}</td></tr>
             <tr><td style="color:#888;">Tarif</td><td>${tarifLabels[b.pricing_type] || b.pricing_type}</td></tr>
             <tr><td style="color:#888;">Von</td><td>${startStr} Uhr</td></tr>

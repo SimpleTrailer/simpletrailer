@@ -144,7 +144,7 @@ module.exports = async (req, res) => {
           htmlBody: `
             <p><strong>${t.name}</strong>: ${issue.msg}</p>
             <p style="background:#0a1a2a;border-left:3px solid #60a5fa;padding:12px;border-radius:6px;margin:14px 0;">
-              <strong>Letztes Signal:</strong> ${t.last_seen_at ? new Date(t.last_seen_at).toLocaleString('de-DE') : '— nie —'}<br>
+              <strong>Letztes Signal:</strong> ${t.last_seen_at ? new Date(t.last_seen_at).toLocaleString('de-DE', { timeZone: 'Europe/Berlin' }) : '— nie —'}<br>
               <strong>Letzte Batterie:</strong> ${t.last_battery_percent != null ? t.last_battery_percent + '%' : '—'}<br>
               <strong>IMEI:</strong> <code>${t.tracker_imei}</code>
               ${mapsLink ? `<br><strong>Letzter Standort:</strong> <a href="${mapsLink}" style="color:#60a5fa;">Google Maps oeffnen</a>` : ''}

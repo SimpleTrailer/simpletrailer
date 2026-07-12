@@ -714,16 +714,81 @@ Wir bitten den Ausfall zu entschuldigen.
       // 'returned' ist bewusst TERMINAL — kein Reopen der Rückgabe-/Verspätungs-Charge-Logik
       // (process-return.js schützt nur über status==='returned'; ein Undo würde Doppel-Abbuchung ermöglichen).
       const ALLOWED = { confirmed: ['active'], active: ['returned', 'confirmed'] };
-      const { data: b } = await supabase.from('bookings').select('id, status').eq('id', booking_id).maybeSingle();
+      const { data: b } = await supabase.from('bookings')
+        .select('id, status, customer_name, customer_email, total_amount, trailers(name)')
+        .eq('id', booking_id).maybeSingle();
       if (!b) return res.status(404).json({ error: 'Buchung nicht gefunden' });
       if (!ALLOWED[b.status] || !ALLOWED[b.status].includes(new_status)) {
         return res.status(400).json({ error: `Übergang ${b.status} → ${new_status} nicht erlaubt` });
       }
       const upd = { status: new_status };
-      if (new_status === 'returned') upd.actual_return_time = new Date().toISOString();
-      const { error } = await supabase.from('bookings').update(upd).eq('id', booking_id);
+      if (new_status === 'returned') {
+        upd.actual_return_time = new Date().toISOString();
+        // Manuelles Abschließen = Kulanz → sicherstellen, dass keine Gebühren-Reste stehen bleiben.
+        upd.late_fee_amount = 0;
+        upd.return_extra_fee = 0;
+      }
+      // Atomar: nur updaten, wenn der Status noch der gelesene ist → verhindert Doppel-Mail
+      // bei parallelem Doppelklick/zweitem Admin-Tab (Read-Check-Write-Fenster).
+      let { data: updated, error } = await supabase.from('bookings')
+        .update(upd).eq('id', booking_id).eq('status', b.status).select('id');
+      if (error && /column .* does not exist/i.test(error.message || '')) {
+        // return_extra_fee ist eine Migrations-Spalte — Fallback wie process-return.js
+        console.warn('return_extra_fee-Spalte fehlt — Update ohne Zone-Feld. Migration ausführen!');
+        delete upd.return_extra_fee;
+        ({ data: updated, error } = await supabase.from('bookings')
+          .update(upd).eq('id', booking_id).eq('status', b.status).select('id'));
+      }
       if (error) return res.status(500).json({ error: error.message });
-      return res.status(200).json({ ok: true, status: new_status });
+      if (!updated || updated.length === 0) {
+        return res.status(409).json({ error: 'Status wurde parallel geändert — bitte neu laden.' });
+      }
+
+      // Kulanz-Abschluss → Mieter bekommt dieselbe Bestätigung wie beim normalen Rückgabe-Flow
+      // (der schickt sie nur, wenn der Mieter den Foto-Flow selbst durchläuft). Fail-soft:
+      // ein Mail-Fehler darf den Status-Wechsel nicht rückgängig machen.
+      let mailSent = false;
+      if (new_status === 'returned' && b.customer_email) {
+        try {
+          const { Resend } = require('resend');
+          const resend = new Resend(process.env.RESEND_API_KEY);
+          const num = b.id.slice(0, 8).toUpperCase();
+          const total = Number(b.total_amount || 0);
+          const vorname = String(b.customer_name || '').trim().split(' ')[0];
+          const reviewBlock =
+            `<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-top:8px;"><tr><td align="center" style="background:#F6F3EE;border:1px solid #E7E2D9;border-radius:12px;padding:22px 20px;">
+              <div style="font-size:24px;letter-spacing:5px;color:#E85D00;margin-bottom:6px;">★★★★★</div>
+              <div style="font-weight:700;font-size:15px;color:#111213;margin-bottom:6px;font-family:system-ui,sans-serif;">Wie war deine Erfahrung?</div>
+              <div style="color:#5C5953;font-size:13px;margin-bottom:16px;line-height:1.5;font-family:system-ui,sans-serif;">Eine kurze Google-Bewertung hilft uns, weiter zu wachsen — und anderen, uns zu finden.</div>
+              <a href="https://g.page/r/Cd6jwKdwS_Y7EAE/review" style="display:inline-block;background:#E85D00;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:700;font-size:14px;font-family:system-ui,sans-serif;">Auf Google bewerten →</a>
+            </td></tr></table>`;
+          // Resend v2 wirft bei API-Fehlern NICHT — es gibt { error } zurück. Explizit prüfen,
+          // sonst meldet mail_sent=true obwohl nichts rausging.
+          const { error: mailErr } = await resend.emails.send({
+            from: 'SimpleTrailer <buchung@simpletrailer.de>',
+            reply_to: 'info@simpletrailer.de',
+            to: b.customer_email,
+            subject: `Rückgabe bestätigt #${num} – SimpleTrailer`,
+            html: T.layout({
+              heading: 'Rückgabe bestätigt ✓',
+              preheader: `Deine Abrechnung — Gesamt ${total.toFixed(2)} €`,
+              replyNote: 'Fragen? Antworte einfach auf diese Mail.',
+              bodyHtml:
+                T.p(`Hallo${vorname ? ' ' + T.esc(vorname) : ''},<br>wir haben deine Rückgabe bestätigt — du musst nichts weiter tun.`) +
+                T.callout('<strong>✓ Rückgabe abgeschlossen – keine zusätzlichen Kosten.</strong>', 'green') +
+                T.rows([
+                  ['Buchung', `#${num}`],
+                  ['Anhänger', T.esc(b.trailers?.name || 'Anhänger')],
+                  ['Gesamt', `${total.toFixed(2)} €`]
+                ]) +
+                reviewBlock
+            })
+          });
+          if (mailErr) throw new Error(mailErr.message || 'Resend-API-Fehler');
+          mailSent = true;
+        } catch (e) { console.error('Kulanz-Rückgabe-Mail fail:', e.message); }
+      }
+      return res.status(200).json({ ok: true, status: new_status, mail_sent: mailSent });
     }
 
     // ─── MARK-NO-SHOW: Kunde nicht erschienen → schließen OHNE Erstattung, Slot frei ───
@@ -735,6 +800,8 @@ Wir bitten den Ausfall zu entschuldigen.
       const { data: b } = await supabase.from('bookings').select('id, status').eq('id', booking_id).maybeSingle();
       if (!b) return res.status(404).json({ error: 'Buchung nicht gefunden' });
       // NUR unbezahlte (pending) Buchungen — kein Geld im Spiel, keine Refund-/Rechtsfrage.
+      // (Bezahlte No-Shows schließt der Cron api/send-reminders.js automatisch ab:
+      //  status 'returned' + no_show=true, GPS-geprüft, mit Kundenmail + Lion-Alert.)
       // Bezahlte (confirmed) No-Shows bewusst NICHT hier: die brauchen eine AGB-gedeckte
       // Entscheidung (Kulanz-Refund via cancel-booking oder anteilige Gebühr) — nicht per Stillschweigen.
       if (b.status !== 'pending') {
@@ -1285,17 +1352,25 @@ SimpleTrailer GbR · Waltjenstr. 96, 28237 Bremen · info@simpletrailer.de`;
     }
 
     // section === 'data' (default)
-    const { data: bookings, error } = await supabase.from('bookings').select(`
+    const BOOKING_COLS = `
       id, customer_name, customer_email, customer_phone,
       start_time, end_time, pricing_type, total_amount,
-      status, access_code, actual_return_time,
+      status, no_show, access_code, actual_return_time,
       late_fee_amount, late_fee_payment_intent_id,
       stripe_payment_intent_id, created_at,
       return_photo_url, ladeflaeche_photo_url, precheck_photo_url, insurance_type, insurance_amount,
       free_floating, cancellation_protection, cancellation_protection_fee,
       cancelled_at, cancellation_refund_amount,
       trailers(name)
-    `).order('created_at', { ascending: false });
+    `;
+    let { data: bookings, error } = await supabase.from('bookings')
+      .select(BOOKING_COLS).order('created_at', { ascending: false });
+    if (error) {
+      // Fallback solange die Migration für bookings.no_show noch nicht gelaufen ist —
+      // das Dashboard darf an der fehlenden Spalte nicht sterben.
+      ({ data: bookings, error } = await supabase.from('bookings')
+        .select(BOOKING_COLS.replace(/\bno_show,\s*/, '')).order('created_at', { ascending: false }));
+    }
     if (error) throw error;
 
     const now = new Date();

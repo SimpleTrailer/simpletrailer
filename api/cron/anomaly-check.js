@@ -11,9 +11,12 @@
  * Bei keiner: einfach OK zurück.
  */
 const { createClient } = require('@supabase/supabase-js');
-const { pushLion } = require('./_lion-push.js');
+const { pushLion } = require('../_lion-push.js');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+
+// User-Input (Name/Email aus dem Buchungsformular) darf nie roh ins Mail-HTML
+const esc = s => String(s ?? '').replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
 
 module.exports = async (req, res) => {
   // Auth via Vercel-Cron-Header oder manuelles Token
@@ -44,7 +47,7 @@ module.exports = async (req, res) => {
         title: `${stalePending.length} Buchung(en) seit >1h "pending"`,
         detail: 'Vermutlich Stripe-Zahlungsfehler.',
         list: stalePending.slice(0, 5).map(b =>
-          `- ${b.customer_name} (${b.customer_email}) · ${(b.total_amount||0).toFixed(2)}€ · ID: ${b.id.slice(0,8)}`
+          `- ${esc(b.customer_name)} (${esc(b.customer_email)}) · ${(b.total_amount||0).toFixed(2)}€ · ID: ${b.id.slice(0,8)}`
         ).join('\n')
       });
     }
@@ -66,7 +69,32 @@ module.exports = async (req, res) => {
         title: `${overdue.length} Anhänger überfällig`,
         detail: 'Mietende > 1 Stunde her, keine Rückgabe registriert.',
         list: overdue.slice(0, 5).map(b =>
-          `- ${b.customer_name} · Ende ${new Date(b.end_time).toLocaleString('de-DE')} · ID: ${b.id.slice(0,8)}`
+          `- ${esc(b.customer_name)} · Ende ${new Date(b.end_time).toLocaleString('de-DE', { timeZone: 'Europe/Berlin' })} · ID: ${b.id.slice(0,8)}`
+        ).join('\n')
+      });
+    }
+
+    // 2b) SICHERHEITSNETZ: Bezahlt, aber nie abgeholt (Status blieb 'confirmed') und Mietzeit >3h vorbei.
+    //     Eigentlich schließt send-reminders solche Buchungen nach 1h automatisch ab (No-Show) —
+    //     wenn dieser Check anschlägt, ist der Auto-Abschluss kaputt (z.B. Migration no_show fehlt).
+    //     Max. 7 Tage zurück, damit uralte Fälle nicht ewig alarmieren.
+    const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
+    const threeHoursAgo = new Date(Date.now() - 3 * 3600000).toISOString();
+    const { data: neverPickedUp, error: npError } = await supabase
+      .from('bookings')
+      .select('id, customer_email, customer_name, end_time')
+      .eq('status', 'confirmed')
+      .lt('end_time', threeHoursAgo)
+      .gt('end_time', sevenDaysAgo);
+    if (npError) console.warn('anomaly-check 2b:', npError.message);
+
+    if ((neverPickedUp || []).length > 0) {
+      anomalies.push({
+        severity: 'yellow',
+        title: `${neverPickedUp.length} Buchung(en) abgelaufen ohne Abholung — manuell prüfen`,
+        detail: 'Bezahlt, kein Precheck, Mietzeit >3h vorbei. Zwei mögliche Ursachen: (1) Nie abgeholt, aber der Auto-Abschluss (send-reminders) greift nicht — Cron kaputt? Spalte bookings.no_show fehlt? GPS-Signal fehlt/veraltet? (2) Kunde hat OHNE Precheck abgeholt (Schloss-Code steht im Vertrags-PDF!) und ist mit dem Anhänger unterwegs. GPS-Position im Admin prüfen, dann manuell entscheiden.',
+        list: neverPickedUp.slice(0, 5).map(b =>
+          `- ${esc(b.customer_name)} (${esc(b.customer_email)}) · Ende ${new Date(b.end_time).toLocaleString('de-DE', { timeZone: 'Europe/Berlin' })} · ID: ${b.id.slice(0,8)}`
         ).join('\n')
       });
     }

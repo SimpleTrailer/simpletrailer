@@ -93,6 +93,10 @@
     .booking-detail span { display: flex; gap: 6px; }
     .booking-detail strong { color: var(--white); }
     .booking-amount { font-size: 1rem; font-weight: 800; color: var(--orange); margin-top: 10px; }
+    .booking-docs { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+    .doc-btn { flex: 1; min-width: 130px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; background: transparent; border: 1px solid var(--orange); color: var(--orange); padding: 9px 12px; border-radius: 9px; font-size: .82rem; font-weight: 700; cursor: pointer; font-family: var(--font); transition: background .15s, color .15s; }
+    .doc-btn:hover { background: var(--orange); color: #fff; }
+    .doc-btn:disabled { opacity: .55; cursor: default; }
 
     /* ACTIVE BOOKING */
     .active-booking-card { background: var(--s1); border: 2px solid #22c55e; border-radius: 16px; padding: 22px; margin-bottom: 20px; }
@@ -735,7 +739,7 @@
         <div class="booking-item">
           <div class="booking-top">
             <div class="booking-ref">#${b.id.slice(0,8).toUpperCase()}</div>
-            <span class="booking-status ${statusClass[b.status] || 'status-confirmed'}">${statusLabel[b.status] || b.status}</span>
+            <span class="booking-status ${statusClass[b.status] || 'status-confirmed'}">${b.no_show ? 'Beendet' : (statusLabel[b.status] || b.status)}</span>
           </div>
           <div class="booking-detail">
             <span>🚛 <strong>${b.trailers?.name || 'Anhänger'}</strong></span>
@@ -745,10 +749,41 @@
             <span>🛡 <strong>${INS_LABEL[b.insurance_type || 'none']}</strong></span>
           </div>
           <div class="booking-amount">${(b.total_amount + (b.late_fee_amount || 0)).toFixed(2).replace('.',',')} €</div>
+          ${docButtons(b.id)}
         </div>
       `).join('');
     } catch(e) {
       list.innerHTML = '<div class="empty-state"><p>Buchungen konnten nicht geladen werden.</p></div>';
+    }
+  }
+
+  // Download-Buttons (Mietvertrag + Rechnung) für eine Buchung
+  function docButtons(id) {
+    return `<div class="booking-docs">
+      <button type="button" class="doc-btn" onclick="downloadDoc('${id}','mietvertrag',this)">📄 Mietvertrag</button>
+      <button type="button" class="doc-btn" onclick="downloadDoc('${id}','rechnung',this)">🧾 Rechnung</button>
+    </div>`;
+  }
+
+  async function downloadDoc(id, type, btn) {
+    const orig = btn ? btn.innerHTML : '';
+    if (btn) { btn.disabled = true; btn.innerHTML = '… lädt'; }
+    try {
+      // authedFetch refresht bei abgelaufenem Token (1h) transparent und wiederholt —
+      // wichtig, weil dieses Feature gerade Kunden trifft, die später ins Konto zurückkommen.
+      const res = await authedFetch(`/api/get-document?booking_id=${encodeURIComponent(id)}&type=${type}`);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${type === 'rechnung' ? 'Rechnung' : 'Mietvertrag'}-${id.slice(0,8).toUpperCase()}.pdf`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+    } catch (e) {
+      alert('Dokument konnte gerade nicht geladen werden. Bitte versuche es gleich nochmal — oder schreib uns an info@simpletrailer.de.');
+    } finally {
+      if (btn) { btn.disabled = false; btn.innerHTML = orig; }
     }
   }
 
@@ -941,8 +976,8 @@
         </details>`;
     }
 
-    // PDF-Downloads (Mietvertrag + Rechnung) — werden serverseitig vorgehalten, hier Verweis auf die Mail
-    const pdfNote = `<p style="font-size:.78rem;color:var(--gray);margin-top:10px;text-align:center;">Mietvertrag + Rechnung als PDF: in deiner Buchungs-E-Mail im Anhang.</p>`;
+    // PDF-Downloads (Mietvertrag + Rechnung) — jederzeit frisch aus der Buchung erzeugt
+    const pdfNote = `${docButtons(b.id)}<p style="font-size:.74rem;color:var(--gray);margin-top:8px;text-align:center;">Mietvertrag + Rechnung jederzeit hier herunterladen.</p>`;
 
     document.getElementById('activeBookingCard').innerHTML = `
       <div class="active-booking-badge">● Aktive Buchung</div>
