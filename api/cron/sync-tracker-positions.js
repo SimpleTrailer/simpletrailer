@@ -5,9 +5,13 @@
  * sie in Supabase (trailers.last_lat/lng + trailer_positions Historie).
  *
  * Diebstahl-Alarm-Logik:
- *   Wenn Anhänger sich >300m vom letzten "Heimat-Standort" entfernt UND
+ *   Wenn Anhänger sich >100m von der zuletzt bekannten Position entfernt UND
  *   keine aktive Buchung läuft (bookings.status NOT IN ('confirmed','active'))
  *   → 🚨 Urgent-Mail + Push + Eintrag in theft_alerts.
+ *   WICHTIG: bewusst KEINE Geschwindigkeits-Bedingung (isMoving). Der TAT240
+ *   geht im Stand in Deep-Sleep und wacht erst am Ziel wieder auf (0 km/h) —
+ *   eine "in Bewegung"-Bedingung würde genau dieses Umparken verpassen.
+ *   Verglichen wird die letzte GÜLTIGE Position mit der neuen → Deep-Sleep-fest.
  *
  * ENV-Variablen:
  *   TRACCAR_URL       → z.B. "https://server.traccar.org"  (Cloud) oder eigene
@@ -174,23 +178,36 @@ module.exports = async (req, res) => {
         }
       }
 
-      // 5) Diebstahl-Alarm-Check: Bewegung außerhalb aktiver Buchung?
+      // 5) Diebstahl-Alarm-Check: Standort-Sprung außerhalb aktiver Buchung?
       // Nur bei VALID Position auslösen — bei 0,0-Defaults keinen Fehlalarm.
-      if (positionValid && isMoving && distFromLast > 300) {
-        const { data: activeBookings } = await supabase
-          .from('bookings')
-          .select('id, status, start_time, end_time')
-          .eq('trailer_id', t.id)
-          .in('status', ['confirmed', 'active'])
+      // KEINE isMoving-Bedingung: der Tracker meldet am Ziel oft 0 km/h (Deep-Sleep
+      // im Stand → wacht erst am neuen Standort auf). Wir vergleichen die letzte
+      // bekannte Position mit der aktuellen — >100m ohne Buchung = Alarm.
+      if (positionValid && distFromLast > 100) {
+        // Laufende Miete (status 'active' = Precheck erfolgt, Kunde hat den
+        // Anhänger jetzt) schützt IMMER — egal ob verspätet oder früh. Sonst
+        // würde ein legitimer, überfälliger Mieter unterwegs als Dieb gemeldet.
+        // Nur 'confirmed' (bezahlt, aber noch KEIN Precheck) bekommt ein
+        // Zeitfenster um den Buchungszeitraum (±30 Min) — davor/danach steht
+        // der Anhänger frei und darf Alarm auslösen.
+        const { data: activeRentals } = await supabase
+          .from('bookings').select('id')
+          .eq('trailer_id', t.id).eq('status', 'active').limit(1);
+        const { data: soonBookings } = await supabase
+          .from('bookings').select('id')
+          .eq('trailer_id', t.id).eq('status', 'confirmed')
           .gte('end_time', new Date(Date.now() - 30 * 60000).toISOString())
           .lte('start_time', new Date(Date.now() + 30 * 60000).toISOString());
+        const activeBookings = [...(activeRentals || []), ...(soonBookings || [])];
 
-        if (!activeBookings || activeBookings.length === 0) {
-          // Doppelte Alarme in 1h vermeiden
+        if (activeBookings.length === 0) {
+          // Doppelte Alarme in 1h vermeiden — unabhängig vom Alarm-Status,
+          // damit ein bereits als "False Alarm" weggeklickter Alarm nicht sofort
+          // durch den nächsten GPS-Sprung im selben Zeitfenster erneut feuert.
           const oneHourAgo = new Date(Date.now() - 3600000).toISOString();
           const { data: recentAlerts } = await supabase
             .from('theft_alerts').select('id')
-            .eq('trailer_id', t.id).eq('status', 'open')
+            .eq('trailer_id', t.id)
             .gte('triggered_at', oneHourAgo).limit(1);
 
           if (!recentAlerts || recentAlerts.length === 0) {
