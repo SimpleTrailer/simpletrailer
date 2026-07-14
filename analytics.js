@@ -215,7 +215,16 @@
               ignoreErrors: [
                 /chrome-extension/i, /moz-extension/i, /safari-extension/i,
                 'ResizeObserver loop limit exceeded',
-                'Non-Error promise rejection captured'
+                'Non-Error promise rejection captured',
+                // Rausch aus dem Instagram-/Facebook-In-App-Browser: Meta spritzt
+                // ein eigenes Tracking-Script in jede Seite (sendPageHideMessage →
+                // sendDataToNative → window.webkit.messageHandlers). In manchen
+                // iOS-WebView-Versionen fehlt messageHandlers → TypeError. Das ist
+                // NICHT unser Code (steht nirgends im Repo) und stört den Besucher
+                // nicht — nur unser onerror-Handler fängt es auf. Wegfiltern:
+                /messageHandlers/i,
+                'sendDataToNative',
+                'sendPageHideMessage'
               ]
             });
           }
