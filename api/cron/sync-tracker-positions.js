@@ -115,6 +115,16 @@ module.exports = async (req, res) => {
     let theftAlertsFired = 0;
     const nowIso = new Date().toISOString();
 
+    // Free-Floating-Parkplatz: trailers.lat/lng = letzter GEPARKTER Standort.
+    // Solange keine aktive Miete läuft, führt der Sync ihn mit der GPS-Position mit.
+    // Ab Precheck (status 'active') friert er am Abhol-Ort ein — die Karte zeigt
+    // während der Miete NICHT die Fahrt des Mieters, sondern wo der Anhänger stand.
+    // Nach der Rückgabe (status 'returned') springt er beim nächsten Lauf auf den
+    // neuen Abstell-Ort.
+    const { data: activeRentalsNow } = await supabase
+      .from('bookings').select('trailer_id').eq('status', 'active');
+    const rentedNow = new Set((activeRentalsNow || []).map(b => b.trailer_id));
+
     for (const t of withImei) {
       const pos = positions.find(p => p.deviceId === t.tracker_traccar_id);
       if (!pos) continue;
@@ -161,6 +171,11 @@ module.exports = async (req, res) => {
       if (positionValid) {
         trailerUpdate.last_lat = lat;
         trailerUpdate.last_lng = lng;
+        // Geparkten Standort nur mitführen, wenn der Anhänger NICHT beim Mieter ist
+        if (!rentedNow.has(t.id)) {
+          trailerUpdate.lat = lat;
+          trailerUpdate.lng = lng;
+        }
       }
       await supabase.from('trailers').update(trailerUpdate).eq('id', t.id);
 

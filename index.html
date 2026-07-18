@@ -555,6 +555,10 @@
 
     .nav-inner {
       width: 100%;
+      /* Dockt an dieselbe Content-Kante an wie .section-inner/.hero-inner
+         (Breiten-Leiter 1200/1480/1760 in den Grossbildschirm-Queries) */
+      max-width: 1200px;
+      margin: 0 auto;
       display: flex;
       align-items: center;
       gap: 20px;
@@ -2443,8 +2447,8 @@
       .hero-inner, .section-inner, .footer-inner { max-width: 1480px; }
       .usecase-grid { max-width: 1460px; }
       #map { height: 580px; }
-      /* Nav bleibt volle Breite — alles wächst proportional mit */
-      .nav-inner { gap: 28px; }
+      /* Nav dockt an dieselbe Content-Kante an wie die Sektionen darunter */
+      .nav-inner { max-width: 1480px; gap: 28px; }
       .nav-links { gap: 40px; }
       .nav-links a { font-size: .95rem; }
       .nav-cta { padding: 12px 26px; font-size: .95rem; }
@@ -2456,7 +2460,7 @@
       .usecase-grid { max-width: 1720px; }
       #map { height: 680px; }
       .hero-text h1 { font-size: clamp(2.6rem, 4.2vw, 4.6rem); }
-      .nav-inner { gap: 36px; }
+      .nav-inner { max-width: 1760px; gap: 36px; }
       .nav-links { gap: 48px; }
       .nav-links a { font-size: 1rem; }
       .nav-cta { padding: 13px 30px; font-size: 1rem; }
@@ -5167,8 +5171,8 @@
     // Wrap immer sichtbar: enthält entweder die Standort-Eingabe-Card (kein userLocation)
     // oder die Mini-Map mit Route (userLocation gesetzt).
     wrap.style.display = 'block';
-    // Belegt → keine öffentliche Position: Mini-Map mit Route wäre falsch
-    if (trailer.currently_booked) {
+    // Free-Floating-Miete läuft → Abhol-Ort unbekannt, Mini-Map/Route wäre falsch
+    if (trailer.free_floating_return) {
       if (mapEl) mapEl.style.display = 'none';
       return;
     }
@@ -5367,8 +5371,8 @@
 
     // Header (Name + Distanz + Status) — Distanz zur LIVE-Position
     const pos = tPos(t);
-    // Belegt → Live-Position versteckt (Privacy während der Miete), Stellplatz evtl. veraltet
-    const posKnown = !t.currently_booked;
+    // Free-Floating-Miete läuft → nächster Abhol-Ort steht erst nach der Rückgabe fest
+    const posKnown = !t.free_floating_return;
     const distStr = (posKnown && userLocation && pos.lat && pos.lng)
       ? fmtDist(haversineKm(userLocation.lat, userLocation.lng, pos.lat, pos.lng))
       : null;
@@ -5399,7 +5403,7 @@
       <div style="margin-bottom:14px;">${statusHtml}</div>
     `;
 
-    // Auto-Route Box: bei belegtem Anhänger → Hinweis (Position nicht öffentlich),
+    // Auto-Route Box: bei laufender Free-Floating-Miete → Hinweis (Abhol-Ort noch offen),
     // sonst bei userLocation → Auto-Route, sonst Eingabe-Card für Standort
     document.getElementById('modalDetailRouteBox').innerHTML = !posKnown
       ? `<div class="modal-route-card">
@@ -5411,7 +5415,7 @@
            </div>
            <div class="mrc-content">
              <div class="mrc-label">Abhol-Standort</div>
-             <div class="mrc-info">Steht nach der Rückgabe fest — der Anhänger ist gerade unterwegs</div>
+             <div class="mrc-info">Steht nach der Rückgabe fest — du siehst ihn hier, sobald der Anhänger abgestellt wurde</div>
            </div>
          </div>`
       : userLocation
@@ -5509,7 +5513,7 @@
     // Pickup-Hinweis
     document.getElementById('modalDetailPickup').innerHTML = posKnown
       ? `Abholung in <strong>${locStr}</strong>${distStr ? ` · <strong>${distStr}</strong> von dir` : ''}`
-      : `Abholung in <strong>Bremen</strong> — den genauen Stellplatz siehst du hier, sobald der Anhänger zurück ist`;
+      : `Abholung in <strong>Bremen</strong> — der genaue Abhol-Standort steht nach der Rückgabe fest`;
 
     // Mini-Map mit Route im Detail-View
     renderModalDetailMap(t);
@@ -5552,12 +5556,12 @@
       const trailers = base.slice();
 
       trailers.forEach(t => {
-        // Während einer Vermietung ist die Position nicht öffentlich (API liefert nur
-        // den alten Stellplatz) → keinen falschen Punkt auf die Karte setzen
-        if (t.currently_booked) return;
+        // Free-Floating-Miete läuft → nächster Abhol-Ort unbekannt, kein (falscher) Punkt
+        if (t.free_floating_return) return;
         const p = tPos(t);
         if (!p.lat || !p.lng) return;
-        const dotCol = t.is_available ? '#22c55e' : '#f87171';
+        // Belegt = amber (Position: am Abhol-Ort eingefroren), Pause = rot
+        const dotCol = t.is_available ? '#22c55e' : (t.currently_booked ? '#f59e0b' : '#f87171');
         const m = L.circleMarker([p.lat, p.lng], {
           radius: 11, weight: 2,
           color:       dotCol,
@@ -5567,7 +5571,7 @@
         modalMapMarkers.push(m);
       });
 
-      const withCoords = trailers.filter(t => !t.currently_booked && tPos(t).lat && tPos(t).lng);
+      const withCoords = trailers.filter(t => tPos(t).lat && tPos(t).lng);
       if (withCoords.length) modalMap.setView([tPos(withCoords[0]).lat, tPos(withCoords[0]).lng], 13);
 
       // Sortierung: Verfügbare zuerst (mit Standort: nächster oben), danach belegte
@@ -5592,9 +5596,9 @@
       modalTrailers = trailers;
 
       list.innerHTML = trailers.map((t, idx) => {
-        // Belegt → Position nicht öffentlich, Stellplatz-Daten evtl. veraltet:
-        // weder (falschen) Stadtteil noch Entfernung anzeigen
-        const posKnown = !t.currently_booked;
+        // Läuft eine Free-Floating-Miete, steht der nächste Abhol-Ort erst nach
+        // der Rückgabe fest → keinen Stadtteil/Entfernung behaupten
+        const posKnown = !t.free_floating_return;
         const distStr  = (posKnown && userLocation && t._distKm != null && t._distKm < 9999)
           ? fmtDist(t._distKm) : null;
         const locStr   = escHtml(posKnown ? (t._address || 'Bremen') : 'Bremen');

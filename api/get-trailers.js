@@ -25,7 +25,7 @@ module.exports = async (req, res) => {
       // Damit wir bestimmen können: gerade gebucht? wann frei?
       supabase
         .from('bookings')
-        .select('trailer_id, start_time, end_time, status')
+        .select('trailer_id, start_time, end_time, status, free_floating')
         .in('status', ['confirmed', 'active'])
         .gte('end_time', nowIso)
         .order('start_time'),
@@ -97,6 +97,11 @@ module.exports = async (req, res) => {
         // Buchungs-Status
         is_available: effectiveAvailable,
         currently_booked: currentlyBooked,
+        // Laufende Miete mit Free-Floating-Rückgabe → der nächste Abhol-Ort steht
+        // erst nach der Rückgabe fest (lat/lng ist nur der eingefrorene alte Standort).
+        // Bei fester Rückgabe (free_floating false/unbekannt) bringt der Mieter den
+        // Anhänger an den Abhol-Ort zurück → Position darf angezeigt werden.
+        free_floating_return: currentlyBooked && currentBooking.free_floating === true,
         available_from: availableFromIso,
         next_booking_start: nextBooking ? nextBooking.start_time : null,
       };
