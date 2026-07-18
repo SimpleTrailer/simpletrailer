@@ -40,7 +40,7 @@ module.exports = async (req, res) => {
 
       const { data: booking, error } = await supabase
         .from('bookings')
-        .select('id, status, access_code, precheck_token, precheck_completed_at, customer_name, start_time, end_time')
+        .select('id, status, access_code, precheck_token, precheck_completed_at, customer_name, start_time, end_time, trailer_id')
         .eq('id', booking_id)
         .eq('precheck_token', precheck_token)
         .single();
@@ -86,6 +86,35 @@ module.exports = async (req, res) => {
           .eq('id', booking_id).is('precheck_completed_at', null)
           .select('id').maybeSingle();
         updated = r.data;
+      }
+
+      // Echten Abhol-Ort stempeln: pickup_lat/lng wurde bei BUCHUNGSERSTELLUNG gesetzt —
+      // da war der Anhänger evtl. noch beim Vormieter unterwegs (Free-Floating!). Erst JETZT,
+      // beim Precheck, steht der Kunde wirklich am Anhänger. Der Rückgabe-Zonen-Check
+      // (process-return) vergleicht gegen diese Werte — ein veralteter Abhol-Ort führte
+      // zu falschen "Falsch-Rückgabe"-Gebühren, obwohl der Mieter korrekt zurückgebracht hat.
+      if (updated) {
+        try {
+          const { data: tr } = await supabase.from('trailers')
+            .select('last_lat, last_lng, lat, lng, last_seen_at')
+            .eq('id', booking.trailer_id).maybeSingle();
+          const pLat = Number(tr?.last_lat ?? tr?.lat);
+          const pLng = Number(tr?.last_lng ?? tr?.lng);
+          // Diagnostik: veralteter GPS-Fix (>15 Min) kann einen alten Standort stempeln
+          const ageMin = tr?.last_seen_at ? (Date.now() - new Date(tr.last_seen_at).getTime()) / 60000 : null;
+          if (ageMin != null && ageMin > 15) {
+            console.warn(`Pickup-Stempel mit ${Math.round(ageMin)} Min alter Position (Buchung ${booking_id})`);
+          }
+          if (isFinite(pLat) && isFinite(pLng) && Math.abs(pLat) > 0.0001 && Math.abs(pLng) > 0.0001) {
+            const { error: stampErr } = await supabase.from('bookings')
+              .update({ pickup_lat: pLat, pickup_lng: pLng })
+              .eq('id', booking_id);
+            if (stampErr) console.warn('Pickup-Stempel DB-Fehler:', stampErr.message);
+          }
+        } catch (posErr) {
+          // Fail-soft: Precheck darf am Positions-Stempel nie scheitern
+          console.warn('Pickup-Position stempeln fehlgeschlagen:', posErr.message);
+        }
       }
 
       // Wenn AI-Override genutzt wurde: Admin-Alert per Mail damit Lion das prüfen kann
