@@ -240,8 +240,17 @@
       document.getElementById('paidAmount').textContent  = data.amount.toFixed(2).replace('.', ',') + ' €';
       document.getElementById('precheckLink').href       = data.precheck_url || '#';
 
-      // Standort-Block befuellen wenn pickup_lat/lng vorhanden
-      if (data.pickup_lat && data.pickup_lng) {
+      // Standort-Block befuellen — aber nur, wenn der Abholort bis Mietbeginn sicher ist.
+      // Ist der Anhänger bis dahin noch bei einem anderen Mieter (Free-Floating),
+      // wäre jeder jetzt gezeigte Standort potenziell falsch → ehrlicher Hinweis.
+      if (data.pickup_location_certain === false) {
+        const lb = document.getElementById('locationBlock');
+        lb.style.display = 'block';
+        lb.innerHTML = `<div style="border:1px solid rgba(17,18,19,0.12);border-radius:12px;padding:16px 18px;font-size:.9rem;line-height:1.55;">
+          📍 <strong>Abhol-Standort folgt:</strong> Der Anhänger ist bis kurz vor deinem Mietbeginn noch unterwegs.
+          Den aktuellen Standort siehst du jederzeit live in deinem <a href="/account" style="color:var(--orange,#E85D00);font-weight:700;">Kundenbereich</a>.
+        </div>`;
+      } else if (data.pickup_lat && data.pickup_lng) {
         const lat = data.pickup_lat, lng = data.pickup_lng;
         document.getElementById('locationBlock').style.display = 'block';
         document.getElementById('locationRoute').href = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;

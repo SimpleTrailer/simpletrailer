@@ -13,6 +13,23 @@ const fmt = (d) => new Date(d).toLocaleString('de-DE', {
   hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Berlin'
 });
 
+// Abholort nur versprechen, wenn der Anhänger bis zum Mietbeginn nicht mehr bei einem
+// anderen Mieter ist. 'active' zählt IMMER als unterwegs — auch mit überschrittenem
+// end_time (überfälliger Vormieter kann den Anhänger noch woanders abstellen).
+// Fail-soft: bei Query-Fehler wie bisher den Standort zeigen.
+async function isPickupLocationCertain(trailerId, startTime) {
+  try {
+    const { data: between } = await supabase
+      .from('bookings').select('id')
+      .eq('trailer_id', trailerId)
+      .in('status', ['confirmed', 'active'])
+      .lt('start_time', startTime)
+      .or(`end_time.gt.${new Date().toISOString()},status.eq.active`)
+      .limit(1);
+    return !between || between.length === 0;
+  } catch (e) { return true; }
+}
+
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -51,7 +68,7 @@ module.exports = async (req, res) => {
       }
 
       const { data: existing } = await supabase
-        .from('bookings').select('id, access_code, return_token, precheck_token, start_time, end_time, total_amount, pickup_lat, pickup_lng')
+        .from('bookings').select('id, trailer_id, access_code, return_token, precheck_token, start_time, end_time, total_amount, pickup_lat, pickup_lng')
         .eq('stripe_payment_intent_id', payment_intent_id).maybeSingle();
 
       if (existing) {
@@ -65,7 +82,8 @@ module.exports = async (req, res) => {
           return_token: existing.return_token,
           start_time: existing.start_time, end_time: existing.end_time,
           amount: existing.total_amount || 0,
-          pickup_lat: existing.pickup_lat, pickup_lng: existing.pickup_lng
+          pickup_lat: existing.pickup_lat, pickup_lng: existing.pickup_lng,
+          pickup_location_certain: await isPickupLocationCertain(existing.trailer_id, existing.start_time)
         });
       }
 
@@ -152,6 +170,13 @@ Refund: ${refunded ? 'OK' : 'FEHLGESCHLAGEN — manuell in Stripe pruefen!'}`
       const access_code = (trailerNow?.access_code && String(trailerNow.access_code).trim())
         || Math.floor(100000 + Math.random() * 900000).toString();
 
+      // Steht der Anhänger bis zu DIESEM Mietbeginn noch bei einem anderen Mieter?
+      // Free-Floating: der kann ihn woanders abstellen — dann wäre jeder jetzt
+      // verschickte Standort/Maps-Link potenziell falsch. In dem Fall: Standort
+      // NICHT versprechen, sondern auf den Live-Standort im Kundenbereich verweisen.
+      // (Der echte Abholort wird beim Precheck in pickup_lat/lng gestempelt.)
+      const pickupLocationCertain = await isPickupLocationCertain(meta.trailer_id, meta.start_time);
+
       const baseInsert = {
         trailer_id: meta.trailer_id, customer_name: meta.customer_name,
         customer_email: meta.customer_email, customer_phone: meta.customer_phone || null,
@@ -190,7 +215,7 @@ Refund: ${refunded ? 'OK' : 'FEHLGESCHLAGEN — manuell in Stripe pruefen!'}`
       if (bookingError && (bookingError.code === '23505' || /duplicate key/i.test(bookingError.message || ''))) {
         // Race: Webhook und Client haben gleichzeitig angelegt — die andere Seite hat gewonnen.
         const { data: won } = await supabase
-          .from('bookings').select('id, access_code, return_token, precheck_token, start_time, end_time, total_amount, pickup_lat, pickup_lng')
+          .from('bookings').select('id, trailer_id, access_code, return_token, precheck_token, start_time, end_time, total_amount, pickup_lat, pickup_lng')
           .eq('stripe_payment_intent_id', payment_intent_id).maybeSingle();
         if (won) {
           const siteUrlW = process.env.SITE_URL || 'https://www.simpletrailer.de';
@@ -200,7 +225,8 @@ Refund: ${refunded ? 'OK' : 'FEHLGESCHLAGEN — manuell in Stripe pruefen!'}`
             return_token: won.return_token,
             start_time: won.start_time, end_time: won.end_time,
             amount: won.total_amount || 0,
-            pickup_lat: won.pickup_lat, pickup_lng: won.pickup_lng
+            pickup_lat: won.pickup_lat, pickup_lng: won.pickup_lng,
+            pickup_location_certain: await isPickupLocationCertain(won.trailer_id, won.start_time)
           });
         }
       }
@@ -215,10 +241,12 @@ Refund: ${refunded ? 'OK' : 'FEHLGESCHLAGEN — manuell in Stripe pruefen!'}`
       const returnUrl   = `${siteUrl}/return.html?id=${booking.id}&token=${return_token}`;
       const precheckUrl = `${siteUrl}/precheck?id=${booking.id}&token=${precheck_token}`;
 
-      // Google-Maps-Route zum Anhaenger — wird in HTML-Mail (Button) + Plain-Text genutzt
-      const routeUrl = (pickupLat && pickupLng)
+      // Google-Maps-Route zum Anhaenger — nur wenn der Standort bis zum Mietbeginn
+      // sicher ist (sonst Hinweis auf Live-Standort im Kundenbereich)
+      const routeUrl = (pickupLocationCertain && pickupLat && pickupLng)
         ? `https://www.google.com/maps/dir/?api=1&destination=${pickupLat},${pickupLng}&travelmode=driving`
         : null;
+      const locationPendingText = 'Der Anhänger ist bis kurz vor deinem Mietbeginn noch unterwegs — den aktuellen Abhol-Standort siehst du jederzeit live in deinem Kundenbereich.';
 
       // Plain-Text-Fallback fuer bessere Spam-Score und Email-Clients ohne HTML
       const plainText = `Hallo ${meta.customer_name},
@@ -231,7 +259,7 @@ Kennzeichen: ${trailerNow?.license_plate || '–'}
 Mietbeginn: ${fmt(meta.start_time)} Uhr
 Mietende: ${fmt(meta.end_time)} Uhr
 Gesamt: ${amount.toFixed(2).replace('.', ',')} € (inkl. 19 % USt)
-${routeUrl ? `\nRoute zum Anhänger (Google Maps):\n${routeUrl}\n` : ''}
+${routeUrl ? `\nRoute zum Anhänger (Google Maps):\n${routeUrl}\n` : `\n${locationPendingText}\n${siteUrl}/account\n`}
 Schritt 1 — Vorab-Check (Foto vor Abholung):
 ${precheckUrl}
 
@@ -357,7 +385,7 @@ info@simpletrailer.de · simpletrailer.de`;
                 <tr><td style="color:#5C5953;padding:4px 0;">Kennzeichen</td><td style="text-align:right;padding:4px 0;"><strong style="color:#111213;font-family:Menlo,Consolas,monospace;letter-spacing:.5px;">${T.esc(trailerNow?.license_plate || '–')}</strong></td></tr>
                 <tr><td style="color:#5C5953;padding:4px 0;">Farbe</td><td style="text-align:right;padding:4px 0;color:#4A4742;">Grau (Branding folgt)</td></tr>
               </table>
-              ${routeUrl ? `<div style="margin-top:12px;"><a href="${routeUrl}" style="display:block;background:#16A34A;color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:700;font-size:14px;text-align:center;font-family:system-ui,sans-serif;">🧭 Route in Google Maps öffnen</a></div>` : ''}
+              ${routeUrl ? `<div style="margin-top:12px;"><a href="${routeUrl}" style="display:block;background:#16A34A;color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:700;font-size:14px;text-align:center;font-family:system-ui,sans-serif;">🧭 Route in Google Maps öffnen</a></div>` : `<div style="margin-top:12px;background:#F6F3EE;border:1px solid #E7E2D9;border-radius:8px;padding:12px 14px;font-size:13px;color:#5C5953;font-family:system-ui,sans-serif;">📍 <strong style="color:#111213;">Abhol-Standort folgt:</strong> ${locationPendingText.replace('Kundenbereich.', '')}<a href="${siteUrl}/account" style="color:#E85D00;font-weight:700;">Kundenbereich</a>.</div>`}
             </td></tr></table>` +
             T.rows([
               ['Buchungsnummer', `#${booking.id.slice(0, 8).toUpperCase()}`],
@@ -384,7 +412,8 @@ info@simpletrailer.de · simpletrailer.de`;
         booking_id: booking.id, return_token, precheck_url: precheckUrl,
         start_time: meta.start_time, end_time: meta.end_time,
         amount, trailer_name: 'PKW-Anhänger mit Plane',
-        pickup_lat: booking.pickup_lat, pickup_lng: booking.pickup_lng
+        pickup_lat: booking.pickup_lat, pickup_lng: booking.pickup_lng,
+        pickup_location_certain: pickupLocationCertain
       });
 
     } catch (err) {

@@ -124,6 +124,19 @@ module.exports = async (req, res) => {
 
           const precheckUrl = `${process.env.SITE_URL || 'https://simpletrailer.de'}/precheck?id=${b.id}&token=${b.precheck_token}`;
 
+          // Aktuellen Abhol-Standort LIVE holen (Free-Floating: der Anhänger steht dort,
+          // wo der Vormieter ihn abgestellt hat — nicht am Buchungs-Zeitpunkt-Standort)
+          let pickupRouteUrl = null;
+          try {
+            const { data: tr } = await supabase.from('trailers')
+              .select('last_lat,last_lng,lat,lng').eq('id', b.trailer_id).maybeSingle();
+            const pl = Number(tr?.last_lat ?? tr?.lat);
+            const pg = Number(tr?.last_lng ?? tr?.lng);
+            if (isFinite(pl) && isFinite(pg) && Math.abs(pl) > 0.0001 && Math.abs(pg) > 0.0001) {
+              pickupRouteUrl = `https://www.google.com/maps/dir/?api=1&destination=${pl},${pg}&travelmode=driving`;
+            }
+          } catch (e) { /* fail-soft: Mail geht auch ohne Route raus */ }
+
           await resend.emails.send({
             from: 'SimpleTrailer <buchung@simpletrailer.de>',
             reply_to: 'info@simpletrailer.de',
@@ -140,7 +153,8 @@ module.exports = async (req, res) => {
                   ['Mietzeit', `${fmt(b.start_time)} – ${fmt(b.end_time)} Uhr`]
                 ]) +
                 T.callout(`<strong>Schon abgeholt?</strong> Dann kannst du diese Mail einfach ignorieren.<br>Falls nicht: Mach vor der Abholung kurz den Foto-Check — direkt danach bekommst du den Zugangscode für das Schloss.`, 'orange') +
-                T.cta(T.btn('Zum Foto-Check & Abholung →', precheckUrl))
+                T.cta(T.btn('Zum Foto-Check & Abholung →', precheckUrl)) +
+                (pickupRouteUrl ? `<div style="text-align:center;margin-top:10px;"><a href="${pickupRouteUrl}" style="color:#E85D00;font-weight:700;font-size:14px;font-family:system-ui,sans-serif;">🧭 Route zum Anhänger (aktueller Standort) →</a></div>` : '')
             })
           });
 
