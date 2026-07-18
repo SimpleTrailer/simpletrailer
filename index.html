@@ -5167,6 +5167,11 @@
     // Wrap immer sichtbar: enthält entweder die Standort-Eingabe-Card (kein userLocation)
     // oder die Mini-Map mit Route (userLocation gesetzt).
     wrap.style.display = 'block';
+    // Belegt → keine öffentliche Position: Mini-Map mit Route wäre falsch
+    if (trailer.currently_booked) {
+      if (mapEl) mapEl.style.display = 'none';
+      return;
+    }
     const tp = tPos(trailer);
     if (!userLocation || !tp.lat || !tp.lng) {
       // Keine Location → nur Eingabe-Card zeigen, Mini-Map verstecken
@@ -5362,10 +5367,12 @@
 
     // Header (Name + Distanz + Status) — Distanz zur LIVE-Position
     const pos = tPos(t);
-    const distStr = (userLocation && pos.lat && pos.lng)
+    // Belegt → Live-Position versteckt (Privacy während der Miete), Stellplatz evtl. veraltet
+    const posKnown = !t.currently_booked;
+    const distStr = (posKnown && userLocation && pos.lat && pos.lng)
       ? fmtDist(haversineKm(userLocation.lat, userLocation.lng, pos.lat, pos.lng))
       : null;
-    const locStr = escHtml(t._address || 'Bremen');
+    const locStr = escHtml(posKnown ? (t._address || 'Bremen') : 'Bremen');
     // 3 Zustände unterscheiden:
     //   - is_available = true                          → "Sofort verfügbar" (grün)
     //   - is_available = false + currently_booked      → "Aktuell belegt — Frei ab X" (orange) — buchbar für später
@@ -5392,8 +5399,22 @@
       <div style="margin-bottom:14px;">${statusHtml}</div>
     `;
 
-    // Auto-Route Box: bei userLocation → Auto-Route, sonst Eingabe-Card für Standort
-    document.getElementById('modalDetailRouteBox').innerHTML = userLocation
+    // Auto-Route Box: bei belegtem Anhänger → Hinweis (Position nicht öffentlich),
+    // sonst bei userLocation → Auto-Route, sonst Eingabe-Card für Standort
+    document.getElementById('modalDetailRouteBox').innerHTML = !posKnown
+      ? `<div class="modal-route-card">
+           <div class="mrc-icon" aria-hidden="true">
+             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+               <path d="M12 21s-7-7.6-7-12a7 7 0 0 1 14 0c0 4.4-7 12-7 12z"/>
+               <circle cx="12" cy="9" r="2.5"/>
+             </svg>
+           </div>
+           <div class="mrc-content">
+             <div class="mrc-label">Abhol-Standort</div>
+             <div class="mrc-info">Steht nach der Rückgabe fest — der Anhänger ist gerade unterwegs</div>
+           </div>
+         </div>`
+      : userLocation
       ? `<div class="modal-route-card" id="modalRouteCard">
            <div class="mrc-icon" aria-hidden="true">
              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -5486,14 +5507,15 @@
     }
 
     // Pickup-Hinweis
-    document.getElementById('modalDetailPickup').innerHTML =
-      `Abholung in <strong>${locStr}</strong>${distStr ? ` · <strong>${distStr}</strong> von dir` : ''}`;
+    document.getElementById('modalDetailPickup').innerHTML = posKnown
+      ? `Abholung in <strong>${locStr}</strong>${distStr ? ` · <strong>${distStr}</strong> von dir` : ''}`
+      : `Abholung in <strong>Bremen</strong> — den genauen Stellplatz siehst du hier, sobald der Anhänger zurück ist`;
 
     // Mini-Map mit Route im Detail-View
     renderModalDetailMap(t);
 
     // Auto-Zeit-Info aus OSRM holen (parallel zur Mini-Map, damit Box gefüllt wird)
-    if (userLocation && pos.lat && pos.lng) {
+    if (posKnown && userLocation && pos.lat && pos.lng) {
       const routeUrl = `https://router.project-osrm.org/route/v1/driving/${userLocation.lng},${userLocation.lat};${pos.lng},${pos.lat}?overview=false`;
       fetch(routeUrl).then(r => r.json()).then(data => {
         const infoEl = document.getElementById('modalRouteInfo');
@@ -5530,9 +5552,12 @@
       const trailers = base.slice();
 
       trailers.forEach(t => {
+        // Während einer Vermietung ist die Position nicht öffentlich (API liefert nur
+        // den alten Stellplatz) → keinen falschen Punkt auf die Karte setzen
+        if (t.currently_booked) return;
         const p = tPos(t);
         if (!p.lat || !p.lng) return;
-        const dotCol = t.is_available ? '#22c55e' : (t.currently_booked ? '#f59e0b' : '#f87171');
+        const dotCol = t.is_available ? '#22c55e' : '#f87171';
         const m = L.circleMarker([p.lat, p.lng], {
           radius: 11, weight: 2,
           color:       dotCol,
@@ -5542,25 +5567,37 @@
         modalMapMarkers.push(m);
       });
 
-      const withCoords = trailers.filter(t => tPos(t).lat && tPos(t).lng);
+      const withCoords = trailers.filter(t => !t.currently_booked && tPos(t).lat && tPos(t).lng);
       if (withCoords.length) modalMap.setView([tPos(withCoords[0]).lat, tPos(withCoords[0]).lng], 13);
 
-      // Nach Entfernung sortieren wenn Standort bekannt
+      // Sortierung: Verfügbare zuerst (mit Standort: nächster oben), danach belegte
+      // nach frühester Frei-ab-Zeit, Pause/Wartung ganz unten
       if (userLocation) {
         trailers.forEach(t => {
           const p = tPos(t);
           t._distKm = (p.lat && p.lng) ? haversineKm(userLocation.lat, userLocation.lng, p.lat, p.lng) : 9999;
         });
-        trailers.sort((a, b) => a._distKm - b._distKm);
       }
+      const tier   = t => t.is_available ? 0 : (t.currently_booked ? 1 : 2);
+      const freeAt = t => {
+        const ts = t.available_from ? new Date(t.available_from).getTime() : NaN;
+        return isNaN(ts) ? 8.64e15 : ts;   // ohne bekannte Frei-ab-Zeit hinter allen bekannten
+      };
+      trailers.sort((a, b) =>
+        (tier(a) - tier(b))
+        || (tier(a) === 0 && userLocation ? a._distKm - b._distKm : 0)
+        || (tier(a) === 1 ? freeAt(a) - freeAt(b) : 0));
 
       // Reverse-Geocoding fehlt vielleicht (Modal kann vor loadMapTrailers aufgerufen werden)
       modalTrailers = trailers;
 
       list.innerHTML = trailers.map((t, idx) => {
-        const distStr  = (userLocation && t._distKm != null && t._distKm < 9999)
+        // Belegt → Position nicht öffentlich, Stellplatz-Daten evtl. veraltet:
+        // weder (falschen) Stadtteil noch Entfernung anzeigen
+        const posKnown = !t.currently_booked;
+        const distStr  = (posKnown && userLocation && t._distKm != null && t._distKm < 9999)
           ? fmtDist(t._distKm) : null;
-        const locStr   = escHtml(t._address || 'Bremen');
+        const locStr   = escHtml(posKnown ? (t._address || 'Bremen') : 'Bremen');
         const subLine  = [locStr, distStr ? distStr + ' entfernt' : null, `ab ${t.price_kurztrip || 9} €`]
           .filter(Boolean).join(' · ');
         const thumb    = trailerImg(t, 'modal-trailer-thumb');
