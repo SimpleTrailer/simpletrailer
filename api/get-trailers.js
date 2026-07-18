@@ -57,7 +57,28 @@ module.exports = async (req, res) => {
       const currentlyBooked = !!currentBooking;
       // Effektive Verfügbarkeit: DB-Flag + KEINE aktuelle Buchung
       const effectiveAvailable = !!t.is_available && !currentlyBooked;
-      const availableFromIso = currentBooking ? currentBooking.end_time : null;
+
+      // "Frei ab" = erster WIRKLICH buchbarer Zeitpunkt: Ende der laufenden Buchung
+      // + 1h Rückgabe-Puffer — und wenn bis zur nächsten Buchung keine Kurztrip-Lücke
+      // (3h) bleibt, hinter die Folge-Buchung(en) springen. Sonst steht "frei ab 16 Uhr",
+      // obwohl wegen einer Abend-Buchung real erst ab 22 Uhr buchbar ist.
+      const BUFFER_MS  = 60 * 60 * 1000;
+      const MIN_GAP_MS = 3 * 60 * 60 * 1000;
+      let availableFromIso = null;
+      if (currentBooking) {
+        let candidate = new Date(currentBooking.end_time).getTime() + BUFFER_MS;
+        for (const b of tBookings) {              // nach start_time sortiert
+          const s = new Date(b.start_time).getTime();
+          const e = new Date(b.end_time).getTime() + BUFFER_MS;
+          if (e <= candidate) continue;           // liegt komplett vor dem Kandidaten
+          if (s >= candidate + MIN_GAP_MS) break; // echte Lücke vor dieser Buchung → Kandidat gilt
+          candidate = e;                          // blockiert den Kandidaten → dahinter springen
+        }
+        // Auf volle Stunde aufrunden — das Slot-Raster der Buchungsseite ist stündlich
+        const cd = new Date(candidate);
+        if (cd.getUTCMinutes() || cd.getUTCSeconds()) cd.setUTCHours(cd.getUTCHours() + 1, 0, 0, 0);
+        availableFromIso = cd.toISOString();
+      }
 
       // Live-GPS-Position publik zeigen nur wenn:
       //  - is_available = true (Anhänger soll überhaupt sichtbar sein)
