@@ -5379,7 +5379,7 @@
         : null;
       statusHtml = `
         <span class="modal-detail-status busy" style="background:rgba(245,158,11,0.10);border-color:rgba(245,158,11,0.30);color:#fbbf24;">● Aktuell belegt</span>
-        ${freiAbStr ? `<span style="display:inline-block;margin-left:10px;font-size:.78rem;color:#a3a3a3;">Frei ab <strong style="color:#fff;">${freiAbStr}</strong></span>` : ''}`;
+        ${freiAbStr ? `<span style="display:inline-block;margin-left:10px;font-size:.78rem;color:#a3a3a3;">Frei ab <strong style="color:#15803D;">${freiAbStr}</strong></span>` : ''}`;
     } else {
       statusHtml = `<span class="modal-detail-status busy">⊘ Aktuell nicht im Angebot</span>`;
     }
@@ -5460,7 +5460,15 @@
     } else if (t.currently_booked && t.available_from) {
       // Belegt mit bekannter Frei-ab-Zeit: trotzdem buchbar, Start vor-ausgefüllt
       const qs = new URLSearchParams({ trailer: t.id, mode: modalMode });
-      qs.set('prefill_start', String(t.available_from).slice(0, 10));
+      // Lokales Datum statt UTC-Slice (Buchungs-Ende 00:00–01:59 Uhr rutscht sonst auf den Vortag)
+      const freeDate = new Date(t.available_from).toLocaleDateString('sv-SE');
+      if (pendingStart && pendingStart >= freeDate) {
+        // User hat nach einem Zeitraum NACH der Frei-ab-Zeit gesucht → seine Daten respektieren
+        qs.set('prefill_start', pendingStart);
+        if (pendingEnd) qs.set('prefill_end', pendingEnd);
+      } else {
+        qs.set('prefill_start', freeDate);
+      }
       bookBtn.href = `/booking?${qs.toString()}`;
       bookBtn.textContent = 'Für später buchen →';
       bookBtn.classList.remove('disabled');
@@ -5524,10 +5532,11 @@
       trailers.forEach(t => {
         const p = tPos(t);
         if (!p.lat || !p.lng) return;
+        const dotCol = t.is_available ? '#22c55e' : (t.currently_booked ? '#f59e0b' : '#f87171');
         const m = L.circleMarker([p.lat, p.lng], {
           radius: 11, weight: 2,
-          color:       t.is_available ? '#22c55e' : '#f87171',
-          fillColor:   t.is_available ? '#22c55e' : '#f87171',
+          color:       dotCol,
+          fillColor:   dotCol,
           fillOpacity: 0.9
         }).addTo(modalMap).bindPopup(t.name);
         modalMapMarkers.push(m);
@@ -5555,19 +5564,31 @@
         const subLine  = [locStr, distStr ? distStr + ' entfernt' : null, `ab ${t.price_kurztrip || 9} €`]
           .filter(Boolean).join(' · ');
         const thumb    = trailerImg(t, 'modal-trailer-thumb');
-        const onClick  = t.is_available ? `onclick="showModalDetail(${idx})"` : '';
-        return `<div class="modal-trailer-card${t.is_available ? '' : ' unavail'}" ${onClick}>
+        // Belegte Anhänger sind für später buchbar (gleicher Flow wie über die Karte) —
+        // gesperrt bleibt nur Pause/Wartung (weder frei noch gerade gebucht)
+        const bookable = t.is_available || t.currently_booked;
+        const freiAbDate = (!t.is_available && t.currently_booked && t.available_from)
+          ? new Date(t.available_from) : null;
+        const freiAb   = (freiAbDate && !isNaN(freiAbDate))
+          ? freiAbDate.toLocaleString('de-DE', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' })
+          : null;
+        let statusLine;
+        if (t.is_available) statusLine = '<span style="color:#15803D;">✓ Verfügbar</span>';
+        else if (bookable)  statusLine = freiAb
+          ? `<span style="color:#15803D;">✓ Frei ab ${freiAb} Uhr</span>`
+          : '<span style="color:#15803D;">✓ Für später buchbar</span>';
+        else                statusLine = '<span style="color:#B91C1C;">⊘ Zurzeit nicht im Angebot</span>';
+        const onClick  = bookable ? `onclick="showModalDetail(${idx})"` : '';
+        return `<div class="modal-trailer-card${bookable ? '' : ' unavail'}" ${onClick}>
           ${thumb}
           <div class="modal-trailer-info">
             <div class="modal-trailer-name">${t.name}</div>
             <div class="modal-trailer-sub">📍 ${subLine}</div>
-            <div style="font-size:.72rem;margin-top:3px;${t.is_available ? 'color:#22c55e;' : 'color:#f87171;'}">
-              ${t.is_available ? '✓ Verfügbar' : '✗ Belegt'}
-            </div>
+            <div style="font-size:.72rem;margin-top:3px;">${statusLine}</div>
           </div>
-          ${t.is_available
+          ${bookable
             ? `<span class="modal-card-chevron">›</span>`
-            : `<span class="modal-belegt">Belegt</span>`}
+            : `<span class="modal-belegt">Pause</span>`}
         </div>`;
       }).join('') || '<p style="color:#666;text-align:center;padding:20px 0;">Keine Anhänger verfügbar.</p>';
 
