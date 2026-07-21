@@ -16,7 +16,10 @@ const C = {
   orange: '#E85D00', orangeTint: '#FFF4EA', green: '#15803D', greenTint: '#E8F8EE',
   border: '#E7E2D9', band: '#111213',
 };
-const FONT = 'system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif';
+// WICHTIG: einfache Quotes um 'Segoe UI' — doppelte würden das umschließende
+// style="…" abbrechen, die font-family würde ungültig und Mails fielen auf die
+// Serifen-Default-Schrift des Clients zurück.
+const FONT = "system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
 
 const esc = s => String(s == null ? '' : s).replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
 
