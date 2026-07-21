@@ -194,14 +194,20 @@ module.exports = async (req, res) => {
       });
     }
 
-    // setup_future_usage NUR fuer Karten setzen (PayPal/Klarna/Amazon Pay
-    // unterstuetzen das nur teilweise und werden sonst KOMPLETT ausgeblendet).
-    // Konsequenz: bei Karte ist Auto-Charge bei Verspaetung/Schaden moeglich,
-    // bei anderen Methoden faellt Auto-Charge auf manuelle E-Mail mit
-    // Zahlungslink zurueck (process-return.js loggt + Lion-Mail).
-    // Im Tausch: Mieter sehen PayPal, Apple Pay, Google Pay, Link als Option.
+    // setup_future_usage fuer Karte, Link UND PayPal: alle drei koennen bei
+    // Verspaetung/Schaden automatisch nachbelastet werden (off_session).
+    // PayPal-Wiederkehrend ist auf dem Stripe-Konto freigegeben (Status
+    // "Wiederkehrende Zahlungen aktiviert", geprueft 2026-07-21) — der Kunde
+    // stimmt beim Checkout einmalig kuenftigen Abbuchungen zu.
+    // Ohne diese SFU war die PayPal-Methode Single-Use → die Verspaetungs-
+    // Nachbelastung schlug fehl ("PaymentMethod may not be used again").
+    // Sicherheitsnetz unten: falls Stripe PayPal-SFU doch ablehnt, wird PayPal
+    // aus den Optionen entfernt und ohne sie erneut versucht (kein Checkout-Abbruch).
     const idemBasis = [effectiveUserId, trailer_id, start_time, end_time, insType, booking_mode || '', pricing_type || '', freeFloating ? 1 : 0, cancellationProtection ? 1 : 0, amountInCents, discountCode || '', customer_name || '', customer_email || '', customer_phone || '', customer_address || '', agb_version || ''].join('|');
-    const idempotencyKey = 'pi-' + crypto.createHash('sha256').update(idemBasis).digest('hex').slice(0, 40);
+    // Präfix-Version: bei jeder Änderung am PI-Payload (z.B. payment_method_options)
+    // hochzählen, damit Keys aus altem/neuem Deploy nie mit abweichendem Body kollidieren
+    // (sonst StripeIdempotencyError → 409-Schleife für in-flight-Buchungen). 'pi2' = PayPal-SFU (2026-07-21).
+    const idempotencyKey = 'pi2-' + crypto.createHash('sha256').update(idemBasis).digest('hex').slice(0, 40);
 
     const piParams = {
       amount: amountInCents, currency: 'eur',
@@ -209,12 +215,12 @@ module.exports = async (req, res) => {
       automatic_payment_methods: { enabled: true },
       payment_method_options: {
         card:   { setup_future_usage: 'off_session' },
-        link:   { setup_future_usage: 'off_session' }
-        // PayPal bewusst OHNE off_session: solange Stripe "Wiederkehrende Zahlungen" für
-        // PayPal noch nicht freigegeben hat, würde off_session PayPal KOMPLETT ausblenden.
-        // So ist PayPal jetzt sichtbar/buchbar; Verspätungs-Auto-Charge fällt für PayPal-
-        // Zahler auf die manuelle Zahlungslink-Mail zurück (process-return.js). Sobald die
-        // Freigabe da ist, hier wieder `paypal: { setup_future_usage: 'off_session' }` ergänzen.
+        link:   { setup_future_usage: 'off_session' },
+        // PayPal-Wiederkehrend am 2026-07-21 im Stripe-Konto bestaetigt (siehe Kommentar oben).
+        // Fehlte das, war die PayPal-Methode Single-Use und die Verspaetungs-/Schaden-
+        // Nachbelastung per off_session schlug fehl. Falls Stripe PayPal-SFU auf diesem
+        // Konto doch nicht traegt, greift das try/catch-Sicherheitsnetz weiter unten.
+        paypal: { setup_future_usage: 'off_session' }
       },
       receipt_email: customer_email,
       description: `SimpleTrailer – ${trailer.name} – ${pricing_type}`,
