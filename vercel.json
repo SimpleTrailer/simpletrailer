@@ -90,6 +90,9 @@
       "schedule": "0 9 1 1,4,7,10 *"
     }
   ],
+  "redirects": [
+    { "source": "/bewerten", "destination": "https://g.page/r/Cd6jwKdwS_Y7EAE/review", "permanent": false }
+  ],
   "headers": [
     {
       "source": "/(.*)",
