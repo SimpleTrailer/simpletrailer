@@ -14,6 +14,7 @@ const DISCOUNT_CODES = {
   WILLKOMMEN20: { percent: 20, scope: 'total', validUntil: '2026-06-25T23:59:59+02:00' },
   URLAUB33:     { percent: 33, scope: 'rent' }, // Urlauber-Rabatt: 33 % nur auf die Miete
   PETER50:      { percent: 50, scope: 'total', validUntil: '2026-12-31T23:59:59+01:00', singleUse: true }, // Persönl. Entschuldigung (Buchung 6b7d5e65, Zahlungsstörung 07.07.) — nur 1×
+  ABDULLAH50:   { percent: 50, scope: 'total', validUntil: '2026-12-31T23:59:59+01:00', singleUse: true }, // Dank/Entschuldigung (Buchung 8aeaf6d9, 18.07.: Tracker-Fehlalarm + Bug-Hinweis) — nur 1×
 };
 
 function resolveDiscount(raw) {
