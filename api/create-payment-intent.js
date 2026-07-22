@@ -8,6 +8,7 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SER
 // Definition zentral in ./_discounts.js, damit die Vorab-Prüfung
 // (api/validate-discount.js) exakt dieselben Codes/Regeln nutzt.
 const { resolveDiscount, isRedeemed } = require('./_discounts');
+const { isLockActive, lockUntilMs } = require('./_booking-lock');
 
 const rateLimit = new Map();
 function isRateLimited(ip) {
@@ -34,6 +35,15 @@ module.exports = async (req, res) => {
 
     if (!trailer_id || !pricing_type || !start_time || !end_time || !customer_name || !customer_email) {
       return res.status(400).json({ error: 'Fehlende Pflichtfelder' });
+    }
+
+    // Temporäre Buchungssperre: Mietbeginn vor Ablauf der Sperre hart ablehnen —
+    // BEVOR irgendetwas bei Stripe passiert. (Slots ab der Freigabe bleiben buchbar.)
+    if (isLockActive() && new Date(start_time).getTime() < lockUntilMs()) {
+      const bis = new Date(lockUntilMs()).toLocaleString('de-DE', {
+        day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Berlin'
+      });
+      return res.status(423).json({ error: `Buchungen sind aktuell pausiert. Ab ${bis} Uhr wieder möglich.` });
     }
 
     // AUTH: Identitaet kommt aus der Session, NICHT aus dem Body —

@@ -1,4 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
+const { isLockActive, lockUntilMs } = require('./_booking-lock');
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
 module.exports = async (req, res) => {
@@ -13,6 +14,11 @@ module.exports = async (req, res) => {
   try {
     const now = new Date();
     const nowIso = now.toISOString();
+
+    // Temporäre Buchungssperre (zeitbasiert, läuft automatisch ab): alle Anhänger
+    // bis zum Ablauf als "belegt · frei ab" darstellen. Ändert KEINE Daten.
+    const lockOn = isLockActive(now.getTime());
+    const lockUntil = lockUntilMs();
 
     // Anhänger + relevante Buchungen PARALLEL holen (Buchungs-Query braucht
     // die Trailer-IDs nicht — Filter über Status + end_time reicht)
@@ -85,9 +91,21 @@ module.exports = async (req, res) => {
       //  - keine laufende Buchung (Privacy: Mieter-Bewegung nicht public)
       //  - Position-Fix da + <24h alt
       const liveAge = t.last_seen_at ? (now.getTime() - new Date(t.last_seen_at).getTime()) / 60000 : null;
-      const showLive = effectiveAvailable
+      const showLive = effectiveAvailable && !lockOn
                     && t.last_lat != null && t.last_lng != null
                     && liveAge != null && liveAge < 1440;
+
+      // Sperre aktiv → als "belegt · frei ab" ausgeben. Frei-ab = spätester
+      // Zeitpunkt aus Sperre und (evtl.) echter laufender Buchung.
+      let outAvailable = effectiveAvailable;
+      let outBooked = currentlyBooked;
+      let outFrom = availableFromIso;
+      if (lockOn) {
+        outAvailable = false;
+        outBooked = true;
+        const realFromMs = availableFromIso ? new Date(availableFromIso).getTime() : 0;
+        outFrom = new Date(Math.max(lockUntil, realFromMs)).toISOString();
+      }
 
       return {
         id: t.id,
@@ -116,14 +134,14 @@ module.exports = async (req, res) => {
         is_moving: showLive ? !!t.is_moving : false,
         last_seen_at: showLive ? t.last_seen_at : null,
         // Buchungs-Status
-        is_available: effectiveAvailable,
-        currently_booked: currentlyBooked,
+        is_available: outAvailable,
+        currently_booked: outBooked,
         // Laufende Miete mit Free-Floating-Rückgabe → der nächste Abhol-Ort steht
         // erst nach der Rückgabe fest (lat/lng ist nur der eingefrorene alte Standort).
         // Bei fester Rückgabe (free_floating false/unbekannt) bringt der Mieter den
         // Anhänger an den Abhol-Ort zurück → Position darf angezeigt werden.
         free_floating_return: currentlyBooked && currentBooking.free_floating === true,
-        available_from: availableFromIso,
+        available_from: outFrom,
         next_booking_start: nextBooking ? nextBooking.start_time : null,
       };
     });

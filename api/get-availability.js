@@ -1,4 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
+const { isLockActive, lockUntilIso } = require('./_booking-lock');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
@@ -20,6 +21,11 @@ module.exports = async (req, res) => {
       start_time: b.start_time,
       end_time: new Date(new Date(b.end_time).getTime() + BUFFER_MS).toISOString()
     }));
+    // Temporäre Buchungssperre: gesamten Zeitraum bis zum Ablauf als belegt
+    // markieren, damit der Slot-Kalender alles vor der Freigabe ausgraut.
+    if (isLockActive()) {
+      booked.push({ start_time: '1970-01-01T00:00:00.000Z', end_time: lockUntilIso() });
+    }
     return res.status(200).json({ booked });
   } catch (err) {
     return res.status(500).json({ booked: [] });
