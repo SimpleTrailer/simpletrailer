@@ -7,8 +7,8 @@
 // - Ändert KEINE Daten in der Datenbank — nichts wird überschrieben.
 // - Aufheben/verlängern: einfach LOCK_UNTIL_ISO anpassen (oder auf null setzen).
 //
-// Aktuell: gesperrt bis 22.07.2026 18:00 Uhr (Europe/Berlin, im Juli CEST = UTC+2).
-const LOCK_UNTIL_ISO = '2026-07-22T16:00:00.000Z';
+// Aktuell: gesperrt bis Freitag, 24.07.2026 15:00 Uhr (Europe/Berlin, im Juli CEST = UTC+2).
+const LOCK_UNTIL_ISO = '2026-07-24T13:00:00.000Z';
 
 function lockUntilMs() {
   if (!LOCK_UNTIL_ISO) return 0;
