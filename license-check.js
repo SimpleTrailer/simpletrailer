@@ -232,7 +232,7 @@
       <div class="stl-busy" id="stlBusy">
         <div class="stl-spin"></div>
         <div class="stl-busy-t">Führerschein wird geprüft …</div>
-        <div class="stl-busy-s">Das dauert meist unter einer Minute. Bitte die Seite nicht schließen.</div>
+        <div class="stl-busy-s">Das dauert nur ein paar Sekunden. Bitte die Seite nicht schließen.</div>
       </div>
 
       <div class="stl-done" id="stlDone">
@@ -333,13 +333,32 @@
       say(message, 'err');
     }
 
+    /** Blendet alles aus, was nur zum Aufnehmen gebraucht wird (Endzustände). */
+    function nurMeldung() {
+      zeige('form');
+      const weg = ['.stl-intro', '.stl-flow', '.stl-facts', '.stl-consent'];
+      weg.forEach(sel => { const n = root.querySelector(sel); if (n) n.style.display = 'none'; });
+      el.start.style.display = 'none';
+      el.steps.style.display = 'none';
+    }
+
     // ── Absenden ────────────────────────────────────────────────────────────
-    async function absenden(bilder) {
+    /**
+     * @param {object} bilder  die drei Aufnahmen
+     * @param {object} steuer  Steuerung der Kamera-Vollbildansicht — MUSS in JEDEM
+     *   Ausgang geschlossen werden. Sonst liegt sie über allem und der Kunde sieht
+     *   ewig „Führerschein wird geprüft", egal was der Server antwortet.
+     */
+    async function absenden(bilder, steuer) {
+      const zu = () => { try { if (steuer && steuer.schliessen) steuer.schliessen(); } catch (e) {} };
+
       const bytes = Object.values(bilder).reduce((n, v) => n + (v ? v.length : 0), 0);
       if (bytes > MAX_BODY_BYTES) {
-        zuruecksetzen('Die Fotos sind zusammen zu groß. Bitte nimm sie noch einmal auf.');
+        zu();
+        zuruecksetzen('Die Fotos sind zusammen zu groß geworden. Bitte nimm sie noch einmal auf — am besten etwas näher dran und ohne Spiegelungen.');
         return;
       }
+
       zeige('busy');
       say('');
       try {
@@ -348,26 +367,36 @@
         if (handoff) payload.handoff_token = handoff;
         else headers.Authorization = 'Bearer ' + getToken();
 
-        const res  = await fetch('/api/verify-license', { method: 'POST', headers, body: JSON.stringify(payload) });
-        const data = await res.json().catch(() => ({}));
+        // Notbremse: hängt die Anfrage, darf der Kunde nicht ewig warten.
+        const abbruch = new AbortController();
+        const wecker = setTimeout(() => abbruch.abort(), 90000);
 
-        if (!res.ok)                 { zuruecksetzen(data.error || 'Die Prüfung hat nicht geklappt. Bitte versuch es noch einmal.'); return; }
+        let res, data;
+        try {
+          res  = await fetch('/api/verify-license', {
+            method: 'POST', headers, body: JSON.stringify(payload), signal: abbruch.signal
+          });
+          data = await res.json().catch(() => ({}));
+        } finally {
+          clearTimeout(wecker);
+        }
+
+        zu();   // ab hier ist die Kamera-Ansicht in jedem Fall weg
+
+        if (!res.ok)                    { zuruecksetzen(data.error || 'Die Prüfung hat nicht geklappt. Bitte versuch es noch einmal.'); return; }
         if (data.status === 'verified') { zeigeVerifiziert(data); return; }
         if (data.status === 'retry')    { zuruecksetzen(data.message); return; }
 
         // 'review' — ein Mensch schaut drauf
-        zeige('form');
-        el.form.querySelector('.stl-flow').style.display = 'none';
-        el.form.querySelector('.stl-facts').style.display = 'none';
-        el.form.querySelector('.stl-consent').style.display = 'none';
-        el.start.style.display = 'none';
-        el.steps.style.display = 'none';
-        root.querySelector('.stl-intro').style.display = 'none';
+        nurMeldung();
         say(data.message || 'Wir prüfen deinen Führerschein persönlich und melden uns per E-Mail.', 'wait');
         onStatus('review');
         onVerified(null);
       } catch (e) {
-        zuruecksetzen('Verbindung unterbrochen. Bitte versuch es noch einmal.');
+        zu();
+        zuruecksetzen(e && e.name === 'AbortError'
+          ? 'Die Prüfung hat zu lange gedauert. Bitte versuch es noch einmal — oder schreib uns kurz, dann prüfen wir persönlich.'
+          : 'Verbindung unterbrochen. Bitte versuch es noch einmal.');
       }
     }
 
@@ -394,8 +423,8 @@
     el.start.addEventListener('click', async () => {
       if (!handoff && !getToken()) { say('Bitte melde dich zuerst an.'); return; }
 
-      // Fallback-Weg: Fotos liegen schon vor
-      if (fallbackModus) { absenden({ ...shots }); return; }
+      // Fallback-Weg: Fotos liegen schon vor (keine Kamera-Ansicht zu schließen)
+      if (fallbackModus) { absenden({ ...shots }, null); return; }
 
       // Rechner ohne brauchbare Kamera → ans Handy übergeben
       if (!handoff && STCamera.istDesktop()) {
@@ -430,7 +459,9 @@
     function starteKamera() {
       if (!STCamera.verfuegbar()) { zuFallback('Bitte wähle die drei Fotos einzeln aus.'); return; }
       STCamera.run({
-        onDone: (bilder) => { absenden(bilder); },
+        // steuer.schliessen() macht die Vollbild-Kamera zu — ohne das bliebe sie
+        // über der Seite liegen und würde jede Antwort verdecken.
+        onDone: (bilder, steuer) => { absenden(bilder, steuer); },
         onCancel: () => { zeige('form'); },
         onFallback: (grund) => { zuFallback(grund); }
       });
@@ -454,11 +485,7 @@
       zeige('form');
 
       if (status === 'review') {
-        root.querySelector('.stl-intro').style.display = 'none';
-        el.form.querySelector('.stl-flow').style.display = 'none';
-        el.form.querySelector('.stl-facts').style.display = 'none';
-        el.form.querySelector('.stl-consent').style.display = 'none';
-        el.start.style.display = 'none';
+        nurMeldung();
         say('Deine Prüfung läuft — wir schauen persönlich drauf und melden uns per E-Mail. Das dauert in der Regel nur wenige Stunden.', 'wait');
         return info;
       }

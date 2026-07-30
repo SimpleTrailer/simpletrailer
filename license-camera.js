@@ -27,8 +27,13 @@
 (function () {
   'use strict';
 
-  const MAX_EDGE = 1600;
-  const QUALITY  = 0.82;
+  // Dokumentfotos mit viel Text werden als JPEG deutlich groesser als
+  // gewoehnliche Bilder. 1400 px reichen, um jedes Feld auf dem Fuehrerschein
+  // sicher zu lesen, halten die Aufnahme aber klein genug fuer eine schnelle
+  // Uebertragung im Mobilfunknetz. Das Selfie braucht noch weniger — fuer den
+  // Gesichtsabgleich sind 1000 px reichlich.
+  const MAX_EDGE  = { front: 1400, back: 1400, selfie: 1000 };
+  const QUALITY   = 0.78;
 
   const SCHRITTE = [
     {
@@ -167,22 +172,42 @@
     } catch (e) {}
   }
 
-  /** Ein Videobild in eine verkleinerte JPEG-Data-URL verwandeln. */
-  function grab(video, spiegeln) {
+  /**
+   * Ein Videobild in eine verkleinerte JPEG-Data-URL verwandeln.
+   *
+   * Der Deckel je Bild ist wichtig: drei Aufnahmen gehen zusammen in EINE
+   * Anfrage, und die darf ein bestimmtes Gesamtgewicht nicht ueberschreiten.
+   * Wird ein Bild zu schwer, wird es hier gleich staerker komprimiert statt
+   * spaeter beim Absenden zu scheitern.
+   */
+  function grab(video, spiegeln, kante, maxBytes) {
     const vw = video.videoWidth, vh = video.videoHeight;
     if (!vw || !vh) throw new Error('Kamerabild noch nicht bereit.');
-    const scale = Math.min(1, MAX_EDGE / Math.max(vw, vh));
-    const w = Math.round(vw * scale), h = Math.round(vh * scale);
-    const c = document.createElement('canvas');
-    c.width = w; c.height = h;
-    const ctx = c.getContext('2d');
-    ctx.imageSmoothingQuality = 'high';
-    if (spiegeln) {           // Selfie zurückdrehen — sonst steht Schrift seitenverkehrt
-      ctx.translate(w, 0);
-      ctx.scale(-1, 1);
+
+    const zeichnen = (breite, guete) => {
+      const scale = Math.min(1, breite / Math.max(vw, vh));
+      const w = Math.round(vw * scale), h = Math.round(vh * scale);
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      const ctx = c.getContext('2d');
+      ctx.imageSmoothingQuality = 'high';
+      if (spiegeln) {         // Selfie zurückdrehen — sonst steht Schrift seitenverkehrt
+        ctx.translate(w, 0);
+        ctx.scale(-1, 1);
+      }
+      ctx.drawImage(video, 0, 0, w, h);
+      return c.toDataURL('image/jpeg', guete);
+    };
+
+    let daten = zeichnen(kante, QUALITY);
+    // Notfalls schrittweise kleiner — lieber etwas weniger scharf als gar nicht
+    // abgeschickt. Die Lesbarkeit bleibt bis etwa 1000 px sicher erhalten.
+    const stufen = [[kante, 0.68], [Math.round(kante * 0.85), 0.72], [Math.round(kante * 0.72), 0.68]];
+    for (const [b, q] of stufen) {
+      if (daten.length <= maxBytes) break;
+      daten = zeichnen(b, q);
     }
-    ctx.drawImage(video, 0, 0, w, h);
-    return c.toDataURL('image/jpeg', QUALITY);
+    return daten;
   }
 
   async function run(opts) {
@@ -339,7 +364,8 @@
       const s = SCHRITTE[idx];
       let daten;
       try {
-        daten = grab(video, s.facing === 'user');
+        // Gesamtbudget ~3 MB fuer alle drei Bilder -> 1 MB je Aufnahme.
+        daten = grab(video, s.facing === 'user', MAX_EDGE[s.key] || 1400, 1024 * 1024);
       } catch (e) {
         el.hinweis.textContent = 'Bild noch nicht scharf — bitte kurz warten und nochmal tippen.';
         return;
@@ -369,7 +395,7 @@
           stoppen();
           mitte(`<div class="stc-spin"></div>
                  <h3>Führerschein wird geprüft</h3>
-                 <p>Das dauert meist unter einer Minute. Bitte die Seite nicht schließen.</p>`);
+                 <p>Das dauert nur ein paar Sekunden. Bitte die Seite nicht schließen.</p>`);
           onDone({ ...bilder }, { schliessen: zumachen, meldung: (h) => mitte(h) });
         }
       }, 620);

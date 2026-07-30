@@ -262,11 +262,22 @@ module.exports = async (req, res) => {
   try {
     const msg = await anthropic.messages.create({
       model: 'claude-opus-5',
-      // ACHTUNG: Auf Opus 5 ist das Nachdenken standardmäßig AN, und max_tokens
-      // deckelt Nachdenken UND Antwort GEMEINSAM. Mit einem knappen Budget kommt
-      // der Antworttext abgeschnitten oder gar nicht — dann landet JEDER Kunde in
-      // der Handprüfung. Deshalb grosszügig bemessen.
-      max_tokens: 16000,
+      // GESCHWINDIGKEIT: Auf Opus 5 ist das Nachdenken standardmäßig AN und kann
+      // bei drei Bildern deutlich über eine Minute dauern — für den Kunden, der
+      // gerade drei Fotos gemacht hat, viel zu lang. Hier ist es auch nicht nötig:
+      // Felder ablesen und zwei Gesichter vergleichen ist Wahrnehmung, keine
+      // mehrstufige Schlussfolgerung. Abgeschaltet läuft die Prüfung in wenigen
+      // Sekunden statt Minuten.
+      // Nebenwirkung des Abschaltens: das Modell kann interne XML-Tags in die
+      // Antwort schreiben. Dagegen steht die Regel im system-Prompt, und der
+      // JSON-Ausschnitt wird ohnehin per Muster herausgelöst.
+      thinking: { type: 'disabled' },
+      // Sorgfalt bewusst NICHT auf 'low': ein faelschlich freigegebener
+      // Fuehrerschein kostet einen Anhaenger. Die Zeitersparnis kommt vom
+      // abgeschalteten Nachdenken, nicht vom Herunterdrehen der Sorgfalt.
+      output_config: { effort: 'medium' },
+      // Ohne Nachdenken reicht ein kleines Budget — die Antwort ist reines JSON.
+      max_tokens: 2000,
       // Die Anweisung gehört in den system-Prompt, NICHT neben die Bilder:
       // die Bilder kommen vom Kunden, und aufgedruckter Text darf niemals als
       // Anweisung an das Modell wirken (Prompt-Injection).
