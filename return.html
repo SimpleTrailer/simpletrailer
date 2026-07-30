@@ -101,6 +101,38 @@
     .confirm-box.warning { background:#1a0d00; border-color:#f97316; }
     .confirm-box.warning label { color:#fed7aa; }
 
+    /* ═══ FOTO-BEISPIELE ("So soll's aussehen") ═══ */
+    .photo-example { position:relative; border-radius:12px; overflow:hidden; background:#141414; border:1px solid var(--border); margin-bottom:10px; }
+    .photo-example svg, .photo-example img { display:block; width:100%; height:auto; }
+    .photo-example img { aspect-ratio:5/3; object-fit:cover; }
+    .photo-example-badge { position:absolute; top:10px; left:10px; background:rgba(0,0,0,.72); color:#fff; font-size:.64rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; padding:4px 10px; border-radius:999px; }
+    .photo-example::before, .photo-example::after { content:''; position:absolute; width:24px; height:24px; border:3px solid rgba(255,255,255,.8); pointer-events:none; }
+    .photo-example::before { top:8px; right:8px; border-left:none; border-bottom:none; border-radius:0 8px 0 0; }
+    .photo-example::after  { bottom:8px; left:8px; border-right:none; border-top:none; border-radius:0 0 0 8px; }
+    .photo-checks { list-style:none; display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px; }
+    .photo-checks li { display:flex; align-items:center; gap:6px; background:var(--s2); border:1px solid var(--border); border-radius:999px; padding:5px 11px; font-size:.76rem; color:#ccc; }
+    .photo-checks li::before { content:'✓'; color:var(--green); font-weight:800; }
+
+    /* ═══ SCHADEN MELDEN ═══ */
+    .dmg-card { border-color:#453208; background:#131006; }
+    .dmg-head { display:flex; align-items:center; justify-content:space-between; gap:14px; cursor:pointer; }
+    .dmg-toggle { flex-shrink:0; background:transparent; border:1.5px solid #fbbf24; color:#fcd34d; font-family:var(--font); font-weight:700; font-size:.84rem; padding:9px 16px; border-radius:999px; cursor:pointer; transition:background .2s; }
+    .dmg-toggle:hover { background:rgba(251,191,36,.12); }
+    .dmg-sev { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin:16px 0 12px; }
+    .dmg-sev label { position:relative; cursor:pointer; }
+    .dmg-sev input { position:absolute; opacity:0; }
+    .dmg-sev span { display:flex; flex-direction:column; align-items:center; gap:3px; text-align:center; background:var(--s2); border:1.5px solid var(--border); border-radius:10px; padding:12px 6px; font-size:.76rem; color:#ccc; line-height:1.3; transition:border-color .15s, background .15s; }
+    .dmg-sev span b { font-size:1.15rem; }
+    .dmg-sev input:checked + span { border-color:#fbbf24; background:rgba(251,191,36,.10); color:#fde68a; }
+    .dmg-sev input:focus-visible + span { outline:2px solid #fbbf24; outline-offset:2px; }
+    #dmgDesc { width:100%; background:var(--s2); border:1.5px solid var(--border); border-radius:10px; color:#fff; font-family:var(--font); font-size:.9rem; padding:12px 14px; min-height:84px; resize:vertical; }
+    #dmgDesc:focus { outline:none; border-color:#fbbf24; }
+    .dmg-photo-btn { display:flex; align-items:center; gap:8px; background:var(--s2); border:1.5px dashed var(--border); border-radius:10px; padding:11px 14px; color:#ccc; font-size:.85rem; cursor:pointer; margin-top:10px; width:100%; font-family:var(--font); text-align:left; }
+    .dmg-photo-btn:hover { border-color:#fbbf24; }
+    .dmg-submit { margin-top:14px; background:#fbbf24; color:#1a1200; }
+    .dmg-submit:hover:not(:disabled) { background:#f59e0b; }
+    .dmg-done { display:none; background:#0a1f0a; border:1.5px solid rgba(34,197,94,.35); border-radius:10px; padding:14px 16px; color:#86efac; font-size:.9rem; line-height:1.55; }
+
     /* ═══ GEFÜHRTE KAMERA (Ghost-Schablone, Foto 1 → direkt Foto 2) ═══ */
     #camModal {
       display:none; position:fixed; inset:0; z-index:9999; background:#000;
@@ -241,7 +273,39 @@
     <!-- Foto Upload -->
     <div class="card">
       <p class="section-tag" data-i18n="return.photo.title">Foto 1 · Anhänger am Stellplatz</p>
-      <p style="color:var(--gray);font-size:.85rem;margin-bottom:14px;" data-i18n="return.photo.desc">Tippe unten — die Kamera zeigt dir eine durchsichtige Schablone, wie der Anhänger ins Bild soll. Foto 2 (Ladefläche) kommt direkt danach.</p>
+      <div class="photo-example" id="example1">
+        <svg viewBox="0 0 520 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Beispiel: Anhänger komplett von der Seite fotografiert">
+          <rect width="520" height="300" fill="#1B1B1B"/>
+          <rect y="254" width="520" height="46" fill="#242424"/>
+          <ellipse cx="230" cy="258" rx="210" ry="10" fill="rgba(0,0,0,.5)"/>
+          <!-- Plane/Aufbau -->
+          <rect x="38" y="50" width="336" height="146" rx="10" fill="#E7E2D8"/>
+          <line x1="98"  y1="50" x2="98"  y2="196" stroke="#CFC8BB" stroke-width="3"/>
+          <line x1="158" y1="50" x2="158" y2="196" stroke="#CFC8BB" stroke-width="3"/>
+          <line x1="218" y1="50" x2="218" y2="196" stroke="#CFC8BB" stroke-width="3"/>
+          <line x1="278" y1="50" x2="278" y2="196" stroke="#CFC8BB" stroke-width="3"/>
+          <line x1="338" y1="50" x2="338" y2="196" stroke="#CFC8BB" stroke-width="3"/>
+          <rect x="38" y="182" width="336" height="14" rx="6" fill="#D9D3C7"/>
+          <!-- Rad (liegt hinter dem Chassis-Balken) -->
+          <circle cx="188" cy="230" r="30" fill="#1e1e1e" stroke="#0c0c0c" stroke-width="3"/>
+          <circle cx="188" cy="230" r="12" fill="#8a8a8a"/>
+          <circle cx="188" cy="230" r="4.5" fill="#2e2e2e"/>
+          <!-- Chassis -->
+          <rect x="24" y="196" width="382" height="10" rx="4" fill="#474747"/>
+          <!-- Deichsel + Kupplung -->
+          <path d="M406 201 L490 236" stroke="#474747" stroke-width="10" stroke-linecap="round"/>
+          <circle cx="494" cy="239" r="9" fill="#6b6b6b"/>
+          <!-- Stützrad -->
+          <rect x="444" y="210" width="7" height="32" rx="3" fill="#5b5b5b"/>
+          <circle cx="447" cy="248" r="9" fill="#2e2e2e" stroke="#111" stroke-width="2"/>
+        </svg>
+        <span class="photo-example-badge">So soll's aussehen</span>
+      </div>
+      <ul class="photo-checks">
+        <li>Ganzer Anhänger im Bild</li>
+        <li>Von der Seite, 3–4 m Abstand</li>
+        <li>Stellplatz erkennbar</li>
+      </ul>
       <div class="upload-area" id="uploadArea" onclick="onUploadAreaClick()">
         <div class="upload-icon">📷</div>
         <div class="upload-text"><strong id="uploadCta" data-i18n="return.photo.choose">Foto aufnehmen</strong> <span data-i18n="return.photo.or_drop">oder hierher ziehen</span></div>
@@ -253,13 +317,68 @@
     <!-- Foto 2: Ladefläche -->
     <div class="card">
       <p class="section-tag">Foto 2 · Ladefläche</p>
-      <p style="color:var(--gray);font-size:.85rem;margin-bottom:14px;">Ein Blick von schräg oben in die <strong style="color:var(--white);">Ladefläche</strong> – so ist der Zustand bei Rückgabe festgehalten. Schützt dich &amp; uns bei Schäden oder Verschmutzung.</p>
+      <div class="photo-example">
+        <svg viewBox="0 0 520 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Beispiel: Blick von schräg oben in die leere Ladefläche">
+          <rect width="520" height="300" fill="#1B1B1B"/>
+          <!-- Bordwände außen -->
+          <path d="M118 40 L402 40 L500 278 L20 278 Z" fill="#3E3A33"/>
+          <!-- Stirnwand-Kante -->
+          <path d="M118 40 L402 40 L410 60 L110 60 Z" fill="#4A453C"/>
+          <!-- Ladefläche (Holzboden) -->
+          <path d="M140 62 L380 62 L462 256 L58 256 Z" fill="#A98F63"/>
+          <!-- Planken, perspektivisch -->
+          <path d="M188 62 L139 256" stroke="#92794F" stroke-width="3"/>
+          <path d="M236 62 L220 256" stroke="#92794F" stroke-width="3"/>
+          <path d="M284 62 L300 256" stroke="#92794F" stroke-width="3"/>
+          <path d="M332 62 L381 256" stroke="#92794F" stroke-width="3"/>
+          <!-- Zurrösen -->
+          <circle cx="160" cy="84" r="6" fill="#6b5a38" stroke="#3f3323" stroke-width="2"/>
+          <circle cx="360" cy="84" r="6" fill="#6b5a38" stroke="#3f3323" stroke-width="2"/>
+          <circle cx="90" cy="236" r="7" fill="#6b5a38" stroke="#3f3323" stroke-width="2"/>
+          <circle cx="430" cy="236" r="7" fill="#6b5a38" stroke="#3f3323" stroke-width="2"/>
+          <!-- Heckklappen-Kante unten -->
+          <path d="M20 278 L500 278 L500 292 L20 292 Z" fill="#2c2a25"/>
+        </svg>
+        <span class="photo-example-badge">So soll's aussehen</span>
+      </div>
+      <ul class="photo-checks">
+        <li>Von schräg oben</li>
+        <li>Ganze Ladefläche im Bild</li>
+        <li>Leer &amp; besenrein</li>
+      </ul>
       <div class="upload-area" id="uploadAreaLade" onclick="onUploadAreaLadeClick()">
         <div class="upload-icon">📦</div>
         <div class="upload-text"><strong id="uploadCtaLade">Foto aufnehmen</strong> oder hierher ziehen</div>
         <input type="file" id="photoInputLade" accept="image/*" capture="environment" onchange="handlePhotoLade(event)" />
         <img id="photoPreviewLade" class="upload-preview" alt="Vorschau Ladefläche" />
       </div>
+    </div>
+
+    <!-- Schaden melden (unabhängig von der Rückgabe — wird sofort an uns gemeldet) -->
+    <div class="card dmg-card" id="damageCard">
+      <div class="dmg-head" id="dmgHead" onclick="toggleDamage()">
+        <div>
+          <p class="section-tag" style="color:#fcd34d;">🔧 Schaden aufgefallen?</p>
+          <p style="color:#b8a97e;font-size:.83rem;line-height:1.5;">Kratzer, Delle, Riss in der Plane? In 30 Sekunden gemeldet — selbst gemeldet ist immer besser (und günstiger), als wenn wir es später finden.</p>
+        </div>
+        <button type="button" class="dmg-toggle" id="dmgToggle" aria-expanded="false">+ Melden</button>
+      </div>
+      <div id="dmgForm" style="display:none;">
+        <div class="dmg-sev">
+          <label><input type="radio" name="dmgSev" value="minor"><span><b>🩹</b>Kleiner Kratzer / Schramme</span></label>
+          <label><input type="radio" name="dmgSev" value="major"><span><b>⚠️</b>Größerer Schaden</span></label>
+          <label><input type="radio" name="dmgSev" value="not_drivable"><span><b>🚫</b>Nicht mehr fahrbereit</span></label>
+        </div>
+        <textarea id="dmgDesc" placeholder="Was ist passiert? Wo genau? (z. B. „Kratzer hinten links an der Bordwand, ca. 10 cm“)" maxlength="600"></textarea>
+        <button type="button" class="dmg-photo-btn" onclick="document.getElementById('dmgPhotoInput').click()">
+          <span>📷</span><span id="dmgPhotoLabel">Foto vom Schaden anhängen (optional, hilft uns sehr)</span>
+        </button>
+        <input type="file" id="dmgPhotoInput" accept="image/*" capture="environment" style="display:none" onchange="handleDmgPhoto(event)" />
+        <img id="dmgPhotoPreview" class="upload-preview" alt="Schadensfoto Vorschau" />
+        <div id="dmgError" style="display:none;color:#f87171;font-size:.84rem;margin-top:10px;"></div>
+        <button type="button" class="btn dmg-submit" id="dmgSubmitBtn" onclick="submitDamage()">Schaden melden</button>
+      </div>
+      <div class="dmg-done" id="dmgDone">✓ <strong>Schaden gemeldet — danke für deine Ehrlichkeit!</strong><br>Wir schauen uns das an und melden uns nur, falls es Fragen gibt. Die Rückgabe kannst du ganz normal abschließen.</div>
     </div>
 
     <!-- Bestaetigung -->
@@ -317,36 +436,39 @@
 <div id="camModal" role="dialog" aria-modal="true" aria-label="Kamera">
   <video id="camVideo" autoplay playsinline muted></video>
 
-  <!-- Schablone Foto 1: Anhänger von der Seite -->
+  <!-- Schablone Foto 1: Anhänger von der Seite (gefüllte Silhouette — gleiches Motiv wie das Beispielbild) -->
   <div class="cam-ghost" id="camGhost1">
-    <svg viewBox="0 0 520 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox="0 0 520 300" xmlns="http://www.w3.org/2000/svg">
       <!-- Plane/Aufbau -->
-      <rect x="42" y="36" width="330" height="178" rx="12" stroke="#fff" stroke-width="4" stroke-dasharray="14 10" fill="rgba(255,255,255,.06)"/>
-      <!-- Chassis -->
-      <line x1="26" y1="222" x2="402" y2="222" stroke="#fff" stroke-width="4" stroke-dasharray="14 10"/>
-      <!-- Deichsel + Kupplung -->
-      <path d="M402 222 L496 252" stroke="#fff" stroke-width="4" stroke-dasharray="14 10"/>
-      <circle cx="501" cy="254" r="8" stroke="#fff" stroke-width="4" fill="rgba(255,255,255,.1)"/>
+      <rect x="38" y="50" width="336" height="146" rx="10" fill="rgba(255,255,255,.12)" stroke="rgba(255,255,255,.9)" stroke-width="3"/>
+      <line x1="158" y1="50" x2="158" y2="196" stroke="rgba(255,255,255,.35)" stroke-width="2.5"/>
+      <line x1="278" y1="50" x2="278" y2="196" stroke="rgba(255,255,255,.35)" stroke-width="2.5"/>
       <!-- Rad -->
-      <circle cx="185" cy="257" r="36" stroke="#fff" stroke-width="4" stroke-dasharray="10 8" fill="rgba(255,255,255,.06)"/>
-      <circle cx="185" cy="257" r="11" stroke="#fff" stroke-width="3" fill="none"/>
-      <!-- Stützrad vorn -->
-      <line x1="452" y1="238" x2="452" y2="278" stroke="#fff" stroke-width="4" stroke-dasharray="8 7"/>
-      <circle cx="452" cy="288" r="11" stroke="#fff" stroke-width="3" fill="none"/>
+      <circle cx="188" cy="230" r="30" fill="rgba(255,255,255,.10)" stroke="rgba(255,255,255,.9)" stroke-width="3"/>
+      <circle cx="188" cy="230" r="11" stroke="rgba(255,255,255,.7)" stroke-width="2.5" fill="none"/>
+      <!-- Chassis -->
+      <rect x="24" y="196" width="382" height="10" rx="4" fill="rgba(255,255,255,.16)" stroke="rgba(255,255,255,.9)" stroke-width="2.5"/>
+      <!-- Deichsel + Kupplung -->
+      <path d="M406 201 L490 236" stroke="rgba(255,255,255,.9)" stroke-width="8" stroke-linecap="round"/>
+      <circle cx="494" cy="239" r="9" fill="rgba(255,255,255,.16)" stroke="rgba(255,255,255,.9)" stroke-width="3"/>
+      <!-- Stützrad -->
+      <line x1="447" y1="210" x2="447" y2="240" stroke="rgba(255,255,255,.9)" stroke-width="5"/>
+      <circle cx="447" cy="248" r="9" fill="rgba(255,255,255,.10)" stroke="rgba(255,255,255,.8)" stroke-width="2.5"/>
     </svg>
   </div>
 
-  <!-- Schablone Foto 2: Blick von schräg oben in die Ladefläche -->
+  <!-- Schablone Foto 2: Blick von schräg oben in die Ladefläche (gleiches Motiv wie das Beispielbild) -->
   <div class="cam-ghost" id="camGhost2">
-    <svg viewBox="0 0 520 320" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <!-- Ladeflächen-Rahmen in Perspektive -->
-      <path d="M118 52 L402 52 L492 282 L28 282 Z" stroke="#fff" stroke-width="4" stroke-dasharray="14 10" fill="rgba(255,255,255,.06)"/>
-      <!-- Boden-Linien für Tiefenwirkung -->
-      <line x1="166" y1="52" x2="106 " y2="282" stroke="#fff" stroke-width="2.5" stroke-dasharray="8 9" opacity=".55"/>
-      <line x1="260" y1="52" x2="260" y2="282" stroke="#fff" stroke-width="2.5" stroke-dasharray="8 9" opacity=".55"/>
-      <line x1="354" y1="52" x2="414" y2="282" stroke="#fff" stroke-width="2.5" stroke-dasharray="8 9" opacity=".55"/>
-      <line x1="97 " y1="129" x2="432" y2="129" stroke="#fff" stroke-width="2.5" stroke-dasharray="8 9" opacity=".55"/>
-      <line x1="76" y1="196" x2="453" y2="196" stroke="#fff" stroke-width="2.5" stroke-dasharray="8 9" opacity=".55"/>
+    <svg viewBox="0 0 520 300" xmlns="http://www.w3.org/2000/svg">
+      <!-- Bordwände außen -->
+      <path d="M118 40 L402 40 L500 278 L20 278 Z" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.9)" stroke-width="3"/>
+      <!-- Ladefläche innen -->
+      <path d="M140 62 L380 62 L462 256 L58 256 Z" fill="rgba(255,255,255,.10)" stroke="rgba(255,255,255,.7)" stroke-width="2.5"/>
+      <!-- Planken, perspektivisch -->
+      <path d="M188 62 L139 256" stroke="rgba(255,255,255,.4)" stroke-width="2.5"/>
+      <path d="M236 62 L220 256" stroke="rgba(255,255,255,.4)" stroke-width="2.5"/>
+      <path d="M284 62 L300 256" stroke="rgba(255,255,255,.4)" stroke-width="2.5"/>
+      <path d="M332 62 L381 256" stroke="rgba(255,255,255,.4)" stroke-width="2.5"/>
     </svg>
   </div>
 
@@ -441,6 +563,21 @@
 
       // Initialer Tracker-Stand aus dem booking-Response
       const tr = booking.trailers || {};
+
+      // "So soll's aussehen": Wenn ein echtes Foto des Anhängers gepflegt ist,
+      // ersetzt es die Illustration — das beste Beispiel ist der Anhänger selbst.
+      if (tr.appearance_photo_url) {
+        try {
+          const exSvg = document.querySelector('#example1 svg');
+          if (exSvg) {
+            const exImg = document.createElement('img');
+            exImg.src = tr.appearance_photo_url;
+            exImg.alt = 'Dein Anhänger — so soll das Foto aussehen';
+            exImg.loading = 'lazy';
+            exSvg.replaceWith(exImg);
+          }
+        } catch (e) { /* Illustration bleibt als Fallback */ }
+      }
       trailerLat    = tr.last_lat;
       trailerLng    = tr.last_lng;
       trailerSeenAt = tr.last_seen_at;
@@ -721,8 +858,8 @@
     document.getElementById('camDot2').className = camStep === 2 ? 'dot-on' : 'dot-off';
     document.getElementById('camStepLabel').textContent = camStep === 1 ? 'Foto 1 von 2 · Anhänger' : 'Foto 2 von 2 · Ladefläche';
     document.getElementById('camHint').textContent = camStep === 1
-      ? 'Stell dich so hin, dass der Anhänger ungefähr in die Schablone passt — dann auslösen'
-      : 'Von schräg oben in die Ladefläche fotografieren — Rahmen ungefähr treffen';
+      ? 'Ganzen Anhänger von der Seite ins Bild — 3–4 Meter Abstand, dann auslösen'
+      : 'Von schräg oben: die ganze Ladefläche ins Bild, dann auslösen';
   }
 
   let camCapturing = false; // Doppeltipp-Schutz: sonst würde Foto 1 auch als Foto 2 gespeichert
@@ -880,6 +1017,82 @@
   // die Rückgabe blockieren — nur der finale process-return-Call darf Fehler zeigen.
   async function tryUpload(fn) {
     try { return await fn(); } catch (e) { return null; }
+  }
+
+  // ─── SCHADEN MELDEN (unabhängig von der Rückgabe — sofortige Meldung) ───
+  let dmgOpen = false, dmgPhotoFile = null, dmgSubmitted = false;
+
+  function toggleDamage() {
+    if (dmgSubmitted) return;
+    dmgOpen = !dmgOpen;
+    document.getElementById('dmgForm').style.display = dmgOpen ? 'block' : 'none';
+    const t = document.getElementById('dmgToggle');
+    t.textContent = dmgOpen ? '× Schließen' : '+ Melden';
+    t.setAttribute('aria-expanded', String(dmgOpen));
+  }
+
+  function handleDmgPhoto(e) {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    dmgPhotoFile = f;
+    document.getElementById('dmgPhotoLabel').textContent = 'Foto ausgewählt ✓ — tippen zum Ändern';
+    const img = document.getElementById('dmgPhotoPreview');
+    if (img.src) URL.revokeObjectURL(img.src);
+    img.src = URL.createObjectURL(f);
+    img.style.display = 'block';
+  }
+
+  async function submitDamage() {
+    const sev  = document.querySelector('input[name="dmgSev"]:checked')?.value;
+    const desc = document.getElementById('dmgDesc').value.trim();
+    const err  = document.getElementById('dmgError');
+    err.style.display = 'none';
+    if (!sev)            { err.textContent = 'Bitte wähle aus, wie schwer der Schaden ist.'; err.style.display = 'block'; return; }
+    if (desc.length < 5) { err.textContent = 'Bitte beschreib den Schaden kurz (mindestens 5 Zeichen).'; err.style.display = 'block'; return; }
+
+    const btn = document.getElementById('dmgSubmitBtn');
+    btn.disabled = true; btn.textContent = 'Wird gemeldet…';
+    try {
+      // Foto ist optional und fail-open: ein hängender Upload darf die Meldung nicht verhindern.
+      let photoUrl = null;
+      if (dmgPhotoFile) {
+        btn.textContent = 'Foto wird hochgeladen…';
+        photoUrl = await tryUpload(async () => {
+          const fileName = `damage-${bookingId}-${Date.now()}.${(dmgPhotoFile.name.split('.').pop() || 'jpg')}`;
+          const ctrl = new AbortController();
+          const t = setTimeout(() => ctrl.abort(), 25000);
+          const res = await fetch(`${SUPABASE_URL}/storage/v1/object/return-photos/${fileName}`, {
+            method: 'POST',
+            headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}`, 'Content-Type': dmgPhotoFile.type },
+            body: dmgPhotoFile, signal: ctrl.signal
+          });
+          clearTimeout(t);
+          return res.ok ? `${SUPABASE_URL}/storage/v1/object/public/return-photos/${fileName}` : null;
+        });
+        btn.textContent = 'Wird gemeldet…';
+      }
+
+      const res = await fetch('/api/damages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          trailer_id: booking.trailer_id,
+          booking_id: bookingId,
+          severity: sev, description: desc, photo_url: photoUrl,
+          source: 'return', return_token: returnToken
+        })
+      });
+      if (!res.ok) throw new Error((await res.json()).error || 'Meldung fehlgeschlagen');
+
+      dmgSubmitted = true;
+      document.getElementById('dmgForm').style.display = 'none';
+      document.getElementById('dmgHead').style.display = 'none';
+      document.getElementById('dmgDone').style.display = 'block';
+    } catch (e) {
+      err.textContent = e.message + ' — versuch es nochmal oder schreib uns: info@simpletrailer.de';
+      err.style.display = 'block';
+      btn.disabled = false; btn.textContent = 'Schaden melden';
+    }
   }
 
   let aiRejectedOnce = false; // KI darf genau 1x zum Neu-Fotografieren auffordern, nie endgültig blocken

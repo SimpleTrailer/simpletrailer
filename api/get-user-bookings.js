@@ -26,9 +26,12 @@ module.exports = async (req, res) => {
 
     if (error) throw error;
 
-    // Tokens nur für aktive/bestätigte Buchungen mitschicken
+    // Tokens nur für aktive/bestätigte Buchungen mitschicken.
+    // Schloss-Code erst NACH dem Vorab-Check rausgeben (fester Code pro Anhänger —
+    // vorher darf er die API gar nicht verlassen, das Frontend blendet ihn eh erst dann ein).
     const result = bookings.map(b => ({
       ...b,
+      access_code:    (['confirmed', 'active'].includes(b.status) && b.precheck_completed_at) ? b.access_code : null,
       precheck_token: ['confirmed', 'active'].includes(b.status) ? b.precheck_token : null,
       return_token:   ['confirmed', 'active'].includes(b.status) ? b.return_token   : null,
     }));

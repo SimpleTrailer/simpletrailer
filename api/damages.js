@@ -12,6 +12,11 @@
  */
 const { createClient } = require('@supabase/supabase-js');
 const { setCors } = require('./_cors');
+const { pushLion } = require('./_lion-push.js');
+const { isRateLimited } = require('./_rate-limit.js');
+
+// User-Input darf nie roh ins Mail-HTML
+const esc = s => String(s ?? '').replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
 
 const supabase     = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 const supabaseAuth = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
@@ -52,12 +57,23 @@ module.exports = async (req, res) => {
 
     // ─── POST: neuen Schaden anlegen ─────────────────────────────
     if (req.method === 'POST') {
+      // Jede Meldung erzeugt eine Alarm-Mail an Lion — ohne Limit wäre das ein Spam-Kanal.
+      if (isRateLimited(req, { maxPerHour: 6, maxPerMinute: 3 })) {
+        return res.status(429).json({ error: 'Zu viele Meldungen — bitte warte kurz oder schreib uns an info@simpletrailer.de.' });
+      }
+
       const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
       const { trailer_id, booking_id, severity, description, photo_url, source, precheck_token, return_token } = body;
 
       if (!trailer_id || !severity || !description) {
         return res.status(400).json({ error: 'trailer_id + severity + description erforderlich' });
       }
+
+      // photo_url nur akzeptieren, wenn sie auf UNSEREN Storage zeigt — sonst landet ein
+      // beliebiges Link-Ziel in der DB und als Klick-Link in der Alarm-Mail (Phishing).
+      const STORAGE_PREFIX = `${process.env.SUPABASE_URL}/storage/v1/object/public/`;
+      const safePhotoUrl = (photo_url && String(photo_url).startsWith(STORAGE_PREFIX)) ? String(photo_url) : null;
+      const safeDescription = String(description).slice(0, 1000);
       if (!['minor', 'major', 'not_drivable'].includes(severity)) {
         return res.status(400).json({ error: 'severity muss minor/major/not_drivable sein' });
       }
@@ -92,10 +108,39 @@ module.exports = async (req, res) => {
 
       const { data, error } = await supabase.from('damages').insert({
         trailer_id, booking_id: booking_id || null,
-        source, severity, description, photo_url: photo_url || null,
+        source, severity, description: safeDescription, photo_url: safePhotoUrl,
         reported_by: reportedBy
       }).select().single();
       if (error) return res.status(500).json({ error: error.message });
+
+      // Lion SOFORT informieren (außer bei Admin-Einträgen — die macht er selbst).
+      // Fail-open: Ein Alert-Fehler darf die Schadensmeldung nie kaputt machen.
+      if (source !== 'admin') {
+        try {
+          const { data: trailer } = await supabase.from('trailers').select('name').eq('id', trailer_id).maybeSingle();
+          const sevLabels = { minor: 'Klein', major: 'Größer', not_drivable: '🚫 NICHT FAHRBEREIT' };
+          const srcLabels = { pre_check: 'Vorab-Check (Abholung)', return: 'Rückgabe', customer_report: 'Kundenkonto' };
+          await pushLion({
+            severity: severity === 'not_drivable' ? 'red' : 'yellow',
+            category: 'alert',
+            title: `Schadensmeldung (${sevLabels[severity] || severity}): ${trailer?.name || 'Anhänger'}`,
+            htmlBody: `
+              <table style="width:100%;font-size:.92rem;line-height:1.6;">
+                <tr><td style="color:#888;width:35%;">Anhänger</td><td><strong>${esc(trailer?.name || trailer_id)}</strong></td></tr>
+                <tr><td style="color:#888;">Schwere</td><td>${sevLabels[severity] || esc(severity)}</td></tr>
+                <tr><td style="color:#888;">Gemeldet bei</td><td>${srcLabels[source] || esc(source)}</td></tr>
+                <tr><td style="color:#888;">Von</td><td>${esc(reportedBy)}</td></tr>
+                ${booking_id ? `<tr><td style="color:#888;">Buchung</td><td><code>#${esc(String(booking_id).slice(0,8).toUpperCase())}</code></td></tr>` : ''}
+              </table>
+              <p style="background:#0a0a0a;padding:12px;border-radius:8px;font-size:.9rem;white-space:pre-wrap;">${esc(safeDescription).slice(0, 600)}</p>
+              ${safePhotoUrl ? `<p><a href="${esc(safePhotoUrl)}" style="color:#E85D00;">📷 Schadensfoto ansehen</a></p>` : ''}
+            `,
+            link: 'https://simpletrailer.de/admin',
+          });
+        } catch (alertErr) {
+          console.warn('damages: Lion-Alert fehlgeschlagen:', alertErr.message);
+        }
+      }
 
       return res.status(200).json({ damage: data });
     }
