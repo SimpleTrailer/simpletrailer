@@ -1205,10 +1205,27 @@
       <div style="font-size:.78rem;color:var(--dim);margin-top:3px">Nicht akzeptieren — mit Mietvertrag, Fotos und Protokoll bestreiten oder selbst erstatten.</div>
     </div>`;
     if(b.admin_note)h+=`<div class="card" style="border-color:#a16207;background:rgba(234,179,8,.07);padding:13px 15px;margin-top:10px">
-      <div style="font-weight:700;font-size:.9rem">💸 Offene Forderung</div>
-      <div style="font-size:.8rem;color:var(--dim);margin-top:3px">${esc(b.admin_note)}</div>
+      <div style="font-weight:700;font-size:.9rem">📝 Notiz</div>
+      <div style="font-size:.8rem;color:var(--dim);margin-top:3px;white-space:pre-wrap">${esc(b.admin_note)}</div>
     </div>`;
+    // Nicht eingezogene Gebühren: zählen trotzdem überall als Umsatz mit. Wer sie
+    // erlässt, muss sie hier auf 0 setzen können — sonst weist die Buchhaltung
+    // dauerhaft Geld aus, das nie geflossen ist.
+    const kassiert=id=>id&&!String(id).startsWith('FAILED');
+    const offenLate=(b.late_fee_amount||0)>0&&!kassiert(b.late_fee_payment_intent_id);
+    const offenExtra=(b.return_extra_fee||0)>0&&!kassiert(b.return_extra_fee_payment_id);
+    if(offenLate||offenExtra){
+      const summe=(offenLate?(b.late_fee_amount||0):0)+(offenExtra?(b.return_extra_fee||0):0);
+      h+=`<div class="card" style="border-color:#a16207;background:rgba(234,179,8,.07);padding:13px 15px;margin-top:10px">
+        <div style="font-weight:700;font-size:.9rem">💸 ${eur(summe)} offen, nicht eingezogen</div>
+        <div style="font-size:.78rem;color:var(--dim);margin-top:3px">
+          ${offenLate?'Verspätungsgebühr '+eur(b.late_fee_amount):''}${offenLate&&offenExtra?' · ':''}${offenExtra?'Rückgabe-Gebühr '+eur(b.return_extra_fee):''}.
+          Zählt aktuell als Umsatz mit. Entweder einziehen — oder erlassen, dann fällt der Betrag überall raus.
+        </div>
+      </div>`;
+    }
     h+=`<div class="dlabel">Status & Aktionen</div><div>`;
+    if(offenLate||offenExtra)h+=`<button class="linkbtn" onclick="waiveFee('${b.id}','${offenLate&&offenExtra?'both':offenLate?'late':'extra'}')">🤝 Gebühr erlassen (Kulanz)</button>`;
     if(b.status==='confirmed')h+=`<button class="linkbtn" onclick="setBookingStatus('${b.id}','active')">🚚 Als abgeholt markieren</button>`;
     if(b.status==='active')h+=`<button class="linkbtn" onclick="setBookingStatus('${b.id}','returned')">✅ Als zurückgegeben markieren</button>`;
     if(b.status==='pending')h+=`<button class="linkbtn" onclick="markNoShow('${b.id}')">👻 Nicht erschienen</button>`;
@@ -1323,6 +1340,18 @@
     }catch(e){ alert('❌ '+e.message); }
   }
 
+  async function waiveFee(id,welche){
+    const was={late:'die Verspätungsgebühr',extra:'die Rückgabe-Gebühr',both:'beide offenen Gebühren'}[welche]||'die Gebühr';
+    if(!confirm(`${was.charAt(0).toUpperCase()+was.slice(1)} aus Kulanz erlassen?\n\nDer Betrag wird auf 0 gesetzt und verschwindet damit aus Umsatz, Kundenwert und den offenen Forderungen. Der Kunde bekommt KEINE Mail — das machst du bei Bedarf über „Kulanz-Mail".`))return;
+    const grund=prompt('Kurzer Grund für die Akte (optional, z. B. „Kulanz — Kunde war 20 Min zu spät wegen Stau"):','Kulanz');
+    if(grund===null)return;
+    try{
+      const r=await fetch('/api/admin?section=waive-fee',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${authToken}`},body:JSON.stringify({booking_id:id,fee:welche,reason:grund})});
+      const d=await r.json(); if(!r.ok)throw new Error(d.error||'Fehler');
+      closePanel(); await loadAll();
+      alert(d.nichts_offen?'Es war nichts mehr offen.':`✓ Erlassen: ${(d.erlassen||[]).join(' + ')}`);
+    }catch(e){ alert('❌ '+e.message); }
+  }
   async function rejectLicense(uid){
     // Seit der vorläufigen Freigabe kann jemand schon eine laufende Buchung
     // haben, wenn wir ihm den Führerschein wieder entziehen. Das Ablehnen

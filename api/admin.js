@@ -970,6 +970,67 @@ Wir bitten den Ausfall zu entschuldigen.
       return res.status(200).json({ ok: true });
     }
 
+    // ─── WAIVE-FEE: Gebühr aus Kulanz erlassen ─────────────────────────────
+    //
+    // WARUM ES DAS BRAUCHT: late_fee_amount und return_extra_fee zählen überall
+    // als Umsatz mit (Cockpit, Kundenwert, CSV-Export, Trend-Charts) und tauchen
+    // im Tagesbriefing als "offene Forderung" auf — und zwar UNABHÄNGIG davon,
+    // ob je Geld geflossen ist. Wird eine Gebühr erlassen, muss sie deshalb auf 0
+    // gesetzt werden, sonst weist die Buchhaltung Umsatz aus, den es nie gab.
+    // Bisher ging das nur beim Kulanz-Abschluss auf 'returned' — bei einer bereits
+    // abgeschlossenen Buchung gab es gar keinen Weg mehr.
+    if (section === 'waive-fee' && req.method === 'POST') {
+      const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+      const { booking_id } = body;
+      const welche = String(body.fee || 'late');          // 'late' | 'extra' | 'both'
+      const grund  = String(body.reason || '').slice(0, 300).trim();
+      if (!booking_id) return res.status(400).json({ error: 'booking_id erforderlich' });
+
+      const { data: b } = await supabase.from('bookings')
+        .select('id, late_fee_amount, late_fee_payment_intent_id, return_extra_fee, return_extra_fee_payment_id, admin_note')
+        .eq('id', booking_id).maybeSingle();
+      if (!b) return res.status(404).json({ error: 'Buchung nicht gefunden' });
+
+      // Eine bereits eingezogene Gebühr darf hier NICHT verschwinden — dann ist
+      // echtes Geld geflossen und der richtige Weg ist eine Erstattung.
+      const eingezogen = id => id && !String(id).startsWith('FAILED');
+      const upd = {};
+      const erlassen = [];
+      if (welche === 'late' || welche === 'both') {
+        if ((b.late_fee_amount || 0) > 0) {
+          if (eingezogen(b.late_fee_payment_intent_id)) {
+            return res.status(409).json({ error: 'Die Verspätungsgebühr wurde bereits eingezogen. Bitte stattdessen in Mollie erstatten — Erlassen würde nur die Buchhaltung verfälschen.' });
+          }
+          erlassen.push(`Verspätungsgebühr ${Number(b.late_fee_amount).toFixed(2)} €`);
+          upd.late_fee_amount = 0;
+          upd.late_fee_payment_intent_id = null;
+        }
+      }
+      if (welche === 'extra' || welche === 'both') {
+        if ((b.return_extra_fee || 0) > 0) {
+          if (eingezogen(b.return_extra_fee_payment_id)) {
+            return res.status(409).json({ error: 'Die Rückgabe-Gebühr wurde bereits eingezogen. Bitte stattdessen in Mollie erstatten.' });
+          }
+          erlassen.push(`Rückgabe-Gebühr ${Number(b.return_extra_fee).toFixed(2)} €`);
+          upd.return_extra_fee = 0;
+          upd.return_extra_fee_payment_id = null;
+        }
+      }
+      if (erlassen.length === 0) {
+        return res.status(200).json({ ok: true, nichts_offen: true });
+      }
+
+      // Nachvollziehbar festhalten, wer wann was erlassen hat (Beleg-Pflicht).
+      const stempel = new Date().toISOString().slice(0, 16).replace('T', ' ');
+      const notiz = `[${stempel}] Erlassen von ${(user.email || '').toLowerCase()}: ${erlassen.join(' + ')}`
+        + (grund ? ` — Grund: ${grund}` : '');
+      upd.admin_note = b.admin_note ? `${b.admin_note}\n${notiz}` : notiz;
+
+      const { error } = await supabase.from('bookings').update(upd).eq('id', booking_id);
+      if (error) return res.status(500).json({ error: error.message });
+      return res.status(200).json({ ok: true, erlassen });
+    }
+
     // ─── CANCEL-BOOKING: Admin storniert eine Buchung (Refund + Slot frei + Mail) ───
     if (section === 'cancel-booking' && req.method === 'POST') {
       const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
@@ -1540,6 +1601,7 @@ SimpleTrailer GbR · Waltjenstr. 96, 28237 Bremen · info@simpletrailer.de`;
       free_floating, cancellation_protection, cancellation_protection_fee,
       cancelled_at, cancellation_refund_amount,
       chargeback_at, chargeback_amount, admin_note, discount_code, discount_amount,
+      return_extra_fee, return_extra_fee_payment_id,
       trailers(name)
     `;
     let { data: bookings, error } = await supabase.from('bookings')
@@ -1549,7 +1611,9 @@ SimpleTrailer GbR · Waltjenstr. 96, 28237 Bremen · info@simpletrailer.de`;
       // darf an einer fehlenden Spalte nicht sterben. Es werden nacheinander die
       // optionalen Spalten weggelassen, bis die Abfrage durchgeht.
       console.warn('[admin] Spalte fehlt, Fallback-Abfrage:', error.message);
-      let cols = BOOKING_COLS.replace(/\s*chargeback_at, chargeback_amount, admin_note, discount_code, discount_amount,/, '');
+      let cols = BOOKING_COLS
+        .replace(/\s*chargeback_at, chargeback_amount, admin_note, discount_code, discount_amount,/, '')
+        .replace(/\s*return_extra_fee, return_extra_fee_payment_id,/, '');
       ({ data: bookings, error } = await supabase.from('bookings')
         .select(cols).order('created_at', { ascending: false }));
       if (error) {

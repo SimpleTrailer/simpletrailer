@@ -264,7 +264,9 @@ module.exports = async (req, res) => {
     const insAmount = Math.round(baseAmount * insRate * 100) / 100;
 
     const freeFloating    = !!free_floating;
-    const freeFloatingFee = freeFloating ? 15.00 : 0;
+    // Preis fuer "egal wo in Bremen abstellen". MUSS mit FREE_FLOATING_FEE in
+    // booking.html uebereinstimmen — hier wird gerechnet, dort nur angezeigt.
+    const freeFloatingFee = freeFloating ? 9.90 : 0;
 
     const cancellationProtection = !!cancellation_protection;
     const cancellationProtectionFee = cancellationProtection
