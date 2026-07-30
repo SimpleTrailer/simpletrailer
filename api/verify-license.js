@@ -322,18 +322,37 @@ module.exports = async (req, res) => {
   }
 
   // ── Serverseitige Zusatzprüfungen (nicht der KI überlassen) ──────────────
-  const concerns = Array.isArray(result.concerns) ? [...result.concerns] : [];
-  const classes  = Array.isArray(result.classes) ? result.classes.map(c => String(c).toUpperCase().trim()) : [];
+  //
+  // Zwei Töpfe, und der Unterschied ist wichtig:
+  //
+  //   HART  — hier wird nicht durchgelassen. Nicht aus Vorsicht, sondern weil
+  //           § 21 StVG denjenigen bestraft, der jemanden ohne gültige
+  //           Fahrerlaubnis fahren lässt. Ein abgelaufener, fremder oder
+  //           gefälschter Führerschein muss deshalb an einem Menschen hängen
+  //           bleiben, egal wie unbequem das ist.
+  //   WEICH — alles, wo nur die Sicherheit der Maschine fehlt, nicht die
+  //           Berechtigung des Kunden. Typischer Fall: der Gesichtsabgleich
+  //           gegen ein zehn Jahre altes Passbild ist "mittel" statt "hoch".
+  //           Dafür darf niemand mehr warten: der Kunde kommt durch, Lion
+  //           bekommt eine Mail und schaut in Ruhe nach.
+  const hart  = [];
+  const weich = Array.isArray(result.concerns) ? [...result.concerns] : [];
+  const classes = Array.isArray(result.classes) ? result.classes.map(c => String(c).toUpperCase().trim()) : [];
 
-  if (!classes.some(c => c === 'B' || c === 'BE')) {
-    concerns.push('Klasse B oder BE nicht eindeutig erkannt.');
+  if (result.is_real_license !== true || result.document_type === 'kein Führerschein') {
+    hart.push(`Dokument wurde nicht als Führerschein erkannt (${result.document_type || 'unbekannt'}).`);
   }
-  // Ohne lesbares Ablaufdatum darf NICHT automatisch freigegeben werden — sonst
-  // greift die spätere Ablaufprüfung beim Buchen ins Leere (dl_expires_at = null).
+  // Klasse B/BE ist die Berechtigung selbst — fehlt sie, darf die Person den
+  // Anhänger nicht ziehen. Das ist kein Zweifelsfall, sondern ein Ausschluss.
+  if (!classes.some(c => c === 'B' || c === 'BE')) {
+    hart.push('Klasse B oder BE nicht eindeutig erkannt.');
+  }
+  // Ohne lesbares Ablaufdatum greift die spätere Ablaufprüfung beim Buchen ins
+  // Leere (dl_expires_at = null) — ein abgelaufener Schein käme unbemerkt durch.
   if (!result.expires_at) {
-    concerns.push('Gültigkeitsdatum (Feld 4b) nicht sicher lesbar.');
+    hart.push('Gültigkeitsdatum (Feld 4b) nicht sicher lesbar.');
   } else if (new Date(result.expires_at) < new Date()) {
-    concerns.push(`Führerschein ist laut Dokument am ${result.expires_at} abgelaufen.`);
+    hart.push(`Führerschein ist laut Dokument am ${result.expires_at} abgelaufen.`);
   }
   // Name gegen das Konto prüfen — schützt davor, dass jemand einen fremden
   // Führerschein hochlädt. Der Kontoname steht in user_metadata (Kunde pflegt ihn
@@ -342,22 +361,28 @@ module.exports = async (req, res) => {
   const accFirst = profile.first_name || '';
   const accLast  = profile.last_name  || '';
   if (accLast && result.last_name && nameLoose(accLast) !== nameLoose(result.last_name)) {
-    concerns.push(`Nachname im Konto ("${accLast}") passt nicht zum Führerschein ("${result.last_name}").`);
+    hart.push(`Nachname im Konto ("${accLast}") passt nicht zum Führerschein ("${result.last_name}").`);
   }
   if (accFirst && result.first_name && !nameLoose(result.first_name).includes(nameLoose(accFirst))
       && !nameLoose(accFirst).includes(nameLoose(result.first_name))) {
-    concerns.push(`Vorname im Konto ("${accFirst}") passt nicht zum Führerschein ("${result.first_name}").`);
+    hart.push(`Vorname im Konto ("${accFirst}") passt nicht zum Führerschein ("${result.first_name}").`);
   }
   if (Array.isArray(result.tampering_signs) && result.tampering_signs.length > 0) {
-    concerns.push(...result.tampering_signs.map(t => `Manipulationsverdacht: ${t}`));
+    hart.push(...result.tampering_signs.map(t => `Manipulationsverdacht: ${t}`));
+  }
+  // Das Selfie passt NACHWEISLICH nicht — das ist ein Betrugssignal, kein Zweifel.
+  if (result.selfie_matches_photo === false) {
+    hart.push('Das Selfie passt laut Prüfung nicht zum Foto im Führerschein.');
+  } else if (result.selfie_matches_photo === null) {
+    weich.push('Gesichtsabgleich nicht eindeutig — bitte die Bilder kurz vergleichen.');
+  } else if (result.selfie_confidence !== 'high') {
+    weich.push(`Gesichtsabgleich stimmt, aber nur mit Sicherheit "${result.selfie_confidence || 'unbekannt'}".`);
   }
 
-  const clean =
-    result.recommendation === 'approve' &&
-    result.is_real_license === true &&
-    result.selfie_matches_photo === true &&
-    result.selfie_confidence === 'high' &&
-    concerns.length === 0;
+  // Sauber = die Maschine ist sich in allem sicher. Dann sieht Lion die Prüfung nie.
+  const clean = hart.length === 0 && weich.length === 0 && result.recommendation === 'approve';
+  // Vorläufig = nichts spricht dagegen, es fehlt nur die letzte Sicherheit.
+  const vorlaeufig = hart.length === 0 && !clean;
 
   const dlData = {
     dl_classes:         classes,
@@ -376,8 +401,8 @@ module.exports = async (req, res) => {
     dl_consent_ip:      consentIp
   };
 
-  // ── Freigabe ─────────────────────────────────────────────────────────────
-  if (clean) {
+  // ── Freigabe (sauber oder vorläufig) ─────────────────────────────────────
+  if (clean || vorlaeufig) {
     // Schreiben NUR nach app_metadata (siehe api/_dl.js) — user_metadata wäre
     // vom Kunden selbst überschreibbar und damit als Berechtigung wertlos.
     await writeLicense(supabase, user, {
@@ -385,12 +410,23 @@ module.exports = async (req, res) => {
       dl_status: 'verified',
       dl_verified_at: new Date().toISOString(),
       dl_check_method: 'ai',
+      dl_provisional:        vorlaeufig ? true : null,
+      dl_provisional_reason: vorlaeufig ? weich.join(' · ').slice(0, 500) : null,
       dl_failure_reason: null,
       dl_review_reason: null,
       dl_rejected_reason: null
     });
-    // Zweck erfüllt — biometrische Bilder sofort löschen.
-    await deleteUserImages(user.id);
+
+    if (vorlaeufig) {
+      // Bilder bleiben liegen — ohne sie kann Lion nicht nachkontrollieren.
+      // Der stündliche Cron (api/cron/purge-license-images.js) räumt sie nach
+      // 72 Stunden ab und erinnert vorher, damit nichts biometrisch liegenbleibt.
+      await meldeVorlaeufig(user, weich, { ...dlData, result });
+    } else {
+      // Zweck erfüllt — biometrische Bilder sofort löschen.
+      await deleteUserImages(user.id);
+    }
+
     return res.status(200).json({
       status: 'verified',
       message: 'Führerschein bestätigt. Du kannst jetzt buchen.',
@@ -399,14 +435,49 @@ module.exports = async (req, res) => {
     });
   }
 
-  // ── Handprüfung durch Lion ───────────────────────────────────────────────
-  await setReview(user, concerns.join(' · ') || 'Automatische Freigabe nicht möglich.', { ...dlData, result });
+  // ── Handprüfung durch Lion (nur noch bei echten Ausschlussgründen) ───────
+  await setReview(user, hart.concat(weich).join(' · ') || 'Automatische Freigabe nicht möglich.', { ...dlData, result });
   return res.status(200).json({
     status: 'review',
     message: 'Wir schauen uns deinen Führerschein noch persönlich an — das dauert meist nur kurz. Du bekommst eine E-Mail, sobald er freigegeben ist.'
   });
 
-  // ── Hilfsfunktion ────────────────────────────────────────────────────────
+  // ── Hilfsfunktionen ──────────────────────────────────────────────────────
+
+  /**
+   * Vorläufig freigegeben: der Kunde ist schon durch und kann buchen. Diese Mail
+   * ist deshalb KEIN Arbeitsauftrag mit wartendem Kunden, sondern eine
+   * Nachkontrolle — mit den Bild-Links, um sie in einer Minute zu erledigen.
+   */
+  async function meldeVorlaeufig(u, gruende, extra) {
+    try {
+      const links = await signedUrls(u.id);
+      const r = extra?.result || {};
+      await pushLion({
+        severity: 'yellow',
+        category: 'urgent',
+        title: `Führerschein nachkontrollieren: ${u.email}`,
+        htmlBody: `
+          <p style="font-size:.95rem;">Der Führerschein sah echt und gültig aus — der Kunde <strong>ist bereits freigegeben und kann buchen</strong>. Ein Punkt blieb aber unsicher, bitte einmal kurz drüberschauen.</p>
+          <table style="width:100%;font-size:.9rem;line-height:1.6;">
+            <tr><td style="color:#888;width:38%;">Konto</td><td>${esc(u.email)}</td></tr>
+            <tr><td style="color:#888;">Name laut Dokument</td><td>${esc([r.first_name, r.last_name].filter(Boolean).join(' ') || '—')}</td></tr>
+            <tr><td style="color:#888;">Geburtsdatum</td><td>${esc(r.date_of_birth || '—')}</td></tr>
+            <tr><td style="color:#888;">Klassen</td><td>${esc((extra?.dl_classes || []).join(', ') || '—')}</td></tr>
+            <tr><td style="color:#888;">Gültig bis</td><td>${esc(r.expires_at || '—')}</td></tr>
+            <tr><td style="color:#888;">Selfie passt</td><td>${r.selfie_matches_photo === true ? 'ja' : r.selfie_matches_photo === false ? 'NEIN' : 'unklar'} (${esc(r.selfie_confidence || '—')})</td></tr>
+          </table>
+          <p style="background:#F6F3EE;padding:12px;border-radius:8px;font-size:.9rem;white-space:pre-wrap;">${esc(gruende.join('\n')).slice(0, 800)}</p>
+          ${links.length ? `<p style="font-size:.9rem;">Bilder (Links laufen in 15 Minuten ab):<br>${
+            links.map(l => `<a href="${l.url}" style="color:#E85D00;">${esc(l.kind)}</a>`).join(' · ')
+          }</p>` : ''}
+          <p style="font-size:.85rem;color:#888;">Passt etwas nicht, kannst du die Freigabe im Admin sofort zurücknehmen — solange der Anhänger noch nicht abgeholt wurde.</p>
+        `,
+        link: 'https://simpletrailer.de/admin'
+      });
+    } catch (e) { console.error('Lion-Alert (Führerschein vorläufig):', e.message); }
+  }
+
   async function setReview(u, reason, extra) {
     try {
       await writeLicense(supabase, u, {

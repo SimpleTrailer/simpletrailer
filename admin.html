@@ -600,13 +600,17 @@
     if(custFilter==='kunden')list=list.filter(u=>(u.bookings_count||0)>0);
     if(custFilter==='unverif')list=list.filter(u=>u.dl_status!=='verified');
     if(custFilter==='review')list=list.filter(u=>u.dl_status==='review');
+    if(custFilter==='nachkontrolle')list=list.filter(u=>u.dl_provisional);
     if(custSearch){const q=custSearch.toLowerCase();list=list.filter(u=>(`${u.first_name||''} ${u.last_name||''} ${u.email||''} ${u.phone||''}`).toLowerCase().includes(q));}
     if(custSort==='umsatz')list.sort((a,b)=>lifeOf(b)-lifeOf(a));
     else if(custSort==='buchungen')list.sort((a,b)=>(b.bookings_count||0)-(a.bookings_count||0));
     else list.sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));
-    const leads=ST.users.filter(u=>(u.bookings_count||0)===0).length;
+    // Team-Konten (is_staff) stehen nur in der Liste, damit man ihre
+    // Führerschein-Prüfung erledigen kann — als Kunde oder Lead zählen sie nicht.
+    const echte=ST.users.filter(u=>!u.is_staff);
+    const leads=echte.filter(u=>(u.bookings_count||0)===0).length;
     let h=`<div class="grid kpis">
-      <div class="kpi"><div class="label">Kunden gesamt</div><div class="val">${ST.users.length}</div></div>
+      <div class="kpi"><div class="label">Kunden gesamt</div><div class="val">${echte.length}</div></div>
       <div class="kpi"><div class="label">🔁 Wiederkehrer-Quote</div><div class="val sm">${repeatRate}%</div><div class="sub">${repeaters} mit ≥2 Buchungen</div></div>
       <div class="kpi"><div class="label">💎 Ø Kundenwert</div><div class="val sm">${eur(avgLtv)}</div><div class="sub">${payingCust} zahlende Kunden</div></div>
       <div class="kpi"><div class="label">Offene Leads</div><div class="val" style="color:var(--yellow)">${leads}</div></div>
@@ -619,14 +623,22 @@
       <div style="font-size:.88rem"><strong>⏳ ${toReview} Führerschein${toReview===1?'':'e'} warten auf deine Prüfung</strong><div style="color:var(--dim);font-size:.78rem;margin-top:2px">Die KI war unsicher — bitte anschauen und freigeben oder ablehnen.</div></div>
       <button class="linkbtn orange" style="margin:0" onclick="custFilter='review';renderKunden()">Anzeigen ›</button>
     </div>`;
-    h+=`<div class="toolbar">`+[['all','Alle'],['kunden','Kunden'],['leads','Leads'],['unverif','Unverifiziert'],['review','⏳ Zu prüfen']].map(([k,l])=>`<button class="chip ${custFilter===k?'active':''}" onclick="custFilter='${k}';renderKunden()">${l}</button>`).join('')+`</div>`;
+    // Vorläufig freigegeben: der Kunde ist schon durch und kann buchen — hier
+    // wartet niemand. Deshalb ruhiger dargestellt als die echte Handprüfung,
+    // aber sichtbar genug, dass es nicht liegen bleibt.
+    const toCheck=ST.users.filter(u=>u.dl_provisional).length;
+    if(toCheck>0)h+=`<div class="card" style="padding:13px 15px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+      <div style="font-size:.88rem"><strong>👁 ${toCheck} Führerschein${toCheck===1?'':'e'} zur Nachkontrolle</strong><div style="color:var(--dim);font-size:.78rem;margin-top:2px">Bereits freigegeben, der Kunde kann buchen. Bitte bei Gelegenheit kurz vergleichen.</div></div>
+      <button class="linkbtn" style="margin:0" onclick="custFilter='nachkontrolle';renderKunden()">Anzeigen ›</button>
+    </div>`;
+    h+=`<div class="toolbar">`+[['all','Alle'],['kunden','Kunden'],['leads','Leads'],['unverif','Unverifiziert'],['review','⏳ Zu prüfen'],['nachkontrolle','👁 Nachkontrolle']].map(([k,l])=>`<button class="chip ${custFilter===k?'active':''}" onclick="custFilter='${k}';renderKunden()">${l}</button>`).join('')+`</div>`;
     h+=`<div class="toolbar"><span style="font-size:.72rem;color:var(--dim);align-self:center;margin-right:2px">Sortieren:</span>`+[['neueste','Neueste'],['umsatz','Top-Umsatz'],['buchungen','Meiste Buchungen']].map(([k,l])=>`<button class="chip ${custSort===k?'active':''}" onclick="custSort='${k}';renderKunden()">${l}</button>`).join('')+`</div>`;
     h+= list.length ? `<div class="card">`+list.map(u=>`
       <button class="row clickable" onclick="openCustomer('${esc(u.email)}')">
         <div class="av">${esc(initial(u.first_name||u.email))}</div>
         <div class="main"><div class="t1">${esc(([u.first_name,u.last_name].filter(Boolean).join(' '))||u.email)}</div><div class="t2">${esc(u.email)} · ${u.bookings_count||0} Buchung(en)</div></div>
         <div class="right">${lifeOf(u)>0?`<div class="amt" style="font-size:.82rem">${eur(lifeOf(u))}</div>`:''}<div style="margin-top:2px">${
-          u.dl_status==='verified' ? '<span class="pill green">✓ verif.</span>'
+          u.dl_status==='verified' ? (u.dl_provisional ? '<span class="pill yellow">👁 nachkontrollieren</span>' : '<span class="pill green">✓ verif.</span>')
         : u.dl_status==='review'   ? '<span class="pill yellow">⏳ prüfen</span>'
         : u.dl_status==='rejected' ? '<span class="pill red">✗ abgelehnt</span>'
         : '<span class="pill grey">○</span>'}</div></div>
@@ -648,7 +660,9 @@
     navigator.clipboard.writeText(emails).then(()=>alert('✓ '+(ST.notify||[]).length+' E-Mails kopiert.')).catch(()=>alert('Kopieren nicht möglich — Adressen:\n\n'+emails));
   }
   async function bulkWinback(){
-    const recips=ST.users.filter(u=>(u.bookings_count||0)===0&&u.email).map(u=>({email:u.email,first_name:u.first_name||'',user_id:u.id}));
+    // is_staff ausschliessen — Team-Konten stehen nur wegen einer offenen
+    // Führerschein-Prüfung in der Liste und dürfen keine Werbemail bekommen.
+    const recips=ST.users.filter(u=>!u.is_staff&&(u.bookings_count||0)===0&&u.email).map(u=>({email:u.email,first_name:u.first_name||'',user_id:u.id}));
     if(!recips.length){alert('Keine offenen Leads.');return;}
     if(!confirm(`Rückhol-Mail (20 % Willkommensrabatt) an ${recips.length} offene Leads senden?\n\nBereits angeschriebene werden serverseitig übersprungen.`))return;
     try{ const r=await fetch('/api/admin?section=send-winback',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${authToken}`},body:JSON.stringify({recipients:recips})}); const j=await r.json(); if(!r.ok)throw new Error(j.error||r.status); alert(`Rückhol-Mail → gesendet: ${j.sent} · übersprungen: ${j.skipped} · Fehler: ${j.failed}`); }catch(e){alert('❌ '+e.message);}
@@ -1235,7 +1249,7 @@
     const nameMatch=(acctName&&dlName)?(acctName===dlName):null;
     const matchBadge=m=>m===null?'<span class="pill grey">– keine Daten</span>':m?'<span class="pill green">✓ stimmt</span>':'<span class="pill red">⚠️ weicht ab</span>';
     let h=`<div style="margin-bottom:8px">${
-        u.dl_status==='verified' ? '<span class="pill green">✓ Verifiziert</span>'
+        u.dl_status==='verified' ? (u.dl_provisional ? '<span class="pill yellow">👁 Freigegeben – bitte nachkontrollieren</span>' : '<span class="pill green">✓ Verifiziert</span>')
       : u.dl_status==='review'   ? '<span class="pill yellow">⏳ Wartet auf deine Prüfung</span>'
       : u.dl_status==='rejected' ? '<span class="pill red">✗ Abgelehnt</span>'
       : '<span class="pill grey">○ Unverifiziert</span>'}${u.dl_manual?' <span class="pill blue">manuell</span>':''}</div>`;
@@ -1257,16 +1271,20 @@
       <div class="drow"><span class="k">Name-Abgleich</span><span class="v">${matchBadge(nameMatch)}</span></div>
       ${u.dl_check_method==='ai'?`<div class="drow"><span class="k">Geprüft durch</span><span class="v">KI-Vorprüfung</span></div>`:''}
       ${u.dl_review_reason&&u.dl_status==='review'?`<div class="drow"><span class="k">Warum Handprüfung</span><span class="v" style="color:var(--yellow)">${esc(u.dl_review_reason)}</span></div>`:''}
+      ${u.dl_provisional?`<div class="drow"><span class="k">Warum Nachkontrolle</span><span class="v" style="color:var(--yellow)">${esc(u.dl_provisional_reason||'—')}</span></div>`:''}
       ${u.dl_rejected_reason&&u.dl_status==='rejected'?`<div class="drow"><span class="k">Abgelehnt weil</span><span class="v" style="color:var(--red)">${esc(u.dl_rejected_reason)}</span></div>`:''}
       ${u.dl_failure_reason&&u.dl_status!=='verified'?`<div class="drow"><span class="k">Fehlergrund</span><span class="v" style="color:var(--red)">${esc(u.dl_failure_reason)}</span></div>`:''}
     </div>`;
     // Führerschein-Bilder: liegen in einem privaten Bucket, Links laufen nach 15 Min ab.
-    if(u.dl_status==='review'||u.dl_status==='rejected'){
+    if(u.dl_status==='review'||u.dl_status==='rejected'||u.dl_provisional){
       h+=`<button class="linkbtn" onclick="showLicenseImages('${u.id}')">🪪 Führerschein-Bilder anzeigen</button>`;
       h+=`<div id="dlImgHost" style="margin-top:10px"></div>`;
     }
     if(u.dl_status!=='verified')h+=`<button class="linkbtn orange" onclick="verifyManual('${u.id}')">✓ Freigeben</button>`;
-    if(u.dl_status==='review')h+=`<button class="linkbtn" style="border-color:#7f1d1d;color:#fca5a5" onclick="rejectLicense('${u.id}')">✗ Ablehnen</button>`;
+    // Vorläufig freigegeben: bestätigen räumt die Nachkontrolle weg, Ablehnen
+    // nimmt die Freigabe zurück (möglich, solange nichts abgeholt wurde).
+    if(u.dl_provisional)h+=`<button class="linkbtn orange" onclick="verifyManual('${u.id}')">✓ Passt – Nachkontrolle erledigt</button>`;
+    if(u.dl_status==='review'||u.dl_provisional)h+=`<button class="linkbtn" style="border-color:#7f1d1d;color:#fca5a5" onclick="rejectLicense('${u.id}')">✗ Ablehnen</button>`;
     if((u.bookings_total||0)<=0)h+=`<button class="linkbtn" style="border-color:#7f1d1d;color:#fca5a5" onclick="deleteUser('${u.id}')">🗑 Löschen</button>`;
     if((u.bookings_count||0)===0)h+=`<button class="linkbtn" onclick="sendWinback('${esc(u.email)}')">✉️ Rückhol-Mail (20%)</button>`;
     // Bilder aus seinen Buchungen (mit Buchungs-Datum als Label)
@@ -1306,6 +1324,13 @@
   }
 
   async function rejectLicense(uid){
+    // Seit der vorläufigen Freigabe kann jemand schon eine laufende Buchung
+    // haben, wenn wir ihm den Führerschein wieder entziehen. Das Ablehnen
+    // storniert sie NICHT — darauf muss hier hingewiesen werden, sonst holt
+    // der Kunde den Anhänger trotzdem ab.
+    const usr=(ST.users||[]).find(x=>x.id===uid);
+    const offen=(ST.bookings||[]).filter(b=>usr&&b.customer_email===usr.email&&['confirmed','active'].includes(b.status));
+    if(offen.length&&!confirm(`Achtung: dieser Kunde hat ${offen.length} laufende Buchung(en).\n\nDas Ablehnen entzieht nur die Freigabe — die Buchung bleibt bestehen und muss separat storniert werden.\n\nTrotzdem ablehnen?`))return;
     const reason=prompt('Warum wird der Führerschein abgelehnt?\n\nDieser Text geht WÖRTLICH per Mail an den Kunden — bitte sachlich und hilfreich formulieren.\n\nBeispiel: „Auf der Rückseite ist keine Klasse BE eingetragen."');
     if(reason===null)return;
     if(!reason.trim()){ alert('Bitte einen Grund angeben.'); return; }

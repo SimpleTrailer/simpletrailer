@@ -32,6 +32,8 @@ const SERVER_OWNED = [
   'dl_doc_number', 'dl_doc_type', 'dl_issuing_country',
   'dl_verified_at', 'dl_failure_reason', 'dl_check_method',
   'dl_review_reason', 'dl_review_started_at',
+  // Vorläufig freigegeben: der Kunde darf buchen, ein Mensch schaut aber nach.
+  'dl_provisional', 'dl_provisional_reason', 'dl_confirmed_at', 'dl_confirmed_by',
   'dl_rejected_reason', 'dl_rejected_at', 'dl_rejected_by',
   'dl_manual', 'dl_manual_by', 'dl_prev_failure_reason',
   'dl_consent_at', 'dl_consent_version', 'dl_consent_ip',

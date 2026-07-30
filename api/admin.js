@@ -125,9 +125,49 @@ module.exports = async (req, res) => {
         dl_review_reason:     dl.dl_review_reason     || null,
         dl_review_started_at: dl.dl_review_started_at || null,
         dl_rejected_reason:   dl.dl_rejected_reason   || null,
+        // Vorläufig freigegeben: darf buchen, wartet aber noch auf einen Blick
+        // von uns. Bleibt sichtbar, bis wir bestätigen oder zurücknehmen.
+        dl_provisional:        !!dl.dl_provisional,
+        dl_provisional_reason: dl.dl_provisional_reason || null,
         dl_legacy:            hasLegacyMetadata(u),
         };
       }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+      // Team-Konten sind oben bewusst aus der Kundenliste geflogen — sonst
+      // verfälschen sie Leads und Umsatz. Hängt so ein Konto aber in der
+      // Handprüfung oder in der Nachkontrolle fest (typisch bei einer
+      // Testbuchung mit der eigenen Adresse), gäbe es keinen Weg mehr, es
+      // freizugeben. Deshalb kommen genau diese Fälle zurück in die Liste —
+      // mit `is_staff`, damit die Kennzahlen sie weiterhin ignorieren.
+      for (const u of usersData.users) {
+        if (!ADMIN_EMAILS.includes((u.email || '').toLowerCase())) continue;
+        const dl = rlUser(u);
+        if (dl.dl_status !== 'review' && dl.dl_status !== 'rejected' && !dl.dl_provisional) continue;
+        users.unshift({
+          id: u.id, email: u.email, created_at: u.created_at, last_sign_in_at: u.last_sign_in_at,
+          first_name: u.user_metadata?.first_name || '', last_name: u.user_metadata?.last_name || '',
+          phone: u.user_metadata?.phone || '', confirmed: !!u.email_confirmed_at,
+          address: u.user_metadata?.address || '', birthdate: u.user_metadata?.birthdate || null,
+          dl_address: dl.dl_address || null, dl_manual: !!dl.dl_manual,
+          dl_manual_by: dl.dl_manual_by || null, dl_prev_failure_reason: dl.dl_prev_failure_reason || null,
+          bookings_count: byEmail[u.email]?.count || 0, bookings_total: byEmail[u.email]?.total || 0,
+          dl_status: dl.dl_status || 'unverified',
+          dl_classes: dl.dl_classes || [], dl_expires_at: dl.dl_expires_at || null,
+          dl_verified_at: dl.dl_verified_at || null,
+          dl_first_name: dl.dl_first_name || '', dl_last_name: dl.dl_last_name || '',
+          dl_dob: dl.dl_dob || null, dl_doc_number: dl.dl_doc_number || null,
+          dl_doc_type: dl.dl_doc_type || null, dl_issuing_country: dl.dl_issuing_country || null,
+          dl_failure_reason: dl.dl_failure_reason || null,
+          dl_check_method: dl.dl_check_method || null,
+          dl_review_reason: dl.dl_review_reason || null,
+          dl_review_started_at: dl.dl_review_started_at || null,
+          dl_rejected_reason: dl.dl_rejected_reason || null,
+          dl_provisional: !!dl.dl_provisional,
+          dl_provisional_reason: dl.dl_provisional_reason || null,
+          dl_legacy: hasLegacyMetadata(u),
+          is_staff: true
+        });
+      }
 
       // "Benachrichtigen wenn da"-Anmeldungen — warme Leads für noch nicht verfügbare Anhänger
       let notify = [];
@@ -205,6 +245,11 @@ module.exports = async (req, res) => {
       meta.dl_failure_reason = null;
       meta.dl_review_reason = null;
       meta.dl_rejected_reason = null;
+      // War der Kunde nur vorläufig freigegeben, ist die Nachkontrolle hiermit erledigt.
+      meta.dl_provisional = null;
+      meta.dl_provisional_reason = null;
+      meta.dl_confirmed_at = new Date().toISOString();
+      meta.dl_confirmed_by = (user.email || '').toLowerCase();
       try { await wl(supabase, tgt.user, meta); }
       catch (e) { return res.status(500).json({ error: 'Speichern fehlgeschlagen: ' + e.message }); }
 
@@ -268,7 +313,10 @@ module.exports = async (req, res) => {
           dl_rejected_reason: reason,
           dl_rejected_at: new Date().toISOString(),
           dl_rejected_by: (user.email || '').toLowerCase(),
-          dl_review_reason: null
+          dl_review_reason: null,
+          // Eine vorläufige Freigabe wird hiermit zurückgenommen.
+          dl_provisional: null,
+          dl_provisional_reason: null
         });
       } catch (e) { return res.status(500).json({ error: 'Speichern fehlgeschlagen: ' + e.message }); }
 
