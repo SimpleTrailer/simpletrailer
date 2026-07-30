@@ -898,7 +898,7 @@
       <p style="font-size:.7rem;color:var(--gray);margin-top:8px;text-align:right;">Alle Preise inkl. 19 % USt.</p>
 
       <!-- Karte: Heimat-Kreis ODER Bremen-Polygon -->
-      <div id="returnZoneMap" style="height:240px;margin-top:14px;border-radius:10px;overflow:hidden;border:1px solid var(--border);background:#0a0a0a;"></div>
+      <div id="returnZoneMap" style="height:240px;margin-top:14px;border-radius:10px;overflow:hidden;border:1px solid var(--border);background:#EDEAE4;"></div>
 
       <!-- Warnhinweis: 50€ bei Fehlrückgabe + Halteverbot-Konsequenzen -->
       <div style="background:var(--s2);border:1px solid var(--border);border-left:3px solid #555;padding:12px 14px;border-radius:8px;margin-top:14px;">
@@ -1224,10 +1224,14 @@
 
     zoneMap = L.map(el, {
       zoomControl: true, scrollWheelZoom: false, dragging: false,
-      doubleClickZoom: false, boxZoom: false, keyboard: false, attributionControl: false
+      doubleClickZoom: false, boxZoom: false, keyboard: false
     }).setView(center, 14);
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    // Helle Kacheln wie auf der Startseite — die Seite ist hell, eine schwarze
+    // Karte mitten im Buchungsschritt sticht sonst als Fremdkoerper heraus.
+    // Attribution ist bei OSM/CARTO Pflicht, nicht optional.
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OSM</a> © <a href="https://carto.com/">CARTO</a>',
       subdomains: 'abcd', maxZoom: 18
     }).addTo(zoneMap);
 
@@ -1236,7 +1240,7 @@
       zoneHomeMarker = L.marker([trailerPickup.lat, trailerPickup.lng], {
         icon: L.divIcon({
           className: '',
-          html: '<div style="width:22px;height:22px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#E85D00;border:3px solid #ff8a3d;box-shadow:0 2px 8px rgba(0,0,0,.6);"></div>',
+          html: '<div style="width:22px;height:22px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#E85D00;border:3px solid #FFFFFF;box-shadow:0 2px 8px rgba(0,0,0,.28);"></div>',
           iconSize: [22, 22], iconAnchor: [11, 22]
         })
       }).addTo(zoneMap).bindTooltip('Heimat-Stellplatz', { direction: 'top', offset: [0, -20] });
@@ -1255,14 +1259,14 @@
       // 500m-Heimat-Kreis (Stellplatz-Toleranz, identisch zu process-return.js)
       if (trailerPickup.lat && trailerPickup.lng) {
         zoneHomeCircle = L.circle([trailerPickup.lat, trailerPickup.lng], {
-          radius: 500, color: '#22c55e', fillColor: '#22c55e', fillOpacity: 0.18, weight: 2
+          radius: 500, color: '#15803D', fillColor: '#22C55E', fillOpacity: 0.20, weight: 2.5
         }).addTo(zoneMap);
         zoneMap.setView([trailerPickup.lat, trailerPickup.lng], 15);
       }
     } else {
       // Bremen-Polygon
       zoneBremenPoly = L.polygon(BREMEN_POLYGON, {
-        color: '#22c55e', fillColor: '#22c55e', fillOpacity: 0.12, weight: 2
+        color: '#15803D', fillColor: '#22C55E', fillOpacity: 0.15, weight: 2.5
       }).addTo(zoneMap);
       zoneMap.fitBounds(zoneBremenPoly.getBounds(), { padding: [10, 10] });
     }
