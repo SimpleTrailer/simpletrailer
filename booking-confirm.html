@@ -312,6 +312,19 @@
       }
 
       if (!res.ok) {
+        // Polling ist ausgelaufen und die Zahlung haengt noch in einem Zwischen-
+        // zustand (typisch: der Kunde hat bei Mollie abgebrochen, die Zahlung
+        // bleibt 'open'). NICHT "Bestaetigung fehlgeschlagen" behaupten — wir
+        // wissen nicht, ob bezahlt wurde, und "erneut buchen" waere hier gefaehrlich.
+        if (data && PENDING_STATES.includes(data.payment_status)) {
+          showError(
+            'Deine Zahlung ist noch nicht abgeschlossen. Falls du sie abgebrochen hast, wurde nichts abgebucht — '
+            + 'du kannst einfach neu buchen. Falls du bezahlt hast, erscheint die Buchung in Kürze in deinem '
+            + 'Kundenkonto und du bekommst eine Bestätigungsmail. Bitte in dem Fall nicht neu buchen.',
+            { account: true }
+          );
+          return;
+        }
         if (data && data.refunded) {
           showError(data.error || 'Der Zeitraum wurde leider vergeben. Deine Zahlung wurde vollständig erstattet.', { refunded: true });
           return;
