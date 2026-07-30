@@ -10,6 +10,8 @@
 
 ## Status (Stand 2026-07-30)
 - **⚠️ Zahlungsanbieter:** **Mollie** (nicht mehr Stripe!). Stripe hat das Konto am 26.07.2026 geschlossen — kein neues Stripe-Konto anlegen (ToS-Verstoß, sperren erneut). Umbau siehe [MOLLIE-UMSTELLUNG.md](MOLLIE-UMSTELLUNG.md).
+- **🟢 LIVE seit 30.07.2026, 18:20 Uhr:** `MOLLIE_API_KEY` ist der Live-Schlüssel (`live_…`), es fließt **echtes Geld**. Die Testphasen-Sperre in [api/create-mollie-payment.js](api/create-mollie-payment.js) greift damit automatisch nicht mehr — jeder verifizierte Kunde kann buchen. Healthcheck bestätigt: `/api/health` → `mollie.ok = true`.
+  - **Falle beim Setzen des Schlüssels:** Ein Schlüssel, der per **PowerShell-Pipeline** an `vercel env add` geht, bekommt ein unsichtbares BOM vorangestellt (`character at index 7 has a value of 65279`) — Mollie lehnt dann JEDEN Aufruf ab. Schlüssel deshalb über **Bash** (`vercel env add … < datei`) oder direkt in der Vercel-Oberfläche setzen. Nach jeder Schlüssel-Änderung: neuer Deploy, dann `/api/health` prüfen.
 - **⚠️ Führerschein-Check:** **KI-Prüfung** (`api/verify-license.js`, Claude Vision) statt Stripe Identity. KI gibt nur frei, lehnt NIE ab — unklare Fälle gehen auf `dl_status='review'` und ein Mensch entscheidet im Admin (Art. 22 DSGVO).
 - **Webseite:** LIVE auf simpletrailer.de
 - **Mobile-App (Capacitor 6):** Backend bereit, native-bridge.js eingebaut, APK kann gebaut werden — wartet auf D-U-N-S für Apple+Google Konten
@@ -231,7 +233,7 @@ Wenn eine Aufgabe **mehrere Domänen** berührt, rufe alle relevanten Agents **P
 ---
 
 ## Backlog (Reihenfolge nach Wert)
-1. **Test-Buchung selbst durchspielen** (Mollie-Testmodus: auf der Bezahlseite Ergebnis „Paid"/„Canceled" auswählen)
+1. **Echte Buchung selbst durchspielen** (seit 30.07.2026 Live-Modus — echtes Geld, danach in Mollie erstatten und die Buchung löschen)
 2. **Echte Anhänger-Fotos** in Webseite + Google Business Profile
 3. **Empfehlungs-System** ("10 € für jede Empfehlung") — Wachstums-Hebel
 4. ✅ ~~**Newsletter-Anmeldung** (DSGVO-konform Double-Opt-In)~~ (erledigt 2026-05-06)
