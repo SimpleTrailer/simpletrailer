@@ -5,7 +5,7 @@
  * Sendet Email an info@simpletrailer.de mit Wochen-Zusammenfassung:
  *  - Anzahl Buchungen, Brutto/Netto-Umsatz, Trend zur Vorwoche
  *  - Top-Tarif, Top-Anhänger
- *  - Erkannte Probleme (Stripe-Fehler, überfällige Rückgaben)
+ *  - Erkannte Probleme (Zahlungsfehler, überfällige Rückgaben)
  */
 const { createClient } = require('@supabase/supabase-js');
 const { Resend } = require('resend');

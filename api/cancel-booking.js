@@ -8,12 +8,13 @@
  *   - Nach Mietbeginn: KEINE Stornierung mehr möglich
  *   - Bereits returned/cancelled: kein Storno mehr
  *
- * Refund läuft über Stripe — wir nutzen die hinterlegte PaymentIntent für den Rückerstattungs-Call.
+ * Erstattung läuft über die bei der Buchung hinterlegte Zahlung (Mollie; bei
+ * Alt-Buchungen Stripe). Die Anbieter-Weiche steckt in api/_charge.js.
  */
 const { createClient } = require('@supabase/supabase-js');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { Resend } = require('resend');
 const { setCors } = require('./_cors');
+const { refundPayment } = require('./_charge');
 
 const supabase     = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 const supabaseAuth = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
@@ -109,25 +110,22 @@ module.exports = async (req, res) => {
       return res.status(500).json({ error: 'Buchung ohne hinterlegte Zahlung — Storno bitte bei info@simpletrailer.de anfragen.' });
     }
 
-    // Refund via Stripe — Idempotency-Key gegen Doppel-Refund auch bei Stripe-Retries
+    // Erstattung über den Zahlungsanbieter (api/_charge.js erkennt Mollie vs. Stripe).
+    // Idempotency-Key gegen Doppel-Erstattung bei Retry/Doppelklick.
     let refundId = null;
     if (refundAmount > 0 && booking.stripe_payment_intent_id) {
-      try {
-        const refund = await stripe.refunds.create({
-          payment_intent: booking.stripe_payment_intent_id,
-          amount: Math.round(refundAmount * 100),
-          reason: 'requested_by_customer',
-          metadata: { booking_id: booking.id }
-        }, { idempotencyKey: `refund-${booking.id}` });
-        refundId = refund.id;
-      } catch (refundErr) {
+      const back = await refundPayment(booking.stripe_payment_intent_id, {
+        amount: refundAmount,
+        description: `SimpleTrailer Storno #${booking.id.slice(0, 8).toUpperCase()}`,
+        idempotencyKey: `refund-${booking.id}`
+      });
+      if (!back.ok) {
         // Lock zurücksetzen damit der User retryen kann
         await supabase.from('bookings').update({ cancelled_at: null }).eq('id', booking.id);
-        console.error('Stripe-Refund-Fehler', {
-          code: refundErr.code, type: refundErr.type, booking_id: booking.id
-        });
+        console.error('Refund-Fehler', { provider: back.provider, booking_id: booking.id, reason: back.error });
         return res.status(500).json({ error: 'Rückerstattung fehlgeschlagen — bitte info@simpletrailer.de kontaktieren.' });
       }
+      refundId = back.id;
     }
 
     // Finaler Status-Update — Fehler MUSS gefangen werden sonst hängt Buchung im Limbo

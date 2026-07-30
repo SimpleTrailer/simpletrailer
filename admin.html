@@ -504,7 +504,7 @@
     }catch(e){ if(el)el.innerHTML=''; }
   }
   async function decideRefund(id,action,amount,btn){
-    const msg = action==='approve' ? `Erstattung von ${eur(amount)} FREIGEBEN?\n\nDas Geld wird sofort über Stripe zurückgebucht und der Kunde per Mail informiert.` : 'Erstattungs-Anfrage ABLEHNEN?\n\nDie Buchung bleibt bestehen, kein Geld zurück.';
+    const msg = action==='approve' ? `Erstattung von ${eur(amount)} FREIGEBEN?\n\nDas Geld wird sofort über Mollie zurückgebucht und der Kunde per Mail informiert.` : 'Erstattungs-Anfrage ABLEHNEN?\n\nDie Buchung bleibt bestehen, kein Geld zurück.';
     if(!confirm(msg))return;
     if(btn){ btn.disabled=true; btn.style.opacity=.6; }
     try{ const r=await fetch('/api/admin?section=approve-refund',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${authToken}`},body:JSON.stringify({booking_id:id,action})}); const d=await r.json(); if(!r.ok)throw new Error(d.error||'Fehler'); await loadAll(); renderHeute(); alert(action==='approve'?'✓ Erstattung freigegeben & Kunde informiert.':'Anfrage abgelehnt.'); }catch(e){ if(btn){ btn.disabled=false; btn.style.opacity=1; } alert('❌ '+e.message);}
@@ -571,7 +571,7 @@
     if(!list.length){alert('Keine Buchungen im aktuellen Filter.');return;}
     const q=v=>{v=String(v==null?'':v); if(/^[=+\-@\t\r]/.test(v))v="'"+v; v=v.replace(/"/g,'""'); return /[";\n\r]/.test(v)?`"${v}"`:v;};
     const de=n=>(Number(n)||0).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2});
-    const head=['Buchung','Kunde','E-Mail','Telefon','Von','Bis','Tarif','Anhänger','Brutto','Netto','MwSt','Schutzpaket','Storno-Gebühr','Verspätung','Status','Stripe-PI'];
+    const head=['Buchung','Kunde','E-Mail','Telefon','Von','Bis','Tarif','Anhänger','Brutto','Netto','MwSt','Schutzpaket','Storno-Gebühr','Verspätung','Status','Zahlungs-ID'];
     const rows=list.map(b=>{const brutto=(b.total_amount||0)+(b.late_fee_amount||0), netto=brutto/1.19; return [
       (b.id||'').slice(0,8).toUpperCase(), b.customer_name, b.customer_email, b.customer_phone,
       b.start_time?fmtDate(b.start_time):'', b.end_time?fmtDate(b.end_time):'',
@@ -599,6 +599,7 @@
     if(custFilter==='leads')list=list.filter(u=>(u.bookings_count||0)===0);
     if(custFilter==='kunden')list=list.filter(u=>(u.bookings_count||0)>0);
     if(custFilter==='unverif')list=list.filter(u=>u.dl_status!=='verified');
+    if(custFilter==='review')list=list.filter(u=>u.dl_status==='review');
     if(custSearch){const q=custSearch.toLowerCase();list=list.filter(u=>(`${u.first_name||''} ${u.last_name||''} ${u.email||''} ${u.phone||''}`).toLowerCase().includes(q));}
     if(custSort==='umsatz')list.sort((a,b)=>lifeOf(b)-lifeOf(a));
     else if(custSort==='buchungen')list.sort((a,b)=>(b.bookings_count||0)-(a.bookings_count||0));
@@ -613,13 +614,22 @@
     </div>`;
     if(leads>0)h+=`<button class="linkbtn orange" style="margin-bottom:10px" onclick="bulkWinback()">✉️ Rückhol-Mail an alle ${leads} Leads (20 %)</button>`;
     h+=`<div class="toolbar"><input class="search" placeholder="Name / E-Mail / Telefon…" value="${esc(custSearch)}" oninput="custSearch=this.value;renderKunden()"></div>`;
-    h+=`<div class="toolbar">`+[['all','Alle'],['kunden','Kunden'],['leads','Leads'],['unverif','Unverifiziert']].map(([k,l])=>`<button class="chip ${custFilter===k?'active':''}" onclick="custFilter='${k}';renderKunden()">${l}</button>`).join('')+`</div>`;
+    const toReview=ST.users.filter(u=>u.dl_status==='review').length;
+    if(toReview>0)h+=`<div class="card" style="border-color:#a16207;background:rgba(234,179,8,.07);padding:13px 15px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+      <div style="font-size:.88rem"><strong>⏳ ${toReview} Führerschein${toReview===1?'':'e'} warten auf deine Prüfung</strong><div style="color:var(--dim);font-size:.78rem;margin-top:2px">Die KI war unsicher — bitte anschauen und freigeben oder ablehnen.</div></div>
+      <button class="linkbtn orange" style="margin:0" onclick="custFilter='review';renderKunden()">Anzeigen ›</button>
+    </div>`;
+    h+=`<div class="toolbar">`+[['all','Alle'],['kunden','Kunden'],['leads','Leads'],['unverif','Unverifiziert'],['review','⏳ Zu prüfen']].map(([k,l])=>`<button class="chip ${custFilter===k?'active':''}" onclick="custFilter='${k}';renderKunden()">${l}</button>`).join('')+`</div>`;
     h+=`<div class="toolbar"><span style="font-size:.72rem;color:var(--dim);align-self:center;margin-right:2px">Sortieren:</span>`+[['neueste','Neueste'],['umsatz','Top-Umsatz'],['buchungen','Meiste Buchungen']].map(([k,l])=>`<button class="chip ${custSort===k?'active':''}" onclick="custSort='${k}';renderKunden()">${l}</button>`).join('')+`</div>`;
     h+= list.length ? `<div class="card">`+list.map(u=>`
       <button class="row clickable" onclick="openCustomer('${esc(u.email)}')">
         <div class="av">${esc(initial(u.first_name||u.email))}</div>
         <div class="main"><div class="t1">${esc(([u.first_name,u.last_name].filter(Boolean).join(' '))||u.email)}</div><div class="t2">${esc(u.email)} · ${u.bookings_count||0} Buchung(en)</div></div>
-        <div class="right">${lifeOf(u)>0?`<div class="amt" style="font-size:.82rem">${eur(lifeOf(u))}</div>`:''}<div style="margin-top:2px">${u.dl_status==='verified'?'<span class="pill green">✓ verif.</span>':'<span class="pill grey">○</span>'}</div></div>
+        <div class="right">${lifeOf(u)>0?`<div class="amt" style="font-size:.82rem">${eur(lifeOf(u))}</div>`:''}<div style="margin-top:2px">${
+          u.dl_status==='verified' ? '<span class="pill green">✓ verif.</span>'
+        : u.dl_status==='review'   ? '<span class="pill yellow">⏳ prüfen</span>'
+        : u.dl_status==='rejected' ? '<span class="pill red">✗ abgelehnt</span>'
+        : '<span class="pill grey">○</span>'}</div></div>
       </button>`).join('')+`</div>`
       : `<div class="card"><div class="empty">Keine Kunden.</div></div>`;
     document.getElementById('pane-kunden').innerHTML=h;
@@ -789,8 +799,10 @@
     const sum=(arr,f)=>arr.reduce((s,b)=>s+f(b),0);
     const bruttoOf=b=>(b.total_amount||0)+(b.late_fee_amount||0);
     const rev=sum(paid,bruttoOf), insRev=sum(paid,b=>b.insurance_amount||0);
-    const txns=paid.length, net=rev/1.19, vat=rev-net, fee=rev*0.015+txns*0.25, avg=txns?rev/txns:0;
-    const keep=net-fee; // was nach MwSt & Stripe übrig bleibt
+    // Gebühren-Schätzung Mollie: Karte EU ~1,8 % + 0,25 € pro Transaktion.
+    // PayPal liegt höher — daher bewusst konservativ gerechnet.
+    const txns=paid.length, net=rev/1.19, vat=rev-net, fee=rev*0.018+txns*0.25, avg=txns?rev/txns:0;
+    const keep=net-fee; // was nach MwSt & Zahlungsgebühren übrig bleibt
     const pRev=prev?sum(prev,bruttoOf):null, pTxns=prev?prev.length:null, pAvg=prev&&prev.length?pRev/prev.length:null, pInsRev=prev?sum(prev,b=>b.insurance_amount||0):null;
     let h=`<div class="toolbar">`+periods.map(([k,l])=>`<button class="chip ${finPeriod===k?'active':''}" onclick="finPeriod='${k}';renderFinanzen()">${l}</button>`).join('')+`</div>`;
     if(prevFrom)h+=`<div style="font-size:.72rem;color:var(--dim);margin:-4px 2px 10px">▲▼ = Vergleich zur Vorperiode${['heute','woche'].includes(finPeriod)?' · laufende Periode noch nicht abgeschlossen (anteilig)':''}</div>`;
@@ -808,17 +820,17 @@
       <div class="kpi"><div class="label">Schutzpaket-Umsatz ${pInsRev!=null?trendBadge(insRev,pInsRev):''}</div><div class="val sm">${eur(insRev)}</div></div>
     </div>`;
     h+=`<div class="card" style="padding:14px 16px;margin-top:2px"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div><div style="font-size:.78rem;color:var(--muted)">📈 Hochrechnung ${esc(mNow.toLocaleDateString('de-DE',{month:'long'}))}</div><div style="font-size:1.15rem;font-weight:800;margin-top:2px">${eur(mProj)}</div></div><div style="text-align:right;font-size:.78rem;color:var(--dim)">aktuell ${eur(mRev)}<br>Tag ${dayOfM} / ${daysInM}</div></div></div>`;
-    // Wohin geht der Brutto-Umsatz? — gestapelte Aufteilung (behalten / Stripe / MwSt)
+    // Wohin geht der Brutto-Umsatz? — gestapelte Aufteilung (behalten / Zahlungsgebühren / MwSt)
     const segW=v=>rev?Math.max(0,v/rev*100):0;
     h+=`<div class="sect-title">Wohin geht der Brutto-Umsatz?</div><div class="card" style="padding:15px 16px">
       <div style="display:flex;height:20px;border-radius:6px;overflow:hidden;gap:2px;background:var(--s3)">
-        <div title="Behalten (nach Stripe & MwSt)" style="width:${segW(keep)}%;background:var(--green)"></div>
-        <div title="Stripe-Gebühren" style="width:${segW(fee)}%;background:var(--red)"></div>
+        <div title="Behalten (nach Zahlungsgebühren & MwSt)" style="width:${segW(keep)}%;background:var(--green)"></div>
+        <div title="Mollie-Gebühren" style="width:${segW(fee)}%;background:var(--red)"></div>
         <div title="MwSt ans Finanzamt" style="width:${segW(vat)}%;background:var(--yellow)"></div>
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:14px;margin-top:12px;font-size:.8rem">
         <span class="lg-item" style="padding:0"><span class="lg-dot" style="background:var(--green)"></span>Behalten <b style="margin-left:4px">${eur(keep)}</b></span>
-        <span class="lg-item" style="padding:0"><span class="lg-dot" style="background:var(--red)"></span>Stripe <b style="margin-left:4px">−${eur(fee)}</b></span>
+        <span class="lg-item" style="padding:0"><span class="lg-dot" style="background:var(--red)"></span>Mollie <b style="margin-left:4px">−${eur(fee)}</b></span>
         <span class="lg-item" style="padding:0"><span class="lg-dot" style="background:var(--yellow)"></span>MwSt <b style="margin-left:4px">${eur(vat)}</b></span>
       </div>
       <div style="color:var(--dim);font-size:.72rem;margin-top:9px">Netto-Umsatz ${eur(net)} · MwSt/Gebühr sind Schätzwerte.</div>
@@ -833,7 +845,7 @@
       <div class="row"><div class="main"><div class="t1">Free-Floating</div><div class="t2">${ffCount} von ${txns} · ${pct(ffCount)}%</div></div><div class="right amt" style="color:var(--green)">${eur(ffRev)}</div></div>
     </div>`;
     h+=`<div class="sect-title">Schutzpaket-Wahl</div><div class="card" style="padding:14px 16px">${barChart([['Basis',ib],['Premium',ip],['Keins',inone]])}</div>`;
-    h+=`<div style="color:var(--dim);font-size:.78rem;margin-top:12px;padding:0 4px">💡 Zeitraum: ${periods.find(p=>p[0]===finPeriod)[1]} · Zahlart pro Buchung im Detail (live aus Stripe). MwSt/Gebühr = Schätzwerte.</div>`;
+    h+=`<div style="color:var(--dim);font-size:.78rem;margin-top:12px;padding:0 4px">💡 Zeitraum: ${periods.find(p=>p[0]===finPeriod)[1]} · Zahlart pro Buchung im Detail (live aus Mollie). MwSt/Gebühr = Schätzwerte.</div>`;
     document.getElementById('pane-finanzen').innerHTML=h;
   }
 
@@ -964,7 +976,7 @@
       2:'Leute starten, springen aber vor dem Konto ab (Datum/Optionen/Preis). → Preis-Schock? Schutzpakete zu kompliziert? Schritt zu lang — vor allem mobil? Sieh dir Recordings genau dieses Schritts an und kürze, wo es geht.',
       3:'Der Konto-Schritt ist die größte Hürde. → Registrierung muss in einem Rutsch gehen (E-Mail-Bestätigung ist jetzt aus ✓). Bleibt der Absprung hoch → „als Gast buchen" (Konto optional) erwägen.',
       4:'Die Führerschein-Verifizierung (Ausweis + Selfie) schreckt ab. → Erklär den Schritt VORHER kurz („dauert 1 Min, gesetzlich vorgeschrieben, Daten sicher"). Vertrauen senkt den Absprung hier am stärksten.',
-      5:'Leute klicken auf „Bezahlen", schließen aber nicht ab. → Stripe-Fehler? Zu wenige Zahlarten (Apple/Google Pay aktiv)? Versteckte Kosten, die erst hier auftauchen? Prüf die Stripe-Logs.'
+      5:'Leute klicken auf „Bezahlen", schließen aber nicht ab. → Bricht die Weiterleitung zu Mollie ab? Zu wenige Zahlarten (Apple/Google Pay aktiv)? Versteckte Kosten, die erst hier auftauchen? Prüf die Zahlungen im Mollie-Dashboard.'
     };
     let advice;
     if(!vis){ advice='<div style="color:var(--dim)">Noch keine Besucher-Daten — füllt sich automatisch.</div>'; }
@@ -1172,6 +1184,16 @@
     </div>`; }
     if(photos.length){ _lb=photos.map(p=>({url:safeUrl(p[1]),cap:p[0]}));
       h+=`<div class="dlabel">📸 Fotos vom Kunden (${photos.length})</div><div class="photo-grid">`+photos.map((p,i)=>`<figure class="photo-cell"><img src="${safeUrl(p[1])}" alt="${esc(p[0])}" loading="lazy" onclick="openLightbox(${i})"><figcaption>${esc(p[0])}</figcaption></figure>`).join('')+`</div>`; }
+    // Rückbuchung und offene Forderungen sofort sichtbar — die dürfen nicht nur
+    // in einer einzelnen E-Mail existieren.
+    if(b.chargeback_at)h+=`<div class="card" style="border-color:#7f1d1d;background:rgba(220,38,38,.08);padding:13px 15px;margin-top:10px">
+      <div style="font-weight:700;font-size:.9rem;color:#fca5a5">🚨 Rückbuchung am ${fmtDay(b.chargeback_at)}${b.chargeback_amount?' · '+eur(b.chargeback_amount):''}</div>
+      <div style="font-size:.78rem;color:var(--dim);margin-top:3px">Nicht akzeptieren — mit Mietvertrag, Fotos und Protokoll bestreiten oder selbst erstatten.</div>
+    </div>`;
+    if(b.admin_note)h+=`<div class="card" style="border-color:#a16207;background:rgba(234,179,8,.07);padding:13px 15px;margin-top:10px">
+      <div style="font-weight:700;font-size:.9rem">💸 Offene Forderung</div>
+      <div style="font-size:.8rem;color:var(--dim);margin-top:3px">${esc(b.admin_note)}</div>
+    </div>`;
     h+=`<div class="dlabel">Status & Aktionen</div><div>`;
     if(b.status==='confirmed')h+=`<button class="linkbtn" onclick="setBookingStatus('${b.id}','active')">🚚 Als abgeholt markieren</button>`;
     if(b.status==='active')h+=`<button class="linkbtn" onclick="setBookingStatus('${b.id}','returned')">✅ Als zurückgegeben markieren</button>`;
@@ -1189,12 +1211,15 @@
       const pi=ST.payCache[b.stripe_payment_intent_id] || await api('payment-info&pi='+encodeURIComponent(b.stripe_payment_intent_id));
       ST.payCache[b.stripe_payment_intent_id]=pi;
       if(!document.getElementById('payMethod'))return;
-      if(pi.error){ document.getElementById('payMethod').textContent='Stripe n/a'; document.getElementById('payStatus').innerHTML=statusPill(b.status); return; }
+      if(pi.error){ document.getElementById('payMethod').textContent=pi.provider==='stripe'?'Stripe (Alt)':'n/a'; document.getElementById('payStatus').innerHTML=statusPill(b.status); return; }
       document.getElementById('payMethod').textContent=pi.method_label||pi.method_type||'–';
-      const ok = pi.status==='succeeded' && !pi.refunded;
-      let badge = pi.refunded ? `<span class="pill red">Erstattet (${eur(pi.amount_refunded)})</span>`
+      // 'paid' = Mollie, 'succeeded' = Stripe-Altbuchung
+      const ok = (pi.status==='paid'||pi.status==='succeeded') && !pi.refunded;
+      let badge = pi.amount_chargedback>0 ? `<span class="pill red">⚠ Rückbuchung (${eur(pi.amount_chargedback)})</span>`
+        : pi.refunded ? `<span class="pill red">Erstattet (${eur(pi.amount_refunded)})</span>`
         : ok ? `<span class="pill green">✓ Bezahlt</span>`
         : `<span class="pill yellow">${esc(pi.status)}</span>`;
+      if(pi.dashboard_url) badge += ` <a class="linkbtn" style="margin-left:6px" href="${pi.dashboard_url}" target="_blank" rel="noopener">Mollie ›</a>`;
       document.getElementById('payStatus').innerHTML=badge;
     }catch(e){ if(document.getElementById('payMethod'))document.getElementById('payMethod').textContent='Fehler'; }
   }
@@ -1209,7 +1234,11 @@
     const dlName=`${u.dl_first_name||''} ${u.dl_last_name||''}`.trim().toLowerCase();
     const nameMatch=(acctName&&dlName)?(acctName===dlName):null;
     const matchBadge=m=>m===null?'<span class="pill grey">– keine Daten</span>':m?'<span class="pill green">✓ stimmt</span>':'<span class="pill red">⚠️ weicht ab</span>';
-    let h=`<div style="margin-bottom:8px">${u.dl_status==='verified'?'<span class="pill green">✓ Verifiziert</span>':'<span class="pill grey">○ Unverifiziert</span>'}${u.dl_manual?' <span class="pill blue">manuell</span>':''}</div>`;
+    let h=`<div style="margin-bottom:8px">${
+        u.dl_status==='verified' ? '<span class="pill green">✓ Verifiziert</span>'
+      : u.dl_status==='review'   ? '<span class="pill yellow">⏳ Wartet auf deine Prüfung</span>'
+      : u.dl_status==='rejected' ? '<span class="pill red">✗ Abgelehnt</span>'
+      : '<span class="pill grey">○ Unverifiziert</span>'}${u.dl_manual?' <span class="pill blue">manuell</span>':''}</div>`;
     h+=`<div class="grid kpis" style="margin-bottom:6px"><div class="kpi"><div class="label">Buchungen</div><div class="val sm">${myBookings.length}</div></div><div class="kpi"><div class="label">Gesamtumsatz</div><div class="val sm">${eur(lifetime)}</div></div></div>`;
     h+=`<div class="dlabel">Stammdaten (Registrierung)</div><div class="dblock">
       ${drow('Name',esc(([u.first_name,u.last_name].filter(Boolean).join(' '))||'–'))}
@@ -1226,11 +1255,18 @@
       ${u.dl_expires_at?drow('Gültig bis',fmtDay(u.dl_expires_at)):''}
       ${u.dl_doc_number?drow('FS-Nr.',esc(u.dl_doc_number)):''}
       <div class="drow"><span class="k">Name-Abgleich</span><span class="v">${matchBadge(nameMatch)}</span></div>
+      ${u.dl_check_method==='ai'?`<div class="drow"><span class="k">Geprüft durch</span><span class="v">KI-Vorprüfung</span></div>`:''}
+      ${u.dl_review_reason&&u.dl_status==='review'?`<div class="drow"><span class="k">Warum Handprüfung</span><span class="v" style="color:var(--yellow)">${esc(u.dl_review_reason)}</span></div>`:''}
+      ${u.dl_rejected_reason&&u.dl_status==='rejected'?`<div class="drow"><span class="k">Abgelehnt weil</span><span class="v" style="color:var(--red)">${esc(u.dl_rejected_reason)}</span></div>`:''}
       ${u.dl_failure_reason&&u.dl_status!=='verified'?`<div class="drow"><span class="k">Fehlergrund</span><span class="v" style="color:var(--red)">${esc(u.dl_failure_reason)}</span></div>`:''}
     </div>`;
-    const sess=u.dl_session_id||u.dl_stripe_session_id;
-    if(sess)h+=`<a class="linkbtn" href="https://dashboard.stripe.com/identity/verification-sessions/${esc(sess)}" target="_blank">🪪 Identity-Bilder (Stripe) ›</a>`;
-    if(u.dl_status!=='verified')h+=`<button class="linkbtn orange" onclick="verifyManual('${u.id}')">✓ Manuell verifizieren</button>`;
+    // Führerschein-Bilder: liegen in einem privaten Bucket, Links laufen nach 15 Min ab.
+    if(u.dl_status==='review'||u.dl_status==='rejected'){
+      h+=`<button class="linkbtn" onclick="showLicenseImages('${u.id}')">🪪 Führerschein-Bilder anzeigen</button>`;
+      h+=`<div id="dlImgHost" style="margin-top:10px"></div>`;
+    }
+    if(u.dl_status!=='verified')h+=`<button class="linkbtn orange" onclick="verifyManual('${u.id}')">✓ Freigeben</button>`;
+    if(u.dl_status==='review')h+=`<button class="linkbtn" style="border-color:#7f1d1d;color:#fca5a5" onclick="rejectLicense('${u.id}')">✗ Ablehnen</button>`;
     if((u.bookings_total||0)<=0)h+=`<button class="linkbtn" style="border-color:#7f1d1d;color:#fca5a5" onclick="deleteUser('${u.id}')">🗑 Löschen</button>`;
     if((u.bookings_count||0)===0)h+=`<button class="linkbtn" onclick="sendWinback('${esc(u.email)}')">✉️ Rückhol-Mail (20%)</button>`;
     // Bilder aus seinen Buchungen (mit Buchungs-Datum als Label)
@@ -1245,12 +1281,38 @@
     openPanel('Kundenprofil',h);
   }
 
+  // Bilder erst auf Klick laden — signierte Links sind nur 15 Minuten gültig
+  // und sollen nicht bei jedem Profil-Öffnen erzeugt werden.
+  async function showLicenseImages(uid){
+    const host=document.getElementById('dlImgHost'); if(!host)return;
+    host.innerHTML=`<div style="color:var(--dim);font-size:.82rem">Bilder werden geladen…</div>`;
+    try{
+      const d=await api('license-images&user_id='+encodeURIComponent(uid));
+      if(!d.images||!d.images.length){ host.innerHTML=`<div style="color:var(--dim);font-size:.82rem">Keine Bilder mehr vorhanden (nach der Entscheidung werden sie gelöscht).</div>`; return; }
+      _lb=d.images.map(i=>({url:i.url,cap:i.kind}));
+      host.innerHTML=`<div class="photo-grid">`+d.images.map((i,n)=>
+        `<figure class="photo-cell"><img src="${i.url}" alt="${esc(i.kind)}" onclick="openLightbox(${n})"><figcaption>${esc(i.kind)}</figcaption></figure>`
+      ).join('')+`</div><div style="color:var(--dim);font-size:.75rem;margin-top:6px">Links laufen in 15 Minuten ab.</div>`;
+    }catch(e){ host.innerHTML=`<div style="color:var(--red);font-size:.82rem">Bilder nicht abrufbar: ${esc(e.message)}</div>`; }
+  }
+
   async function verifyManual(uid){
-    if(!confirm('Führerschein MANUELL als verifiziert markieren?\n\n⚠️ NUR wenn du den echten Führerschein geprüft hast UND Stripe KEINEN Betrug/Fälschung gemeldet hat.'))return;
+    if(!confirm('Führerschein FREIGEBEN?\n\n⚠️ Nur wenn du die Bilder angeschaut hast und der Führerschein echt und gültig ist.\n\nDer Kunde bekommt automatisch eine Mail und kann sofort buchen. Die Bilder werden danach gelöscht.'))return;
     try{
       const r=await fetch('/api/admin?section=verify-user-manual',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${authToken}`},body:JSON.stringify({user_id:uid})});
       const d=await r.json(); if(!r.ok)throw new Error(d.error||'Fehler');
-      closePanel(); await loadAll(); alert('✓ Verifiziert.');
+      closePanel(); await loadAll(); alert('✓ Freigegeben. Der Kunde wurde per Mail informiert.');
+    }catch(e){ alert('❌ '+e.message); }
+  }
+
+  async function rejectLicense(uid){
+    const reason=prompt('Warum wird der Führerschein abgelehnt?\n\nDieser Text geht WÖRTLICH per Mail an den Kunden — bitte sachlich und hilfreich formulieren.\n\nBeispiel: „Auf der Rückseite ist keine Klasse BE eingetragen."');
+    if(reason===null)return;
+    if(!reason.trim()){ alert('Bitte einen Grund angeben.'); return; }
+    try{
+      const r=await fetch('/api/admin?section=reject-license',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${authToken}`},body:JSON.stringify({user_id:uid,reason:reason.trim()})});
+      const d=await r.json(); if(!r.ok)throw new Error(d.error||'Fehler');
+      closePanel(); await loadAll(); alert('Abgelehnt. Der Kunde wurde per Mail informiert und kann es erneut versuchen.');
     }catch(e){ alert('❌ '+e.message); }
   }
   async function cancelBooking(id){

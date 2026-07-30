@@ -64,6 +64,10 @@ module.exports = async (req, res) => {
       })
       .eq('customer_email', user.email);
 
+    // 3b. Etwaige Fuehrerschein-Bilder loeschen. Normalerweise sind sie nach der
+    // Pruefung schon weg — hier als Sicherheitsnetz, falls eine Handpruefung offen ist.
+    try { await require('./_license-store').deleteUserImages(user.id); } catch (e) { console.warn('Fuehrerschein-Bilder:', e.message); }
+
     // 4. Auth-User loeschen
     const { error: delError } = await supabase.auth.admin.deleteUser(user.id);
     if (delError) throw delError;

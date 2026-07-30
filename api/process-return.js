@@ -1,6 +1,6 @@
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { createClient } = require('@supabase/supabase-js');
 const { Resend } = require('resend');
+const { chargeStored } = require('./_charge');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -38,21 +38,20 @@ module.exports = async (req, res) => {
     let lateFeePaymentIntentId = null;
     let lateFeeCharged = false;
 
-    if (lateFeeAmount > 0 && booking.stripe_payment_method_id && booking.stripe_customer_id) {
-      try {
-        const latePi = await stripe.paymentIntents.create({
-          amount: Math.round(lateFeeAmount * 100), currency: 'eur',
-          customer: booking.stripe_customer_id,
-          payment_method: booking.stripe_payment_method_id,
-          confirm: true, off_session: true,
-          receipt_email: booking.customer_email,
-          description: `SimpleTrailer – Verspätung ${lateHours}h`,
-          metadata: { booking_id, type: 'late_fee' }
-        });
-        lateFeePaymentIntentId = latePi.id;
+    if (lateFeeAmount > 0 && booking.stripe_customer_id) {
+      const charge = await chargeStored({
+        booking,
+        amount:      lateFeeAmount,
+        type:        'late_fee',
+        description: `SimpleTrailer – Verspätung ${lateHours}h`,
+        extraMetadata: { late_hours: String(lateHours) }
+      });
+
+      if (charge.ok) {
+        lateFeePaymentIntentId = charge.id;
         lateFeeCharged = true;
-      } catch (stripeErr) {
-        console.error('Verspätungsaufpreis fehlgeschlagen:', stripeErr.message);
+      } else {
+        console.error('Verspätungsaufpreis fehlgeschlagen:', charge.error);
         // Markieren als offene Forderung (queryable im Admin) + SOFORT Lion alarmieren.
         lateFeePaymentIntentId = 'FAILED:offsession';
         try {
@@ -61,7 +60,7 @@ module.exports = async (req, res) => {
             reply_to: 'info@simpletrailer.de',
             to: 'info@simpletrailer.de',
             subject: `⚠ OFFENE FORDERUNG: ${lateFeeAmount.toFixed(2)} € Verspätung NICHT eingezogen — #${booking_id.slice(0,8).toUpperCase()}`,
-            text: `Die automatische Abbuchung der Verspätungsgebühr ist FEHLGESCHLAGEN — bitte manuell einziehen.\n\nKunde:   ${booking.customer_name} (${booking.customer_email})\nBuchung: #${booking_id.slice(0,8).toUpperCase()}\nBetrag:  ${lateFeeAmount.toFixed(2)} € (${lateHours}h Verspätung)\nGrund:   ${stripeErr.code || stripeErr.decline_code || stripeErr.message}\n\nEinziehen: Stripe → Payment Links → ${lateFeeAmount.toFixed(2)} € → an ${booking.customer_email} senden.`
+            text: `Die automatische Abbuchung der Verspätungsgebühr ist FEHLGESCHLAGEN — bitte manuell einziehen.\n\nKunde:   ${booking.customer_name} (${booking.customer_email})\nBuchung: #${booking_id.slice(0,8).toUpperCase()}\nBetrag:  ${lateFeeAmount.toFixed(2)} € (${lateHours}h Verspätung)\nGrund:   ${charge.error}\n\nEinziehen: Mollie-Dashboard → Zahlungslinks → ${lateFeeAmount.toFixed(2)} € → Link an ${booking.customer_email} schicken.`
           });
         } catch (e) { console.error('Alarm-Mail (late_fee) fehlgeschlagen:', e.message); }
       }
@@ -217,22 +216,21 @@ module.exports = async (req, res) => {
       }
     }
 
-    // Aufpreis charge (Stripe Off-Session)
+    // Aufpreis nachbelasten (Mollie-Mandat, siehe api/_charge.js)
     let returnExtraFeePiId = null;
-    if (returnExtraFee > 0 && booking.stripe_payment_method_id && booking.stripe_customer_id) {
-      try {
-        const feePi = await stripe.paymentIntents.create({
-          amount: Math.round(returnExtraFee * 100), currency: 'eur',
-          customer: booking.stripe_customer_id,
-          payment_method: booking.stripe_payment_method_id,
-          confirm: true, off_session: true,
-          receipt_email: booking.customer_email,
-          description: `SimpleTrailer – ${returnStatus === 'outside_bremen' ? 'Rückführung außerhalb Bremen' : 'Falsch-Rückgabe (nicht am Abholort)'}`,
-          metadata: { booking_id, type: 'return_extra_fee', return_status: returnStatus }
-        });
-        returnExtraFeePiId = feePi.id;
-      } catch (stripeErr) {
-        console.error('Rückgabe-Aufpreis Stripe-Charge fehlgeschlagen:', stripeErr.message);
+    if (returnExtraFee > 0 && booking.stripe_customer_id) {
+      const extraCharge = await chargeStored({
+        booking,
+        amount:      returnExtraFee,
+        type:        'return_extra_fee',
+        description: `SimpleTrailer – ${returnStatus === 'outside_bremen' ? 'Rückführung außerhalb Bremen' : 'Falsch-Rückgabe (nicht am Abholort)'}`,
+        extraMetadata: { return_status: returnStatus }
+      });
+
+      if (extraCharge.ok) {
+        returnExtraFeePiId = extraCharge.id;
+      } else {
+        console.error('Rückgabe-Aufpreis fehlgeschlagen:', extraCharge.error);
         // SOFORT Lion alarmieren — Rückgabe-Aufpreis manuell einziehen.
         try {
           await resend.emails.send({
@@ -240,7 +238,7 @@ module.exports = async (req, res) => {
             reply_to: 'info@simpletrailer.de',
             to: 'info@simpletrailer.de',
             subject: `⚠ OFFENE FORDERUNG: ${returnExtraFee.toFixed(2)} € Rückgabe-Aufpreis NICHT eingezogen — #${booking_id.slice(0,8).toUpperCase()}`,
-            text: `Die automatische Abbuchung des Rückgabe-Aufpreises ist FEHLGESCHLAGEN — bitte manuell einziehen.\n\nKunde:   ${booking.customer_name} (${booking.customer_email})\nBuchung: #${booking_id.slice(0,8).toUpperCase()}\nBetrag:  ${returnExtraFee.toFixed(2)} € (${returnStatus})\nGrund:   ${stripeErr.code || stripeErr.decline_code || stripeErr.message}\n\nEinziehen: Stripe → Payment Links → ${returnExtraFee.toFixed(2)} € → an ${booking.customer_email} senden.`
+            text: `Die automatische Abbuchung des Rückgabe-Aufpreises ist FEHLGESCHLAGEN — bitte manuell einziehen.\n\nKunde:   ${booking.customer_name} (${booking.customer_email})\nBuchung: #${booking_id.slice(0,8).toUpperCase()}\nBetrag:  ${returnExtraFee.toFixed(2)} € (${returnStatus})\nGrund:   ${extraCharge.error}\n\nEinziehen: Mollie-Dashboard → Zahlungslinks → ${returnExtraFee.toFixed(2)} € → Link an ${booking.customer_email} schicken.`
           });
         } catch (e) { console.error('Alarm-Mail (extra_fee) fehlgeschlagen:', e.message); }
       }
@@ -278,15 +276,33 @@ module.exports = async (req, res) => {
     // Verfügbarkeit nach Rückgabe ergibt sich automatisch aus status='returned' der Buchung
     // (get-trailers.js berechnet currently_booked zeitbasiert).
 
-    const total = booking.total_amount + lateFeeAmount;
+    // Der Rueckgabe-Aufpreis MUSS in Summe und Mail auftauchen. Vorher wurde er
+    // abgebucht, aber nirgends erwaehnt — der Kunde sah 50 EUR auf dem Konto ohne
+    // jede Erklaerung. Genau solche unangekuendigten Belastungen loesen
+    // Rueckbuchungen aus (und haben das Stripe-Konto gekostet).
+    const total = booking.total_amount + lateFeeAmount + returnExtraFee;
     const bookingRef = booking_id.slice(0, 8).toUpperCase();
 
     const lateBlock = lateFeeAmount > 0
-      ? T.callout(`<strong>Verspätungsaufpreis</strong><br>${lateHours} Stunde${lateHours > 1 ? 'n' : ''} × ${lateFeePerHour.toFixed(2)} € = <strong>${lateFeeAmount.toFixed(2)} €</strong><br><span style="font-size:13px;color:#8A857D;">${lateFeeCharged ? '✓ Automatisch abgebucht.' : '⚠ Automatische Abbuchung fehlgeschlagen. Wir melden uns.'}</span>`, 'orange')
-      : T.callout('<strong>✓ Pünktlich zurückgegeben – danke!</strong>', 'green');
+      ? T.callout(`<strong>Verspätungsaufpreis</strong><br>${lateHours} Stunde${lateHours > 1 ? 'n' : ''} × ${lateFeePerHour.toFixed(2)} € = <strong>${lateFeeAmount.toFixed(2)} €</strong><br><span style="font-size:13px;color:#8A857D;">${lateFeeCharged ? '✓ Wird über deine hinterlegte Zahlungsmethode eingezogen.' : '⚠ Automatische Abbuchung fehlgeschlagen. Wir melden uns.'}</span>`, 'orange')
+      : (returnExtraFee > 0 ? '' : T.callout('<strong>✓ Pünktlich zurückgegeben – danke!</strong>', 'green'));
 
-    // Review-CTA: nur wenn pünktlich zurückgegeben (positive Erfahrung)
-    const reviewBlock = lateFeeAmount > 0 ? '' :
+    const RETURN_FEE_REASON = {
+      outside_bremen:              'Der Anhänger wurde außerhalb des Bremer Stadtgebiets abgestellt.',
+      outside_confirmed_by_mieter: 'Der Anhänger wurde nicht am vereinbarten Abstellort zurückgegeben.'
+    };
+    const extraBlock = returnExtraFee > 0
+      ? T.callout(
+          `<strong>Rückführungspauschale</strong><br>${RETURN_FEE_REASON[returnStatus] || 'Rückgabe außerhalb des vereinbarten Bereichs.'}`
+          + `<br><strong>${returnExtraFee.toFixed(2)} €</strong>`
+          + `<br><span style="font-size:13px;color:#8A857D;">${returnExtraFeePiId ? '✓ Wird über deine hinterlegte Zahlungsmethode eingezogen.' : '⚠ Automatische Abbuchung fehlgeschlagen. Wir melden uns.'}</span>`
+          + `<br><span style="font-size:13px;color:#8A857D;">Grundlage: AGB § 7. Wenn du das für falsch hältst, antworte einfach auf diese Mail — wir schauen es uns an.</span>`,
+          'orange')
+      : '';
+
+    // Review-CTA: nur wenn alles glattlief (keine Verspätung, kein Aufpreis) —
+    // niemanden um eine Bewertung bitten, dem wir gerade 50 € berechnet haben.
+    const reviewBlock = (lateFeeAmount > 0 || returnExtraFee > 0) ? '' :
       `<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-top:8px;"><tr><td align="center" style="background:#F6F3EE;border:1px solid #E7E2D9;border-radius:12px;padding:22px 20px;">
         <div style="font-size:24px;letter-spacing:5px;color:#E85D00;margin-bottom:6px;">★★★★★</div>
         <div style="font-weight:700;font-size:15px;color:#111213;margin-bottom:6px;font-family:system-ui,sans-serif;">Wie war deine Erfahrung?</div>
@@ -336,10 +352,12 @@ module.exports = async (req, res) => {
         bodyHtml:
           T.p(`Hallo ${T.esc(booking.customer_name)}, hier deine Abrechnung.`) +
           lateBlock +
+          extraBlock +
           T.rows([
             ['Buchung', `#${bookingRef}`],
             ['Mietbetrag', `${booking.total_amount.toFixed(2)} €`],
             ...(lateFeeAmount > 0 ? [['Verspätung', `<span style="color:#E85D00;">+ ${lateFeeAmount.toFixed(2)} €</span>`]] : []),
+            ...(returnExtraFee > 0 ? [['Rückführungspauschale', `<span style="color:#E85D00;">+ ${returnExtraFee.toFixed(2)} €</span>`]] : []),
             ['Gesamt', `${total.toFixed(2)} €`]
           ]) +
           reviewBlock

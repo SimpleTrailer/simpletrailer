@@ -17,7 +17,7 @@
   <meta name="description" content="PKW-Anhänger online buchen in Bremen. Stundenweise, tageweise oder Wochenende. Sofort verfügbar, kontaktlos abholen, mit dem Handy entsperren." />
   <link rel="canonical" href="https://simpletrailer.de/booking" />
   <meta name="robots" content="index, follow" />
-  <script src="https://js.stripe.com/v3/"></script>
+  <script src="/license-check.js?v=1"></script>
   <script src="/native-bridge.js?v=9" defer></script>
   <script src="/analytics.js?v=13" defer></script>
   <script src="/email-typo-check.js?v=1" defer></script>
@@ -132,9 +132,21 @@
       .btn { padding: 12px 10px; font-size: .88rem; }
     }
 
-    /* STRIPE */
+    /* ZAHLUNG (Mollie-Weiterleitung) */
     #payment-element { margin-bottom: 20px; }
     #payment-message { color: #f87171; font-size: .88rem; text-align: center; margin-bottom: 12px; display: none; }
+
+    .pay-redirect-note {
+      display: flex; align-items: flex-start; gap: 13px;
+      padding: 16px 17px;
+      background: var(--s2);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      color: #ddd;
+    }
+    .pay-redirect-note > svg { flex: 0 0 auto; margin-top: 1px; color: var(--orange); }
+    .pay-redirect-note strong { display: block; font-size: .92rem; letter-spacing: -.01em; margin-bottom: 4px; }
+    .pay-redirect-note span   { display: block; font-size: .82rem; line-height: 1.55; color: #aaa; }
 
     /* AGB CHECKBOX — grosse Touch-Flaeche (mind. 44px Empfehlung iOS/Apple Human Interface) */
     .agb-row {
@@ -459,6 +471,66 @@
 </nav>
 
 <div class="page">
+
+  <!-- ⚠️ TEMPORÄR (28.07.2026): Stripe-Zahlungsausfall — kompletter Block inkl. <style> restlos entfernbar -->
+  <style id="stc-payment-notice-styles">
+    #stcPaymentNotice{
+      background:#FFF7F0;border:1px solid #F0C9A8;border-left:4px solid #E85D00;
+      border-radius:14px;padding:20px 22px;margin:0 0 26px;
+    }
+    #stcPaymentNotice .pn-head{
+      display:flex;align-items:center;gap:10px;margin-bottom:10px;
+      font-weight:700;font-size:1.02rem;color:#7A2E00;letter-spacing:-.01em;
+    }
+    #stcPaymentNotice .pn-head svg{flex:0 0 auto}
+    #stcPaymentNotice p{
+      margin:0 0 16px;font-size:.92rem;line-height:1.6;color:#5C4636;
+    }
+    #stcPaymentNotice .pn-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+    #stcPaymentNotice .pn-wa{
+      display:inline-flex;align-items:center;gap:9px;
+      background:#25D366;color:#fff;text-decoration:none;
+      font-weight:650;font-size:.94rem;padding:12px 20px;border-radius:10px;
+      box-shadow:0 2px 10px rgba(37,211,102,.28);
+      transition:transform .18s ease,box-shadow .18s ease,background .18s ease;
+    }
+    #stcPaymentNotice .pn-wa:hover{background:#1EBE5A;transform:translateY(-1px);box-shadow:0 5px 16px rgba(37,211,102,.34)}
+    #stcPaymentNotice .pn-wa:active{transform:translateY(0)}
+    #stcPaymentNotice .pn-alt{font-size:.86rem;color:#7A6252}
+    #stcPaymentNotice .pn-alt a{color:#E85D00;font-weight:600}
+    @media(max-width:520px){
+      #stcPaymentNotice{padding:17px 16px;border-radius:12px}
+      #stcPaymentNotice .pn-wa{width:100%;justify-content:center}
+      #stcPaymentNotice .pn-alt{width:100%}
+    }
+  </style>
+  <div id="stcPaymentNotice" role="status">
+    <div class="pn-head">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#E85D00" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><path d="M12 16.5v.01"/>
+      </svg>
+      Online-Zahlung gerade nicht verfügbar
+    </div>
+    <p>
+      Aus technischen Gründen können wir im Moment keine Online-Zahlung entgegennehmen.
+      Vermieten tun wir aber ganz normal weiter: Schreib uns einfach kurz per WhatsApp,
+      wir reservieren deinen Anhänger persönlich und klären die Zahlung direkt mit dir.
+    </p>
+    <div class="pn-actions">
+      <a class="pn-wa"
+         href="https://wa.me/4915754255876?text=Hallo%20SimpleTrailer%2C%20ich%20m%C3%B6chte%20einen%20Anh%C3%A4nger%20mieten."
+         target="_blank" rel="noopener">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M17.47 14.38c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.25-.46-2.39-1.47-.88-.79-1.48-1.76-1.65-2.06-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.61-.92-2.21-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48s1.07 2.88 1.22 3.08c.15.2 2.1 3.2 5.08 4.49.71.31 1.26.49 1.69.63.71.23 1.36.19 1.87.12.57-.09 1.76-.72 2.01-1.41.25-.7.25-1.29.17-1.42-.07-.13-.27-.2-.57-.35z"/>
+          <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.86 9.86 0 0 0 4.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91S17.5 2 12.04 2zm0 18.15h-.01a8.2 8.2 0 0 1-4.18-1.15l-.3-.18-3.11.82.83-3.04-.2-.31a8.19 8.19 0 0 1-1.26-4.38c0-4.54 3.69-8.23 8.24-8.23a8.23 8.23 0 0 1 0 16.47z"/>
+        </svg>
+        Per WhatsApp anfragen
+      </a>
+      <span class="pn-alt">oder per Mail an <a href="mailto:info@simpletrailer.de?subject=Anh%C3%A4nger%20mieten">info@simpletrailer.de</a></span>
+    </div>
+  </div>
+  <!-- ⚠️ ENDE TEMPORÄR -->
+
   <!-- STEPPER -->
   <div class="stepper">
     <div class="step-item">
@@ -683,7 +755,7 @@
       </div>
 
       <div style="background:rgba(232,93,0,0.07);border:1px solid rgba(232,93,0,0.25);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:.82rem;color:#ccc;line-height:1.5;">
-        ℹ️ <strong style="color:#fff;">Nur bei deiner ersten Buchung:</strong> kurzer Führerschein-Check — Foto von Vorder- und Rückseite plus ein kurzes Selfie (ca. 30 Sek., sicher über Stripe). Das ersetzt den Schaltertermin mit Ausweis, den du bei klassischen Vermietern hättest. Bei allen weiteren Buchungen entfällt er komplett.
+        ℹ️ <strong style="color:#fff;">Nur bei deiner ersten Buchung:</strong> kurzer Führerschein-Check — Foto von Vorder- und Rückseite plus ein kurzes Selfie (ca. 1 Minute). Das ersetzt den Schaltertermin mit Ausweis, den du bei klassischen Vermietern hättest. Bei allen weiteren Buchungen entfällt er komplett.
       </div>
 
       <!-- LOGIN -->
@@ -771,44 +843,13 @@
 
   <!-- STEP 3: Führerschein -->
   <div class="step-content" id="step3" style="max-width:560px;margin-left:auto;margin-right:auto;">
-    <div class="card" id="dlVerifiedBox" style="display:none;border-color:#86efac;background:#ECFDF3;">
-      <div style="display:flex;gap:14px;align-items:flex-start;">
-        <div style="width:42px;height:42px;border-radius:50%;background:#22c55e;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;">✓</div>
-        <div style="flex:1;min-width:0;">
-          <div style="font-weight:700;font-size:1rem;margin-bottom:4px;color:#14532D;">Führerschein bestätigt</div>
-          <div style="color:#3f7553;font-size:.84rem;line-height:1.5;" id="dlVerifiedInfo">–</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="card" id="dlVerifyBox">
-      <p class="field-label" style="margin-bottom:8px;">Führerschein verifizieren</p>
-      <p style="color:var(--gray);font-size:.84rem;line-height:1.55;margin-bottom:18px;">
-        Vor deiner ersten Buchung prüfen wir einmalig deinen Führerschein – sicher über <strong style="color:#fff;">Stripe Identity</strong>. Du fotografierst Vorder- und Rückseite plus ein kurzes Selfie. Die Prüfung dauert ca. 30 Sekunden, danach kannst du jederzeit ohne erneute Verifikation buchen.
-      </p>
-      <div style="background:#0d0d0d;border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:16px;display:flex;flex-direction:column;gap:8px;font-size:.82rem;color:#aaa;">
-        <span>📄 Führerschein Klasse B (oder höher)</span>
-        <span>📷 Vorder- und Rückseite</span>
-        <span>🤳 Selfie zur Identitätsprüfung</span>
-        <span>🔒 DSGVO-konform · End-to-End verschlüsselt</span>
-      </div>
-
-      <!-- Art. 9 DSGVO Einwilligung biometrischer Gesichtsabgleich -->
-      <label class="agb-row" for="biometricCheck" style="margin-bottom:14px;">
-        <input type="checkbox" id="biometricCheck" onchange="updateDlStartState()" />
-        <span class="agb-text">
-          Ich willige in die biometrische Verarbeitung meines Gesichts durch Stripe Identity zum Abgleich mit meinem Führerschein-Lichtbild ein (Art. 9 Abs. 2 lit. a DSGVO). Die Einwilligung kann jederzeit widerrufen werden; ohne erfolgreiche Verifikation ist eine Buchung nicht möglich.
-        </span>
-      </label>
-
-      <button class="btn btn-orange" id="dlStartBtn" onclick="startIdentityVerification()" disabled>Jetzt verifizieren →</button>
-      <span class="error-msg" id="errDl" style="margin-top:10px;display:none;"></span>
-    </div>
-
-    <div class="card" id="dlPendingBox" style="display:none;text-align:center;">
-      <div class="spinner" style="margin:8px auto 16px;width:36px;height:36px;border:3px solid #2a2a2a;border-top-color:var(--orange);border-radius:50%;animation:spin 1s linear infinite;"></div>
-      <p style="font-weight:600;margin-bottom:4px;">Verifizierung läuft …</p>
-      <p style="color:var(--gray);font-size:.82rem;">Stripe prüft dein Dokument. Das dauert meist 5–30 Sekunden.</p>
+    <!-- Führerschein-Prüfung: Oberfläche kommt aus license-check.js
+         (dieselbe wie im Kundenkonto — nur an einer Stelle gepflegt). -->
+    <div class="card">
+      <p class="field-label" style="margin-bottom:14px;">Führerschein prüfen</p>
+      <div id="dlBox"></div>
+      <!-- Wird gefüllt, wenn die Prüfung bei einem Menschen liegt (kein Sackgassen-Zustand) -->
+      <div id="dlNextSteps"></div>
     </div>
 
     <div style="text-align:center;margin-top:12px;">
@@ -989,7 +1030,17 @@
           <span class="pay-pill" style="background:#003087;color:#fff;">PayPal</span>
         </div>
       </div>
-      <div id="payment-element"></div>
+      <!-- Mollie leitet zur Bezahlseite weiter — die Methode wird DORT gewählt.
+           Deshalb hier kein eingebettetes Zahlungsformular mehr, sondern ein Hinweis. -->
+      <div id="payment-element" class="pay-redirect-note">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="2" y="5" width="20" height="14" rx="2.5"/><path d="M2 10h20"/>
+        </svg>
+        <div>
+          <strong>Sichere Bezahlung über Mollie</strong>
+          <span>Nach dem Klick auf „Jetzt buchen &amp; bezahlen" wählst du deine Zahlungsart (Karte, PayPal, Apple&nbsp;Pay, Google&nbsp;Pay) auf der geschützten Bezahlseite. Danach kommst du automatisch zurück.</span>
+        </div>
+      </div>
       <div id="payment-message"></div>
 
       <!-- WIDERRUFSBELEHRUNG — sichtbar vor Pay-Button (§ 312g Abs. 2 Nr. 9 BGB) -->
@@ -1090,7 +1141,6 @@
 <script>
   const SUPABASE_URL  = 'https://zcjlfatuelhkghtdyrqh.supabase.co';
   const SUPABASE_ANON = 'sb_publishable_cX1r2GLuIkxEPIpkFKdXaQ_RtP7eDOf';
-  const STRIPE_PK     = 'pk_live_51TOehmPgNvYcKGtMbHXSssYCRGba5FXzM6BMwApWD25Fc3KSKruD95WbTQplHTtQldVfrWQduFXJvEGHziITWOqN00mwmamOpK';
 
   let bookingUser    = null;
   let bookingToken   = null;
@@ -1105,12 +1155,9 @@
   let bookingMode       = 'flexible'; // 'flexible' | 'weekend' | 'week'
   let calClickState     = 'start';   // 'start' | 'end' — for flexible mode only
 
-  const stripeClient = Stripe(STRIPE_PK);
-
   let trailerId      = null;
   let trailerPickup  = { lat: null, lng: null, name: '' }; // Heimat-Stellplatz für Rückgabe-Zone
   let selectedFreeFloating = false; // false = Heimat-Rückgabe (frei), true = irgendwo in Bremen (+15€)
-  let stripeElements = null;
   let trailerPrices  = { kurztrip: 9, halftag: 18, day: 29, extra_day: 24, weekend: 59, week: 119 };
 
   function getStartMs() { return new Date(document.getElementById('startTime').value).getTime() || 0; }
@@ -1654,7 +1701,7 @@
 
   // Rabattcode prüfen über /api/validate-discount — KEIN Login/Führerschein nötig, daher schon
   // im Optionen-Schritt nutzbar. Der verbindliche Abzug passiert beim Bezahlen serverseitig
-  // in create-payment-intent.js (Single Source of Truth für den Stripe-Betrag).
+  // in create-mollie-payment.js (Single Source of Truth für den Zahlbetrag).
   async function applyDiscount() {
     const code = (document.getElementById('discountInput')?.value || '').trim().toUpperCase();
     const btn  = document.getElementById('discountBtn');
@@ -2375,12 +2422,13 @@
     if (currentDlStatus !== 'verified') { goToStep(4); return; }
     goToStep(5);
     updateSummary();
-    await initStripe();
+    initPayment();
   }
 
-  /* ── Stripe Identity Führerschein-Verifikation ────────────────── */
+  /* ── Führerschein-Prüfung (KI, siehe license-check.js) ────────── */
   let currentDlStatus = null;
-  let dlPollTimer = null;
+  let licenseWidget   = null;
+  let licenseInfo     = null;   // Antwort von /api/verify-license (Name, Klassen, Ablauf)
 
   // Wrapper: macht den Request mit dem aktuellen Token, bei 401 versucht Refresh + Retry
   async function authedFetch(url, opts = {}) {
@@ -2396,134 +2444,58 @@
     return res;
   }
 
-  async function fetchLicenseStatus() {
-    if (!bookingToken) return null;
-    try {
-      const res = await authedFetch('/api/identity');
-      if (!res || !res.ok) return null;
-      return await res.json();
-    } catch { return null; }
-  }
-
+  /**
+   * Baut das Führerschein-Widget beim ersten Aufruf auf und holt danach nur noch
+   * den aktuellen Status. Der Statuswechsel steuert, ob es zu Schritt 5 weitergeht.
+   */
   async function refreshLicenseUI() {
-    const verifiedBox = document.getElementById('dlVerifiedBox');
-    const verifyBox   = document.getElementById('dlVerifyBox');
-    const pendingBox  = document.getElementById('dlPendingBox');
-    const info        = await fetchLicenseStatus();
-    const status      = info?.dl_status || 'unverified';
-    currentDlStatus   = status;
-
-    verifiedBox.style.display = 'none';
-    verifyBox.style.display   = 'none';
-    pendingBox.style.display  = 'none';
-    document.getElementById('errDl').style.display = 'none';
-
-    if (status === 'verified') {
-      try { if (!window.__dlTracked) { window.__dlTracked = 1; window.stcTrack && stcTrack('booking_dl_verified'); } } catch (e) {}
-      verifiedBox.style.display = 'block';
-      const expires = info.dl_expires_at ? new Date(info.dl_expires_at).toLocaleDateString('de-DE') : '–';
-      const klass   = (info.dl_classes || []).join(', ') || 'B';
-      document.getElementById('dlVerifiedInfo').innerHTML =
-        `Klasse <strong style="color:#14532D;">${klass}</strong> · gültig bis <strong style="color:#14532D;">${expires}</strong>`;
-      // Auto-weiter zur Zahlung nach kurzer Bestätigung
-      setTimeout(() => { if (currentDlStatus === 'verified') goStep5(); }, 900);
-      return;
-    }
-
-    if (status === 'pending') {
-      pendingBox.style.display = 'block';
-      startStatusPolling();
-      return;
-    }
-
-    verifyBox.style.display = 'block';
-    if (status === 'failed' && info.dl_failure_reason) {
-      const err = document.getElementById('errDl');
-      err.textContent = `Letzte Verifizierung fehlgeschlagen: ${info.dl_failure_reason}. Bitte erneut versuchen.`;
-      err.style.display = 'block';
-    }
-  }
-
-  // Verify-Button erst aktiv wenn Art.9-Einwilligung gesetzt
-  function updateDlStartState() {
-    const consent = document.getElementById('biometricCheck')?.checked;
-    const btn = document.getElementById('dlStartBtn');
-    if (btn) btn.disabled = !consent;
-  }
-
-  async function startIdentityVerification() {
-    try { window.stcTrack && stcTrack('booking_dl_verify_start'); } catch (e) {}
-    const consent = document.getElementById('biometricCheck')?.checked;
-    if (!consent) {
-      const err = document.getElementById('errDl');
-      err.textContent = 'Bitte willige in die biometrische Verarbeitung ein.';
-      err.style.display = 'block';
-      return;
-    }
-    const btn = document.getElementById('dlStartBtn');
-    btn.disabled = true;
-    btn.textContent = 'Wird gestartet …';
-
-    try {
-      const res = await authedFetch('/api/identity', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+    if (!licenseWidget) {
+      licenseWidget = STLicense.mount('#dlBox', {
+        getToken: () => bookingToken,
+        onStatus: (status) => {
+          currentDlStatus = status;
+          if (status === 'verified') {
+            try {
+              if (!window.__dlTracked) { window.__dlTracked = 1; window.stcTrack && stcTrack('booking_dl_verified'); }
+            } catch (e) {}
+          }
+        },
+        onVerified: (info) => {
+          licenseInfo = info || licenseInfo;
+          // Kurz die Bestätigung zeigen, dann automatisch zur Zahlung.
+          setTimeout(() => { if (currentDlStatus === 'verified') goStep5(); }, 1200);
+        }
       });
-      if (!res) throw new Error('Sitzung abgelaufen — bitte erneut anmelden.');
-      if (res.status === 401) {
-        // Auch nach Refresh nicht autorisiert → User muss neu einloggen
-        switchBookingAccount();
-        goToStep(3);
-        throw new Error('Sitzung abgelaufen — bitte erneut anmelden.');
-      }
-      const data = await res.json();
-      if (!res.ok || !data.client_secret) throw new Error(data.error || 'Verifikation konnte nicht gestartet werden');
-
-      const result = await stripeClient.verifyIdentity(data.client_secret);
-
-      btn.disabled = false;
-      btn.textContent = 'Jetzt verifizieren →';
-
-      if (result.error) {
-        const err = document.getElementById('errDl');
-        err.textContent = result.error.message || 'Verifikation abgebrochen.';
-        err.style.display = 'block';
-        return;
-      }
-
-      // Stripe Modal geschlossen → Status pollen
-      document.getElementById('dlVerifyBox').style.display  = 'none';
-      document.getElementById('dlPendingBox').style.display = 'block';
-      startStatusPolling();
-    } catch (err) {
-      const errEl = document.getElementById('errDl');
-      errEl.textContent = err.message || 'Fehler beim Start der Verifikation.';
-      errEl.style.display = 'block';
-      btn.disabled = false;
-      btn.textContent = 'Jetzt verifizieren →';
     }
+    if (licenseWidget) licenseInfo = await licenseWidget.refresh();
+    renderLicenseHint();
   }
 
-  function startStatusPolling() {
-    if (dlPollTimer) clearInterval(dlPollTimer);
-    let elapsed = 0;
-    dlPollTimer = setInterval(async () => {
-      elapsed += 2;
-      const info = await fetchLicenseStatus();
-      const status = info?.dl_status || 'unverified';
-      if (status === 'verified' || status === 'failed' || status === 'unverified') {
-        clearInterval(dlPollTimer); dlPollTimer = null;
-        await refreshLicenseUI();
-      } else if (elapsed >= 90) {
-        clearInterval(dlPollTimer); dlPollTimer = null;
-        const err = document.getElementById('errDl');
-        err.textContent = 'Verifizierung dauert ungewöhnlich lange. Bitte später nochmal probieren.';
-        err.style.display = 'block';
-        document.getElementById('dlPendingBox').style.display = 'none';
-        document.getElementById('dlVerifyBox').style.display  = 'block';
-      }
-    }, 2000);
+  /**
+   * Bei „Handprüfung läuft" darf der Kunde nicht in einer Sackgasse stehen:
+   * er soll wissen, dass der Zeitraum NICHT reserviert ist und wie es weitergeht.
+   */
+  function renderLicenseHint() {
+    const host = document.getElementById('dlNextSteps');
+    if (!host) return;
+    if (currentDlStatus !== 'review') { host.innerHTML = ''; return; }
+    host.innerHTML = `
+      <div style="margin-top:16px;border:1px solid var(--border);border-radius:12px;padding:15px 17px;background:var(--s2);">
+        <div style="font-weight:700;font-size:.92rem;margin-bottom:6px;">Wie es weitergeht</div>
+        <div style="font-size:.83rem;line-height:1.6;color:var(--gray);">
+          Wir schauen uns deine Fotos persönlich an — meist innerhalb weniger Stunden. Sobald dein
+          Führerschein freigegeben ist, bekommst du eine E-Mail und kannst sofort buchen.<br><br>
+          <strong>Wichtig:</strong> Dein Wunsch-Zeitraum ist noch <strong>nicht</strong> reserviert.
+          Falls er dir wichtig ist, schreib uns kurz — wir halten ihn dir frei.
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;">
+          <a href="/account" class="btn btn-orange" style="width:auto;padding:11px 20px;font-size:.88rem;">Zum Kundenkonto</a>
+          <a href="https://wa.me/4915754255876?text=Hallo%2C%20mein%20F%C3%BChrerschein%20wird%20gerade%20gepr%C3%BCft%20%E2%80%94%20k%C3%B6nnt%20ihr%20mir%20meinen%20Zeitraum%20freihalten%3F"
+             target="_blank" rel="noopener" class="btn" style="width:auto;padding:11px 20px;font-size:.88rem;background:var(--s3);border:1px solid var(--border);">Zeitraum freihalten</a>
+        </div>
+      </div>`;
   }
+
 
   function updateSummary() {
     const startMs = new Date(document.getElementById('startTime').value).getTime() || 0;
@@ -2532,9 +2504,12 @@
     const insAmt  = getInsuranceAmount();
     const insLabels = { basis: 'Basis Schutz (+15%)', premium: 'Premium Schutz (+30%)' };
     const meta    = bookingUser?.user_metadata || {};
-    // Verifizierte DL-Daten haben Vorrang (Stripe Identity = Master)
-    const name    = (meta.dl_first_name && meta.dl_last_name)
-      ? `${meta.dl_first_name} ${meta.dl_last_name}`
+    // Der geprüfte Führerschein-Name hat Vorrang. Er kommt aus /api/verify-license
+    // (licenseInfo) — NICHT mehr aus user_metadata: die dl_*-Felder liegen jetzt in
+    // app_metadata und sind für den Browser bewusst unsichtbar. Verbindlich setzt
+    // ihn ohnehin der Server in create-mollie-payment.js, das hier ist nur Anzeige.
+    const name    = (licenseInfo?.dl_first_name && licenseInfo?.dl_last_name)
+      ? `${licenseInfo.dl_first_name} ${licenseInfo.dl_last_name}`
       : `${meta.first_name || ''} ${meta.last_name || ''}`.trim() || bookingUser?.email || '–';
 
     document.getElementById('sumTarif').textContent  = p ? p.label : '–';
@@ -2598,108 +2573,26 @@
     }
   }
 
-  let stripePaymentElement = null;
-  let lastStripeSignature  = null;
   let appliedDiscount      = null;   // aktuelle Rabatt-Anzeige {code,percent,scope,amount,total}
   let appliedDiscountMeta  = null;   // geprüfter Code {code,percent,scope} — schon vor Login/Führerschein
   let appliedDiscountCode  = '';     // Code, der an den Server gesendet wird
 
-  async function initStripe() {
+  /**
+   * Zahlungs-Schritt vorbereiten.
+   *
+   * Frueher (Stripe) wurde hier bereits ein PaymentIntent erzeugt, um das
+   * Payment-Element einzubetten. Mollie arbeitet mit Weiterleitung: die Zahlung
+   * wird erst beim Klick angelegt. Das ist auch sauberer — kein verwaister
+   * Zahlungsvorgang, wenn der Kunde im letzten Schritt doch abspringt.
+   */
+  function initPayment() {
     const payBtn = document.getElementById('payBtn');
-
-    // Guard: identische Buchungs-Parameter => bestehendes Payment-Element weiterverwenden
-    // (verhindert verwaiste PaymentIntents + Doppel-Mounts bei Stepper vor/zurueck)
-    const signature = [trailerId, document.getElementById('startTime').value,
-      document.getElementById('endTime').value, selectedInsurance, bookingMode,
-      selectedFreeFloating, cancellationProtection, appliedDiscountCode].join('|');
-    if (stripeElements && stripePaymentElement && lastStripeSignature === signature) {
-      payBtn.textContent = 'Jetzt buchen & bezahlen';
-      payBtn.dataset.stripeReady = '1';
-      updatePayBtnState();
-      return;
-    }
-    if (stripePaymentElement) {
-      try { stripePaymentElement.unmount(); } catch (e) {}
-      stripePaymentElement = null;
-    }
-
-    payBtn.disabled = true;
-    payBtn.textContent = 'Zahlung wird vorbereitet...';
-
-    try {
-      const res = await authedFetch('/api/create-payment-intent', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          trailer_id:       trailerId,
-          pricing_type:     calcPrice(getStartMs(), getEndMs())?.key || 'flexible',
-          start_time:       document.getElementById('startTime').value,
-          end_time:         document.getElementById('endTime').value,
-          customer_name:    (bookingUser.user_metadata?.dl_first_name && bookingUser.user_metadata?.dl_last_name)
-                              ? `${bookingUser.user_metadata.dl_first_name} ${bookingUser.user_metadata.dl_last_name}`
-                              : `${bookingUser.user_metadata?.first_name || ''} ${bookingUser.user_metadata?.last_name || ''}`.trim() || bookingUser.email,
-          customer_email:   bookingUser.email,
-          customer_phone:   bookingUser.user_metadata?.phone   || '',
-          customer_address: bookingUser.user_metadata?.address || '',
-          insurance_type:   selectedInsurance,
-          insurance_amount: getInsuranceAmount(),
-          user_id:          bookingUser.id,
-          booking_mode:     bookingMode,
-          agb_version:      '2026-06-05',
-          free_floating:    selectedFreeFloating,
-          cancellation_protection:     cancellationProtection,
-          cancellation_protection_fee: getCancellationProtectionFee(),
-          discount_code:               appliedDiscountCode
-        })
-      });
-
-      if (!res) throw new Error('Anmeldung abgelaufen — bitte neu einloggen.');
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Fehler beim Laden der Zahlung');
-
-      // Server hat den Code verbindlich geprüft + Betrag gesetzt; Anzeige neu rechnen (lokal = identisch).
-      updateSummary();
-
-      stripeElements = stripeClient.elements({ clientSecret: data.client_secret, appearance: {
-        theme: 'stripe',
-        variables: {
-          colorPrimary: '#E85D00',
-          colorBackground: '#FFFFFF',
-          colorText: '#111213',
-          colorDanger: '#DC2626',
-          fontFamily: 'system-ui, sans-serif',
-          borderRadius: '8px'
-        }
-      }});
-
-      const pe = stripeElements.create('payment');
-      pe.mount('#payment-element');
-      stripePaymentElement = pe;
-      lastStripeSignature  = signature;
-
-      payBtn.textContent = 'Jetzt buchen & bezahlen';
-      payBtn.dataset.stripeReady = '1';
-      updatePayBtnState();   // enabled nur wenn AGB-Checkbox an
-
-      // Client Secret für Confirm-Seite speichern
-      sessionStorage.setItem('st_client_secret', data.client_secret);
-      sessionStorage.setItem('st_pi_id', data.payment_intent_id);
-
-    } catch (err) {
-      let msg = err.message;
-      if (msg === 'Failed to fetch') msg = 'Verbindung fehlgeschlagen. Bitte Seite neu laden.';
-      if (msg.includes('No API key')) msg = 'Zahlungssystem nicht konfiguriert. Bitte Betreiber kontaktieren.';
-      // Lehnt der Server den Rabattcode ab (z.B. zwischenzeitlich abgelaufen): Code entfernen,
-      // damit kein Stillstand entsteht und der nächste Versuch ohne Code durchläuft.
-      if (/Rabattcode/i.test(msg)) {
-        appliedDiscountCode = ''; appliedDiscountMeta = null;
-        refreshDiscountUI();
-        msg = msg.replace(/^Rabattcode:\s*/, '') + ' — der Rabattcode wurde entfernt, bitte erneut „Jetzt buchen" klicken.';
-      }
-      showPaymentError(msg);
-      payBtn.textContent = 'Erneut versuchen';
-      payBtn.disabled = false;
-    }
+    if (!payBtn) return;
+    hidePaymentError();
+    updateSummary();
+    payBtn.textContent = 'Jetzt buchen & bezahlen';
+    payBtn.dataset.payReady = '1';
+    updatePayBtnState();   // enabled nur wenn beide Checkboxen an
   }
 
   // AGB-Checkbox-Logik — Pay-Button nur enabled wenn BEIDE Checkboxen aktiv
@@ -2708,7 +2601,7 @@
     const widerrufOk = document.getElementById('widerrufCheck')?.checked;
     const payBtn    = document.getElementById('payBtn');
     if (!payBtn) return;
-    if (payBtn.dataset.stripeReady === '1') {
+    if (payBtn.dataset.payReady === '1') {
       payBtn.disabled = !(agbOk && widerrufOk);
     }
   }
@@ -2738,32 +2631,81 @@
 
     const payBtn = document.getElementById('payBtn');
     payBtn.disabled = true;
-    payBtn.textContent = 'Zahlung wird verarbeitet...';
+    payBtn.textContent = 'Zahlung wird vorbereitet...';
     hidePaymentError();
     try { window.stcTrack && stcTrack('booking_pay_clicked'); } catch (e) {}
 
-    let error = null;
     try {
-      ({ error } = await stripeClient.confirmPayment({
-        elements: stripeElements,
-        confirmParams: {
-          return_url: `${window.location.origin}/booking-confirm`
-        },
-        redirect: 'if_required'
-      }));
-    } catch (ex) {
-      // Netzabriss/Stripe-Exception: Button NICHT haengen lassen
-      error = { message: 'Verbindung unterbrochen — bitte erneut versuchen. Es wurde nichts abgebucht.' };
-    }
+      // Der Server rechnet den Preis verbindlich neu, prüft Führerschein, Rabattcode
+      // und Doppelbuchung — und legt erst dann die Mollie-Zahlung an.
+      const res = await authedFetch('/api/create-mollie-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          trailer_id:       trailerId,
+          pricing_type:     calcPrice(getStartMs(), getEndMs())?.key || 'flexible',
+          start_time:       document.getElementById('startTime').value,
+          end_time:         document.getElementById('endTime').value,
+          // Nur ein Vorschlag — der Server ersetzt ihn verbindlich durch den
+          // geprüften Führerschein-Namen (create-mollie-payment.js).
+          customer_name:    (licenseInfo?.dl_first_name && licenseInfo?.dl_last_name)
+                              ? `${licenseInfo.dl_first_name} ${licenseInfo.dl_last_name}`
+                              : `${bookingUser.user_metadata?.first_name || ''} ${bookingUser.user_metadata?.last_name || ''}`.trim() || bookingUser.email,
+          customer_email:   bookingUser.email,
+          customer_phone:   bookingUser.user_metadata?.phone   || '',
+          customer_address: bookingUser.user_metadata?.address || '',
+          insurance_type:   selectedInsurance,
+          insurance_amount: getInsuranceAmount(),
+          user_id:          bookingUser.id,
+          booking_mode:     bookingMode,
+          agb_version:      '2026-06-05',
+          free_floating:    selectedFreeFloating,
+          cancellation_protection:     cancellationProtection,
+          cancellation_protection_fee: getCancellationProtectionFee(),
+          discount_code:               appliedDiscountCode
+        })
+      });
 
-    if (error) {
-      showPaymentError(error.message);
+      if (!res) throw new Error('Anmeldung abgelaufen — bitte neu einloggen.');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Zahlung konnte nicht gestartet werden.');
+      if (!data.checkout_url) throw new Error('Zahlung konnte nicht gestartet werden. Bitte erneut versuchen.');
+
+      // Die Bestätigungsseite braucht diese ID — Mollie hängt sie NICHT an die
+      // Rücksprung-URL. Bewusst in BEIDEN Speichern:
+      //   sessionStorage = pro Tab, localStorage = pro Browser.
+      // Bei PayPal-App oder 3-D-Secure landet der Rücksprung sehr oft in einem
+      // NEUEN Tab — dort ist sessionStorage leer, localStorage aber nicht.
+      // Ohne das sieht ein Kunde, der bezahlt hat, „Es wurde nichts abgebucht".
+      try {
+        sessionStorage.setItem('st_mollie_id', data.payment_id);
+        localStorage.setItem('st_mollie_id', data.payment_id);
+        localStorage.setItem('st_mollie_at', String(Date.now()));
+      } catch (e) {
+        // Privater Modus / voller Speicher: darf die Weiterleitung NIEMALS blockieren.
+        console.warn('Zahlungs-ID konnte nicht gespeichert werden:', e.message);
+      }
+
+      payBtn.textContent = 'Weiterleitung zur Bezahlseite...';
+      window.location.href = data.checkout_url;
+      return;
+
+    } catch (err) {
+      let msg = err.message;
+      if (msg === 'Failed to fetch') msg = 'Verbindung unterbrochen — bitte erneut versuchen. Es wurde nichts abgebucht.';
+      if (/MOLLIE_API_KEY/i.test(msg)) msg = 'Zahlungssystem nicht konfiguriert. Bitte Betreiber kontaktieren.';
+      // Lehnt der Server den Rabattcode ab (z.B. zwischenzeitlich abgelaufen): Code entfernen,
+      // damit kein Stillstand entsteht und der nächste Versuch ohne Code durchläuft.
+      if (/Rabattcode/i.test(msg)) {
+        appliedDiscountCode = ''; appliedDiscountMeta = null;
+        refreshDiscountUI();
+        updateSummary();
+        msg = msg.replace(/^Rabattcode:\s*/, '') + ' — der Rabattcode wurde entfernt, bitte erneut „Jetzt buchen" klicken.';
+      }
+      showPaymentError(msg);
       try { window.stcTrack && stcTrack('booking_payment_error'); } catch (e) {}
       payBtn.disabled = false;
       payBtn.textContent = 'Jetzt buchen & bezahlen';
-    } else {
-      // Kein Redirect nötig (Kartenzahlung) – direkt zur Bestätigungsseite
-      window.location.href = `/booking-confirm?payment_intent=${sessionStorage.getItem('st_pi_id')}&redirect_status=succeeded`;
     }
   }
 

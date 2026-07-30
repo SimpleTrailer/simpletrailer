@@ -1,9 +1,15 @@
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { createClient } = require('@supabase/supabase-js');
 const { Resend } = require('resend');
 const crypto = require('crypto');
 const { generateMietvertrag, generateRechnung } = require('./_pdf-templates');
 const T = require('./_email-template');
+const {
+  isMollieId,
+  getPayment: getMolliePayment,
+  isPaid: molliePaid,
+  amountEUR: mollieAmountEUR,
+  refund: mollieRefund
+} = require('./_mollie');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -47,7 +53,10 @@ module.exports = async (req, res) => {
 
       if (error || !booking) return res.status(404).json({ error: 'Buchung nicht gefunden' });
 
-      const { stripe_payment_method_id, stripe_customer_id, return_token, ...safe } = booking;
+      // access_code ebenfalls strippen: fester Code pro Anhänger — alte Rückgabe-Links
+      // (Mail-Archiv) dürfen den aktuell gültigen Code nicht ausliefern. Der Code wird
+      // ausschließlich nach dem Precheck angezeigt (api/precheck.js / get-user-bookings).
+      const { stripe_payment_method_id, stripe_customer_id, return_token, access_code, ...safe } = booking;
       return res.status(200).json(safe);
     } catch (err) {
       return res.status(500).json({ error: err.message });
@@ -56,20 +65,43 @@ module.exports = async (req, res) => {
 
   if (req.method === 'POST') {
     try {
-      const { payment_intent_id } = req.body;
+      // ── Zahlungs-ID ──────────────────────────────────────────────────────
+      // Historisch kam hier eine Stripe-PaymentIntent-ID (pi_...), heute eine
+      // Mollie-Payment-ID (tr_...). Erkannt wird das am Praefix — deshalb braucht
+      // es KEINE neue DB-Spalte: stripe_payment_intent_id / stripe_customer_id
+      // nehmen beide Formate auf. Stripe-IDs koennen aber nicht mehr eingeloest
+      // werden, weil das Stripe-Konto seit 26.07.2026 geschlossen ist.
+      const { payment_intent_id, mollie_payment_id } = req.body;
+      const paymentRef = mollie_payment_id || payment_intent_id;
+      if (!paymentRef) return res.status(400).json({ error: 'Zahlungs-ID fehlt' });
 
-      const pi = await stripe.paymentIntents.retrieve(payment_intent_id, { expand: ['latest_charge'] });
-      if (pi.status !== 'succeeded') {
-        return res.status(400).json({ error: 'Zahlung noch nicht abgeschlossen' });
+      if (!isMollieId(paymentRef)) {
+        return res.status(400).json({
+          error: 'Diese Zahlung stammt aus dem alten Zahlungssystem und kann nicht mehr verarbeitet werden. Bitte schreib uns kurz an info@simpletrailer.de.'
+        });
       }
-      // Bereits (teil-)erstattete Zahlung darf NIE mehr eine Buchung + Schloss-Code erzeugen
-      if (pi.latest_charge && (pi.latest_charge.refunded || (pi.latest_charge.amount_refunded || 0) > 0)) {
+
+      const p = await getMolliePayment(paymentRef);
+      if (p.status !== 'paid') {
+        // payment_status mitgeben: die Bestaetigungsseite muss unterscheiden koennen
+        // zwischen "noch in Arbeit" (weiter pollen) und "abgebrochen" (Abbruch zeigen).
+        return res.status(400).json({ error: 'Zahlung noch nicht abgeschlossen', payment_status: p.status });
+      }
+      // Bereits (teil-)erstattet oder zurueckgebucht -> nie eine Buchung + Schloss-Code
+      if (!molliePaid(p)) {
         return res.status(409).json({ error: 'Diese Zahlung wurde bereits erstattet.', refunded: true });
       }
+      const pay = {
+        id:              p.id,
+        amount:          mollieAmountEUR(p),
+        metadata:        p.metadata || {},
+        customerId:      p.customerId || null,
+        paymentMethodId: p.method || null   // z.B. "paypal" / "creditcard"
+      };
 
       const { data: existing } = await supabase
         .from('bookings').select('id, trailer_id, access_code, return_token, precheck_token, start_time, end_time, total_amount, pickup_lat, pickup_lng')
-        .eq('stripe_payment_intent_id', payment_intent_id).maybeSingle();
+        .eq('stripe_payment_intent_id', paymentRef).maybeSingle();
 
       if (existing) {
         const siteUrlEx = process.env.SITE_URL || 'https://www.simpletrailer.de';
@@ -87,8 +119,8 @@ module.exports = async (req, res) => {
         });
       }
 
-      const meta = pi.metadata;
-      const amount = pi.amount / 100;
+      const meta = pay.metadata;
+      const amount = pay.amount;
 
       // DOUBLE-BOOKING-SCHUTZ: Overlap-Recheck direkt vor dem Insert.
       // Der Check bei PI-Erstellung reicht nicht — zwei Kunden koennen denselben
@@ -102,19 +134,19 @@ module.exports = async (req, res) => {
         const nStart = new Date(meta.start_time).getTime();
         const nEnd   = new Date(meta.end_time).getTime();
         const hasClash = (clash || []).some(b =>
-          b.stripe_payment_intent_id !== payment_intent_id &&
+          b.stripe_payment_intent_id !== paymentRef &&
           new Date(b.start_time).getTime() < nEnd &&
           new Date(b.end_time).getTime() + BUFFER_MS > nStart);
         if (hasClash) {
           let refunded = false;
           try {
-            await stripe.refunds.create(
-              { payment_intent: payment_intent_id, reason: 'requested_by_customer' },
-              { idempotencyKey: `clash-refund-${payment_intent_id}` }
-            );
+            await mollieRefund(paymentRef, {
+              description: 'SimpleTrailer — Zeitraum bereits vergeben',
+              idempotencyKey: `clash-refund-${paymentRef}`
+            });
             refunded = true;
           } catch (refErr) {
-            console.error('Clash-Refund fehlgeschlagen:', payment_intent_id, refErr.message);
+            console.error('Clash-Refund fehlgeschlagen:', paymentRef, refErr.message);
           }
           try { await resend.emails.send({
             from: 'SimpleTrailer <buchung@simpletrailer.de>',
@@ -136,11 +168,11 @@ Lion & Samuel — SimpleTrailer`
             from: 'SimpleTrailer <buchung@simpletrailer.de>',
             to: 'info@simpletrailer.de',
             subject: '⚠ Double-Booking abgefangen — automatisch erstattet',
-            text: `PI: ${payment_intent_id}
+            text: `Zahlung: ${paymentRef} (Mollie)
 Kunde: ${meta.customer_name} (${meta.customer_email})
 Zeitraum: ${meta.start_time} – ${meta.end_time}
 Trailer: ${meta.trailer_id}
-Refund: ${refunded ? 'OK' : 'FEHLGESCHLAGEN — manuell in Stripe pruefen!'}`
+Refund: ${refunded ? 'OK' : 'FEHLGESCHLAGEN — manuell im Mollie-Dashboard pruefen!'}`
           }); } catch (e) {}
           return res.status(409).json({
             error: 'Der Zeitraum wurde in der Zwischenzeit leider vergeben. Deine Zahlung wurde vollständig erstattet.',
@@ -185,8 +217,10 @@ Refund: ${refunded ? 'OK' : 'FEHLGESCHLAGEN — manuell in Stripe pruefen!'}`
         insurance_type: insType, insurance_amount: insAmount,
         customer_address: meta.customer_address || null,
         user_id: meta.user_id || null,
-        stripe_payment_intent_id: payment_intent_id,
-        stripe_customer_id: pi.customer, stripe_payment_method_id: pi.payment_method,
+        // Spaltennamen historisch "stripe_*" — nehmen jetzt auch Mollie-IDs auf
+        // (tr_... / cst_...). Der Anbieter ist am Praefix erkennbar.
+        stripe_payment_intent_id: paymentRef,
+        stripe_customer_id: pay.customerId, stripe_payment_method_id: pay.paymentMethodId,
         status: 'confirmed', access_code, return_token, precheck_token,
         free_floating: freeFloating,
         cancellation_protection: cancellationProtection,
@@ -198,7 +232,12 @@ Refund: ${refunded ? 'OK' : 'FEHLGESCHLAGEN — manuell in Stripe pruefen!'}`
       const insertWithAgb = { ...baseInsert,
         agb_version:     meta.agb_version || null,
         agb_accepted_at: meta.agb_accepted_at || null,
-        agb_accepted_ip: meta.agb_accepted_ip || null
+        agb_accepted_ip: meta.agb_accepted_ip || null,
+        // Rabattcode MUSS mitgeschrieben werden: die Single-Use-Pruefung in
+        // api/_discounts.js sucht genau hier. Ohne diese Zeile waeren Codes wie
+        // PETER50/ABDULLAH50 (je 50 %) unbegrenzt oft einloesbar.
+        discount_code:   meta.discount_code || null,
+        discount_amount: parseFloat(meta.discount_amount || '0') || 0
       };
 
       let { data: booking, error: bookingError } = await supabase
@@ -216,7 +255,7 @@ Refund: ${refunded ? 'OK' : 'FEHLGESCHLAGEN — manuell in Stripe pruefen!'}`
         // Race: Webhook und Client haben gleichzeitig angelegt — die andere Seite hat gewonnen.
         const { data: won } = await supabase
           .from('bookings').select('id, trailer_id, access_code, return_token, precheck_token, start_time, end_time, total_amount, pickup_lat, pickup_lng')
-          .eq('stripe_payment_intent_id', payment_intent_id).maybeSingle();
+          .eq('stripe_payment_intent_id', paymentRef).maybeSingle();
         if (won) {
           const siteUrlW = process.env.SITE_URL || 'https://www.simpletrailer.de';
           return res.status(200).json({
@@ -315,7 +354,9 @@ info@simpletrailer.de · simpletrailer.de`;
         accessCode:      access_code,
         returnModeLabel: freeFloating ? 'Bremen-Stadtgebiet (Flexrückgabe)' : 'Zurück zum Heimat-Stellplatz',
         agbVersion:      meta.agb_version || '2026-06-05',
-        paymentMethod:   (pi.payment_method_types && pi.payment_method_types[0]) || 'card',
+        // Mollie liefert die konkret genutzte Methode ("paypal", "creditcard", "klarna"),
+        // Stripe nur die zugelassenen Typen — daher der Fallback auf 'card'.
+        paymentMethod:   pay.paymentMethodId || 'card',
         items
       };
 

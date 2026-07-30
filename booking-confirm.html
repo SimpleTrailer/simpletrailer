@@ -66,6 +66,8 @@
   <div id="loadingView" class="loading">
     <div class="spinner"></div>
     <p data-i18n="confirm.loading">Buchung wird bestätigt...</p>
+    <!-- Zweite Zeile: wird gefüllt, solange Mollie die Zahlung noch verbucht -->
+    <p id="loadingNote" style="font-size:.85rem;color:#888;margin-top:8px;min-height:1.2em;"></p>
   </div>
 
   <!-- Erfolg -->
@@ -208,30 +210,94 @@
     }
   }
 
-  async function confirm() {
-    const params = new URLSearchParams(window.location.search);
-    const piId   = params.get('payment_intent') || sessionStorage.getItem('st_pi_id');
-    const status = params.get('redirect_status');
+  /**
+   * Zahlungs-Rückkehr auswerten.
+   *
+   * Mollie (aktuell): Der Kunde kommt von der Bezahlseite zurück. Die Payment-ID
+   * hängt NICHT an der URL — sie liegt in session- UND localStorage (booking.html).
+   * Beides ist nötig: bei PayPal-App oder 3-D-Secure landet der Rücksprung häufig
+   * in einem NEUEN Tab, dort ist sessionStorage leer. Beim Rücksprung kann die
+   * Zahlung ausserdem noch „open"/„pending" sein, weil Mollie sie erst verbucht —
+   * deshalb wird bis zu ~40 Sekunden nachgefragt statt sofort zu meckern.
+   *
+   * Stripe (Altlast): Buchungen aus der Zeit vor dem Umstieg kommen mit
+   * ?payment_intent=pi_...&redirect_status=succeeded zurück — Pfad bleibt erhalten.
+   */
+  const PENDING_STATES = ['open', 'pending', 'authorized', 'paid'];
 
-    if (!piId || (status && status !== 'succeeded')) {
-      showError('Die Zahlung wurde abgebrochen oder ist fehlgeschlagen.');
+  function readStored(key) {
+    try { return sessionStorage.getItem(key) || localStorage.getItem(key); }
+    catch (e) { return null; }
+  }
+
+  async function confirm() {
+    const params  = new URLSearchParams(window.location.search);
+    const piId    = params.get('payment_intent');
+    const status  = params.get('redirect_status');
+    // Reihenfolge: URL (falls Mollie sie doch mitgibt) → Tab → Browser
+    const mollieId = params.get('id') || readStored('st_mollie_id');
+
+    // Stripe-Rückweg nur, wenn wirklich eine Stripe-ID an der URL hängt.
+    const useStripe  = !!piId && !mollieId;
+    const paymentRef = useStripe ? piId : (mollieId || piId || readStored('st_pi_id'));
+
+    if (!paymentRef || (useStripe && status && status !== 'succeeded')) {
+      // Wir wissen NICHT, ob bezahlt wurde — also behaupten wir es auch nicht.
+      // Der Webhook legt die Buchung ohnehin an; der Kunde findet sie im Konto.
+      showError(
+        'Wir konnten deine Zahlung auf diesem Gerät nicht eindeutig zuordnen. '
+        + 'Falls du bezahlt hast, ist deine Buchung trotzdem angelegt — du findest sie in deinem Kundenkonto, '
+        + 'und die Bestätigungsmail ist unterwegs. Bitte buche nicht einfach neu, sonst zahlst du doppelt.',
+        { account: true }
+      );
       return;
     }
 
+    const body = useStripe ? { payment_intent_id: paymentRef } : { mollie_payment_id: paymentRef };
+
     try {
-      const res  = await fetch('/api/booking', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ payment_intent_id: piId })
-      });
-      const data = await res.json();
+      // Bis zu 14 Versuche mit 3 s Abstand (~40 s), solange Mollie noch verarbeitet.
+      let res, data, netFails = 0;
+      for (let attempt = 0; attempt < 14; attempt++) {
+        // Netzfehler dürfen NICHT sofort ins Fehlerbild führen: genau jetzt kommt
+        // der Kunde aus einer Banking-App zurück, kurze Abbrüche sind der Normalfall.
+        try {
+          res  = await fetch('/api/booking', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          });
+          data = await res.json().catch(() => ({}));
+          netFails = 0;
+        } catch (netErr) {
+          if (++netFails >= 4) throw netErr;
+          await new Promise(r => setTimeout(r, 3000));
+          continue;
+        }
+
+        if (res.ok) break;
+
+        // Endgültig abgebrochen → nicht weiter warten.
+        if (data && data.payment_status && !PENDING_STATES.includes(data.payment_status)) {
+          showError('Die Zahlung wurde abgebrochen. Es wurde nichts abgebucht — du kannst den Anhänger einfach erneut buchen.', { retry: true });
+          return;
+        }
+        // Noch in Arbeit → warten und erneut fragen.
+        if (data && data.payment_status && PENDING_STATES.includes(data.payment_status)) {
+          const note = document.getElementById('loadingNote');
+          if (note) note.textContent = 'Deine Zahlung wird bestätigt — das dauert nur einen Moment.';
+          await new Promise(r => setTimeout(r, 3000));
+          continue;
+        }
+        break;   // anderer Fehler → unten behandeln
+      }
 
       if (!res.ok) {
         if (data && data.refunded) {
           showError(data.error || 'Der Zeitraum wurde leider vergeben. Deine Zahlung wurde vollständig erstattet.', { refunded: true });
           return;
         }
-        throw new Error(data.error || 'Bestätigung fehlgeschlagen');
+        throw new Error((data && data.error) || 'Bestätigung fehlgeschlagen');
       }
 
       document.getElementById('bookingNum').textContent  = '#' + data.booking_id.slice(0, 8).toUpperCase();
@@ -261,8 +327,13 @@
 
       document.getElementById('loadingView').style.display = 'none';
       document.getElementById('successView').style.display = 'block';
-      sessionStorage.removeItem('st_client_secret');
-      sessionStorage.removeItem('st_pi_id');
+      try {
+        sessionStorage.removeItem('st_client_secret');
+        sessionStorage.removeItem('st_pi_id');
+        sessionStorage.removeItem('st_mollie_id');
+        localStorage.removeItem('st_mollie_id');
+        localStorage.removeItem('st_mollie_at');
+      } catch (e) {}
 
       // Conversion-Event für Google Ads + GA4 feuern (sobald Buchung bestätigt).
       // analytics.js ist defer-geladen → ggf. noch nicht ready. Bis zu 10× retry
@@ -293,6 +364,15 @@
       if (opts && opts.refunded) {
         cta.textContent = 'Neuen Zeitraum wählen →';
         cta.href = '/booking';
+      } else if (opts && opts.retry) {
+        // Zahlung kam nie zustande → hier ist „nochmal buchen" die richtige Aktion.
+        cta.textContent = 'Erneut buchen →';
+        cta.href = '/booking';
+      } else if (opts && opts.account) {
+        // Unklarer Zustand: NICHT zum Neubuchen einladen (Doppelzahlung!),
+        // sondern ins Konto, wo die Buchung auftaucht sobald sie angelegt ist.
+        cta.textContent = 'Zu meinen Buchungen →';
+        cta.href = '/account';
       } else {
         cta.textContent = 'Seite neu laden';
         cta.href = window.location.href;

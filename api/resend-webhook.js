@@ -21,8 +21,13 @@
 const crypto = require('crypto');
 const { pushLion } = require('./_lion-push.js');
 
-// Raw body wird für die Svix-Signaturprüfung gebraucht (wie beim Stripe-Webhook).
-export const config = { api: { bodyParser: false } };
+// Raw body wird für die Svix-Signaturprüfung gebraucht.
+//
+// ACHTUNG: Hier stand `export const config = ...` — ein ES-Modul-Export in einer
+// Datei, die sonst CommonJS (require/module.exports) nutzt. Node stuft die Datei
+// dadurch als ES-Modul ein, und `require` oben schlägt fehl: der Endpoint stürzte
+// bei JEDEM Aufruf ab. In CommonJS gehört die Konfiguration ans module.exports
+// (steht am Dateiende, direkt nach dem Handler).
 
 const getRawBody = (req) => new Promise((resolve, reject) => {
   let data = '';
@@ -136,3 +141,8 @@ module.exports = async (req, res) => {
 
   return res.status(200).json({ ok: true });
 };
+
+// Vercel liest diese Konfiguration vom Handler-Export. bodyParser muss aus
+// bleiben, sonst ist der Roh-Body weg und die Svix-Signatur lässt sich nicht mehr
+// prüfen (siehe getRawBody oben).
+module.exports.config = { api: { bodyParser: false } };

@@ -158,7 +158,7 @@ async function generateMietvertrag(p) {
   if (p.customerAddress) doc.text(p.customerAddress);
   doc.text(p.customerEmail);
   if (p.customerPhone) doc.text(p.customerPhone);
-  if (p.dlVerified) doc.fillColor('#15803d').font('Helvetica-Bold').text(`✓ Führerschein verifiziert via Stripe Identity am ${fmtDateOnly(p.dlVerifiedAt)}`).fillColor(DARK).font('Helvetica');
+  if (p.dlVerified) doc.fillColor('#15803d').font('Helvetica-Bold').text(`✓ Führerschein geprüft am ${fmtDateOnly(p.dlVerifiedAt)}`).fillColor(DARK).font('Helvetica');
 
   drawSection(doc, 'Mietgegenstand');
   drawKVRow(doc, 'Anhänger',       p.trailerName, { bold: true });
@@ -168,7 +168,10 @@ async function generateMietvertrag(p) {
   drawKVRow(doc, 'Mietende',       fmtDate(p.endTime) + ' Uhr', { bold: true });
   drawKVRow(doc, 'Schutzpaket',    p.insuranceLabel);
   drawKVRow(doc, 'Kostenlose Stornierung', p.cancellationLabel);
-  drawKVRow(doc, 'Schloss-Code',   p.accessCode + ' (wird nach Pre-Check freigeschaltet)', { bold: true });
+  // Code bewusst NICHT im PDF: fester Code pro Anhänger — jeder Ex-Kunde könnte ihn
+  // sonst dauerhaft nachschlagen (PDF hängt an der Mail + Konto-Download). Der Code
+  // wird erst nach dem Vorab-Check (Foto) im Konto / auf der Precheck-Seite angezeigt.
+  drawKVRow(doc, 'Schloss-Code',   'Wird nach dem Vorab-Check (Foto) freigeschaltet', { bold: true });
   drawKVRow(doc, 'Rückgabe-Modus', p.returnModeLabel);
 
   drawSection(doc, 'Pflichten des Mieters');
@@ -227,7 +230,7 @@ async function generateMietvertrag(p) {
   doc.text(`Der Mieter hat die AGB (Stand ${p.agbVersion}) und die Datenschutzerklärung von SimpleTrailer elektronisch akzeptiert und dem sofortigen Vertragsbeginn ausdrücklich zugestimmt. Es besteht kein Widerrufsrecht gem. § 312g Abs. 2 Nr. 9 BGB (Beförderungsmittel-Vermietung für bestimmten Zeitraum). Die jeweils aktuellen AGB sind abrufbar unter ${COMPANY.url}/agb. Bei Widerspruch zwischen diesem Vertragstext und den AGB gehen die Regelungen dieses Vertrags vor; ergänzend gelten die AGB.`, 50, doc.y, { width: 495, align: 'justify' });
 
   doc.moveDown(1);
-  doc.fontSize(8).fillColor(GREY).text(`Dieser Mietvertrag wurde elektronisch geschlossen und ersetzt eine eigenhändige Unterschrift. Die Identitätsfeststellung erfolgte über Stripe Identity (biometrischer Gesichtsabgleich mit dem Lichtbild auf dem Führerschein).`, { width: 495, align: 'center' });
+  doc.fontSize(8).fillColor(GREY).text(`Dieser Mietvertrag wurde elektronisch geschlossen und ersetzt eine eigenhändige Unterschrift. Die Identitätsfeststellung erfolgte durch Prüfung des Führerscheins (Vorder- und Rückseite) sowie eines Selfies, mit automatisierter Vorprüfung und menschlicher Nachkontrolle.`, { width: 495, align: 'center' });
 
   drawFooter(doc);
   return pdfToBuffer(doc);
@@ -321,7 +324,15 @@ async function generateRechnung(p) {
   doc.text(fmtEur(totalGross), sumLeft + 70, doc.y - 13, { width: 125, align: 'right' });
 
   doc.moveDown(2);
-  doc.fontSize(9).fillColor('#15803d').font('Helvetica-Bold').text(`✓ Bezahlt am ${fmtDateOnly(p.contractDate)} via Stripe (${p.paymentMethod || 'Kreditkarte'})`, 50, doc.y);
+  // Zahlart lesbar machen: Mollie liefert Kuerzel wie "creditcard"/"paypal".
+  const PAY_LABEL = {
+    creditcard: 'Kreditkarte', paypal: 'PayPal', applepay: 'Apple Pay',
+    googlepay: 'Google Pay', ideal: 'iDEAL', bancontact: 'Bancontact',
+    directdebit: 'SEPA-Lastschrift', banktransfer: 'Überweisung',
+    klarna: 'Klarna', paybybank: 'Sofortüberweisung', card: 'Kreditkarte'
+  };
+  const payLabel = PAY_LABEL[p.paymentMethod] || p.paymentMethod || 'Kreditkarte';
+  doc.fontSize(9).fillColor('#15803d').font('Helvetica-Bold').text(`✓ Bezahlt am ${fmtDateOnly(p.contractDate)} (${payLabel})`, 50, doc.y);
 
   doc.moveDown(1);
   doc.fontSize(8).fillColor(GREY).font('Helvetica');

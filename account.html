@@ -14,7 +14,7 @@
   <link rel="apple-touch-icon" href="/logo-icon.png?v=10" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mein Konto – SimpleTrailer</title>
-  <script src="https://js.stripe.com/v3/"></script>
+  <script src="/license-check.js?v=1"></script>
   <script src="/native-bridge.js?v=9" defer></script>
   <script src="/analytics.js?v=13" defer></script>
   <script src="/email-typo-check.js?v=1" defer></script>
@@ -540,132 +540,76 @@
     }
   }
 
-  /* ── Führerschein-Verifikation ──────────────────────────────────── */
-  const STRIPE_PK_ACC = 'pk_live_51TOehmPgNvYcKGtMbHXSssYCRGba5FXzM6BMwApWD25Fc3KSKruD95WbTQplHTtQldVfrWQduFXJvEGHziITWOqN00mwmamOpK';
-  let stripeAcc = null;
-  let dlPoll = null;
+  /* ── Führerschein-Prüfung (KI, siehe license-check.js) ──────────── */
+  let dlWidget = null;
 
-  function getStripeAcc() { if (!stripeAcc) stripeAcc = Stripe(STRIPE_PK_ACC); return stripeAcc; }
+  const DL_BADGE = {
+    verified: ['✓ Verifiziert',    'background:rgba(34,197,94,.12);color:#15803D;border:1px solid rgba(34,197,94,.3);'],
+    review:   ['⏳ In Prüfung',     'background:rgba(234,179,8,.12);color:#A16207;border:1px solid rgba(234,179,8,.3);'],
+    rejected: ['✗ Nicht freigegeben','background:rgba(248,113,113,.12);color:#B91C1C;border:1px solid rgba(248,113,113,.3);'],
+    unverified: ['○ Nicht verifiziert','background:rgba(17,18,19,.05);color:#6B6862;border:1px solid var(--border);']
+  };
+
+  function setDlBadge(status) {
+    const badge = document.getElementById('dlBadge');
+    if (!badge) return;
+    const [label, style] = DL_BADGE[status] || DL_BADGE.unverified;
+    badge.textContent = label;
+    badge.style.display = '';
+    badge.style.cssText = `font-size:.7rem;font-weight:700;padding:4px 10px;border-radius:999px;letter-spacing:.05em;text-transform:uppercase;${style}`;
+  }
 
   async function loadLicenseStatus() {
-    const body  = document.getElementById('dlBody');
-    const badge = document.getElementById('dlBadge');
-    body.innerHTML = '<div style="color:#888;font-size:.85rem;">Wird geladen…</div>';
-    try {
-      const res = await fetch('/api/identity', { headers: { Authorization: `Bearer ${authToken}` } });
-      if (!res.ok) throw new Error();
-      const info = await res.json();
-      renderLicense(info);
-    } catch(e) {
-      body.innerHTML = '<div style="color:#f87171;font-size:.85rem;">Status konnte nicht geladen werden.</div>';
-      badge.style.display = 'none';
-    }
-  }
-
-  function renderLicense(info) {
-    const body  = document.getElementById('dlBody');
-    const badge = document.getElementById('dlBadge');
-    const status = info.dl_status || 'unverified';
-
-    if (status === 'verified') {
-      badge.textContent = '✓ Verifiziert';
-      badge.style.cssText = 'font-size:.7rem;font-weight:700;padding:4px 10px;border-radius:999px;letter-spacing:.05em;text-transform:uppercase;background:rgba(34,197,94,.12);color:#15803D;border:1px solid rgba(34,197,94,.3);';
-      const expires = info.dl_expires_at ? new Date(info.dl_expires_at).toLocaleDateString('de-DE') : null;
-      const dob     = info.dl_dob        ? new Date(info.dl_dob).toLocaleDateString('de-DE')        : null;
-      const verified = info.dl_verified_at ? new Date(info.dl_verified_at).toLocaleDateString('de-DE') : null;
-      const klass   = (info.dl_classes || []).join(', ') || 'B';
-      const fname   = [info.dl_first_name, info.dl_last_name].filter(Boolean).join(' ') || null;
-      const expiryDate = info.dl_expires_at ? new Date(info.dl_expires_at) : null;
-      const expiringSoon = expiryDate && (expiryDate.getTime() - Date.now()) / (1000*60*60*24) < 90;
-      const expiredAlready = expiryDate && expiryDate.getTime() < Date.now();
-      const expiryNote = expiredAlready
-        ? '<div style="color:#f87171;font-size:.78rem;margin-top:10px;">⚠ Führerschein abgelaufen – bitte neu verifizieren um buchen zu können.</div>'
-        : (expiringSoon ? '<div style="color:#facc15;font-size:.78rem;margin-top:10px;">⚠ Läuft bald ab – ggf. neu verifizieren.</div>' : '');
-      const row = (label, val) => val
-        ? `<div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid #1f1f1f;"><span style="color:var(--gray);">${label}</span><span style="font-weight:600;text-align:right;">${val}</span></div>`
-        : '';
-      body.innerHTML = `
-        <div style="font-size:.85rem;">
-          ${row('Name lt. Führerschein', fname)}
-          ${row('Geburtsdatum', dob)}
-          ${row('Klasse', klass)}
-          ${row('Gültig bis', expires)}
-          ${row('Ausstellungsland', info.dl_issuing_country)}
-          ${row('Verifiziert am', verified)}
-          ${expiryNote}
-        </div>
-      `;
-      return;
-    }
-
-    if (status === 'pending') {
-      badge.textContent = '⏳ In Prüfung';
-      badge.style.cssText = 'font-size:.7rem;font-weight:700;padding:4px 10px;border-radius:999px;letter-spacing:.05em;text-transform:uppercase;background:rgba(234,179,8,.12);color:#A16207;border:1px solid rgba(234,179,8,.3);';
-      body.innerHTML = `
-        <div style="display:flex;align-items:center;gap:12px;color:#aaa;font-size:.85rem;">
-          <div style="width:24px;height:24px;border:3px solid #2a2a2a;border-top-color:var(--orange);border-radius:50%;animation:spin 1s linear infinite;flex-shrink:0;"></div>
-          Stripe prüft dein Dokument. Das dauert meist 5–30 Sekunden.
-        </div>
-      `;
-      pollLicense();
-      return;
-    }
-
-    badge.textContent = status === 'failed' ? '✗ Fehlgeschlagen' : '○ Nicht verifiziert';
-    badge.style.cssText = `font-size:.7rem;font-weight:700;padding:4px 10px;border-radius:999px;letter-spacing:.05em;text-transform:uppercase;${
-      status === 'failed'
-        ? 'background:rgba(248,113,113,.12);color:#B91C1C;border:1px solid rgba(248,113,113,.3);'
-        : 'background:rgba(17,18,19,.05);color:#6B6862;border:1px solid var(--border);'
-    }`;
-    const failNote = status === 'failed' && info.dl_failure_reason
-      ? `<div style="color:#f87171;font-size:.8rem;margin-bottom:12px;">Letzte Verifizierung: ${info.dl_failure_reason}</div>`
-      : '';
-    body.innerHTML = `
-      <div style="color:#aaa;font-size:.85rem;line-height:1.55;margin-bottom:14px;">
-        Lade deinen Führerschein einmalig hoch – sicher über <strong style="color:#fff;">Stripe Identity</strong>. Vorder-, Rückseite und ein Selfie. Danach kannst du jederzeit ohne erneute Verifikation buchen.
-      </div>
-      ${failNote}
-      <button class="btn btn-orange" id="dlAccBtn" onclick="startAccountIdentity()">Jetzt verifizieren →</button>
-    `;
-  }
-
-  async function startAccountIdentity() {
-    const btn = document.getElementById('dlAccBtn');
-    btn.disabled = true;
-    btn.textContent = 'Wird gestartet …';
-    try {
-      const res = await fetch('/api/identity', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${authToken}`, 'Content-Type': 'application/json' }
+    const body = document.getElementById('dlBody');
+    if (!body) return;
+    if (!dlWidget) {
+      // Container leeren und Widget einhängen — dieselbe Oberfläche wie im Buchungs-Flow.
+      body.innerHTML = '<div id="dlWidgetHost"></div><div id="dlFacts" style="margin-top:16px;"></div>';
+      dlWidget = STLicense.mount('#dlWidgetHost', {
+        getToken: () => authToken,
+        onStatus: setDlBadge,
+        // Nach der Freigabe die vollständigen Daten NACHLADEN. Die Antwort auf den
+        // Upload enthält nur Klasse und Ablaufdatum — ohne das Nachladen stünde
+        // die Übersicht direkt nach erfolgreicher Prüfung leer da.
+        onVerified: () => {
+          setTimeout(async () => {
+            try { renderLicenseFacts(await dlWidget.refresh()); } catch (e) {}
+          }, 300);
+        }
       });
-      const data = await res.json();
-      if (!res.ok || !data.client_secret) throw new Error(data.error || 'Verifikation konnte nicht gestartet werden');
-
-      const result = await getStripeAcc().verifyIdentity(data.client_secret);
-      btn.disabled = false;
-      btn.textContent = 'Jetzt verifizieren →';
-      if (result.error) return; // Nutzer abgebrochen
-      loadLicenseStatus();
-    } catch(e) {
-      btn.disabled = false;
-      btn.textContent = 'Jetzt verifizieren →';
-      alert(e.message || 'Fehler beim Start der Verifikation.');
     }
+    const info = dlWidget ? await dlWidget.refresh() : null;
+    renderLicenseFacts(info);
   }
 
-  function pollLicense() {
-    if (dlPoll) clearInterval(dlPoll);
-    let elapsed = 0;
-    dlPoll = setInterval(async () => {
-      elapsed += 3;
-      const res = await fetch('/api/identity', { headers: { Authorization: `Bearer ${authToken}` } });
-      if (!res.ok) return;
-      const info = await res.json();
-      if (info.dl_status !== 'pending' || elapsed >= 90) {
-        clearInterval(dlPoll); dlPoll = null;
-        renderLicense(info);
-      }
-    }, 3000);
+  /** Bei bestätigtem Führerschein die ausgelesenen Daten als Liste zeigen. */
+  function renderLicenseFacts(info) {
+    const host = document.getElementById('dlFacts');
+    if (!host) return;
+    if (!info || info.dl_status !== 'verified') { host.innerHTML = ''; return; }
+
+    const d       = v => v ? new Date(v).toLocaleDateString('de-DE') : null;
+    const fname   = [info.dl_first_name, info.dl_last_name].filter(Boolean).join(' ') || null;
+    const expiry  = info.dl_expires_at ? new Date(info.dl_expires_at) : null;
+    const daysLeft = expiry ? (expiry.getTime() - Date.now()) / 86400000 : null;
+    const note = daysLeft == null ? ''
+      : daysLeft < 0
+        ? '<div style="color:#B91C1C;font-size:.78rem;margin-top:10px;">⚠ Führerschein abgelaufen – bitte neu prüfen lassen, um buchen zu können.</div>'
+        : daysLeft < 90
+          ? '<div style="color:#A16207;font-size:.78rem;margin-top:10px;">⚠ Läuft in weniger als 3 Monaten ab.</div>'
+          : '';
+    const row = (label, val) => val
+      ? `<div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--border,#1f1f1f);"><span style="color:var(--gray);">${label}</span><span style="font-weight:600;text-align:right;">${val}</span></div>`
+      : '';
+    host.innerHTML = `<div style="font-size:.85rem;">
+      ${row('Name lt. Führerschein', fname)}
+      ${row('Geburtsdatum', d(info.dl_dob))}
+      ${row('Klasse', (info.dl_classes || []).join(', ') || 'B')}
+      ${row('Gültig bis', d(info.dl_expires_at))}
+      ${row('Ausstellungsland', info.dl_issuing_country)}
+      ${row('Geprüft am', d(info.dl_verified_at))}
+      ${note}
+    </div>`;
   }
 
   const INS_LABEL = { none: 'Kein Schutz', basis: 'Basis Schutz (500 € SB)', premium: 'Premium Schutz (50 € SB)' };

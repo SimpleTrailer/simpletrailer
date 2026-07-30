@@ -93,30 +93,41 @@ module.exports = async (req, res) => {
         byEmail[b.customer_email].count++;
         if (['confirmed','active','returned'].includes(b.status)) byEmail[b.customer_email].total += b.total_amount || 0;
       }
+      // Führerschein-Daten kommen aus app_metadata (api/_dl.js), Profildaten aus
+      // user_metadata. `dl_legacy` zeigt an, dass bei diesem Nutzer noch alte
+      // dl_*-Felder im vom Kunden beschreibbaren user_metadata liegen.
+      const { readLicense: rlUser, hasLegacyMetadata } = require('./_dl');
       const users = usersData.users
         .filter(u => !ADMIN_EMAILS.includes((u.email || '').toLowerCase()))  // Team-/Admin-Konten nicht als Kunden/Leads zählen
-        .map(u => ({
+        .map(u => {
+        const dl = rlUser(u);
+        return {
         id: u.id, email: u.email, created_at: u.created_at, last_sign_in_at: u.last_sign_in_at,
         first_name: u.user_metadata?.first_name || '', last_name: u.user_metadata?.last_name || '',
         phone: u.user_metadata?.phone || '', confirmed: !!u.email_confirmed_at,
         address: u.user_metadata?.address || '', birthdate: u.user_metadata?.birthdate || null,
-        dl_address: u.user_metadata?.dl_address || null, dl_manual: !!u.user_metadata?.dl_manual,
-        dl_manual_by: u.user_metadata?.dl_manual_by || null, dl_prev_failure_reason: u.user_metadata?.dl_prev_failure_reason || null,
+        dl_address: dl.dl_address || null, dl_manual: !!dl.dl_manual,
+        dl_manual_by: dl.dl_manual_by || null, dl_prev_failure_reason: dl.dl_prev_failure_reason || null,
         bookings_count: byEmail[u.email]?.count || 0, bookings_total: byEmail[u.email]?.total || 0,
-        dl_status:      u.user_metadata?.dl_status      || 'unverified',
-        dl_classes:     u.user_metadata?.dl_classes     || [],
-        dl_expires_at:  u.user_metadata?.dl_expires_at  || null,
-        dl_verified_at: u.user_metadata?.dl_verified_at || null,
-        dl_first_name:  u.user_metadata?.dl_first_name  || '',
-        dl_last_name:   u.user_metadata?.dl_last_name   || '',
-        dl_dob:         u.user_metadata?.dl_dob         || null,
-        dl_doc_number:  u.user_metadata?.dl_doc_number  || null,
-        dl_doc_type:    u.user_metadata?.dl_doc_type    || null,
-        dl_issuing_country: u.user_metadata?.dl_issuing_country || null,
-        dl_session_id:  u.user_metadata?.dl_session_id  || null,
-        dl_stripe_session_id: u.user_metadata?.dl_stripe_session_id || null,
-        dl_failure_reason: u.user_metadata?.dl_failure_reason || null,
-      })).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        dl_status:      dl.dl_status      || 'unverified',
+        dl_classes:     dl.dl_classes     || [],
+        dl_expires_at:  dl.dl_expires_at  || null,
+        dl_verified_at: dl.dl_verified_at || null,
+        dl_first_name:  dl.dl_first_name  || '',
+        dl_last_name:   dl.dl_last_name   || '',
+        dl_dob:         dl.dl_dob         || null,
+        dl_doc_number:  dl.dl_doc_number  || null,
+        dl_doc_type:    dl.dl_doc_type    || null,
+        dl_issuing_country: dl.dl_issuing_country || null,
+        dl_failure_reason: dl.dl_failure_reason || null,
+        // KI-Prüfung (Ersatz für Stripe Identity)
+        dl_check_method:      dl.dl_check_method      || null,
+        dl_review_reason:     dl.dl_review_reason     || null,
+        dl_review_started_at: dl.dl_review_started_at || null,
+        dl_rejected_reason:   dl.dl_rejected_reason   || null,
+        dl_legacy:            hasLegacyMetadata(u),
+        };
+      }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
       // "Benachrichtigen wenn da"-Anmeldungen — warme Leads für noch nicht verfügbare Anhänger
       let notify = [];
@@ -163,6 +174,9 @@ module.exports = async (req, res) => {
       if (delBookErr) return res.status(500).json({ error: 'Buchungs-Cleanup fehlgeschlagen, Konto NICHT gelöscht: ' + delBookErr.message });
       try { await supabase.from('push_tokens').delete().eq('user_id', userId); } catch (e) {}
       try { await supabase.from('notify_when_available').delete().eq('email', targetEmail); } catch (e) {}
+      // Führerschein-Bilder MÜSSEN vor dem Konto weg: danach ist die user_id
+      // nicht mehr auffindbar und die biometrischen Daten lägen für immer im Bucket.
+      try { await require('./_license-store').deleteUserImages(userId); } catch (e) { console.warn('Führerschein-Bilder:', e.message); }
 
       const { error: delErr } = await supabase.auth.admin.deleteUser(userId);
       if (delErr) return res.status(500).json({ error: 'Konto-Löschen fehlgeschlagen: ' + delErr.message });
@@ -177,16 +191,112 @@ module.exports = async (req, res) => {
       if (!userId || !/^[0-9a-f-]{36}$/i.test(String(userId))) return res.status(400).json({ error: 'Ungültige user_id.' });
       const { data: tgt, error: getErr } = await supabase.auth.admin.getUserById(userId);
       if (getErr || !tgt?.user) return res.status(404).json({ error: 'Benutzer nicht gefunden.' });
-      const meta = { ...(tgt.user.user_metadata || {}) };
-      meta.dl_prev_failure_reason = meta.dl_failure_reason || meta.dl_prev_failure_reason || null;  // Original-Stripe-Grund aufbewahren (Audit)
+      // Schreiben nach app_metadata (siehe api/_dl.js) — user_metadata waere vom
+      // Kunden selbst ueberschreibbar und als Berechtigung wertlos.
+      const { readLicense: rl, writeLicense: wl } = require('./_dl');
+      const cur = rl(tgt.user);
+      const meta = { ...cur };
+      meta.dl_prev_failure_reason = cur.dl_failure_reason || cur.dl_prev_failure_reason || null;  // Grund der Vorprüfung aufbewahren (Audit)
       meta.dl_status = 'verified';
       meta.dl_verified_at = new Date().toISOString();
       meta.dl_manual = true;
       meta.dl_manual_by = (user.email || '').toLowerCase();  // welcher Admin hat freigeschaltet
-      meta.dl_classes = (Array.isArray(meta.dl_classes) && meta.dl_classes.includes('B')) ? meta.dl_classes : [...new Set([...(meta.dl_classes || []), 'B'])];
+      meta.dl_classes = (Array.isArray(cur.dl_classes) && cur.dl_classes.includes('B')) ? cur.dl_classes : [...new Set([...(cur.dl_classes || []), 'B'])];
       meta.dl_failure_reason = null;
-      const { error: upErr } = await supabase.auth.admin.updateUserById(userId, { user_metadata: meta });
-      if (upErr) return res.status(500).json({ error: 'Speichern fehlgeschlagen: ' + upErr.message });
+      meta.dl_review_reason = null;
+      meta.dl_rejected_reason = null;
+      try { await wl(supabase, tgt.user, meta); }
+      catch (e) { return res.status(500).json({ error: 'Speichern fehlgeschlagen: ' + e.message }); }
+
+      // Biometrische Bilder sind jetzt zwecklos — löschen (Datenminimierung).
+      try { await require('./_license-store').deleteUserImages(userId); } catch (e) { console.warn('Bilder löschen:', e.message); }
+
+      // Kunde informieren, dass er buchen kann.
+      try {
+        const { Resend } = require('resend');
+        const T = require('./_email-template');
+        const resend = new Resend(process.env.RESEND_API_KEY);
+        await resend.emails.send({
+          from: 'SimpleTrailer <buchung@simpletrailer.de>',
+          reply_to: 'info@simpletrailer.de',
+          to: tgt.user.email,
+          subject: 'Dein Führerschein ist freigegeben – SimpleTrailer',
+          html: T.layout({
+            heading: 'Führerschein bestätigt',
+            preheader: 'Du kannst jetzt buchen.',
+            bodyHtml:
+              T.p(`Hallo${meta.dl_first_name ? ' ' + T.esc(meta.dl_first_name) : ''},`) +
+              T.p('wir haben deinen Führerschein geprüft und freigegeben. Du kannst ab sofort jederzeit einen Anhänger buchen — eine erneute Prüfung ist nicht nötig.') +
+              T.cta(T.btn('Jetzt Anhänger buchen', 'https://www.simpletrailer.de/booking')),
+            replyNote: 'Fragen? Antworte einfach auf diese Mail.'
+          })
+        });
+      } catch (e) { console.warn('Freigabe-Mail:', e.message); }
+
+      return res.status(200).json({ ok: true });
+    }
+
+    // Bilder zur Handprüfung holen — kurzlebige signierte Links (15 Min).
+    // Die Bilder liegen in einem PRIVATEN Bucket; ohne diesen Endpoint kommt niemand ran.
+    if (section === 'license-images') {
+      const userId = String(req.query.user_id || '');
+      if (!/^[0-9a-f-]{36}$/i.test(userId)) return res.status(400).json({ error: 'Ungültige user_id.' });
+      try {
+        const images = await require('./_license-store').signedUrls(userId);
+        return res.status(200).json({ images });
+      } catch (e) {
+        console.error('[admin license-images]', e.message);
+        return res.status(200).json({ images: [], error: 'Bilder nicht abrufbar' });
+      }
+    }
+
+    // Führerschein ABLEHNEN — bewusst nur von Hand, nie automatisch (Art. 22 DSGVO).
+    if (section === 'reject-license' && req.method === 'POST') {
+      const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+      const userId = body.user_id;
+      const reason = String(body.reason || '').slice(0, 500).trim();
+      if (!userId || !/^[0-9a-f-]{36}$/i.test(String(userId))) return res.status(400).json({ error: 'Ungültige user_id.' });
+      if (!reason) return res.status(400).json({ error: 'Bitte einen Grund angeben — der Kunde bekommt ihn zu lesen.' });
+
+      const { data: tgt2, error: getErr2 } = await supabase.auth.admin.getUserById(userId);
+      if (getErr2 || !tgt2?.user) return res.status(404).json({ error: 'Benutzer nicht gefunden.' });
+
+      const { writeLicense: wl2 } = require('./_dl');
+      try {
+        await wl2(supabase, tgt2.user, {
+          dl_status: 'rejected',
+          dl_rejected_reason: reason,
+          dl_rejected_at: new Date().toISOString(),
+          dl_rejected_by: (user.email || '').toLowerCase(),
+          dl_review_reason: null
+        });
+      } catch (e) { return res.status(500).json({ error: 'Speichern fehlgeschlagen: ' + e.message }); }
+
+      try { await require('./_license-store').deleteUserImages(userId); } catch (e) { console.warn('Bilder löschen:', e.message); }
+
+      try {
+        const { Resend } = require('resend');
+        const T = require('./_email-template');
+        const resend = new Resend(process.env.RESEND_API_KEY);
+        await resend.emails.send({
+          from: 'SimpleTrailer <buchung@simpletrailer.de>',
+          reply_to: 'info@simpletrailer.de',
+          to: tgt2.user.email,
+          subject: 'Zu deiner Führerschein-Prüfung – SimpleTrailer',
+          html: T.layout({
+            heading: 'Führerschein-Prüfung',
+            preheader: 'Wir konnten deinen Führerschein noch nicht freigeben.',
+            bodyHtml:
+              T.p('Hallo,') +
+              T.p('wir konnten deinen Führerschein leider noch nicht freigeben. Der Grund:') +
+              T.callout(T.esc(reason), 'orange') +
+              T.p('Du kannst es gern erneut versuchen oder uns einfach antworten — wir helfen dir persönlich weiter.') +
+              T.cta(T.btn('Erneut versuchen', 'https://www.simpletrailer.de/account')),
+            replyNote: 'Antworte einfach auf diese Mail, wenn du Hilfe brauchst.'
+          })
+        });
+      } catch (e) { console.warn('Ablehnungs-Mail:', e.message); }
+
       return res.status(200).json({ ok: true });
     }
 
@@ -199,7 +309,7 @@ module.exports = async (req, res) => {
         const { data: stalePending } = await supabase.from('bookings')
           .select('id, customer_name, total_amount').eq('status', 'pending').lt('created_at', oneHourAgo);
         if ((stalePending || []).length > 0) {
-          items.push({ severity: 'red', icon: '🔴', title: `${stalePending.length} Buchung(en) seit >1h pending`, detail: 'Vermutlich Stripe-Fehler — manuell nachfassen.' });
+          items.push({ severity: 'red', icon: '🔴', title: `${stalePending.length} Buchung(en) seit >1h pending`, detail: 'Zahlung wurde nicht abgeschlossen — manuell nachfassen.' });
         }
       } catch (e) {}
 
@@ -222,7 +332,7 @@ module.exports = async (req, res) => {
         const claims = (feeBookings || []).filter(b => !b.late_fee_payment_intent_id || String(b.late_fee_payment_intent_id).startsWith('FAILED'));
         if (claims.length > 0) {
           const sum = claims.reduce((s, c) => s + (c.late_fee_amount || 0), 0);
-          items.push({ severity: 'red', icon: '💸', title: `${claims.length} offene Forderung(en): ${sum.toFixed(2)} € nicht eingezogen`, detail: 'Verspätung/Schaden — Auto-Abbuchung fehlgeschlagen. Manuell per Stripe-Payment-Link einziehen.' });
+          items.push({ severity: 'red', icon: '💸', title: `${claims.length} offene Forderung(en): ${sum.toFixed(2)} € nicht eingezogen`, detail: 'Verspätung/Schaden — Auto-Abbuchung fehlgeschlagen. Manuell per Mollie-Zahlungslink einziehen.' });
         }
       } catch (e) {}
 
@@ -654,20 +764,18 @@ module.exports = async (req, res) => {
       }
 
       if (action === 'approve') {
-        // Stripe-Refund
-        const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+        // Volle Erstattung über den Zahlungsanbieter (Mollie; Alt-Buchungen: Stripe)
+        const { refundPayment } = require('./_charge');
         let refundId = null;
         if (booking.stripe_payment_intent_id) {
-          try {
-            const refund = await stripe.refunds.create({
-              payment_intent: booking.stripe_payment_intent_id,
-              reason: 'requested_by_customer',
-              metadata: { booking_id: booking.id, reason: 'not_drivable_approved' }
-            }, { idempotencyKey: `refund-${booking.id}` });
-            refundId = refund.id;
-          } catch (e) {
-            return res.status(500).json({ error: 'Stripe-Refund fehlgeschlagen: ' + e.message });
+          const back = await refundPayment(booking.stripe_payment_intent_id, {
+            description: `SimpleTrailer Erstattung #${booking.id.slice(0, 8).toUpperCase()} (nicht fahrbereit)`,
+            idempotencyKey: `refund-${booking.id}`
+          });
+          if (!back.ok) {
+            return res.status(500).json({ error: 'Erstattung fehlgeschlagen: ' + back.error });
           }
+          refundId = back.id;
         }
         await supabase.from('bookings').update({
           refund_status: 'approved',
@@ -706,7 +814,7 @@ Wir bitten den Ausfall zu entschuldigen.
     }
 
     // ─── SET-BOOKING-STATUS: Admin schaltet Status von Hand (Übergabe/Rückgabe bestätigen) ───
-    // Nur Status/actual_return_time — KEIN Stripe-Eingriff. Enge Whitelist erlaubter Übergänge.
+    // Nur Status/actual_return_time — KEIN Zahlungs-Eingriff. Enge Whitelist erlaubter Übergänge.
     if (section === 'set-booking-status' && req.method === 'POST') {
       const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
       const { booking_id, new_status } = body;
@@ -792,7 +900,7 @@ Wir bitten den Ausfall zu entschuldigen.
     }
 
     // ─── MARK-NO-SHOW: Kunde nicht erschienen → schließen OHNE Erstattung, Slot frei ───
-    // Setzt cancelled + refund 0, löst KEINEN Stripe-Refund aus (bewusst anders als cancel-booking).
+    // Setzt cancelled + refund 0, löst KEINE Erstattung aus (bewusst anders als cancel-booking).
     if (section === 'mark-no-show' && req.method === 'POST') {
       const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
       const { booking_id } = body;
@@ -840,36 +948,35 @@ Wir bitten den Ausfall zu entschuldigen.
       // Buchung ohne hinterlegte Zahlung: nicht still als "erstattet" markieren — Lock lösen + abbrechen.
       if (totalPaid > 0 && !booking.stripe_payment_intent_id) {
         await supabase.from('bookings').update({ cancelled_at: null }).eq('id', booking.id);
-        return res.status(400).json({ error: 'Buchung ohne hinterlegte Zahlung — bitte manuell im Stripe-Dashboard erstatten.' });
+        return res.status(400).json({ error: 'Buchung ohne hinterlegte Zahlung — bitte manuell per Überweisung erstatten.' });
       }
 
       // Voller Refund — robust: nur den NOCH NICHT erstatteten Rest zurückzahlen
       // (falls der Mieter z.B. schon einen Teil-Refund erhalten hat → Aufstockung auf 100 %).
-      const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+      const { refundPayment, refundedSoFar } = require('./_charge');
       let refundId = booking.cancellation_refund_id || null;
       let refundedAmount = 0;
       if (booking.stripe_payment_intent_id) {
-        try {
-          const pi = await stripe.paymentIntents.retrieve(booking.stripe_payment_intent_id, { expand: ['latest_charge'] });
-          const ch = pi.latest_charge;
-          const chargedCents = ch ? (ch.amount || 0) : 0;
-          const alreadyCents = ch ? (ch.amount_refunded || 0) : 0;
-          const remainingCents = Math.max(0, chargedCents - alreadyCents);
-          if (remainingCents > 0) {
-            const refund = await stripe.refunds.create({
-              payment_intent: booking.stripe_payment_intent_id,
-              amount: remainingCents,
-              reason: 'requested_by_customer',
-              metadata: { booking_id: booking.id, reason: 'admin_cancellation' }
-            }, { idempotencyKey: `cancel-${booking.id}-${remainingCents}` });
-            refundId = refund.id;
-          }
-          refundedAmount = (alreadyCents + remainingCents) / 100;
-        } catch (e) {
+        const state = await refundedSoFar(booking.stripe_payment_intent_id);
+        if (!state) {
           await supabase.from('bookings').update({ cancelled_at: null }).eq('id', booking.id);
-          console.error('Admin-Cancel Stripe-Refund-Fehler', { code: e.code, type: e.type, booking_id: booking.id });
-          return res.status(500).json({ error: 'Stripe-Refund fehlgeschlagen — bitte Stripe-Dashboard prüfen.' });
+          return res.status(500).json({ error: 'Zahlung konnte nicht abgerufen werden — bitte im Mollie-Dashboard prüfen.' });
         }
+        const remaining = Math.round(Math.max(0, state.paid - state.refunded) * 100) / 100;
+        if (remaining > 0) {
+          const back = await refundPayment(booking.stripe_payment_intent_id, {
+            amount: remaining,
+            description: `SimpleTrailer Storno #${booking.id.slice(0, 8).toUpperCase()} (Admin)`,
+            idempotencyKey: `cancel-${booking.id}-${remaining.toFixed(2)}`
+          });
+          if (!back.ok) {
+            await supabase.from('bookings').update({ cancelled_at: null }).eq('id', booking.id);
+            console.error('Admin-Cancel Refund-Fehler', { provider: back.provider, booking_id: booking.id, reason: back.error });
+            return res.status(500).json({ error: 'Erstattung fehlgeschlagen — bitte Mollie-Dashboard prüfen.' });
+          }
+          refundId = back.id;
+        }
+        refundedAmount = Math.round((state.refunded + remaining) * 100) / 100;
       }
 
       const { error: finalErr } = await supabase.from('bookings').update({
@@ -1219,7 +1326,7 @@ SimpleTrailer GbR · Waltjenstr. 96, 28237 Bremen · info@simpletrailer.de`;
 
       // Anomalien erkennen
       const anomalies = [];
-      // 1) Buchung mit Stripe-Fehler (pending > 1h)
+      // 1) Buchung mit Zahlungsfehler (pending > 1h)
       const stalePending = (bookings || []).filter(b =>
         b.status === 'pending' && (Date.now() - new Date(b.created_at).getTime()) > 3600000
       );
@@ -1227,7 +1334,7 @@ SimpleTrailer GbR · Waltjenstr. 96, 28237 Bremen · info@simpletrailer.de`;
         anomalies.push({
           severity: 'red',
           title: `${stalePending.length} Buchung(en) seit >1h "pending"`,
-          detail: 'Vermutlich Stripe-Zahlungsfehler. Bitte Mieter manuell kontaktieren.'
+          detail: 'Zahlung wurde nicht abgeschlossen. Bitte Mieter manuell kontaktieren.'
         });
       }
       // 2) Anhaenger nicht zurueckgebracht (active + end_time < now - 1h)
@@ -1320,34 +1427,57 @@ SimpleTrailer GbR · Waltjenstr. 96, 28237 Bremen · info@simpletrailer.de`;
       });
     }
 
-    // Zahlungs-Info zu einer Buchung live aus Stripe (Methode + Status + Erstattungen)
+    // Zahlungs-Info zu einer Buchung live beim Anbieter (Methode + Status + Erstattungen).
+    // Der Parameter heisst weiterhin ?pi= — er enthaelt jetzt Mollie- (tr_) oder
+    // Stripe-IDs (pi_, Alt-Buchungen).
     if (section === 'payment-info') {
-      const piId = req.query.pi;
-      if (!piId || !/^pi_/.test(piId)) return res.status(400).json({ error: 'Ungültige Payment-Intent-ID' });
-      try {
-        const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-        const pi = await stripe.paymentIntents.retrieve(piId, { expand: ['latest_charge'] });
-        const charge = pi.latest_charge || {};
-        const pmd = charge.payment_method_details || {};
-        const type = pmd.type || (pi.payment_method_types && pi.payment_method_types[0]) || 'unbekannt';
-        let label = type;
-        if (pmd.card)        label = `${(pmd.card.brand || 'Karte').toUpperCase()} •••• ${pmd.card.last4 || '????'}`;
-        else if (pmd.paypal) label = `PayPal${pmd.paypal.payer_email ? ' · ' + pmd.paypal.payer_email : ''}`;
-        else if (pmd.link)   label = `Link${pmd.link.email ? ' · ' + pmd.link.email : ''}`;
-        else if (type === 'klarna') label = 'Klarna';
+      const payId = req.query.pi;
+      if (!payId || !/^(pi_|tr_)/.test(payId)) return res.status(400).json({ error: 'Ungültige Zahlungs-ID' });
+
+      // ── Alt-Buchung (Stripe): Konto geschlossen, kein Abruf mehr moeglich ──
+      if (payId.startsWith('pi_')) {
         return res.status(200).json({
-          status: pi.status,                                  // 'succeeded' etc.
-          method_type: type,                                  // card | paypal | link | ...
+          provider: 'stripe',
+          error: 'Alt-Buchung über Stripe — Konto geschlossen, kein Live-Abruf mehr möglich.'
+        });
+      }
+
+      try {
+        const { getPayment } = require('./_mollie');
+        const p = await getPayment(payId);
+
+        // Mollie liefert die tatsaechlich genutzte Methode als Slug.
+        const METHOD_LABELS = {
+          creditcard: 'Karte', paypal: 'PayPal', applepay: 'Apple Pay',
+          googlepay: 'Google Pay', ideal: 'iDEAL', bancontact: 'Bancontact',
+          banktransfer: 'Überweisung', directdebit: 'SEPA-Lastschrift',
+          klarna: 'Klarna', giropay: 'giropay', eps: 'EPS', sofort: 'Sofort'
+        };
+        const type  = p.method || 'unbekannt';
+        const d     = p.details || {};
+        let label   = METHOD_LABELS[type] || type;
+        if (d.cardLabel || d.cardNumber) {
+          label = `${d.cardLabel || 'Karte'} •••• ${d.cardNumber || '????'}`;
+        } else if (type === 'paypal' && d.consumerAccount) {
+          label = `PayPal · ${d.consumerAccount}`;
+        }
+
+        return res.status(200).json({
+          provider: 'mollie',
+          status: p.status,                                     // 'paid' | 'open' | 'failed' | ...
+          method_type: type,
           method_label: label,
-          amount: (pi.amount || 0) / 100,
-          amount_refunded: (charge.amount_refunded || 0) / 100,
-          refunded: !!charge.refunded || (charge.amount_refunded || 0) > 0,
-          receipt_url: charge.receipt_url || null,
-          paid_at: charge.created ? new Date(charge.created * 1000).toISOString() : null
+          amount:          parseFloat(p.amount?.value || '0') || 0,
+          amount_refunded: parseFloat(p.amountRefunded?.value || '0') || 0,
+          amount_chargedback: parseFloat(p.amountChargedBack?.value || '0') || 0,
+          refunded: (parseFloat(p.amountRefunded?.value || '0') || 0) > 0,
+          receipt_url: null,                                    // Mollie stellt keinen Beleg-Link bereit
+          dashboard_url: `https://my.mollie.com/dashboard/payments/${payId}`,
+          paid_at: p.paidAt || null
         });
       } catch (e) {
         console.error('[admin payment-info]', e.message);
-        return res.status(200).json({ error: 'Stripe-Abruf fehlgeschlagen' });
+        return res.status(200).json({ error: 'Mollie-Abruf fehlgeschlagen' });
       }
     }
 
@@ -1361,15 +1491,23 @@ SimpleTrailer GbR · Waltjenstr. 96, 28237 Bremen · info@simpletrailer.de`;
       return_photo_url, ladeflaeche_photo_url, precheck_photo_url, insurance_type, insurance_amount,
       free_floating, cancellation_protection, cancellation_protection_fee,
       cancelled_at, cancellation_refund_amount,
+      chargeback_at, chargeback_amount, admin_note, discount_code, discount_amount,
       trailers(name)
     `;
     let { data: bookings, error } = await supabase.from('bookings')
       .select(BOOKING_COLS).order('created_at', { ascending: false });
     if (error) {
-      // Fallback solange die Migration für bookings.no_show noch nicht gelaufen ist —
-      // das Dashboard darf an der fehlenden Spalte nicht sterben.
+      // Fallback solange eine Migration noch nicht gelaufen ist — das Dashboard
+      // darf an einer fehlenden Spalte nicht sterben. Es werden nacheinander die
+      // optionalen Spalten weggelassen, bis die Abfrage durchgeht.
+      console.warn('[admin] Spalte fehlt, Fallback-Abfrage:', error.message);
+      let cols = BOOKING_COLS.replace(/\s*chargeback_at, chargeback_amount, admin_note, discount_code, discount_amount,/, '');
       ({ data: bookings, error } = await supabase.from('bookings')
-        .select(BOOKING_COLS.replace(/\bno_show,\s*/, '')).order('created_at', { ascending: false }));
+        .select(cols).order('created_at', { ascending: false }));
+      if (error) {
+        ({ data: bookings, error } = await supabase.from('bookings')
+          .select(cols.replace(/\bno_show,\s*/, '')).order('created_at', { ascending: false }));
+      }
     }
     if (error) throw error;
 

@@ -8,8 +8,10 @@
 - **Email:** info@simpletrailer.de
 - **Produkt:** PKW-Anhängervermietung in Bremen, vollautomatisch online buchbar (1-3 Anhänger zum Start, an mehreren Stellplätzen)
 
-## Status (Stand 2026-04-28)
-- **Webseite:** LIVE auf simpletrailer.de, verarbeitet echte Stripe-Zahlungen
+## Status (Stand 2026-07-30)
+- **⚠️ Zahlungsanbieter:** **Mollie** (nicht mehr Stripe!). Stripe hat das Konto am 26.07.2026 geschlossen — kein neues Stripe-Konto anlegen (ToS-Verstoß, sperren erneut). Umbau siehe [MOLLIE-UMSTELLUNG.md](MOLLIE-UMSTELLUNG.md).
+- **⚠️ Führerschein-Check:** **KI-Prüfung** (`api/verify-license.js`, Claude Vision) statt Stripe Identity. KI gibt nur frei, lehnt NIE ab — unklare Fälle gehen auf `dl_status='review'` und ein Mensch entscheidet im Admin (Art. 22 DSGVO).
+- **Webseite:** LIVE auf simpletrailer.de
 - **Mobile-App (Capacitor 6):** Backend bereit, native-bridge.js eingebaut, APK kann gebaut werden — wartet auf D-U-N-S für Apple+Google Konten
 - **Anhänger:** Lieferung ~2026-05-01 (3 Tage)
 - **Google Business Profile:** Postkarten-Verifizierung läuft (~5 Tage)
@@ -40,7 +42,7 @@
 ## Tech Stack
 - **Frontend:** HTML, CSS, Vanilla JS (kein React/Vue — bewusst schlank)
 - **Datenbank:** Supabase (PostgreSQL + Auth + Storage)
-- **Zahlung:** Stripe (mit `off_session` für automatische Verspätungs-Abbuchung)
+- **Zahlung:** Mollie (Redirect-Checkout; Mandat via `sequenceType: 'first'` für automatische Verspätungs-Abbuchung). Kunde sieht: Apple Pay, Google Pay, PayPal, Karte. Kein `excludedMethods` — den Parameter gibt es bei Mollie nicht (HTTP 422)!
 - **Email:** Resend (transaktional, `reply_to: info@simpletrailer.de`)
 - **Push:** Firebase Cloud Messaging (HTTP V1 API mit OAuth2/JWT)
 - **Hosting:** Vercel Pro (Cron-Jobs, Analytics, kein Function-Limit)
@@ -55,7 +57,7 @@
 ### Webseite (Root)
 - [index.html](index.html) — Landing + Karte + Reviews + FAQ
 - [booking.html](booking.html) — 5-Schritt-Buchungs-Flow
-- [booking-confirm.html](booking-confirm.html) — Erfolgsseite nach Stripe
+- [booking-confirm.html](booking-confirm.html) — Erfolgsseite nach Rückkehr von Mollie (pollt, bis die Zahlung verbucht ist)
 - [account.html](account.html) — User-Login, eigene Buchungen, Konto-Löschen, Push-Token-Save
 - [precheck.html](precheck.html) — Foto-Upload vor Abholung
 - [return.html](return.html) — Rückgabe + Foto + Verspätungs-Berechnung
@@ -65,7 +67,10 @@
 - [analytics.js](analytics.js) — Zentrale Tracking-Konfig (Clarity + Vercel Analytics)
 
 ### Backend (Vercel Serverless Functions in `api/`)
-- `booking.js` — Buchung erstellen + Stripe-Setup
+- `booking.js` — Buchung erstellen (nimmt `mollie_payment_id`)
+- `_mollie.js` / `_charge.js` — Mollie-Client + anbieter-neutrale Nachbelastung/Erstattung
+- `create-mollie-payment.js` — Zahlung starten · `mollie-webhook.js` — verbindlicher Status + Chargeback-Alarm
+- `verify-license.js` / `_license-store.js` — KI-Führerscheinprüfung + privater Bilderspeicher
 - `process-return.js` — Rückgabe + Verspätungs-Auto-Charge
 - `send-reminders.js` — **Cron alle 15 Min** — Mail+Push 1h vor Rückgabe
 - `chat.js` — Claude Haiku mit Tool Use (`check_availability`)
@@ -186,7 +191,7 @@ Wenn eine Aufgabe **mehrere Domänen** berührt, rufe alle relevanten Agents **P
 | Cron | Schedule | Was er macht |
 |---|---|---|
 | `send-reminders` | alle 15 Min | Push+Mail 1h vor Anhänger-Rückgabe |
-| `anomaly-check` | alle 6h | Mail bei Stripe-Fehler / überfälligen Anhängern |
+| `anomaly-check` | alle 6h | Mail bei Zahlungsfehler / überfälligen Anhängern |
 | `daily-briefing` | täglich 8:00 Berlin | Aggregiert Anomalien/Bugs/Drafts → 1 Tagesplan-Mail |
 | `social-media-generator` | täglich 9:00 Berlin | Insta-Post-Vorschlag in Mail |
 | `bug-triager` | täglich 10:00 Berlin | Sentry-Top-5 Bugs in Mail |
@@ -209,7 +214,8 @@ Wenn eine Aufgabe **mehrere Domänen** berührt, rufe alle relevanten Agents **P
 
 ## Regeln (HART)
 - **Sprache:** Antworten immer auf Deutsch
-- **Buchungssystem TABU:** Webseite läuft LIVE mit echten Stripe-Zahlungen. Änderungen an [booking.html](booking.html), [api/booking.js](api/booking.js), [api/process-return.js](api/process-return.js), [supabase-schema.sql](supabase-schema.sql) NUR mit explizitem User-OK
+- **Buchungssystem TABU:** Webseite läuft LIVE mit echten Zahlungen (Mollie). Änderungen an [booking.html](booking.html), [api/booking.js](api/booking.js), [api/create-mollie-payment.js](api/create-mollie-payment.js), [api/mollie-webhook.js](api/mollie-webhook.js), [api/process-return.js](api/process-return.js), [supabase-schema.sql](supabase-schema.sql) NUR mit explizitem User-OK
+- **Mollie-Aufrufe immer gegen die echte Test-API prüfen, nicht nur `node --check`.** Zwei erfundene Parameter (`excludedMethods`, `/methods?limit=`) sind nur so aufgefallen — sie hätten jede Zahlung bzw. den Healthcheck gekillt.
 - **Native-Bridge ist defensiv:** [native-bridge.js](native-bridge.js) tut im Browser NICHTS (`isNative=false`). Webseite verhält sich für normale Besucher exakt wie ohne Bridge
 - **User ist Anfänger:** Schritt für Schritt erklären, vollständigen Code liefern, fragen wenn unklar
 - **Commits:** nur auf explizite Anweisung (`commit das`)
@@ -225,7 +231,7 @@ Wenn eine Aufgabe **mehrere Domänen** berührt, rufe alle relevanten Agents **P
 ---
 
 ## Backlog (Reihenfolge nach Wert)
-1. **Test-Buchung selbst durchspielen** sobald Anhänger live (Stripe-Testkarte `4242 4242 4242 4242`)
+1. **Test-Buchung selbst durchspielen** (Mollie-Testmodus: auf der Bezahlseite Ergebnis „Paid"/„Canceled" auswählen)
 2. **Echte Anhänger-Fotos** in Webseite + Google Business Profile
 3. **Empfehlungs-System** ("10 € für jede Empfehlung") — Wachstums-Hebel
 4. ✅ ~~**Newsletter-Anmeldung** (DSGVO-konform Double-Opt-In)~~ (erledigt 2026-05-06)

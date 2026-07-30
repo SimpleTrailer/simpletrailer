@@ -48,7 +48,7 @@ module.exports = async (req, res) => {
         severity: 'red',
         icon: '🔴',
         title: `${stalePending.length} Buchung${stalePending.length>1?'en':''} seit >1h pending`,
-        detail: 'Vermutlich Stripe-Zahlungsfehler — Mieter manuell kontaktieren.',
+        detail: 'Vermutlich Zahlungs-Abbruch bei Mollie — Mieter manuell kontaktieren.',
         action_link: 'https://simpletrailer.de/admin'
       });
     }

@@ -68,8 +68,8 @@ Pflicht-Checks fuer SimpleTrailer:
 - AGB §3 Widerrufsrecht: Mietvertrag mit Termin AUSGESCHLOSSEN nach §312g II Nr.9 BGB - muss explizit drinstehen
 - AGB §5 Preise: "inkl. 19% MwSt" + Brutto-Pflicht (PAngV)
 - AGB §6 Storno: Klare %-Staffelung
-- AGB Klausel "Stripe Off-Session-Charges": muss bei Vertragsschluss explizit drin sein
-- Datenschutz: alle US-Tools (Stripe, Vercel, Anthropic, Sentry, Microsoft Clarity) genannt + Drittland-Hinweis
+- AGB Klausel "Mandat für Nachbelastungen (Verspätung/Schaden)": muss bei Vertragsschluss explizit drin sein
+- Datenschutz: alle Dienstleister genannt (Mollie/EU, Supabase/EU, Resend/EU sowie die US-Tools Vercel, Anthropic, Sentry, Microsoft Clarity) + Drittland-Hinweis
 - Impressum: Steuernummer ODER USt-IdNr (sobald da)
 - OS-Plattform-Hinweis (Art. 14 ODR-VO) bei Online-Verkauf
 

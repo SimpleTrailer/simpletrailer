@@ -37,9 +37,10 @@
 <ul>
   <li><strong>Konto-Daten:</strong> E-Mail, Vor-/Nachname, Telefonnummer, Adresse, Geburtsdatum (zur Altersverifikation, Mindestalter 18)</li>
   <li><strong>Buchungs-Daten:</strong> Anhänger, Mietzeitraum, gewähltes Schutzpaket, Stornoschutz, Preis</li>
-  <li><strong>Zahlungs-Daten:</strong> Verarbeitet durch Stripe Inc. — wir speichern nur die Stripe-Customer-ID, keine Kartendaten</li>
-  <li><strong>Führerschein-Daten:</strong> Für die einmalige Verifikation via Stripe Identity (Name, Geburtsdatum, Führerscheinklassen, Ablaufdatum, Führerschein-Nummer). Bilder werden nur 30 Tage bei Stripe gespeichert.</li>
-  <li><strong>Biometrische Daten:</strong> Im Rahmen der Stripe-Identity-Verifikation erfolgt ein biometrischer Gesichtsabgleich zwischen dem Lichtbild im Führerschein und einem Selfie des Mieters. Diese Verarbeitung erfolgt ausschließlich durch Stripe; uns werden lediglich das Ergebnis und die abgleichten Stammdaten übermittelt.</li>
+  <li><strong>Zahlungs-Daten:</strong> Verarbeitet durch Mollie B.V. — wir speichern nur die Mollie-Kunden- und Zahlungs-ID, keine Karten- oder Kontodaten</li>
+  <li><strong>Führerschein-Daten:</strong> Für die einmalige Prüfung vor der ersten Buchung erheben wir Name, Geburtsdatum, Führerscheinklassen, Ablaufdatum, Führerschein-Nummer und Ausstellungsland. Diese Stammdaten benötigen wir für den Mietvertrag.</li>
+  <li><strong>Führerschein-Bilder und Selfie:</strong> Für die Prüfung lädst du Vorder- und Rückseite deines Führerscheins sowie ein Selfie hoch. Die Bilder werden in einem nicht öffentlich zugänglichen Speicher bei Supabase (EU-Region, Frankfurt) abgelegt und <strong>unmittelbar nach Abschluss der Prüfung gelöscht</strong> — bei automatischer Freigabe sofort, bei einer Prüfung durch einen Mitarbeiter direkt nach dessen Entscheidung.</li>
+  <li><strong>Biometrische Daten:</strong> Bei der Prüfung wird das Lichtbild auf dem Führerschein mit deinem Selfie abgeglichen, um festzustellen, ob der Führerschein dir gehört. Diesen Abgleich führt in unserem Auftrag ein KI-Dienst von Anthropic PBC durch. Der Abgleich erfolgt nur mit deiner ausdrücklichen Einwilligung nach Art. 9 Abs. 2 lit. a DSGVO. Eine automatische Ablehnung findet nicht statt: Kann die KI nicht zweifelsfrei freigeben, entscheidet immer ein Mensch (Art. 22 Abs. 3 DSGVO).</li>
   <li><strong>Schadens-Fotos (Pre-Check und Rückgabe):</strong> Vor-/Nach-Mietfotos des Anhängers, gespeichert in Supabase Storage (EU-Region). Werden 6 Monate nach Mietende automatisch gelöscht. Näheres siehe Abschnitt 11.</li>
   <li><strong>Standort:</strong> Nur in der App, nur für "Anhänger in der Nähe". Keine Speicherung serverseitig.</li>
   <li><strong>Push-Token:</strong> Nur in der App, für Buchungs-Erinnerungen. Wird beim Konto-Logout gelöscht.</li>
@@ -52,16 +53,16 @@
   <li><strong>Art. 6 (1) c DSGVO</strong> (gesetzliche Pflicht): Steuerrechtliche Aufbewahrung Buchungen 10 Jahre (§ 147 AO)</li>
   <li><strong>Art. 6 (1) f DSGVO</strong> (berechtigtes Interesse): Schadens-Dokumentation, Push-Erinnerungen, Performance-/Heatmap-Tools, Fehler-Monitoring, GPS-Schutz des Eigentums</li>
   <li><strong>Art. 6 (1) a DSGVO</strong> (Einwilligung): Standortzugriff in der App, Chat mit Simply</li>
-  <li><strong>Art. 9 (2) a DSGVO</strong> (ausdrückliche Einwilligung): Biometrischer Gesichtsabgleich bei Führerschein-Verifikation über Stripe Identity. Du kannst diese Einwilligung jederzeit widerrufen; ohne erfolgreiche Verifikation ist eine Buchung jedoch nicht möglich.</li>
+  <li><strong>Art. 9 (2) a DSGVO</strong> (ausdrückliche Einwilligung): Biometrischer Abgleich zwischen Führerschein-Lichtbild und Selfie im Rahmen der Führerschein-Prüfung. Du kannst diese Einwilligung jederzeit widerrufen; ohne erfolgreiche Prüfung ist eine Buchung jedoch nicht möglich.</li>
 </ul>
 
 <h2>4. Auftragsverarbeiter / Drittanbieter</h2>
 <ul>
   <li><strong>Supabase Inc.</strong> (Datenbank + Authentifizierung + Foto-Speicherung) — Server-Standort EU (Frankfurt). Auftragsverarbeitung nach Art. 28 DSGVO.</li>
-  <li><strong>Stripe Payments Europe Ltd. / Stripe Inc.</strong> (Zahlung + Identity-Verifikation inkl. biometrischer Gesichtsabgleich) — Server-Standort EU/USA, Übermittlung auf Basis EU-Standardvertragsklauseln nach Art. 46 DSGVO.</li>
+  <li><strong>Mollie B.V.</strong>, Amsterdam/Niederlande (Zahlungsabwicklung: Karte, PayPal, Apple&nbsp;Pay, Google&nbsp;Pay, SEPA) — Server-Standort EU. Auftragsverarbeitung nach Art. 28 DSGVO.</li>
   <li><strong>Resend (Resend Inc.)</strong> (Transaktions-Mails wie Buchungsbestätigung, Erinnerungen) — Server-Standort EU.</li>
   <li><strong>Vercel Inc.</strong> (Hosting + Web Analytics) — Hosting in EU-Region (Frankfurt). Übermittlung an Mutter-Konzern USA auf Basis EU-Standardvertragsklauseln nach Art. 46 DSGVO.</li>
-  <li><strong>Anthropic PBC</strong>, USA (KI-Chat "Simply" — nur wenn du den Chat aktiv nutzt) — Übermittlung erfolgt auf Basis EU-Standardvertragsklauseln nach Art. 46 DSGVO.</li>
+  <li><strong>Anthropic PBC</strong>, USA (KI-Chat "Simply" — nur wenn du den Chat aktiv nutzt; sowie die automatische Führerschein-Prüfung inkl. Bildabgleich) — Übermittlung erfolgt auf Basis EU-Standardvertragsklauseln nach Art. 46 DSGVO. Die übermittelten Bilder werden nicht zum Training von KI-Modellen verwendet.</li>
   <li><strong>Functional Software Inc. d/b/a Sentry</strong>, USA (Fehler-Monitoring zur Stabilitäts-Sicherung der Webseite) — Art. 6 Abs. 1 lit. f DSGVO; EU-Standardvertragsklauseln nach Art. 46 DSGVO.</li>
   <li><strong>Microsoft Ireland Operations Ltd.</strong> (Clarity Heatmaps + Session-Recordings — cookielos, IP-Anonymisierung) — Server-Standort EU/USA, Art. 6 Abs. 1 lit. f DSGVO.</li>
   <li><strong>OpenStreetMap Foundation</strong>, Vereinigtes Königreich (Kartendarstellung und Adress-Suche) — IP-Adresse zur Auslieferung der Kartenkacheln, Art. 6 Abs. 1 lit. f DSGVO.</li>
@@ -75,7 +76,7 @@
   <li>Konto: bis zur Löschung (von dir initiiert in der App / per E-Mail)</li>
   <li>Buchungen: 10 Jahre nach Buchungsende (Steuerrecht §147 AO)</li>
   <li>Schadens-Fotos: 6 Monate nach Mietende</li>
-  <li>Führerschein-Bilder: 30 Tage bei Stripe (gesetzliche Aufbewahrung Stripe)</li>
+  <li>Führerschein-Bilder und Selfie: nur bis zum Abschluss der Prüfung, danach sofortige Löschung (in der Regel wenige Minuten, bei manueller Prüfung wenige Stunden)</li>
   <li>Push-Tokens: bis zur Deinstallation der App oder Konto-Löschung</li>
 </ul>
 
@@ -97,7 +98,7 @@
 <ul>
   <li><code>st_session</code> — dein Login-Token, gelöscht beim Logout</li>
   <li><code>st_app_onboarded_v1</code> (nur App) — Onboarding-Screen schon gesehen</li>
-  <li><code>st_pi_id</code>, <code>st_client_secret</code> — Stripe-Zahlungs-Session, gelöscht nach Bezahlung</li>
+  <li><code>st_mollie_id</code> — Kennung deiner laufenden Zahlung, gelöscht nach Abschluss der Buchung</li>
 </ul>
 <p>Wir nutzen <strong>keine Werbe-Cookies und kein Google Analytics</strong>. Performance- und Heatmap-Tools (cookielos) siehe Abschnitt 8.</p>
 

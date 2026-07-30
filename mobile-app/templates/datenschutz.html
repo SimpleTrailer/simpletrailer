@@ -35,8 +35,9 @@
 <ul>
   <li><strong>Konto-Daten:</strong> E-Mail, Vor-/Nachname, Telefonnummer, Adresse</li>
   <li><strong>Buchungs-Daten:</strong> Anhänger, Mietzeitraum, Versicherungs-Wahl, Preis</li>
-  <li><strong>Zahlungs-Daten:</strong> Verarbeitet durch Stripe Inc. — wir speichern nur die Stripe-Customer-ID, keine Kartendaten</li>
-  <li><strong>Führerschein-Daten:</strong> Für die einmalige Verifikation via Stripe Identity (Name, Geburtsdatum, Klasse, Ablaufdatum, Führerschein-Nummer). Bilder werden nur 30 Tage bei Stripe gespeichert.</li>
+  <li><strong>Zahlungs-Daten:</strong> Verarbeitet durch Mollie B.V. — wir speichern nur die Mollie-Kunden- und Zahlungs-ID, keine Karten- oder Kontodaten</li>
+  <li><strong>Führerschein-Daten:</strong> Für die einmalige Prüfung vor der ersten Buchung (Name, Geburtsdatum, Klasse, Ablaufdatum, Führerschein-Nummer). Die Bilder von Führerschein und Selfie liegen in einem nicht öffentlichen Speicher (Supabase, EU) und werden direkt nach Abschluss der Prüfung gelöscht.</li>
+  <li><strong>Biometrische Daten:</strong> Für die Prüfung wird das Lichtbild im Führerschein mit deinem Selfie abgeglichen (Art. 9 Abs. 2 lit. a DSGVO, nur mit deiner ausdrücklichen Einwilligung). Eine automatische Ablehnung findet nicht statt — im Zweifel entscheidet ein Mensch.</li>
   <li><strong>Schadens-Fotos:</strong> Vor-/Nach-Mietfotos, gespeichert in Supabase Storage (EU-Region). Werden 6 Monate nach Mietende automatisch gelöscht.</li>
   <li><strong>Standort:</strong> Nur in der App, nur für "Anhänger in der Nähe". Keine Speicherung serverseitig.</li>
   <li><strong>Push-Token:</strong> Nur in der App, für Buchungs-Erinnerungen. Wird beim Konto-Logout gelöscht.</li>
@@ -53,7 +54,8 @@
 <h2>4. Auftragsverarbeiter / Drittanbieter</h2>
 <ul>
   <li><strong>Supabase Inc.</strong> (Datenbank + Auth) — Server-Standort EU (Frankfurt)</li>
-  <li><strong>Stripe Inc.</strong> (Zahlung + Identity-Verifikation) — Server-Standort EU/USA, EU-Standardvertragsklauseln</li>
+  <li><strong>Mollie B.V.</strong>, Niederlande (Zahlungsabwicklung) — Server-Standort EU</li>
+  <li><strong>Anthropic PBC</strong>, USA (KI-Chat sowie automatische Führerschein-Prüfung) — EU-Standardvertragsklauseln; keine Nutzung der Daten zum KI-Training</li>
   <li><strong>Resend</strong> (Transaktions-Mails) — Server-Standort EU</li>
   <li><strong>Vercel Inc.</strong> (Hosting) — Server-Standort EU</li>
   <li><strong>Firebase / Google LLC</strong> (Push-Notifications, nur App) — EU-Standardvertragsklauseln</li>
@@ -65,7 +67,7 @@
   <li>Konto: bis zur Löschung (von dir initiiert in der App / per E-Mail)</li>
   <li>Buchungen: 10 Jahre nach Buchungsende (Steuerrecht §147 AO)</li>
   <li>Schadens-Fotos: 6 Monate nach Mietende</li>
-  <li>Führerschein-Bilder: 30 Tage bei Stripe (gesetzliche Aufbewahrung Stripe)</li>
+  <li>Führerschein-Bilder und Selfie: nur bis zum Abschluss der Prüfung, danach sofortige Löschung</li>
   <li>Push-Tokens: bis zur Deinstallation der App oder Konto-Löschung</li>
 </ul>
 
@@ -87,7 +89,7 @@
 <ul>
   <li><code>st_session</code> — dein Login-Token, gelöscht beim Logout</li>
   <li><code>st_app_onboarded_v1</code> (nur App) — Onboarding-Screen schon gesehen</li>
-  <li><code>st_pi_id</code>, <code>st_client_secret</code> — Stripe-Zahlungs-Session, gelöscht nach Bezahlung</li>
+  <li><code>st_mollie_id</code> — Kennung deiner laufenden Zahlung, gelöscht nach Abschluss der Buchung</li>
 </ul>
 <p>Wir nutzen <strong>kein Tracking, kein Werbe-Cookie, kein Google Analytics</strong>.</p>
 

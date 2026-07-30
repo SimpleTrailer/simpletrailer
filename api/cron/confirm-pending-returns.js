@@ -16,7 +16,7 @@
  */
 const { createClient } = require('@supabase/supabase-js');
 const { Resend } = require('resend');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const { chargeStored } = require('../_charge.js');
 const { pushLion } = require('../_lion-push.js');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
@@ -55,22 +55,16 @@ function inBremen(lat, lng) {
 }
 
 async function chargeExtraFee(booking, amount, description) {
-  if (!booking.stripe_payment_method_id || !booking.stripe_customer_id) return null;
-  try {
-    const pi = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100), currency: 'eur',
-      customer: booking.stripe_customer_id,
-      payment_method: booking.stripe_payment_method_id,
-      confirm: true, off_session: true,
-      receipt_email: booking.customer_email,
-      description,
-      metadata: { booking_id: booking.id, type: 'return_extra_fee_post_check' }
-    });
-    return pi.id;
-  } catch (err) {
-    console.error('chargeExtraFee fehlgeschlagen:', err.message);
+  if (!booking.stripe_customer_id) return null;
+  const charge = await chargeStored({
+    booking, amount, type: 'return_extra_fee', description,
+    extraMetadata: { phase: 'post_check' }
+  });
+  if (!charge.ok) {
+    console.error('chargeExtraFee fehlgeschlagen:', charge.error);
     return null;
   }
+  return charge.id;
 }
 
 async function sendFinalMail(booking, returnStatus, extraFee, extraFeeCharged) {

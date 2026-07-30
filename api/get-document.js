@@ -19,7 +19,7 @@
  *         Header: Authorization: Bearer <supabase access_token>
  */
 const { createClient } = require('@supabase/supabase-js');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const { isMollieId, getPayment: getMolliePayment } = require('./_mollie');
 const { setCors } = require('./_cors');
 const { generateMietvertrag, generateRechnung } = require('./_pdf-templates.js');
 
@@ -55,19 +55,21 @@ module.exports = async (req, res) => {
     if (error) throw error;
     if (!b) return res.status(404).json({ error: 'Buchung nicht gefunden' });
 
-    // Finanz-Teil bevorzugt EXAKT aus den Stripe-PI-Metadaten rekonstruieren (genau die
+    // Finanz-Teil bevorzugt EXAKT aus den Zahlungs-Metadaten rekonstruieren (genau die
     // Quelle, aus der booking.js beim Kauf das PDF erzeugt hat) → die erneut geladene
     // Rechnung ist deckungsgleich mit der Original-Mail-Rechnung (inkl. Rabatt-/Flex-Posten),
-    // gleiche Rechnungsnummer = gleicher Beleg. Fällt Stripe aus, greift der DB-Fallback.
+    // gleiche Rechnungsnummer = gleicher Beleg. Ist die Zahlung nicht abrufbar (Alt-Buchung
+    // über das geschlossene Stripe-Konto), greift der DB-Fallback.
     let meta = null, payMethod = 'card', amount = parseFloat(b.total_amount || 0) || 0;
-    if (b.stripe_payment_intent_id) {
+    if (b.stripe_payment_intent_id && isMollieId(b.stripe_payment_intent_id)) {
       try {
-        const pi = await stripe.paymentIntents.retrieve(b.stripe_payment_intent_id);
-        meta = pi.metadata || {};
-        if (typeof pi.amount === 'number') amount = pi.amount / 100;
-        payMethod = (pi.payment_method_types && pi.payment_method_types[0]) || 'card';
+        const p = await getMolliePayment(b.stripe_payment_intent_id);
+        meta = p.metadata || {};
+        const v = parseFloat(p.amount?.value || '');
+        if (!Number.isNaN(v)) amount = v;
+        payMethod = p.method || 'card';
       } catch (e) {
-        console.warn('get-document: Stripe-PI nicht abrufbar, DB-Fallback:', e.message);
+        console.warn('get-document: Mollie-Zahlung nicht abrufbar, DB-Fallback:', e.message);
       }
     }
 

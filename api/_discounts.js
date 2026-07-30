@@ -1,6 +1,6 @@
 // ── Rabattcodes — EINE geteilte Quelle ───────────────────────────────────
 // Genutzt von:
-//   - api/create-payment-intent.js  (verbindliche Berechnung + Abzug, Stripe-Betrag)
+//   - api/create-mollie-payment.js  (verbindliche Berechnung + Abzug, Zahlbetrag)
 //   - api/validate-discount.js      (Vorab-Prüfung VOR der Führerschein-Verifizierung)
 // Beide müssen dieselben Codes/Regeln sehen → deshalb hier zentral.
 //
@@ -8,8 +8,8 @@
 // scope:      'total' = auf den Gesamtbetrag (inkl. Schutzpaket/Storno/Free-Floating),
 //             'rent'  = NUR auf den Mietpreis — Versicherung & Add-ons bleiben voll.
 // validUntil: optionaler letzter gültiger Moment (inkl., Berlin-Zeit). Fehlt = nie ablaufend.
-// singleUse:  true = darf nur EINMAL erfolgreich eingelöst werden (Prüfung via Stripe,
-//             siehe isRedeemed() — „gibt es schon eine erfolgreiche Zahlung mit diesem Code?").
+// singleUse:  true = darf nur EINMAL erfolgreich eingelöst werden (Prüfung siehe
+//             isRedeemed() — „gibt es schon eine bezahlte Buchung mit diesem Code?").
 const DISCOUNT_CODES = {
   WILLKOMMEN20: { percent: 20, scope: 'total', validUntil: '2026-06-25T23:59:59+02:00' },
   URLAUB33:     { percent: 33, scope: 'rent' }, // Urlauber-Rabatt: 33 % nur auf die Miete
@@ -26,21 +26,31 @@ function resolveDiscount(raw) {
   return { code, percent: def.percent, scope: def.scope || 'total', singleUse: !!def.singleUse };
 }
 
-// Single-Use-Prüfung: true, wenn dieser Code schon eine ERFOLGREICHE Zahlung ausgelöst hat.
-// Quelle der Wahrheit = Stripe (Payment-Intent-Metadaten discount_code). Kein DB-Tisch nötig.
-// Fail-open: Wenn die Stripe-Suche fehlschlägt, NICHT blockieren (kein echter Kunde soll
-// wegen eines Such-Glitches steckenbleiben; Risiko bei persönlichem Kleinbetrags-Code minimal).
-async function isRedeemed(stripe, code) {
-  if (!code) return false;
+// Single-Use-Prüfung: true, wenn dieser Code schon zu einer bezahlten Buchung geführt hat.
+// Quelle der Wahrheit sind unsere EIGENEN Buchungen (Spalte discount_code) — früher lief
+// das über die Stripe-Zahlungssuche, die es bei Mollie so nicht gibt.
+//
+// WICHTIG — bewusst NICHT fail-open:
+// Vorher wurde bei einem DB-Fehler einfach "noch nicht eingelöst" zurückgegeben.
+// Da die Spalte discount_code gar nicht existierte, schlug die Abfrage IMMER fehl —
+// und Codes wie PETER50/ABDULLAH50 (je 50 % Rabatt) waren unbegrenzt oft nutzbar.
+// Bei einem Einmal-Code ist "im Zweifel sperren" richtig: der Kunde bekommt eine
+// klare Meldung und kann sich melden, statt dass wir dauerhaft Geld verlieren.
+// Für Mehrfach-Codes wird diese Funktion gar nicht erst aufgerufen.
+async function isRedeemed(supabase, code) {
+  if (!code || !supabase) return false;
   try {
-    const r = await stripe.paymentIntents.search({
-      query: `status:'succeeded' AND metadata['discount_code']:'${code}'`,
-      limit: 1,
-    });
-    return !!(r && r.data && r.data.length > 0);
+    const { data, error } = await supabase
+      .from('bookings')
+      .select('id')
+      .eq('discount_code', code)
+      .in('status', ['confirmed', 'active', 'returned'])
+      .limit(1);
+    if (error) throw error;
+    return !!(data && data.length > 0);
   } catch (e) {
-    console.error('Single-Use-Check fehlgeschlagen (fail-open):', e.message);
-    return false;
+    console.error('Single-Use-Check fehlgeschlagen — Code wird vorsorglich gesperrt:', e.message);
+    return true;
   }
 }
 

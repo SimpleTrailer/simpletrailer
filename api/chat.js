@@ -123,7 +123,7 @@ PKW-Anhänger mit Plane (Humbaur Steely Cover Tieflader):
 - 10 €/angefangene Stunde Verspätung (automatisch abgebucht)
 - 30 € Reinigungspauschale bei nicht ordentlich zurückgegeben
 - Mindestalter 18, Klasse B reicht (Anhänger ≤ 750 kg)
-- Stripe-Identity Führerschein-Verifikation einmalig (~5 Min)
+- Führerschein-Prüfung einmalig vor der ersten Buchung: Foto von Vorder- und Rückseite plus Selfie, Ergebnis meist in unter 1 Minute
 - Stornierung: bis 24h vor Mietbeginn kostenfrei
 
 # 🔧 TOOL: VERFÜGBARKEIT PRÜFEN

@@ -78,13 +78,23 @@
       return this._fetch(`/api/booking?id=${encodeURIComponent(id)}&token=${encodeURIComponent(token)}`, { auth: false });
     }
 
-    // ===== Identity (Fuehrerschein-Verifikation via Stripe Identity) =====
-    async getIdentity() {
-      return this._fetch('/api/identity');
+    // ===== Fuehrerschein-Pruefung (KI, siehe api/verify-license.js) =====
+    /** Aktuellen Status holen: unverified | verified | review | rejected */
+    async getLicenseStatus() {
+      return this._fetch('/api/verify-license');
     }
 
-    async startIdentityVerification() {
-      return this._fetch('/api/identity', { method: 'POST' });
+    /**
+     * Drei Fotos zur Pruefung schicken.
+     * @param {{front:string, back:string, selfie:string}} images — jeweils Data-URL (image/jpeg)
+     * Antwort: { status: 'verified' | 'review' | 'retry', message }
+     */
+    async submitLicense(images) {
+      return this._fetch('/api/verify-license', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(images)
+      });
     }
 
     // ===== Auth (direkter Supabase-Call, gleiche Tokens wie Webseite) =====

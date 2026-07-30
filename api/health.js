@@ -1,9 +1,9 @@
 /* Healthcheck-Endpoint für Uptime-Monitoring (z.B. UptimeRobot, Better Uptime, Cronitor)
- * Prüft Supabase- und Stripe-Konnektivität.
+ * Prüft Supabase- und Mollie-Konnektivität.
  * Antwort 200 = alles OK, 503 = mindestens ein Service down.
  */
 const { createClient } = require('@supabase/supabase-js');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const { mollie } = require('./_mollie');
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -26,13 +26,15 @@ module.exports = async (req, res) => {
     checks.supabase = { ok: false, error: e.message };
   }
 
-  // Stripe
+  // Mollie — /methods ist der billigste Aufruf, der Key + Konto-Status verifiziert.
+  // ACHTUNG: /methods kennt KEINEN 'limit'-Parameter (HTTP 422). Ohne Parameter aufrufen —
+  // sonst meldet der Healthcheck dauerhaft 503 und das Monitoring schlägt grundlos Alarm.
   try {
     const t0 = Date.now();
-    await stripe.balance.retrieve();
-    checks.stripe = { ok: true, latency_ms: Date.now() - t0 };
+    await mollie('/methods');
+    checks.mollie = { ok: true, latency_ms: Date.now() - t0 };
   } catch (e) {
-    checks.stripe = { ok: false, error: e.message };
+    checks.mollie = { ok: false, error: e.message };
   }
 
   // Resend (nur Konfig prüfen, kein API-Call um Quota nicht zu verbrauchen)

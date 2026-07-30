@@ -1,12 +1,14 @@
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const { createClient } = require('@supabase/supabase-js');
 const { resolveDiscount, isRedeemed } = require('./_discounts');
+
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
 // ── Rabattcode-Vorabprüfung ──────────────────────────────────────────────
 // Leichter Endpoint, damit ein Rabattcode SCHON VOR der Führerschein-Verifizierung
 // (und vor dem Login) eingegeben und geprüft werden kann. Gibt nur percent + scope
 // zurück — keine sensiblen Daten, daher kein Auth-/Führerschein-Gate.
 // Verbindlich abgezogen wird der Rabatt weiterhin ausschließlich in
-// create-payment-intent.js (Single Source of Truth für den Stripe-Betrag).
+// create-mollie-payment.js (Single Source of Truth für den Zahlbetrag).
 
 const rateLimit = new Map();
 function isRateLimited(ip) {
@@ -32,7 +34,7 @@ module.exports = async (req, res) => {
   if (disc.error)  return res.status(200).json({ valid: false, error: disc.error });
   if (!disc.code)  return res.status(200).json({ valid: false, error: 'Bitte einen Code eingeben.' });
   // Single-Use-Codes schon hier ehrlich melden, damit der Kunde nicht erst beim Bezahlen scheitert.
-  if (disc.singleUse && await isRedeemed(stripe, disc.code)) {
+  if (disc.singleUse && await isRedeemed(supabase, disc.code)) {
     return res.status(200).json({ valid: false, error: 'Dieser Code wurde bereits eingelöst.' });
   }
   return res.status(200).json({ valid: true, code: disc.code, percent: disc.percent, scope: disc.scope });

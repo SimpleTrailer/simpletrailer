@@ -3,7 +3,7 @@
  *
  * Läuft alle 6 Stunden via Vercel Cron.
  * Prüft auf:
- *  - Buchungen mit Stripe-Fehler (status=pending seit >1h)
+ *  - Buchungen mit Zahlungsfehler (status=pending seit >1h)
  *  - Überfällige Anhänger (active + end_time + 1h < now, kein actual_return_time)
  *  - Buchungs-Drop-Off (diese Woche < 50% der letzten Woche)
  *
@@ -45,7 +45,7 @@ module.exports = async (req, res) => {
       anomalies.push({
         severity: 'red',
         title: `${stalePending.length} Buchung(en) seit >1h "pending"`,
-        detail: 'Vermutlich Stripe-Zahlungsfehler.',
+        detail: 'Vermutlich Zahlungs-Abbruch bei Mollie.',
         list: stalePending.slice(0, 5).map(b =>
           `- ${esc(b.customer_name)} (${esc(b.customer_email)}) · ${(b.total_amount||0).toFixed(2)}€ · ID: ${b.id.slice(0,8)}`
         ).join('\n')
