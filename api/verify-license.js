@@ -321,6 +321,20 @@ module.exports = async (req, res) => {
     });
   }
 
+  // ── Ablaufdatum unlesbar: sofort neu fotografieren, NICHT warten lassen ──
+  // Das ist bewusst kein Fall für die Handprüfung. Ohne Ablaufdatum lässt das
+  // Zahlungs-Tor (create-mollie-payment.js) die Buchung ohnehin nicht zu — wir
+  // würden den Kunden also erst freigeben und ihn dann beim Bezahlen abweisen,
+  // im letzten und teuersten Schritt. Ein neues Foto von der Vorderseite kostet
+  // ihn zehn Sekunden und löst es sofort.
+  if (result.is_real_license === true && !result.expires_at) {
+    await deleteUserImages(user.id);
+    return res.status(200).json({
+      status: 'retry',
+      message: 'Das Gültigkeitsdatum (Feld 4b, direkt unter deinem Foto) war nicht sicher lesbar. Bitte fotografiere die Vorderseite noch einmal — möglichst gerade von oben, ohne Spiegelung und ohne Schatten.'
+    });
+  }
+
   // ── Serverseitige Zusatzprüfungen (nicht der KI überlassen) ──────────────
   //
   // Zwei Töpfe, und der Unterschied ist wichtig:
@@ -347,25 +361,31 @@ module.exports = async (req, res) => {
   if (!classes.some(c => c === 'B' || c === 'BE')) {
     hart.push('Klasse B oder BE nicht eindeutig erkannt.');
   }
-  // Ohne lesbares Ablaufdatum greift die spätere Ablaufprüfung beim Buchen ins
-  // Leere (dl_expires_at = null) — ein abgelaufener Schein käme unbemerkt durch.
-  if (!result.expires_at) {
-    hart.push('Gültigkeitsdatum (Feld 4b) nicht sicher lesbar.');
-  } else if (new Date(result.expires_at) < new Date()) {
+  if (result.expires_at && new Date(result.expires_at) < new Date()) {
     hart.push(`Führerschein ist laut Dokument am ${result.expires_at} abgelaufen.`);
   }
-  // Name gegen das Konto prüfen — schützt davor, dass jemand einen fremden
-  // Führerschein hochlädt. Der Kontoname steht in user_metadata (Kunde pflegt ihn
-  // selbst), NICHT in den geschützten Führerschein-Daten.
+  // Der Name im Konto ist frei eingetippt und weicht oft harmlos ab: Ehename,
+  // zweiter Vorname, Tippfehler, Konto auf den Partner angelegt. Entscheidend
+  // ist nicht der Name, sondern ob die Person vor der Kamera die Person im
+  // Dokument IST — das prüft das Selfie. Passt das Gesicht, ist eine
+  // Namensabweichung eine Datenfrage, keine Betrugsfrage: der Mietvertrag läuft
+  // ohnehin auf den geprüften Führerschein-Namen (create-mollie-payment.js),
+  // nicht auf den eingetippten. Passt das Gesicht NICHT oder ist es unklar,
+  // wird aus derselben Abweichung ein echtes Warnsignal — dann bleibt sie hart.
   const profile  = user.user_metadata || {};
   const accFirst = profile.first_name || '';
   const accLast  = profile.last_name  || '';
+  const gesichtBestaetigt = result.selfie_matches_photo === true;
+  const nameAbweichung = [];
   if (accLast && result.last_name && nameLoose(accLast) !== nameLoose(result.last_name)) {
-    hart.push(`Nachname im Konto ("${accLast}") passt nicht zum Führerschein ("${result.last_name}").`);
+    nameAbweichung.push(`Nachname im Konto ("${accLast}") passt nicht zum Führerschein ("${result.last_name}").`);
   }
   if (accFirst && result.first_name && !nameLoose(result.first_name).includes(nameLoose(accFirst))
       && !nameLoose(accFirst).includes(nameLoose(result.first_name))) {
-    hart.push(`Vorname im Konto ("${accFirst}") passt nicht zum Führerschein ("${result.first_name}").`);
+    nameAbweichung.push(`Vorname im Konto ("${accFirst}") passt nicht zum Führerschein ("${result.first_name}").`);
+  }
+  if (nameAbweichung.length) {
+    (gesichtBestaetigt ? weich : hart).push(...nameAbweichung);
   }
   if (Array.isArray(result.tampering_signs) && result.tampering_signs.length > 0) {
     hart.push(...result.tampering_signs.map(t => `Manipulationsverdacht: ${t}`));
@@ -461,6 +481,7 @@ module.exports = async (req, res) => {
           <p style="font-size:.95rem;">Der Führerschein sah echt und gültig aus — der Kunde <strong>ist bereits freigegeben und kann buchen</strong>. Ein Punkt blieb aber unsicher, bitte einmal kurz drüberschauen.</p>
           <table style="width:100%;font-size:.9rem;line-height:1.6;">
             <tr><td style="color:#888;width:38%;">Konto</td><td>${esc(u.email)}</td></tr>
+            <tr><td style="color:#888;">Name im Konto</td><td>${esc([u.user_metadata?.first_name, u.user_metadata?.last_name].filter(Boolean).join(' ') || '—')}</td></tr>
             <tr><td style="color:#888;">Name laut Dokument</td><td>${esc([r.first_name, r.last_name].filter(Boolean).join(' ') || '—')}</td></tr>
             <tr><td style="color:#888;">Geburtsdatum</td><td>${esc(r.date_of_birth || '—')}</td></tr>
             <tr><td style="color:#888;">Klassen</td><td>${esc((extra?.dl_classes || []).join(', ') || '—')}</td></tr>
@@ -468,6 +489,7 @@ module.exports = async (req, res) => {
             <tr><td style="color:#888;">Selfie passt</td><td>${r.selfie_matches_photo === true ? 'ja' : r.selfie_matches_photo === false ? 'NEIN' : 'unklar'} (${esc(r.selfie_confidence || '—')})</td></tr>
           </table>
           <p style="background:#F6F3EE;padding:12px;border-radius:8px;font-size:.9rem;white-space:pre-wrap;">${esc(gruende.join('\n')).slice(0, 800)}</p>
+          <p style="font-size:.85rem;color:#888;">Zur Einordnung: Der Mietvertrag läuft auf den Namen aus dem Führerschein, nicht auf den im Konto eingetippten.</p>
           ${links.length ? `<p style="font-size:.9rem;">Bilder (Links laufen in 15 Minuten ab):<br>${
             links.map(l => `<a href="${l.url}" style="color:#E85D00;">${esc(l.kind)}</a>`).join(' · ')
           }</p>` : ''}
