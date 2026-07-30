@@ -692,7 +692,7 @@ module.exports = async (req, res) => {
       }
 
       // ── Preis-Felder: nur als valide, nicht-negative Zahlen zulassen ──
-      // Diese Werte steuern DIREKT die Live-Buchungsbeträge (booking.js + create-payment-intent.js
+      // Diese Werte steuern DIREKT die Live-Buchungsbeträge (booking.js + create-mollie-payment.js
       // laden dieselben Spalten). Fehleingabe = kaputte Preise → hart validieren.
       const PRICE_FIELDS = [
         'price_kurztrip', 'price_halftag', 'price_day',

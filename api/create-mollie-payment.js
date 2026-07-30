@@ -20,6 +20,7 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SER
 
 const { resolveDiscount, isRedeemed } = require('./_discounts');
 const { readLicense, writeLicense } = require('./_dl');
+const { isLockActive, lockUntilMs } = require('./_booking-lock');
 const { mollie } = require('./_mollie');
 
 const SITE_URL = process.env.SITE_URL || 'https://www.simpletrailer.de';
@@ -83,6 +84,18 @@ module.exports = async (req, res) => {
     const ipForLimit = agbAcceptedIp || 'unknown';
     if (isRateLimited(ipForLimit)) {
       return res.status(429).json({ error: 'Zu viele Versuche — bitte kurz warten.' });
+    }
+
+    // Temporaere, zeitbasierte Buchungssperre (api/_booking-lock.js). Stand
+    // frueher in create-payment-intent.js — die Datei ist mit Stripe weggefallen,
+    // der Mechanismus bleibt aber nutzbar: einfach LOCK_UNTIL_ISO setzen.
+    // Mietbeginn vor Ablauf der Sperre wird abgelehnt, BEVOR bei Mollie etwas
+    // passiert. Slots nach der Freigabe bleiben buchbar.
+    if (isLockActive() && new Date(start_time).getTime() < lockUntilMs()) {
+      const bis = new Date(lockUntilMs()).toLocaleString('de-DE', {
+        day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Berlin'
+      });
+      return res.status(423).json({ error: `Buchungen sind aktuell pausiert. Ab ${bis} Uhr wieder möglich.` });
     }
 
     // AUTH: Identitaet aus der Session, nicht aus dem Body.
