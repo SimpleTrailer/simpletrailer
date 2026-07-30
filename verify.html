@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Führerschein prüfen – SimpleTrailer</title>
+  <link rel="icon" type="image/png" sizes="192x192" href="/logo-icon.png?v=10" />
+  <link rel="apple-touch-icon" href="/logo-icon.png?v=10" />
+  <script src="/license-camera.js?v=1"></script>
+  <script src="/license-check.js?v=2"></script>
+  <style>
+    /* Eigenständige, bewusst schlanke Seite: sie wird ausschließlich per QR-Code
+       vom Rechner aus geöffnet. Kein Login, keine Navigation, keine Ablenkung —
+       nur der eine Vorgang, für den der Kunde hergekommen ist. */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:#F6F3EE; --s1:#FFFFFF; --s2:#F4F0EA; --s3:#EDE8E0;
+      --orange:#E85D00; --white:#111213; --gray:#5C5953;
+      --border:rgba(17,18,19,.14);
+      --font:system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    }
+    body { background:var(--bg); color:var(--white); font-family:var(--font);
+           min-height:100dvh; -webkit-font-smoothing:antialiased; }
+    @media (max-width:768px){ input,textarea,select{ font-size:16px !important; } }
+
+    .top { background:#111213; padding:calc(env(safe-area-inset-top,0px) + 14px) 20px 14px;
+           display:flex; align-items:center; justify-content:center; }
+    .top img { height:30px; width:auto; display:block; }
+
+    .page { max-width:520px; margin:0 auto; padding:26px 18px calc(env(safe-area-inset-bottom,0px) + 40px); }
+    h1 { font-size:1.45rem; font-weight:800; letter-spacing:-.03em; margin-bottom:8px; line-height:1.2; }
+    .lead { color:var(--gray); font-size:.9rem; line-height:1.6; margin-bottom:22px; }
+
+    .card { background:var(--s1); border:1.5px solid var(--border); border-radius:16px;
+            padding:20px 18px; box-shadow:0 10px 30px -22px rgba(17,18,19,.35); }
+
+    .btn { display:inline-flex; align-items:center; justify-content:center; width:100%;
+           padding:15px 22px; border-radius:12px; font-weight:700; font-size:.96rem;
+           cursor:pointer; border:none; font-family:inherit; transition:filter .18s ease, transform .18s ease; }
+    .btn-orange { background:var(--orange); color:#fff; }
+    .btn-orange:hover:not(:disabled) { filter:brightness(1.06); transform:translateY(-1px); }
+    .btn-orange:disabled { background:#C9C4BD; cursor:default; }
+
+    .state { text-align:center; padding:44px 20px; }
+    .state .ic { font-size:2.6rem; margin-bottom:14px; display:block; }
+    .state h2 { font-size:1.12rem; font-weight:700; letter-spacing:-.02em; margin-bottom:8px; }
+    .state p { color:var(--gray); font-size:.88rem; line-height:1.6; }
+
+    .foot { text-align:center; margin-top:24px; font-size:.74rem; color:#8A857D; line-height:1.7; }
+    .foot a { color:#8A857D; }
+  </style>
+</head>
+<body>
+
+<div class="top">
+  <img src="/logo.png?v=7" alt="SimpleTrailer" />
+</div>
+
+<div class="page">
+  <!-- Ungültiger oder abgelaufener Link -->
+  <div class="state" id="badLink" style="display:none;">
+    <span class="ic">⏱</span>
+    <h2>Dieser Link ist abgelaufen</h2>
+    <p>Aus Sicherheitsgründen gilt der QR-Code nur 15 Minuten.<br>
+       Starte die Prüfung an deinem Rechner einfach noch einmal — dann bekommst du einen neuen Code.</p>
+  </div>
+
+  <!-- Hauptinhalt -->
+  <div id="main" style="display:none;">
+    <h1>Führerschein prüfen</h1>
+    <p class="lead">Gleich öffnet sich die Kamera und führt dich durch drei Aufnahmen.
+       Danach kannst du an deinem Rechner weitermachen — dort geht es automatisch weiter.</p>
+    <div class="card"><div id="dlBox"></div></div>
+    <div class="foot">
+      SimpleTrailer GbR · <a href="/datenschutz">Datenschutz</a> · <a href="/impressum">Impressum</a>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const token = new URLSearchParams(location.search).get('t');
+  const badLink = document.getElementById('badLink');
+  const main    = document.getElementById('main');
+
+  if (!token) { badLink.style.display = 'block'; return; }
+
+  const widget = STLicense.mount('#dlBox', {
+    handoff: token,
+    onStatus: (status) => {
+      // Ist die Prüfung durch, weiß der Kunde: am Rechner geht es weiter.
+      if (status === 'verified' || status === 'review') {
+        const lead = document.querySelector('.lead');
+        if (lead) lead.textContent = status === 'verified'
+          ? 'Fertig! Du kannst dieses Fenster schließen — an deinem Rechner geht es automatisch weiter.'
+          : 'Danke! Wir schauen uns deine Fotos persönlich an und melden uns per E-Mail. Du kannst dieses Fenster schließen.';
+      }
+    }
+  });
+
+  (async () => {
+    const info = await widget.refresh();
+    // refresh() liefert null, wenn der Server den Token abgelehnt hat
+    if (!info) { badLink.style.display = 'block'; return; }
+    main.style.display = 'block';
+  })();
+})();
+</script>
+
+</body>
+</html>

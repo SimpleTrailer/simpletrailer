@@ -24,6 +24,9 @@ const { setCors } = require('./_cors');
 const { pushLion } = require('./_lion-push.js');
 const { putImage, deleteUserImages, signedUrls } = require('./_license-store');
 const { readLicense, writeLicense } = require('./_dl');
+const { createToken, verifyToken, qrSvg, GUELTIG_MS } = require('./_handoff');
+
+const SITE_URL = process.env.SITE_URL || 'https://www.simpletrailer.de';
 
 const anthropic    = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const supabase     = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
@@ -127,10 +130,31 @@ module.exports = async (req, res) => {
   setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const auth = req.headers.authorization || '';
-  if (!auth.startsWith('Bearer ')) return res.status(401).json({ error: 'Nicht autorisiert' });
-  const { data: { user }, error: authError } = await supabaseAuth.auth.getUser(auth.slice(7));
-  if (authError || !user) return res.status(401).json({ error: 'Anmeldung abgelaufen — bitte neu einloggen.' });
+  const body0 = typeof req.body === 'string' ? (() => { try { return JSON.parse(req.body); } catch (e) { return {}; } })() : (req.body || {});
+
+  // ── Zwei Wege sich auszuweisen ───────────────────────────────────────────
+  // 1. Normal: Bearer-Token des eingeloggten Kunden.
+  // 2. Übergabe-Ticket: der Kunde hat am PC einen QR-Code gescannt und macht
+  //    auf dem Handy weiter — dort ist er nicht eingeloggt. Das Ticket erlaubt
+  //    AUSSCHLIESSLICH das Einreichen der Führerschein-Fotos (siehe _handoff.js).
+  const handoff = body0.handoff_token || req.query.t || null;
+  let user = null;
+
+  if (handoff) {
+    const ticket = verifyToken(handoff);
+    if (!ticket) {
+      return res.status(401).json({ error: 'Der Link ist abgelaufen. Bitte starte die Prüfung am Rechner noch einmal.' });
+    }
+    const { data, error } = await supabase.auth.admin.getUserById(ticket.userId);
+    if (error || !data?.user) return res.status(401).json({ error: 'Konto nicht gefunden.' });
+    user = data.user;
+  } else {
+    const auth = req.headers.authorization || '';
+    if (!auth.startsWith('Bearer ')) return res.status(401).json({ error: 'Nicht autorisiert' });
+    const { data: { user: sessionUser }, error: authError } = await supabaseAuth.auth.getUser(auth.slice(7));
+    if (authError || !sessionUser) return res.status(401).json({ error: 'Anmeldung abgelaufen — bitte neu einloggen.' });
+    user = sessionUser;
+  }
 
   // WICHTIG: dl_* kommt ausschliesslich aus app_metadata (siehe api/_dl.js).
   // user_metadata ist vom Kunden selbst beschreibbar und darf hier NIE die
@@ -158,6 +182,26 @@ module.exports = async (req, res) => {
 
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
+  // ── Übergabe an das Handy anfordern (QR-Code) ────────────────────────────
+  // Der Kunde sitzt am Rechner und hat dort keine brauchbare Kamera. Wir geben
+  // ihm einen QR-Code, der auf dem Handy die geführte Aufnahme öffnet.
+  if (body0.action === 'handoff') {
+    if (handoff) return res.status(400).json({ error: 'Auf dem Handy nicht nötig.' });
+    if (meta.dl_status === 'verified') return res.status(200).json({ status: 'verified' });
+    try {
+      const token = createToken(user.id);
+      const url = `${SITE_URL}/verify?t=${encodeURIComponent(token)}`;
+      return res.status(200).json({
+        url,
+        qr: await qrSvg(url),
+        expires_in_min: Math.round(GUELTIG_MS / 60000)
+      });
+    } catch (e) {
+      console.error('handoff:', e.message);
+      return res.status(500).json({ error: 'QR-Code konnte nicht erzeugt werden.' });
+    }
+  }
+
   // Schon verifiziert? Dann nichts erneut prüfen (spart Kosten + Bilder).
   if (meta.dl_status === 'verified') {
     return res.status(200).json({ status: 'verified', message: 'Dein Führerschein ist bereits bestätigt.' });
@@ -180,7 +224,7 @@ module.exports = async (req, res) => {
     return res.status(503).json({ error: 'Die Prüfung ist gerade nicht verfügbar. Bitte versuch es in ein paar Minuten erneut.' });
   }
 
-  const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+  const body = body0;
   const { front, back, selfie } = body;
   if (!front || !back || !selfie) {
     return res.status(400).json({ error: 'Es fehlen Bilder: Vorderseite, Rückseite und Selfie werden benötigt.' });
