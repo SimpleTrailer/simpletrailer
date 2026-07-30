@@ -93,7 +93,9 @@ Prüfe sorgfältig und gib AUSSCHLIESSLICH gültiges JSON in genau dieser Form z
 
 Regeln:
 - usable=false NUR bei technischen Problemen: unscharf, zu dunkel, angeschnitten, Blendung, falsches Motiv, fehlende Rückseite. Beschreibe im unusable_reason genau, welches der drei Bilder neu gemacht werden muss.
-- selfie_matches_photo: Vergleiche Gesichtsform, Augenpartie, Nase, Ohren. Alter darf abweichen — Führerscheinfotos sind oft alt. Bei Unsicherheit: null und selfie_confidence "low".
+- selfie_matches_photo: Vergleiche NUR Merkmale, die sich nicht ändern lassen: Schädel- und Gesichtsform, Abstand und Form der Augen, Nasenrücken und Nasenflügel, Ohrform und -ansatz, Kinn- und Kieferlinie.
+- Diese Unterschiede sind AUSDRÜCKLICH KEIN Grund für selfie_matches_photo=false, weil sie sich im Leben ständig ändern: Frisur, Haarfarbe, Glatze, Bart, Brille, Gewicht, Bräune, Schminke, Alter, Gesichtsausdruck, Lichtverhältnisse, Bildschärfe. Führerscheine gelten 15 Jahre — die Person sieht auf dem Foto fast immer anders aus als heute.
+- Setze selfie_matches_photo=false NUR, wenn du dir sicher bist, dass es zwei VERSCHIEDENE Personen sind (z.B. deutlich andere Gesichtsgeometrie, anderes Geschlecht, offensichtlich andere Altersklasse als es der Zeitraum hergibt). Bist du dir nicht sicher, ist die Antwort null mit selfie_confidence "low" — niemals false.
 - tampering_signs: achte auf nachträglich veränderte Schrift, fehlende oder unsaubere Hologramme/Guillochen, aufgeklebte Fotos, ein abfotografierter Bildschirm statt eines echten Dokuments, Rasterpunkte eines Ausdrucks.
 - recommendation "approve" NUR wenn ALLES zutrifft: echter Führerschein, alle Felder klar lesbar, Klasse B oder BE in der Tabelle, Gültigkeitsdatum in der Zukunft, selfie_matches_photo=true mit selfie_confidence "high", keine tampering_signs.
 - In JEDEM anderen Fall "review". Du lehnst niemals selbst ab — ein Mensch schaut sich Zweifelsfälle an.
@@ -390,9 +392,15 @@ module.exports = async (req, res) => {
   if (Array.isArray(result.tampering_signs) && result.tampering_signs.length > 0) {
     hart.push(...result.tampering_signs.map(t => `Manipulationsverdacht: ${t}`));
   }
-  // Das Selfie passt NACHWEISLICH nicht — das ist ein Betrugssignal, kein Zweifel.
-  if (result.selfie_matches_photo === false) {
-    hart.push('Das Selfie passt laut Prüfung nicht zum Foto im Führerschein.');
+  // Ein "passt nicht" blockiert nur, wenn die Prüfung sich SICHER ist. Grund:
+  // Führerscheine gelten 15 Jahre. Frisur, Bart, Brille, Gewicht und Alter
+  // ändern sich in der Zeit — ein unsicheres "passt nicht" ist deshalb viel
+  // öfter ein veraltetes Passfoto als ein Betrugsversuch. Nur die eindeutige
+  // Aussage "zwei verschiedene Personen" hält den Kunden auf.
+  if (result.selfie_matches_photo === false && result.selfie_confidence === 'high') {
+    hart.push('Das Selfie zeigt laut Prüfung eindeutig eine andere Person als der Führerschein.');
+  } else if (result.selfie_matches_photo === false) {
+    weich.push(`Gesichtsabgleich negativ, aber nur mit Sicherheit "${result.selfie_confidence || 'unbekannt'}" — bitte die Bilder selbst vergleichen.`);
   } else if (result.selfie_matches_photo === null) {
     weich.push('Gesichtsabgleich nicht eindeutig — bitte die Bilder kurz vergleichen.');
   } else if (result.selfie_confidence !== 'high') {
