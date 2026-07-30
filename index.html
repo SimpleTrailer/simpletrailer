@@ -3078,6 +3078,37 @@
     /* dunkler Popup-CTA auf der Karte bleibt dunkel mit weisser Schrift */
     [style*="background:#1f2937"] { background: #111213 !important; color: #FFFFFF !important; }
   </style>
+
+  <style id="hero-wide-v1">
+    /* ── Hero auf grossen Monitoren ───────────────────────────────────────────
+       Der Hero heisst .hero2-inner und stand fest auf 1240 px. Die vorhandene
+       Breiten-Leiter weiter oben zielt auf .hero-inner (den abgeloesten Hero v1)
+       und lief deshalb ins Leere: auf einem 27-Zoll-Schirm klebten Text und
+       Karte als schmaler Block in der Mitte, links und rechts nur Weiss.
+
+       Diese Stufen greifen ERST ab 1800 px — bewusst oberhalb jedes MacBook
+       (1440 / 1512 / 1728 CSS-Pixel). Auf Laptops bleibt der Hero exakt wie er
+       ist, dort stimmen die Proportionen bereits.
+
+       Muss nach hero-v2-styles stehen: gleiche Spezifitaet, es gewinnt die
+       spaetere Regel. Weiter oben eingefuegt haette sie keine Wirkung. */
+
+    @media (min-width: 1800px) {
+      .hero2-inner { max-width: 1520px; gap: 60px; }
+      .hero2-sub   { max-width: 540px; font-size: 1.12rem; }
+      .hero2-bar   { max-width: 620px; }
+    }
+
+    @media (min-width: 2200px) {
+      /* Karte bekommt anteilig mehr Platz als der Text: eine Textspalte von
+         1000 px waere leer, die Karte traegt die Flaeche besser. */
+      .hero2-inner { max-width: 2080px; gap: 76px; grid-template-columns: 1fr 1.3fr; }
+      .hero2-h1    { font-size: clamp(2.4rem, 4.2vw, 4.4rem); }
+      .hero2-sub   { max-width: 620px; font-size: 1.2rem; }
+      .hero2-bar   { max-width: 700px; }
+      .hero2-tag   { font-size: .78rem; }
+    }
+  </style>
 </head>
 <body>
 
