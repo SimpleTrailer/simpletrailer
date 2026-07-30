@@ -556,15 +556,18 @@
       height: var(--nav-h);
       display: flex;
       align-items: center;
-      padding: 0 clamp(20px, 3vw, 56px);
+      /* Einziger Abstand zum Bildschirmrand, seit die Leiste randlos laeuft.
+         Waechst mit, damit Logo und Buchen-Knopf auf 27 Zoll nicht am Rand kleben. */
+      padding: 0 clamp(20px, 3vw, 80px);
     }
 
     .nav-inner {
       width: 100%;
-      /* Dockt an dieselbe Content-Kante an wie .section-inner/.hero-inner
-         (Breiten-Leiter 1200/1480/1760 in den Grossbildschirm-Queries) */
-      max-width: 1200px;
-      margin: 0 auto;
+      /* Randlos: Logo sitzt ganz links, die Aktions-Gruppe ganz rechts. Bewusst
+         NICHT auf die Content-Kante der Sektionen begrenzt — auf breiten Schirmen
+         wirkte die Leiste sonst wie ein schmaler Block in viel leerem Schwarz.
+         Den Atem zum Bildschirmrand macht das padding von nav. */
+      max-width: none;
       display: flex;
       align-items: center;
       gap: 20px;
@@ -2455,8 +2458,8 @@
       .hero-inner, .section-inner, .footer-inner { max-width: 1480px; }
       .usecase-grid { max-width: 1460px; }
       #map { height: 580px; }
-      /* Nav dockt an dieselbe Content-Kante an wie die Sektionen darunter */
-      .nav-inner { max-width: 1480px; gap: 28px; }
+      /* Nav bleibt randlos — nur die Abstaende wachsen mit */
+      .nav-inner { gap: 28px; }
       .nav-links { gap: 40px; }
       .nav-links a { font-size: .95rem; }
       .nav-cta { padding: 12px 26px; font-size: .95rem; }
@@ -2468,7 +2471,7 @@
       .usecase-grid { max-width: 1720px; }
       #map { height: 680px; }
       .hero-text h1 { font-size: clamp(2.6rem, 4.2vw, 4.6rem); }
-      .nav-inner { max-width: 1760px; gap: 36px; }
+      .nav-inner { gap: 36px; }
       .nav-links { gap: 48px; }
       .nav-links a { font-size: 1rem; }
       .nav-cta { padding: 13px 30px; font-size: 1rem; }
