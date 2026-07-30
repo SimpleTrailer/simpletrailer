@@ -97,21 +97,49 @@ function photo(src, captionHtml) {
  * @param {string} [o.preheader] versteckter Vorschautext (Inbox-Snippet)
  */
 function layout({ heading, bodyHtml, replyNote = '', preheader = '' }) {
-  return `<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light only"><meta name="supported-color-schemes" content="light only"><style>:root{color-scheme:light only;supported-color-schemes:light only;}</style></head>
+  return `<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light only"><meta name="supported-color-schemes" content="light only">
+<style>
+  :root{color-scheme:light only;supported-color-schemes:light only;}
+
+  /* ── Abwehr gegen erzwungenen Dunkelmodus ──────────────────────────────
+     Gmail (besonders die Handy-App), Outlook.com und Apple Mail drehen helle
+     Mails im Dunkelmodus eigenmaechtig um und ignorieren dabei color-scheme.
+     Die Mail sah dadurch schwarz aus, obwohl sie hell gebaut ist.
+     Drei Ebenen, weil jeder Client anders arbeitet:
+       1. prefers-color-scheme  -> Apple Mail, Outlook fuer Mac, iOS
+       2. [data-ogsc]/[data-ogsb] -> Outlook.com schreibt diese Attribute
+       3. bgcolor-Attribute am <td> (weiter unten) -> Gmail respektiert die eher
+     Vollstaendig verhindern laesst sich Gmails Invertierung nicht; damit
+     bleiben aber Karte, Text und Akzente in den richtigen Farben. */
+  @media (prefers-color-scheme: dark) {
+    .st-paper, .st-paper td { background-color:${C.paper} !important; }
+    .st-card                { background-color:${C.card} !important; }
+    .st-ink, .st-ink *      { color:${C.ink} !important; }
+    .st-body, .st-body *    { color:${C.body} !important; }
+    .st-muted               { color:${C.muted} !important; }
+    .st-orange              { color:${C.orange} !important; }
+  }
+  [data-ogsc] .st-paper, [data-ogsb] .st-paper { background-color:${C.paper} !important; }
+  [data-ogsc] .st-card,  [data-ogsb] .st-card  { background-color:${C.card}  !important; }
+  [data-ogsc] .st-ink,   [data-ogsc] .st-ink * { color:${C.ink}   !important; }
+  [data-ogsc] .st-body,  [data-ogsc] .st-body *{ color:${C.body}  !important; }
+  [data-ogsc] .st-muted                        { color:${C.muted} !important; }
+  [data-ogsc] .st-orange                       { color:${C.orange}!important; }
+</style></head>
 <body style="margin:0;padding:0;background:${C.paper};color-scheme:light only;">
 ${preheader ? `<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;opacity:0;">${preheader}</div>` : ''}
-<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:${C.paper};font-family:${FONT};">
-<tr><td align="center" style="padding:34px 16px 44px;">
+<table width="100%" cellpadding="0" cellspacing="0" role="presentation" bgcolor="${C.paper}" class="st-paper" style="background:${C.paper};font-family:${FONT};">
+<tr><td align="center" bgcolor="${C.paper}" style="padding:34px 16px 44px;">
   <table width="600" cellpadding="0" cellspacing="0" role="presentation" style="max-width:600px;width:100%;">
-    <tr><td align="center" style="padding-bottom:6px;font-family:${FONT};"><span style="font-size:24px;font-weight:800;letter-spacing:-.5px;color:${C.ink};">Simple</span><span style="font-size:24px;font-weight:800;letter-spacing:-.5px;color:${C.orange};">Trailer</span></td></tr>
+    <tr><td align="center" style="padding-bottom:6px;font-family:${FONT};"><span class="st-ink" style="font-size:24px;font-weight:800;letter-spacing:-.5px;color:${C.ink};">Simple</span><span class="st-orange" style="font-size:24px;font-weight:800;letter-spacing:-.5px;color:${C.orange};">Trailer</span></td></tr>
     <tr><td align="center" style="padding-bottom:22px;"><div style="width:34px;height:3px;background:${C.orange};border-radius:3px;line-height:3px;font-size:0;">&nbsp;</div></td></tr>
-    <tr><td style="background:${C.card};border:1px solid ${C.border};border-top:3px solid ${C.orange};border-radius:14px;padding:34px 30px;">
-      <h1 style="margin:0 0 16px;font-size:23px;font-weight:800;line-height:1.22;color:${C.ink};font-family:${FONT};">${heading}</h1>
-      ${bodyHtml}
+    <tr><td bgcolor="${C.card}" class="st-card" style="background:${C.card};border:1px solid ${C.border};border-top:3px solid ${C.orange};border-radius:14px;padding:34px 30px;">
+      <h1 class="st-ink" style="margin:0 0 16px;font-size:23px;font-weight:800;line-height:1.22;color:${C.ink};font-family:${FONT};">${heading}</h1>
+      <div class="st-body">${bodyHtml}</div>
     </td></tr>
-    ${replyNote ? `<tr><td align="center" style="padding:16px 20px 0;color:${C.muted};font-size:13px;line-height:1.5;">${replyNote}</td></tr>` : ''}
+    ${replyNote ? `<tr><td align="center" class="st-muted" style="padding:16px 20px 0;color:${C.muted};font-size:13px;line-height:1.5;">${replyNote}</td></tr>` : ''}
     <tr><td height="22" style="font-size:0;line-height:22px;">&nbsp;</td></tr>
-    <tr><td align="center" style="background:${C.band};border-radius:12px;padding:24px 30px;">
+    <tr><td align="center" bgcolor="${C.band}" style="background:${C.band};border-radius:12px;padding:24px 30px;">
       <div style="font-size:15px;font-weight:800;color:#ffffff;margin-bottom:6px;font-family:${FONT};">Simple<span style="color:${C.orange};">Trailer</span></div>
       <div style="color:#b9b5ad;font-size:12px;line-height:1.7;font-family:${FONT};">SimpleTrailer GbR · Waltjenstr. 96, 28237 Bremen<br><a href="https://simpletrailer.de" style="color:#e0ddd6;text-decoration:none;">simpletrailer.de</a> · <a href="mailto:info@simpletrailer.de" style="color:#e0ddd6;text-decoration:none;">info@simpletrailer.de</a></div>
     </td></tr>

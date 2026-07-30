@@ -122,54 +122,54 @@ nav .nav-back:hover { color: #FFFFFF !important; }
    ============================================================ */
 
 /* Dunkle Flächen → helle Flächen */
-[style*="background:#0d0d0d"], [style*="background:#0D0D0D"], [style*="background:#0a0a0a"] { background: #F6F3EE !important; }
-[style*="background:#111;"], [style*="background:#111\""], [style*="background:#141414"] { background: #F4F0EA !important; }
-[style*="background:#1a1a1a"], [style*="background:#1A1A1A"], [style*="background:#1f1f1f"] { background: #FFFFFF !important; }
+[style*="background:#0d0d0d"], [style*="background: rgb(13, 13, 13)"], [style*="background:#0D0D0D"], [style*="background: rgb(13, 13, 13)"], [style*="background:#0a0a0a"], [style*="background: rgb(10, 10, 10)"] { background: #F6F3EE !important; }
+[style*="background:#111;"], [style*="background:#111\""], [style*="background:#141414"], [style*="background: rgb(20, 20, 20)"] { background: #F4F0EA !important; }
+[style*="background:#1a1a1a"], [style*="background: rgb(26, 26, 26)"], [style*="background:#1A1A1A"], [style*="background: rgb(26, 26, 26)"], [style*="background:#1f1f1f"], [style*="background: rgb(31, 31, 31)"] { background: #FFFFFF !important; }
 
 /* Farbige Tönungen */
-[style*="background:#1a0d00"] { background: #FFF4EA !important; }
-[style*="background:#0a1f0a"], [style*="background:#0a1a0a"] { background: #E8F8EE !important; }
-[style*="background:#1a1606"] { background: #FFF8E6 !important; }
-[style*="background:#1a0808"], [style*="background:#0a0202"] { background: #FEF1F1 !important; }
-[style*="background:#120d00"] { background: #FFFBEA !important; }
+[style*="background:#1a0d00"], [style*="background: rgb(26, 13, 0)"] { background: #FFF4EA !important; }
+[style*="background:#0a1f0a"], [style*="background: rgb(10, 31, 10)"], [style*="background:#0a1a0a"], [style*="background: rgb(10, 26, 10)"] { background: #E8F8EE !important; }
+[style*="background:#1a1606"], [style*="background: rgb(26, 22, 6)"] { background: #FFF8E6 !important; }
+[style*="background:#1a0808"], [style*="background: rgb(26, 8, 8)"], [style*="background:#0a0202"], [style*="background: rgb(10, 2, 2)"] { background: #FEF1F1 !important; }
+[style*="background:#120d00"], [style*="background: rgb(18, 13, 0)"] { background: #FFFBEA !important; }
 
 /* Helle Inline-Textfarben → dunkle */
 [style*="color:#fff"], [style*="color: #fff"] { color: #111213 !important; }
 [style*="color:#ddd"], [style*="color:#ccc"], [style*="color:#bbb"], [style*="color:#aaa"] { color: #4A4742 !important; }
-[style*="color:#86efac"], [style*="color:#4ade80"] { color: #15803D !important; }
-[style*="color:#fcd34d"], [style*="color:#fde047"], [style*="color:#fbbf24"] { color: #A16207 !important; }
-[style*="color:#fca5a5"], [style*="color:#fecaca"], [style*="color:#f3a5a5"] { color: #B91C1C !important; }
-[style*="color:#fdba74"] { color: #B45309 !important; }
+[style*="color:#86efac"], [style*="color: rgb(134, 239, 172)"], [style*="color:#4ade80"], [style*="color: rgb(74, 222, 128)"] { color: #15803D !important; }
+[style*="color:#fcd34d"], [style*="color: rgb(252, 211, 77)"], [style*="color:#fde047"], [style*="color: rgb(253, 224, 71)"], [style*="color:#fbbf24"], [style*="color: rgb(251, 191, 36)"] { color: #A16207 !important; }
+[style*="color:#fca5a5"], [style*="color: rgb(252, 165, 165)"], [style*="color:#fecaca"], [style*="color: rgb(254, 202, 202)"], [style*="color:#f3a5a5"], [style*="color: rgb(243, 165, 165)"] { color: #B91C1C !important; }
+[style*="color:#fdba74"], [style*="color: rgb(253, 186, 116)"] { color: #B45309 !important; }
 
 /* Dunkelgrüne Gradient-Karten → hellgrün (Zugangscode, Führerschein-bestätigt) */
-[style*="background:linear-gradient(135deg,#0d2f0d"],
-[style*="background:linear-gradient(180deg,#0a1f0a"] { background: #E8F8EE !important; }
+[style*="background:linear-gradient(135deg,#0d2f0d"], [style*="background:linear-gradient(135deg,rgb(13, 47, 13)"],
+[style*="background:linear-gradient(180deg,#0a1f0a"], [style*="background:linear-gradient(180deg,rgb(10, 31, 10)"] { background: #E8F8EE !important; }
 
 /* Weitere helle Signal-/Grautöne → dunkle Pendants */
-[style*="color:#9ca3af"] { color: #4A4742 !important; }
-[style*="color:#f87171"] { color: #B91C1C !important; }
-[style*="color:#facc15"] { color: #A16207 !important; }
-[style*="color:#60a5fa"] { color: #1D4ED8 !important; }
+[style*="color:#9ca3af"], [style*="color: rgb(156, 163, 175)"] { color: #4A4742 !important; }
+[style*="color:#f87171"], [style*="color: rgb(248, 113, 113)"] { color: #B91C1C !important; }
+[style*="color:#facc15"], [style*="color: rgb(250, 204, 21)"] { color: #A16207 !important; }
+[style*="color:#60a5fa"], [style*="color: rgb(96, 165, 250)"] { color: #1D4ED8 !important; }
 
 /* Dunkelrote Fehlerbox im Lösch-Modal → heller Rot-Tint */
-[style*="background:#2a0a0a"] { background: #FEF1F1 !important; border-color: #F3C5C5 !important; }
+[style*="background:#2a0a0a"], [style*="background: rgb(42, 10, 10)"] { background: #FEF1F1 !important; border-color: #F3C5C5 !important; }
 
 /* Dunkle Inline-Borders → helle */
-[style*="#383838"] { border-color: rgba(17, 18, 19, 0.14) !important; }
+[style*="#383838"], [style*="rgb(56, 56, 56)"] { border-color: rgba(17, 18, 19, 0.14) !important; }
 [style*="solid #333"] { border-color: rgba(17, 18, 19, 0.16) !important; }
-[style*="solid #1f1f1f"] { border-color: rgba(17, 18, 19, 0.10) !important; }
+[style*="solid #1f1f1f"], [style*="solid rgb(31, 31, 31)"] { border-color: rgba(17, 18, 19, 0.10) !important; }
 
 /* Spinner: nur die grauen Seiten aufhellen, Orange-Top bleibt */
-[style*="border:3px solid #2a2a2a"] {
+[style*="border:3px solid #2a2a2a"], [style*="border:3px solid rgb(42, 42, 42)"] {
   border-left-color: #E8E3DA !important;
   border-right-color: #E8E3DA !important;
   border-bottom-color: #E8E3DA !important;
 }
 
 /* Ausnahmen: farbige Flächen behalten weiße Schrift */
-[style*="background:#1A1F71"], [style*="background:#003087"], [style*="background:#000;"],
-[style*="background:#7f1d1d"], [style*="background:#dc2626"],
-[style*="background:#E85D00"], [style*="background:var(--orange)"] { color: #FFFFFF !important; }
+[style*="background:#1A1F71"], [style*="background: rgb(26, 31, 113)"], [style*="background:#003087"], [style*="background: rgb(0, 48, 135)"], [style*="background:#000;"],
+[style*="background:#7f1d1d"], [style*="background: rgb(127, 29, 29)"], [style*="background:#dc2626"], [style*="background: rgb(220, 38, 38)"],
+[style*="background:#E85D00"], [style*="background: rgb(232, 93, 0)"], [style*="background:var(--orange)"] { color: #FFFFFF !important; }
 
 /* ============================================================
    Nachzügler-Fixes (dunkle Klassen-Regeln ohne Override) — 2026-06-16

@@ -51,6 +51,25 @@
     @keyframes spin { to { transform:rotate(360deg); } }
     .error-view { display:none; }
     .error-view .icon { color:#f87171; }
+
+    /* Standort-Kasten — nutzt dieselben Variablen wie .card, damit light-theme.css
+       ihn mitdreht. Vorher standen hier feste Werte (#0a0a0a, #1f1f1f, #aaa), die
+       im hellen Design als schwarzer Klotz stehen blieben. */
+    .loc-box { background:var(--s1); border:1.5px solid var(--border); border-radius:14px;
+               padding:16px 18px; margin-bottom:18px; text-align:left; }
+    .loc-row { display:flex; align-items:flex-start; gap:13px; }
+    .loc-pin { font-size:1.3rem; flex-shrink:0; line-height:1.2; }
+    .loc-title { font-weight:700; font-size:.95rem; margin-bottom:3px; letter-spacing:-.01em; }
+    .loc-addr { color:var(--gray); font-size:.84rem; line-height:1.45; }
+    .loc-actions { display:flex; gap:8px; margin-top:13px; flex-wrap:wrap; }
+    .loc-btn { flex:1; min-width:140px; text-decoration:none; padding:11px 12px; border-radius:9px;
+               font-weight:700; font-size:.86rem; text-align:center; transition:filter .18s ease,transform .18s ease; }
+    .loc-btn:hover { filter:brightness(1.06); transform:translateY(-1px); }
+    .loc-btn.primary { background:var(--orange); color:#fff; }
+    .loc-btn.ghost { flex:0 0 auto; min-width:auto; background:var(--s2,transparent);
+                     border:1.5px solid var(--border); color:var(--white); }
+    .loc-note { border:1.5px solid var(--border); border-radius:14px; padding:16px 18px;
+                font-size:.9rem; line-height:1.55; text-align:left; background:var(--s1); }
   </style>
   <link rel="stylesheet" href="/light-theme.css?v=2">
 </head>
@@ -90,15 +109,15 @@
       </table>
 
       <!-- Standort-Block: Adresse + Route in Maps -->
-      <div id="locationBlock" style="display:none;background:#0a0a0a;border:1.5px solid var(--border);border-radius:12px;padding:16px;margin-bottom:18px;text-align:left;">
-        <div style="display:flex;align-items:flex-start;gap:12px;">
-          <div style="font-size:1.4rem;flex-shrink:0;">📍</div>
+      <div id="locationBlock" class="loc-box" style="display:none;">
+        <div class="loc-row">
+          <div class="loc-pin">📍</div>
           <div style="flex:1;min-width:0;">
-            <div style="font-weight:700;font-size:.95rem;margin-bottom:2px;" data-i18n="confirm.location.title">Standort des Anhängers</div>
-            <div id="locationAddr" style="color:#aaa;font-size:.84rem;line-height:1.45;" data-i18n="account.location.loading">Adresse wird geladen…</div>
-            <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
-              <a id="locationRoute" href="#" target="_blank" rel="noopener" style="flex:1;min-width:140px;background:var(--orange);color:#fff;text-decoration:none;padding:10px 12px;border-radius:8px;font-weight:700;font-size:.86rem;text-align:center;" data-i18n="account.location.route">🚗 Route starten</a>
-              <a id="locationMap" href="#" target="_blank" rel="noopener" style="background:#1f1f1f;border:1px solid var(--border);color:#fff;text-decoration:none;padding:10px 12px;border-radius:8px;font-weight:700;font-size:.86rem;text-align:center;" data-i18n="account.location.map">🗺 Auf Karte</a>
+            <div class="loc-title" data-i18n="confirm.location.title">Standort des Anhängers</div>
+            <div id="locationAddr" class="loc-addr" data-i18n="account.location.loading">Adresse wird geladen…</div>
+            <div class="loc-actions">
+              <a id="locationRoute" href="#" target="_blank" rel="noopener" class="loc-btn primary" data-i18n="account.location.route">🚗 Route starten</a>
+              <a id="locationMap" href="#" target="_blank" rel="noopener" class="loc-btn ghost" data-i18n="account.location.map">🗺 Auf Karte</a>
             </div>
           </div>
         </div>
@@ -312,7 +331,8 @@
       if (data.pickup_location_certain === false) {
         const lb = document.getElementById('locationBlock');
         lb.style.display = 'block';
-        lb.innerHTML = `<div style="border:1px solid rgba(17,18,19,0.12);border-radius:12px;padding:16px 18px;font-size:.9rem;line-height:1.55;">
+        lb.className = '';   // .loc-box-Rahmen weg, .loc-note bringt einen eigenen
+        lb.innerHTML = `<div class="loc-note">
           📍 <strong>Abhol-Standort folgt:</strong> Der Anhänger ist bis kurz vor deinem Mietbeginn noch unterwegs.
           Den aktuellen Standort siehst du jederzeit live in deinem <a href="/account" style="color:var(--orange,#E85D00);font-weight:700;">Kundenbereich</a>.
         </div>`;
