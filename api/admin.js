@@ -235,6 +235,12 @@ module.exports = async (req, res) => {
       // Kunden selbst ueberschreibbar und als Berechtigung wertlos.
       const { readLicense: rl, writeLicense: wl } = require('./_dl');
       const cur = rl(tgt.user);
+      // NUR eine Nachkontrolle? Dann war der Kunde die ganze Zeit freigegeben und
+      // konnte buchen — er hat nie erfahren, dass wir nochmal draufgeschaut haben.
+      // Eine Mail "Dein Führerschein ist freigegeben" würde ihn deshalb nur
+      // verwirren ("war ich das nicht schon?") und Zweifel säen, wo keine sind.
+      // Der Kunde hört von uns ausschliesslich, wenn etwas NICHT in Ordnung ist.
+      const nurNachkontrolle = cur.dl_status === 'verified' && !!cur.dl_provisional;
       const meta = { ...cur };
       meta.dl_prev_failure_reason = cur.dl_failure_reason || cur.dl_prev_failure_reason || null;  // Grund der Vorprüfung aufbewahren (Audit)
       meta.dl_status = 'verified';
@@ -253,10 +259,10 @@ module.exports = async (req, res) => {
       try { await wl(supabase, tgt.user, meta); }
       catch (e) { return res.status(500).json({ error: 'Speichern fehlgeschlagen: ' + e.message }); }
 
-      // Biometrische Bilder sind jetzt zwecklos — löschen (Datenminimierung).
-      try { await require('./_license-store').deleteUserImages(userId); } catch (e) { console.warn('Bilder löschen:', e.message); }
+      // Kunde informieren, dass er buchen kann — aber NICHT nach einer blossen
+      // Nachkontrolle (siehe oben): der war nie gesperrt und wartet auf nichts.
+      if (nurNachkontrolle) return res.status(200).json({ ok: true, nur_nachkontrolle: true });
 
-      // Kunde informieren, dass er buchen kann.
       try {
         const { Resend } = require('resend');
         const T = require('./_email-template');

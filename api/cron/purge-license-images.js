@@ -1,21 +1,34 @@
 /**
  * Cron: Führerschein-Bilder mit Verfallsdatum löschen (stündlich).
  *
- * WARUM:
- * Im Normalfall verschwinden die Bilder sofort — bei automatischer Freigabe,
- * bei „bitte neu fotografieren", und wenn Lion im Admin entscheidet. Bleibt ein
- * Fall aber in der Handprüfung liegen (Urlaub, übersehene Mail, Kunde springt
- * ab), lagen Führerschein und Selfie bisher UNBEFRISTET im Bucket. Das sind
- * biometrische Daten nach Art. 9 DSGVO, und unsere Datenschutzerklärung sagt
- * ausdrücklich, dass sie nach der Prüfung gelöscht werden.
+ * WARUM ES DIESE DATEI GIBT:
+ * Führerschein und Selfie sind biometrische Daten nach Art. 9 DSGVO. Ohne einen
+ * Job, der aufräumt, lägen sie unbefristet im Bucket — das wäre weder von der
+ * Einwilligung gedeckt noch von der Datenschutzerklärung.
  *
- * Diese Datei setzt eine harte Obergrenze: nach 72 Stunden ist Schluss,
- * unabhängig davon, ob jemand entschieden hat. Lion bekommt vorher eine
- * Erinnerung, damit ihm kein Fall durchrutscht.
+ * AUFBEWAHRUNG (Stand 30.07.2026): 6 Monate ab Upload.
+ * Vorher wurden die Bilder direkt nach der Freigabe gelöscht. Das war
+ * datensparsam, liess uns im Schadensfall aber ohne jeden Beleg dastehen: Wer
+ * hat den Anhänger tatsächlich abgeholt, und haben wir vorher eine gültige
+ * Fahrerlaubnis gesehen? Genau das muss belegbar sein — § 21 StVG bestraft den,
+ * der jemanden ohne Fahrerlaubnis fahren lässt.
  *
- * Die Prüfung selbst bleibt möglich — Lion kann im Admin weiterhin freigeben
- * oder ablehnen, er sieht dann nur keine Bilder mehr und muss den Kunden bitten,
- * sie neu hochzuladen.
+ * Warum 6 Monate: Ansprüche wegen Veränderung oder Verschlechterung der
+ * Mietsache verjähren nach § 548 BGB in 6 Monaten. Dieselbe Frist gilt bei uns
+ * schon für die Schadens-Fotos aus Precheck und Rückgabe (siehe
+ * datenschutz.html Abschnitt 11) — die Führerschein-Bilder liegen jetzt in
+ * derselben Systematik statt in einer eigenen.
+ *
+ * ⚠️ Wird diese Frist geändert, MÜSSEN mitgeändert werden:
+ *    - der Einwilligungstext in license-check.js (+ CONSENT_VERSION hochzählen)
+ *    - datenschutz.html (Abschnitte „Welche Daten" und „Aufbewahrung")
+ * Sonst haben wir eine Einwilligung für etwas anderes als das, was wir tun.
+ *
+ * Sofort gelöscht wird weiterhin bei: unbrauchbaren Fotos, Ablehnung durch
+ * einen Menschen und Konto-Löschung — dort endet der Zweck sofort.
+ *
+ * Lion wird zusätzlich erinnert, solange ein Fall noch in der Handprüfung
+ * hängt: dort wartet ein Kunde, und das soll nicht liegen bleiben.
  */
 
 const { createClient } = require('@supabase/supabase-js');
@@ -25,8 +38,9 @@ const { pushLion } = require('../_lion-push.js');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
-const MAX_AGE_MS   = 72 * 3600 * 1000;   // harte Löschgrenze
-const REMIND_AT_MS = 24 * 3600 * 1000;   // ab wann Lion erinnert wird
+const TAGE_MS      = 24 * 3600 * 1000;
+const MAX_AGE_MS   = 183 * TAGE_MS;      // 6 Monate — harte Löschgrenze (§ 548 BGB)
+const REMIND_AT_MS = 24 * 3600 * 1000;   // ab wann Lion an eine offene Handprüfung erinnert wird
 
 module.exports = async (req, res) => {
   // Cron-Schutz wie bei den anderen Jobs
@@ -83,18 +97,16 @@ module.exports = async (req, res) => {
     // Eine gesammelte Erinnerung statt vieler Einzelmails
     if (pending.length > 0) {
       reminders = pending.length;
-      const rest = h => Math.max(0, 72 - h);
       try {
         await pushLion({
           severity: 'yellow',
           category: 'urgent',
           title: `${pending.length} Führerschein-Prüfung${pending.length === 1 ? '' : 'en'} wartet auf dich`,
           htmlBody: `
-            <p style="font-size:.95rem;">Diese Kunden warten seit über einem Tag auf deine Entscheidung.
-            Die hochgeladenen Bilder werden aus Datenschutzgründen nach 72 Stunden automatisch gelöscht —
-            danach müsste der Kunde sie neu hochladen.</p>
+            <p style="font-size:.95rem;">Diese Kunden warten seit über einem Tag auf deine Entscheidung —
+            sie können bis dahin nicht buchen.</p>
             <ul style="font-size:.9rem;line-height:1.8;">
-              ${pending.map(p => `<li>${p.email} — wartet ${p.hours} h (Bilder noch ${rest(p.hours)} h verfügbar)</li>`).join('')}
+              ${pending.map(p => `<li>${p.email} — wartet ${p.hours} h</li>`).join('')}
             </ul>`,
           link: 'https://simpletrailer.de/admin'
         });

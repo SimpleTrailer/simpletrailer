@@ -39,7 +39,7 @@
   <li><strong>Buchungs-Daten:</strong> Anhänger, Mietzeitraum, gewähltes Schutzpaket, Stornoschutz, Preis</li>
   <li><strong>Zahlungs-Daten:</strong> Verarbeitet durch Mollie B.V. — wir speichern nur die Mollie-Kunden- und Zahlungs-ID, keine Karten- oder Kontodaten</li>
   <li><strong>Führerschein-Daten:</strong> Für die einmalige Prüfung vor der ersten Buchung erheben wir Name, Geburtsdatum, Führerscheinklassen, Ablaufdatum, Führerschein-Nummer und Ausstellungsland. Diese Stammdaten benötigen wir für den Mietvertrag.</li>
-  <li><strong>Führerschein-Bilder und Selfie:</strong> Für die Prüfung lädst du Vorder- und Rückseite deines Führerscheins sowie ein Selfie hoch. Die Bilder werden in einem nicht öffentlich zugänglichen Speicher bei Supabase (EU-Region, Frankfurt) abgelegt und <strong>unmittelbar nach Abschluss der Prüfung gelöscht</strong> — bei automatischer Freigabe sofort, bei einer Prüfung durch einen Mitarbeiter direkt nach dessen Entscheidung.</li>
+  <li><strong>Führerschein-Bilder und Selfie:</strong> Für die Prüfung lädst du Vorder- und Rückseite deines Führerscheins sowie ein Selfie hoch. Die Bilder werden in einem nicht öffentlich zugänglichen Speicher bei Supabase (EU-Region, Frankfurt) abgelegt und dort <strong>6 Monate</strong> aufbewahrt, danach automatisch gelöscht. Zweck der Aufbewahrung ist der Nachweis, dass wir vor der Vermietung eine gültige Fahrerlaubnis geprüft haben, und die Beweissicherung bei Schäden oder Streitfällen; die Frist entspricht der Verjährung nach § 548 BGB. Wird deine Prüfung abgelehnt oder löschst du dein Konto, werden die Bilder sofort gelöscht.</li>
   <li><strong>Biometrische Daten:</strong> Bei der Prüfung wird das Lichtbild auf dem Führerschein mit deinem Selfie abgeglichen, um festzustellen, ob der Führerschein dir gehört. Diesen Abgleich führt in unserem Auftrag ein KI-Dienst von Anthropic PBC durch. Der Abgleich erfolgt nur mit deiner ausdrücklichen Einwilligung nach Art. 9 Abs. 2 lit. a DSGVO. Eine automatische Ablehnung findet nicht statt: Kann die KI nicht zweifelsfrei freigeben, entscheidet immer ein Mensch (Art. 22 Abs. 3 DSGVO).</li>
   <li><strong>Schadens-Fotos (Pre-Check und Rückgabe):</strong> Vor-/Nach-Mietfotos des Anhängers, gespeichert in Supabase Storage (EU-Region). Werden 6 Monate nach Mietende automatisch gelöscht. Näheres siehe Abschnitt 11.</li>
   <li><strong>Standort:</strong> Nur in der App, nur für "Anhänger in der Nähe". Keine Speicherung serverseitig.</li>
@@ -53,7 +53,7 @@
   <li><strong>Art. 6 (1) c DSGVO</strong> (gesetzliche Pflicht): Steuerrechtliche Aufbewahrung Buchungen 10 Jahre (§ 147 AO)</li>
   <li><strong>Art. 6 (1) f DSGVO</strong> (berechtigtes Interesse): Schadens-Dokumentation, Push-Erinnerungen, Performance-/Heatmap-Tools, Fehler-Monitoring, GPS-Schutz des Eigentums</li>
   <li><strong>Art. 6 (1) a DSGVO</strong> (Einwilligung): Standortzugriff in der App, Chat mit Simply</li>
-  <li><strong>Art. 9 (2) a DSGVO</strong> (ausdrückliche Einwilligung): Biometrischer Abgleich zwischen Führerschein-Lichtbild und Selfie im Rahmen der Führerschein-Prüfung. Du kannst diese Einwilligung jederzeit widerrufen; ohne erfolgreiche Prüfung ist eine Buchung jedoch nicht möglich.</li>
+  <li><strong>Art. 9 (2) a DSGVO</strong> (ausdrückliche Einwilligung): Biometrischer Abgleich zwischen Führerschein-Lichtbild und Selfie im Rahmen der Führerschein-Prüfung sowie die anschließende Aufbewahrung der Aufnahmen für 6 Monate als Nachweis der geprüften Fahrerlaubnis. Du kannst diese Einwilligung jederzeit widerrufen; die Aufnahmen werden dann gelöscht. Ohne erfolgreiche Prüfung ist eine Buchung nicht möglich.</li>
 </ul>
 
 <h2>4. Auftragsverarbeiter / Drittanbieter</h2>
@@ -76,7 +76,7 @@
   <li>Konto: bis zur Löschung (von dir initiiert in der App / per E-Mail)</li>
   <li>Buchungen: 10 Jahre nach Buchungsende (Steuerrecht §147 AO)</li>
   <li>Schadens-Fotos: 6 Monate nach Mietende</li>
-  <li>Führerschein-Bilder und Selfie: nur bis zum Abschluss der Prüfung, danach sofortige Löschung (in der Regel wenige Minuten, bei manueller Prüfung wenige Stunden)</li>
+  <li>Führerschein-Bilder und Selfie: 6 Monate ab Upload, danach automatische Löschung — bei Ablehnung der Prüfung oder Löschung deines Kontos sofort</li>
   <li>Push-Tokens: bis zur Deinstallation der App oder Konto-Löschung</li>
 </ul>
 
@@ -159,7 +159,7 @@
 <p><strong>Speicherdauer:</strong> 6 Monate nach Mietende. Bei laufender Schadens-Aufklärung bis zum Abschluss des Vorgangs (Art. 17 Abs. 3 lit. e DSGVO).</p>
 <p><strong>Empfänger:</strong> SimpleTrailer GbR intern. Im Schadens- oder Diebstahlsfall ggf. die zuständige Versicherung oder Polizei, jeweils nur auf konkreten Anlass.</p>
 
-<p style="margin-top:32px;font-size:.85rem;color:#888;"><strong>Stand der Datenschutzerklärung:</strong> 05.06.2026 (Ergänzung um vollständige Auftragsverarbeiter-Liste, Art. 9 DSGVO biometrische Verifikation, eigener Abschnitt Foto-Dokumentation).</p>
+<p style="margin-top:32px;font-size:.85rem;color:#888;"><strong>Stand der Datenschutzerklärung:</strong> 30.07.2026 (Aufbewahrung der Führerschein-Bilder und des Selfies auf 6 Monate geändert — Nachweis der geprüften Fahrerlaubnis, Frist entsprechend § 548 BGB wie bei den Schadens-Fotos).</p>
 
 </body>
 </html>

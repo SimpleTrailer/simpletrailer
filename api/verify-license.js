@@ -7,9 +7,14 @@
  *   3. Claude prüft mit Bilderkennung: echter Führerschein? lesbar? Person auf dem
  *      Selfie = Person auf dem Lichtbild? Daten passen zum Konto?
  *   4. Entscheidung:
- *        - eindeutig in Ordnung   -> dl_status = 'verified', Bilder werden SOFORT gelöscht
+ *        - eindeutig in Ordnung   -> dl_status = 'verified', Kunde kann sofort buchen
+ *        - nur Restzweifel        -> dl_status = 'verified' + dl_provisional, Kunde kann
+ *                                    buchen, Lion bekommt eine Nachkontrolle-Mail
  *        - Bild unbrauchbar       -> Kunde bekommt einen konkreten Hinweis und darf neu fotografieren
- *        - alles andere           -> dl_status = 'review', Lion entscheidet im Admin
+ *        - echter Ausschlussgrund -> dl_status = 'review', Lion entscheidet im Admin
+ *
+ * Die Bilder bleiben 6 Monate liegen (Nachweis der Fahrerlaubnis, § 548 BGB) und
+ * werden dann vom stündlichen Cron gelöscht — siehe api/cron/purge-license-images.js.
  *
  * WARUM NIE EINE AUTOMATISCHE ABLEHNUNG:
  * Eine Ablehnung verhindert den Vertragsschluss und wäre damit eine automatisierte
@@ -51,7 +56,7 @@ function tooManyAttempts(userId) {
 
 // Versionskennung des Einwilligungstextes (license-check.js). Bei jeder Änderung
 // des Textes hochzählen — so bleibt nachweisbar, worin genau eingewilligt wurde.
-const CONSENT_VERSION = 'dl-bio-2026-07-30';
+const CONSENT_VERSION = 'dl-bio-2026-07-30b';
 
 /**
  * Der system-Prompt trägt die Regeln, die auch dann gelten müssen, wenn im Bild
@@ -450,10 +455,15 @@ module.exports = async (req, res) => {
       // Der stündliche Cron (api/cron/purge-license-images.js) räumt sie nach
       // 72 Stunden ab und erinnert vorher, damit nichts biometrisch liegenbleibt.
       await meldeVorlaeufig(user, weich, { ...dlData, result });
-    } else {
-      // Zweck erfüllt — biometrische Bilder sofort löschen.
-      await deleteUserImages(user.id);
     }
+    // Die Bilder bleiben in beiden Faellen liegen — als Nachweis, dass wir vor
+    // der Vermietung eine gueltige Fahrerlaubnis gesehen haben, und als Beleg,
+    // falls mit dem Anhaenger etwas passiert. Geloescht wird nach der Frist im
+    // stuendlichen Cron (api/cron/purge-license-images.js), bei Ablehnung und
+    // bei Kontoloeschung. Der Einwilligungstext in license-check.js benennt das
+    // ausdruecklich — wird die Frist geaendert, MUSS er mitgeaendert und
+    // CONSENT_VERSION hochgezaehlt werden, sonst haben wir eine Einwilligung
+    // fuer etwas anderes als das, was wir tun.
 
     return res.status(200).json({
       status: 'verified',

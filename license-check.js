@@ -32,7 +32,7 @@
   // Version des Einwilligungstextes weiter unten. Bei JEDER Textänderung
   // hochzählen — sie wird serverseitig als Nachweis gespeichert und muss zur
   // Konstante CONSENT_VERSION in api/verify-license.js passen.
-  const CONSENT_VERSION = 'dl-bio-2026-07-30';
+  const CONSENT_VERSION = 'dl-bio-2026-07-30b';
 
   // Vercel nimmt maximal ~4,5 MB Body an. Drei Bilder als Base64 sind rund
   // ein Drittel größer als die Rohdaten — eigene Grenze, damit der Kunde eine
@@ -211,8 +211,9 @@
           <input type="checkbox" id="stlConsent">
           <span class="stl-consent-t">
             Ich willige ein, dass mein Selfie und mein Führerschein-Lichtbild automatisiert verglichen werden,
-            um meine Identität zu prüfen (Art.&nbsp;9 Abs.&nbsp;2 lit.&nbsp;a DSGVO). Die Bilder werden nach der
-            Prüfung gelöscht. Die Einwilligung kann ich jederzeit widerrufen; ohne Prüfung ist keine Buchung möglich.
+            um meine Identität zu prüfen (Art.&nbsp;9 Abs.&nbsp;2 lit.&nbsp;a DSGVO). Die Aufnahmen werden als
+            Nachweis der Fahrerlaubnis <strong>6&nbsp;Monate</strong> gespeichert und danach automatisch gelöscht.
+            Die Einwilligung kann ich jederzeit widerrufen; ohne Prüfung ist keine Buchung möglich.
           </span>
         </label>
 
