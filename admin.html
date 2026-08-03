@@ -1323,7 +1323,7 @@
     host.innerHTML=`<div style="color:var(--dim);font-size:.82rem">Bilder werden geladen…</div>`;
     try{
       const d=await api('license-images&user_id='+encodeURIComponent(uid));
-      if(!d.images||!d.images.length){ host.innerHTML=`<div style="color:var(--dim);font-size:.82rem">Keine Bilder mehr vorhanden (nach der Entscheidung werden sie gelöscht).</div>`; return; }
+      if(!d.images||!d.images.length){ host.innerHTML=`<div style="color:var(--dim);font-size:.82rem">Keine Bilder mehr vorhanden — sie werden 6 Monate nach dem Hochladen automatisch gelöscht, bei einer Ablehnung sofort.</div>`; return; }
       _lb=d.images.map(i=>({url:i.url,cap:i.kind}));
       host.innerHTML=`<div class="photo-grid">`+d.images.map((i,n)=>
         `<figure class="photo-cell"><img src="${i.url}" alt="${esc(i.kind)}" onclick="openLightbox(${n})"><figcaption>${esc(i.kind)}</figcaption></figure>`
@@ -1332,11 +1332,25 @@
   }
 
   async function verifyManual(uid){
-    if(!confirm('Führerschein FREIGEBEN?\n\n⚠️ Nur wenn du die Bilder angeschaut hast und der Führerschein echt und gültig ist.\n\nDer Kunde bekommt automatisch eine Mail und kann sofort buchen. Die Bilder werden danach gelöscht.'))return;
+    // Zwei verschiedene Vorgaenge hinter einem Endpoint — und sie fuehlen sich
+    // fuer den Kunden voellig unterschiedlich an:
+    //   Nachkontrolle: er ist laengst freigegeben und merkt nichts. Keine Mail.
+    //   Echte Freigabe: er wartet und wird per Mail benachrichtigt.
+    // Der Dialog muss sagen, was WIRKLICH passiert, sonst klickt man im Zweifel
+    // nicht - oder verlaesst sich auf etwas Falsches.
+    const u=(ST.users||[]).find(x=>x.id===uid);
+    const nachkontrolle=u&&u.dl_status==='verified'&&u.dl_provisional;
+    const frage=nachkontrolle
+      ? 'Nachkontrolle abschliessen?\n\n⚠️ Nur wenn du die Bilder angeschaut hast und der Führerschein echt und gültig ist.\n\nDer Kunde ist bereits freigegeben und bekommt KEINE Mail — er merkt von der Nachkontrolle nichts. Der Fall verschwindet nur aus deiner Liste.'
+      : 'Führerschein FREIGEBEN?\n\n⚠️ Nur wenn du die Bilder angeschaut hast und der Führerschein echt und gültig ist.\n\nDer Kunde bekommt eine Mail und kann sofort buchen.';
+    if(!confirm(frage))return;
     try{
       const r=await fetch('/api/admin?section=verify-user-manual',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${authToken}`},body:JSON.stringify({user_id:uid})});
       const d=await r.json(); if(!r.ok)throw new Error(d.error||'Fehler');
-      closePanel(); await loadAll(); alert('✓ Freigegeben. Der Kunde wurde per Mail informiert.');
+      closePanel(); await loadAll();
+      alert(d.nur_nachkontrolle
+        ? '✓ Nachkontrolle erledigt. Der Kunde hat nichts davon mitbekommen.'
+        : '✓ Freigegeben. Der Kunde wurde per Mail informiert.');
     }catch(e){ alert('❌ '+e.message); }
   }
 

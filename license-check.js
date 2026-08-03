@@ -190,7 +190,7 @@
 
         <div class="stl-facts">
           <span>📄 <b>Klasse B oder BE</b> — für PKW-Anhänger nötig</span>
-          <span>🔒 <b>Privat gespeichert</b> — nach der Prüfung sofort gelöscht</span>
+          <span>🔒 <b>Privat gespeichert</b> — Server in der EU, nach 6 Monaten gelöscht</span>
           <span>↻ <b>Nur einmal</b> — bei allen weiteren Buchungen entfällt der Check</span>
         </div>
 
