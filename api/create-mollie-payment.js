@@ -182,6 +182,18 @@ module.exports = async (req, res) => {
       .from('trailers').select('*').eq('id', trailer_id).single();
     if (trailerError || !trailer) return res.status(404).json({ error: 'Anhänger nicht gefunden' });
 
+    // Von Hand gesperrt (Admin: "🔒 Für Buchung sperren", Feld is_available).
+    // Der Flag markiert Wartung/Reparatur/Eigenbedarf — NICHT "gerade vermietet",
+    // das rechnet der Overlap-Check weiter unten aus. Diese Prüfung MUSS hier
+    // stehen: die Karte blendet gesperrte Anhänger zwar aus, aber ein direkter
+    // Link (/booking?trailer=ID), ein Lesezeichen oder der Zurück-Knopf führen
+    // am Filter vorbei. Ohne diese Zeile war "gesperrt" nur eine Anzeigefrage.
+    if (trailer.is_available === false) {
+      return res.status(409).json({
+        error: 'Dieser Anhänger ist gerade nicht buchbar. Bitte wähle einen anderen — oder schreib uns kurz an info@simpletrailer.de, dann finden wir eine Lösung.'
+      });
+    }
+
     // Overlap-Check inkl. 1h Pufferzeit (unveraendert).
     const BUFFER_MS = 60 * 60 * 1000;
     const { data: existing_bookings } = await supabase

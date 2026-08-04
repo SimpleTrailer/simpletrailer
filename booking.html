@@ -1283,13 +1283,19 @@
       url += tid ? `&id=eq.${tid}` : `&is_available=eq.true&limit=1`;
       const res  = await fetch(url, { headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` } });
       const data = await res.json();
-      if (!data || !data[0]) {
+      // Ein direkter Link (?trailer=ID) umgeht den Verfuegbarkeits-Filter oben.
+      // Ohne diese Pruefung fuellt der Kunde das ganze Formular aus und wird
+      // erst beim Bezahlen abgewiesen — das gehoert an den Anfang, nicht ans Ende.
+      const gesperrt = data && data[0] && data[0].is_available === false;
+      if (!data || !data[0] || gesperrt) {
         document.querySelector('.page').innerHTML = `
           <div style="text-align:center;padding:60px 20px;">
             <div style="font-size:2rem;margin-bottom:16px;">😔</div>
-            <h2 style="margin-bottom:12px;">Aktuell nicht verfügbar</h2>
-            <p style="color:var(--gray);margin-bottom:24px;">Der Anhänger ist gerade gebucht. Schau später wieder vorbei.</p>
-            <a href="/" class="btn btn-orange" style="display:inline-flex;width:auto;">Zurück zur Startseite</a>
+            <h2 style="margin-bottom:12px;">${gesperrt ? 'Gerade nicht buchbar' : 'Aktuell nicht verfügbar'}</h2>
+            <p style="color:var(--gray);margin-bottom:24px;">${gesperrt
+              ? 'Dieser Anhänger steht im Moment nicht zur Vermietung bereit. Schau dir gern die anderen an — oder schreib uns kurz, dann finden wir eine Lösung.'
+              : 'Der Anhänger ist gerade gebucht. Schau später wieder vorbei.'}</p>
+            <a href="/#anhaenger" class="btn btn-orange" style="display:inline-flex;width:auto;">Andere Anhänger ansehen</a>
           </div>`;
         return;
       }
