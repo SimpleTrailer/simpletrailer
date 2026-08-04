@@ -43,12 +43,27 @@ module.exports = async (req, res) => {
     const trailerData = trailersRes.data;
     const bookings = bookingsRes.data;
 
+    // Sperrzeiten wirken auf der Karte exakt wie Buchungen ("belegt · frei ab").
+    // Sie werden deshalb hier untergemischt, statt die Rechnung darunter ein
+    // zweites Mal zu bauen — eine Verfügbarkeits-Logik, nicht zwei.
+    // free_floating: false sorgt dafür, dass der Standort korrekt behandelt wird
+    // (bei einer Sperre fährt niemand irgendwohin).
+    const blocks = await require('./_trailer-blocks').loadBlocks(supabase, null, now);
+    const alsBuchung = (blocks || []).map(b => ({
+      trailer_id: b.trailer_id, start_time: b.start_time, end_time: b.end_time,
+      status: 'confirmed', free_floating: false, _sperre: true
+    }));
+
     // Pro Trailer: laufende Buchung jetzt + nächste freie Zeit berechnen
     const bookingsByTrailer = {};
-    (bookings || []).forEach(b => {
+    [...(bookings || []), ...alsBuchung].forEach(b => {
       if (!bookingsByTrailer[b.trailer_id]) bookingsByTrailer[b.trailer_id] = [];
       bookingsByTrailer[b.trailer_id].push(b);
     });
+    // Nach dem Mischen neu sortieren — die "frei ab"-Rechnung unten setzt
+    // voraus, dass die Liste nach start_time geordnet ist.
+    Object.values(bookingsByTrailer).forEach(list =>
+      list.sort((a, b) => new Date(a.start_time) - new Date(b.start_time)));
 
     const trailers = (trailerData || []).map(t => {
       const tBookings = bookingsByTrailer[t.id] || [];

@@ -1456,6 +1456,21 @@
       ${drow('Nächster TÜV',t.next_tuev_date?fmtDay(t.next_tuev_date):'')}
       ${drow('Letzte GPS-Position',t.last_seen_at?fmtDate(t.last_seen_at):'')}
     </div>`;
+    // Sperrzeiten: hier steht, wann der Anhaenger NICHT vermietet wird.
+    // Wird per Fetch nachgeladen, damit die Anhaenger-Liste schlank bleibt.
+    if(t.id){
+      h+=`<div class="dlabel">🚧 Sperrzeiten</div>
+      <div class="card" style="padding:13px 15px">
+        <div style="font-size:.78rem;color:var(--dim);margin-bottom:10px">Zeitraum, in dem der Anhänger nicht buchbar ist — Wartung, TÜV, Reparatur oder Eigenbedarf. Wirkt sofort im Kalender, auf der Karte und beim Bezahlen.</div>
+        <div id="blockList" style="margin-bottom:12px">⏳ lädt…</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+          <label style="font-size:.72rem;color:var(--dim)">Von<input type="datetime-local" id="blkFrom" class="search" style="width:100%;margin-top:3px"></label>
+          <label style="font-size:.72rem;color:var(--dim)">Bis<input type="datetime-local" id="blkTo" class="search" style="width:100%;margin-top:3px"></label>
+        </div>
+        <input type="text" id="blkReason" class="search" placeholder="Grund (optional, z. B. TÜV oder Eigenbedarf)" style="width:100%;margin-bottom:8px">
+        <button class="linkbtn orange" style="margin:0" onclick="addBlock('${esc(t.id)}')">＋ Zeitraum sperren</button>
+      </div>`;
+    }
     h+=`<div class="dlabel">Buchungen (${tb.length})</div>`;
     h+= tb.length ? `<div class="card">`+tb.slice(0,30).map(b=>`<button class="row clickable" onclick="openBooking('${b.id}')"><div class="main"><div class="t1">${esc(b.customer_name||'–')}</div><div class="t2">${fmtDay(b.start_time)}</div></div><div class="right">${statusPill(b.status)}</div></button>`).join('')+`</div>` : `<div class="card"><div class="empty">Keine Buchungen.</div></div>`;
     h+=`<div class="dlabel">🛠 Schadenverlauf</div><div id="trDamages"><div class="empty">lädt…</div></div>`;
@@ -1502,6 +1517,54 @@
     if(t.last_lat&&t.last_lng)h+=`<a class="linkbtn" href="https://www.google.com/maps?q=${Number(t.last_lat)},${Number(t.last_lng)}" target="_blank">📍 GPS-Position auf Karte ›</a>`;
     openPanel('Anhänger',h);
     if(t.id)loadTrDamages(t.id);
+    if(t.id)loadBlocks(t.id);
+  }
+
+  /* ── Sperrzeiten ───────────────────────────────────────────────────────── */
+  function fmtSpanne(a,b){
+    const d=x=>new Date(x).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
+    return `${d(a)} – ${d(b)} Uhr`;
+  }
+  async function loadBlocks(tid){
+    const host=document.getElementById('blockList'); if(!host)return;
+    try{
+      const d=await api('trailer-blocks&trailer_id='+encodeURIComponent(tid));
+      const list=(d.blocks||[]).filter(b=>new Date(b.end_time)>new Date());
+      if(!document.getElementById('blockList'))return;   // Panel inzwischen zu
+      if(!list.length){ host.innerHTML=`<div style="color:var(--dim);font-size:.8rem">Keine Sperrzeiten — der Anhänger ist durchgehend buchbar.</div>`; return; }
+      host.innerHTML=list.map(b=>`<div class="drow" style="align-items:center">
+        <span class="k" style="flex:1">${esc(fmtSpanne(b.start_time,b.end_time))}${b.reason?`<br><span style="color:var(--dim);font-size:.74rem">${esc(b.reason)}</span>`:''}</span>
+        <span class="v"><button class="linkbtn" style="margin:0;padding:4px 10px;font-size:.74rem" onclick="delBlock('${esc(b.id)}','${esc(tid)}')">Aufheben</button></span>
+      </div>`).join('');
+    }catch(e){ if(document.getElementById('blockList'))host.innerHTML=`<div style="color:var(--red);font-size:.8rem">Sperrzeiten nicht abrufbar: ${esc(e.message)}</div>`; }
+  }
+  async function addBlock(tid,trotzdem){
+    const von=document.getElementById('blkFrom'), bis=document.getElementById('blkTo'), grund=document.getElementById('blkReason');
+    if(!von||!bis)return;
+    if(!von.value||!bis.value){ alert('Bitte Von und Bis ausfüllen.'); return; }
+    const body={trailer_id:tid,start_time:new Date(von.value).toISOString(),end_time:new Date(bis.value).toISOString(),reason:grund?grund.value:'',trotzdem:!!trotzdem};
+    try{
+      const r=await fetch('/api/admin?section=add-trailer-block',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${authToken}`},body:JSON.stringify(body)});
+      const d=await r.json();
+      // Der Server warnt, wenn in dem Zeitraum schon Buchungen liegen — die
+      // Sperre wuerde sie NICHT aufheben. Erst danach darf man bewusst weiter.
+      if(r.status===409&&d.error==='kollision'){
+        if(confirm(`${d.message}\n\nSperre trotzdem eintragen?`)) return addBlock(tid,true);
+        return;
+      }
+      if(!r.ok)throw new Error(d.error||'Fehler');
+      von.value=''; bis.value=''; if(grund)grund.value='';
+      await loadBlocks(tid);
+      await loadAll();
+    }catch(e){ alert('❌ '+e.message); }
+  }
+  async function delBlock(id,tid){
+    if(!confirm('Sperrzeit aufheben? Der Anhänger ist danach in diesem Zeitraum wieder buchbar.'))return;
+    try{
+      const r=await fetch('/api/admin?section=delete-trailer-block',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${authToken}`},body:JSON.stringify({id})});
+      const d=await r.json(); if(!r.ok)throw new Error(d.error||'Fehler');
+      await loadBlocks(tid); await loadAll();
+    }catch(e){ alert('❌ '+e.message); }
   }
   let _trDmgReq=0;
   async function loadTrDamages(tid){

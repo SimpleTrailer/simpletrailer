@@ -790,6 +790,67 @@ module.exports = async (req, res) => {
       return res.status(200).json({ ok: true });
     }
 
+    // ─── SPERRZEITEN: Anhänger für einen Zeitraum als belegt markieren ───────
+    // Wartung, TÜV, Reparatur, Eigenbedarf. Wirkt überall wie eine Buchung
+    // (Kalender, Karte, Zahlung), ist aber keine — siehe api/_trailer-blocks.js.
+    if (section === 'trailer-blocks') {
+      const tid = String(req.query.trailer_id || '');
+      const { loadBlocks } = require('./_trailer-blocks');
+      const blocks = await loadBlocks(supabase, tid || null, null);
+      return res.status(200).json({ blocks });
+    }
+
+    if (section === 'add-trailer-block' && req.method === 'POST') {
+      const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+      const { trailer_id } = body;
+      const start = String(body.start_time || '').trim();
+      const end   = String(body.end_time || '').trim();
+      const reason = String(body.reason || '').slice(0, 200).trim();
+      if (!trailer_id) return res.status(400).json({ error: 'trailer_id erforderlich' });
+
+      const s = new Date(start), e = new Date(end);
+      if (isNaN(s.getTime()) || isNaN(e.getTime())) {
+        return res.status(400).json({ error: 'Bitte Start und Ende als gültige Zeitpunkte angeben.' });
+      }
+      if (e <= s) return res.status(400).json({ error: 'Das Ende muss nach dem Start liegen.' });
+
+      // Eine Sperre über eine bestehende Buchung wäre wirkungslos — der Kunde
+      // hat den Anhänger dann trotzdem. Lieber hier sagen als hinterher merken.
+      const { data: kollision } = await supabase.from('bookings')
+        .select('id, start_time, end_time, customer_name')
+        .eq('trailer_id', trailer_id).in('status', ['confirmed', 'active']);
+      const treffer = (kollision || []).filter(b =>
+        new Date(b.start_time) < e && new Date(b.end_time) > s);
+      if (treffer.length > 0 && !body.trotzdem) {
+        return res.status(409).json({
+          error: 'kollision',
+          message: `In diesem Zeitraum liegen bereits ${treffer.length} Buchung(en). Die Sperre ändert daran nichts — die Buchung bleibt bestehen und muss separat storniert werden.`,
+          bookings: treffer.map(b => ({ id: b.id, name: b.customer_name, start_time: b.start_time, end_time: b.end_time }))
+        });
+      }
+
+      const { data, error } = await supabase.from('trailer_blocks').insert({
+        trailer_id, start_time: s.toISOString(), end_time: e.toISOString(),
+        reason: reason || null, created_by: (user.email || '').toLowerCase()
+      }).select('id').maybeSingle();
+      if (error) {
+        if (/does not exist|42P01/i.test(error.message || '')) {
+          return res.status(500).json({ error: 'Die Tabelle trailer_blocks fehlt noch — bitte supabase-migration-sperrzeiten.sql im SQL-Editor ausführen.' });
+        }
+        return res.status(500).json({ error: error.message });
+      }
+      return res.status(200).json({ ok: true, id: data?.id || null });
+    }
+
+    if (section === 'delete-trailer-block' && req.method === 'POST') {
+      const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+      const id = String(body.id || '');
+      if (!/^[0-9a-f-]{36}$/i.test(id)) return res.status(400).json({ error: 'Ungültige id.' });
+      const { error } = await supabase.from('trailer_blocks').delete().eq('id', id);
+      if (error) return res.status(500).json({ error: error.message });
+      return res.status(200).json({ ok: true });
+    }
+
     // ─── UPDATE-TRAILER: Vollständige Flotten-Daten (Code, TÜV, Kennzeichen, etc.) ───
     if (section === 'update-trailer' && req.method === 'POST') {
       const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});

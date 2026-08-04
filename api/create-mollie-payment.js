@@ -208,6 +208,17 @@ module.exports = async (req, res) => {
     });
     if (overlap) return res.status(400).json({ error: 'Anhänger ist in diesem Zeitraum (inkl. Pufferzeit) bereits gebucht' });
 
+    // Sperrzeiten (Wartung, TÜV, Eigenbedarf) — dieselbe Wirkung wie eine
+    // Buchung, aber ohne Pufferstunde: der Zeitraum ist von uns gesetzt.
+    // Diese Prüfung ist die VERBINDLICHE. Kalender und Karte blenden gesperrte
+    // Zeiten zwar aus, aber ein veralteter Tab oder ein direkter Aufruf kommen
+    // dort vorbei — bezahlt wird nur, was hier durchgeht.
+    const { blocksOverlap } = require('./_trailer-blocks');
+    const blocks = await require('./_trailer-blocks').loadBlocks(supabase, trailer_id, new Date());
+    if (blocksOverlap(blocks, start_time, end_time)) {
+      return res.status(409).json({ error: 'In diesem Zeitraum ist der Anhänger nicht verfügbar. Bitte wähle einen anderen Zeitraum oder einen anderen Anhänger.' });
+    }
+
     // ── Preisberechnung: 1:1 identisch zu create-payment-intent.js und
     //    booking.html calcPrice(). Alle drei muessen gleich rechnen.
     const prices = {

@@ -1,5 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
 const { isLockActive, lockUntilIso } = require('./_booking-lock');
+const { loadBlocks } = require('./_trailer-blocks');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
@@ -21,6 +22,15 @@ module.exports = async (req, res) => {
       start_time: b.start_time,
       end_time: new Date(new Date(b.end_time).getTime() + BUFFER_MS).toISOString()
     }));
+    // Sperrzeiten (Wartung, TÜV, Eigenbedarf) zählen wie belegte Zeit — der
+    // Kalender und das Stunden-Raster grauen sie damit automatisch aus.
+    // BEWUSST OHNE Pufferstunde: die Sperre ist ein exakter Zeitraum, den wir
+    // selbst festlegen — anders als eine Miete, nach der jemand zurückfahren muss.
+    const blocks = await loadBlocks(supabase, trailer_id, new Date());
+    for (const b of blocks) {
+      booked.push({ start_time: b.start_time, end_time: b.end_time });
+    }
+
     // Temporäre Buchungssperre: gesamten Zeitraum bis zum Ablauf als belegt
     // markieren, damit der Slot-Kalender alles vor der Freigabe ausgraut.
     if (isLockActive()) {
