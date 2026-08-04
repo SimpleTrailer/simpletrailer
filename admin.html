@@ -1289,11 +1289,18 @@
       ${u.dl_check_method==='ai'?`<div class="drow"><span class="k">Geprüft durch</span><span class="v">KI-Vorprüfung</span></div>`:''}
       ${u.dl_review_reason&&u.dl_status==='review'?`<div class="drow"><span class="k">Warum Handprüfung</span><span class="v" style="color:var(--yellow)">${esc(u.dl_review_reason)}</span></div>`:''}
       ${u.dl_provisional?`<div class="drow"><span class="k">Warum Nachkontrolle</span><span class="v" style="color:var(--yellow)">${esc(u.dl_provisional_reason||'—')}</span></div>`:''}
+      ${(!u.dl_provisional&&u.dl_prev_review_reason)?`<div class="drow"><span class="k">Damals aufgehalten wegen</span><span class="v" style="color:var(--dim)">${esc(u.dl_prev_review_reason)}</span></div>`:''}
       ${u.dl_rejected_reason&&u.dl_status==='rejected'?`<div class="drow"><span class="k">Abgelehnt weil</span><span class="v" style="color:var(--red)">${esc(u.dl_rejected_reason)}</span></div>`:''}
       ${u.dl_failure_reason&&u.dl_status!=='verified'?`<div class="drow"><span class="k">Fehlergrund</span><span class="v" style="color:var(--red)">${esc(u.dl_failure_reason)}</span></div>`:''}
     </div>`;
     // Führerschein-Bilder: liegen in einem privaten Bucket, Links laufen nach 15 Min ab.
-    if(u.dl_status==='review'||u.dl_status==='rejected'||u.dl_provisional){
+    // Bilder IMMER erreichbar, nicht nur solange eine Entscheidung aussteht.
+    // Vorher verschwand der Knopf in dem Moment, in dem freigegeben wurde — die
+    // Bilder lagen noch im Speicher, waren im Dashboard aber nicht mehr
+    // aufrufbar. Genau dann braucht man sie aber: wenn mit dem Anhaenger etwas
+    // passiert ist. Sind sie nach 6 Monaten abgelaufen, sagt showLicenseImages
+    // das von selbst.
+    if(u.dl_check_method||u.dl_status!=='unverified'){
       h+=`<button class="linkbtn" onclick="showLicenseImages('${u.id}')">🪪 Führerschein-Bilder anzeigen</button>`;
       h+=`<div id="dlImgHost" style="margin-top:10px"></div>`;
     }
@@ -1301,6 +1308,9 @@
     // Vorläufig freigegeben: bestätigen räumt die Nachkontrolle weg, Ablehnen
     // nimmt die Freigabe zurück (möglich, solange nichts abgeholt wurde).
     if(u.dl_provisional)h+=`<button class="linkbtn orange" onclick="verifyManual('${u.id}')">✓ Passt – Nachkontrolle erledigt</button>`;
+    // Freigegeben, aber ohne offene Nachkontrolle: dann darf man ihm sagen,
+    // dass er buchen kann — etwa wenn die automatische Mail im Spam gelandet ist.
+    if(u.dl_status==='verified'&&!u.dl_provisional)h+=`<button class="linkbtn" onclick="resendLicenseMail('${u.id}')">✉️ Freigabe-Mail senden</button>`;
     if(u.dl_status==='review'||u.dl_provisional)h+=`<button class="linkbtn" style="border-color:#7f1d1d;color:#fca5a5" onclick="rejectLicense('${u.id}')">✗ Ablehnen</button>`;
     if((u.bookings_total||0)<=0)h+=`<button class="linkbtn" style="border-color:#7f1d1d;color:#fca5a5" onclick="deleteUser('${u.id}')">🗑 Löschen</button>`;
     if((u.bookings_count||0)===0)h+=`<button class="linkbtn" onclick="sendWinback('${esc(u.email)}')">✉️ Rückhol-Mail (20%)</button>`;
@@ -1351,6 +1361,16 @@
       alert(d.nur_nachkontrolle
         ? '✓ Nachkontrolle erledigt. Der Kunde hat nichts davon mitbekommen.'
         : '✓ Freigegeben. Der Kunde wurde per Mail informiert.');
+    }catch(e){ alert('❌ '+e.message); }
+  }
+
+  async function resendLicenseMail(uid){
+    const u=(ST.users||[]).find(x=>x.id===uid);
+    if(!confirm(`„Dein Führerschein ist freigegeben — du kannst jetzt buchen" an ${u?u.email:'den Kunden'} senden?\n\nHinweis: Beim Freigeben aus der Handprüfung geht diese Mail automatisch raus. Nur senden, wenn sie nicht angekommen ist oder der Kunde nachfragt.`))return;
+    try{
+      const r=await fetch('/api/admin?section=resend-license-mail',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${authToken}`},body:JSON.stringify({user_id:uid})});
+      const d=await r.json(); if(!r.ok)throw new Error(d.error||'Fehler');
+      alert(`✓ Mail gesendet an ${d.to}`);
     }catch(e){ alert('❌ '+e.message); }
   }
 

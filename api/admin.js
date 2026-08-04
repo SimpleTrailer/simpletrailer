@@ -129,6 +129,7 @@ module.exports = async (req, res) => {
         // von uns. Bleibt sichtbar, bis wir bestätigen oder zurücknehmen.
         dl_provisional:        !!dl.dl_provisional,
         dl_provisional_reason: dl.dl_provisional_reason || null,
+        dl_prev_review_reason: dl.dl_prev_review_reason || null,
         dl_legacy:            hasLegacyMetadata(u),
         };
       }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
@@ -249,6 +250,11 @@ module.exports = async (req, res) => {
       meta.dl_manual_by = (user.email || '').toLowerCase();  // welcher Admin hat freigeschaltet
       meta.dl_classes = (Array.isArray(cur.dl_classes) && cur.dl_classes.includes('B')) ? cur.dl_classes : [...new Set([...(cur.dl_classes || []), 'B'])];
       meta.dl_failure_reason = null;
+      // Grund der maschinellen Prüfung aufbewahren statt wegwerfen: nur so lässt
+      // sich später beantworten, WARUM ein einwandfreier Führerschein aufgehalten
+      // wurde — sonst ist die Information nach dem Freigeben-Klick für immer weg
+      // und die Prüfung lässt sich nicht nachschärfen.
+      meta.dl_prev_review_reason = cur.dl_review_reason || cur.dl_provisional_reason || cur.dl_prev_review_reason || null;
       meta.dl_review_reason = null;
       meta.dl_rejected_reason = null;
       // War der Kunde nur vorläufig freigegeben, ist die Nachkontrolle hiermit erledigt.
@@ -299,6 +305,52 @@ module.exports = async (req, res) => {
         console.error('[admin license-images]', e.message);
         return res.status(200).json({ images: [], error: 'Bilder nicht abrufbar' });
       }
+    }
+
+    // Die Freigabe-Mail noch einmal schicken. Braucht man, wenn die erste im
+    // Spam gelandet ist, wenn der Kunde nachfragt, oder wenn eine Freigabe aus
+    // der Zeit stammt, in der noch keine Mail rausging.
+    if (section === 'resend-license-mail' && req.method === 'POST') {
+      const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+      const userId = body.user_id;
+      if (!userId || !/^[0-9a-f-]{36}$/i.test(String(userId))) return res.status(400).json({ error: 'Ungültige user_id.' });
+
+      const { data: tgtM, error: getErrM } = await supabase.auth.admin.getUserById(userId);
+      if (getErrM || !tgtM?.user) return res.status(404).json({ error: 'Benutzer nicht gefunden.' });
+
+      const { readLicense: rlM } = require('./_dl');
+      const dlM = rlM(tgtM.user);
+      // Kein "du kannst buchen" an jemanden, der es nicht kann.
+      if (dlM.dl_status !== 'verified') {
+        return res.status(409).json({ error: 'Dieser Kunde ist nicht freigegeben — erst freigeben, dann informieren.' });
+      }
+      if (!tgtM.user.email) return res.status(400).json({ error: 'Keine E-Mail-Adresse hinterlegt.' });
+
+      try {
+        const { Resend } = require('resend');
+        const T = require('./_email-template');
+        const resend = new Resend(process.env.RESEND_API_KEY);
+        const vorname = dlM.dl_first_name || tgtM.user.user_metadata?.first_name || '';
+        await resend.emails.send({
+          from: 'SimpleTrailer <buchung@simpletrailer.de>',
+          reply_to: 'info@simpletrailer.de',
+          to: tgtM.user.email,
+          subject: 'Dein Führerschein ist freigegeben – SimpleTrailer',
+          html: T.layout({
+            heading: 'Führerschein bestätigt',
+            preheader: 'Du kannst jetzt buchen.',
+            bodyHtml:
+              T.p(`Hallo${vorname ? ' ' + T.esc(vorname) : ''},`) +
+              T.p('wir haben deinen Führerschein geprüft und freigegeben. Du kannst ab sofort jederzeit einen Anhänger buchen — eine erneute Prüfung ist nicht nötig.') +
+              T.cta(T.btn('Jetzt Anhänger buchen', 'https://www.simpletrailer.de/booking')),
+            replyNote: 'Fragen? Antworte einfach auf diese Mail.'
+          })
+        });
+      } catch (e) {
+        console.error('resend-license-mail:', e.message);
+        return res.status(500).json({ error: 'Mail konnte nicht gesendet werden: ' + e.message });
+      }
+      return res.status(200).json({ ok: true, to: tgtM.user.email });
     }
 
     // Führerschein ABLEHNEN — bewusst nur von Hand, nie automatisch (Art. 22 DSGVO).

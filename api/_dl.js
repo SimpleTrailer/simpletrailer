@@ -35,7 +35,7 @@ const SERVER_OWNED = [
   // Vorläufig freigegeben: der Kunde darf buchen, ein Mensch schaut aber nach.
   'dl_provisional', 'dl_provisional_reason', 'dl_confirmed_at', 'dl_confirmed_by',
   'dl_rejected_reason', 'dl_rejected_at', 'dl_rejected_by',
-  'dl_manual', 'dl_manual_by', 'dl_prev_failure_reason',
+  'dl_manual', 'dl_manual_by', 'dl_prev_failure_reason', 'dl_prev_review_reason',
   'dl_consent_at', 'dl_consent_version', 'dl_consent_ip',
   'dl_address', 'dl_session_id', 'dl_stripe_session_id',
   'mollie_customer_id'
