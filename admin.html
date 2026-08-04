@@ -1354,8 +1354,18 @@
       ? 'Nachkontrolle abschliessen?\n\n⚠️ Nur wenn du die Bilder angeschaut hast und der Führerschein echt und gültig ist.\n\nDer Kunde ist bereits freigegeben und bekommt KEINE Mail — er merkt von der Nachkontrolle nichts. Der Fall verschwindet nur aus deiner Liste.'
       : 'Führerschein FREIGEBEN?\n\n⚠️ Nur wenn du die Bilder angeschaut hast und der Führerschein echt und gültig ist.\n\nDer Kunde bekommt eine Mail und kann sofort buchen.';
     if(!confirm(frage))return;
+    // Ohne Ablaufdatum wuerde der Kunde spaeter beim BEZAHLEN abgewiesen ("Datum
+    // unklar") — obwohl wir ihn gerade freigegeben haben. Deshalb hier abfragen,
+    // solange das Dokument noch auf dem Bildschirm liegt. Leer lassen ist erlaubt:
+    // eine Freigabe von Hand blockiert das Zahlungs-Tor nicht mehr.
+    let exp='';
+    if(u&&!u.dl_expires_at){
+      exp=prompt('Gültig bis (Feld 4b auf der Vorderseite) — Format JJJJ-MM-TT, z. B. 2035-12-31.\n\nLeer lassen, wenn nicht lesbar. Der Kunde kann trotzdem buchen, wir können dann nur nicht automatisch warnen, wenn sein Führerschein abläuft.','');
+      if(exp===null)return;
+      exp=exp.trim();
+    }
     try{
-      const r=await fetch('/api/admin?section=verify-user-manual',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${authToken}`},body:JSON.stringify({user_id:uid})});
+      const r=await fetch('/api/admin?section=verify-user-manual',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${authToken}`},body:JSON.stringify({user_id:uid,expires_at:exp})});
       const d=await r.json(); if(!r.ok)throw new Error(d.error||'Fehler');
       closePanel(); await loadAll();
       alert(d.nur_nachkontrolle

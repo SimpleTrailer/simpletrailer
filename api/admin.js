@@ -249,6 +249,19 @@ module.exports = async (req, res) => {
       meta.dl_manual = true;
       meta.dl_manual_by = (user.email || '').toLowerCase();  // welcher Admin hat freigeschaltet
       meta.dl_classes = (Array.isArray(cur.dl_classes) && cur.dl_classes.includes('B')) ? cur.dl_classes : [...new Set([...(cur.dl_classes || []), 'B'])];
+      // Ablaufdatum, das der Admin beim Freigeben abgelesen hat. Ohne dieses Feld
+      // greift die spaetere Ablaufpruefung beim Buchen ins Leere — deshalb wird es
+      // hier nachgetragen, wenn die Maschine es nicht lesen konnte.
+      const expIn = String(body.expires_at || '').trim();
+      if (expIn) {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(expIn) || isNaN(Date.parse(expIn))) {
+          return res.status(400).json({ error: 'Ablaufdatum bitte als JJJJ-MM-TT angeben, z. B. 2035-12-31.' });
+        }
+        if (new Date(expIn) < new Date()) {
+          return res.status(400).json({ error: 'Dieses Datum liegt in der Vergangenheit — ein abgelaufener Führerschein darf nicht freigegeben werden.' });
+        }
+        meta.dl_expires_at = expIn;
+      }
       meta.dl_failure_reason = null;
       // Grund der maschinellen Prüfung aufbewahren statt wegwerfen: nur so lässt
       // sich später beantworten, WARUM ein einwandfreier Führerschein aufgehalten

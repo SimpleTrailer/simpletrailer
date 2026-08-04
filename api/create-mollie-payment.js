@@ -143,7 +143,16 @@ module.exports = async (req, res) => {
     // Stripe hat das damals nicht immer geliefert. Die duerfen weiter buchen,
     // sonst sperren wir bestehende Kunden aus. Fuer alle NEU geprueften gilt die
     // strenge Regel: ohne Ablaufdatum und ohne Klasse keine Buchung.
-    const legacyCheck = !dl.dl_check_method;
+    // Bestandsschutz greift in zwei Faellen:
+    //  1. Alt-Kunden aus der Stripe-Identity-Zeit (kein dl_check_method) — dort
+    //     lieferte Stripe Ablaufdatum und Klassen nicht zuverlaessig.
+    //  2. Von Hand freigegebene Kunden (dl_manual). Hier hat ein MENSCH das
+    //     Dokument gesehen und bewusst freigegeben. Ihn danach an einem Feld
+    //     scheitern zu lassen, das die Maschine nicht lesen konnte, ist unsinnig:
+    //     der Kunde bekaeme im letzten Schritt ein "Ablaufdatum unklar" zu sehen,
+    //     obwohl wir ihn gerade selbst durchgewunken haben. Ein eingetragenes
+    //     Datum wird trotzdem geprueft — nur ein FEHLENDES blockiert nicht mehr.
+    const legacyCheck = !dl.dl_check_method || dl.dl_manual === true;
 
     if (dl.dl_expires_at) {
       if (new Date(dl.dl_expires_at) < new Date(end_time)) {
@@ -152,7 +161,7 @@ module.exports = async (req, res) => {
     } else if (!legacyCheck) {
       return res.status(403).json({ error: 'Das Ablaufdatum deines Führerscheins ist unklar — bitte melde dich kurz bei info@simpletrailer.de.' });
     } else {
-      console.warn('Alt-Verifizierung ohne Ablaufdatum, durchgelassen:', effectiveUserId);
+      console.warn('Freigabe ohne Ablaufdatum, durchgelassen:', effectiveUserId, dl.dl_manual ? '(von Hand)' : '(Alt-Verifizierung)');
     }
 
     if (Array.isArray(dl.dl_classes) && dl.dl_classes.length > 0) {
